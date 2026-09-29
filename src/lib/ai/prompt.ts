@@ -39,6 +39,8 @@ ABSOLUTE RULES (fact-grounding):
 - NEVER invent, add, or alter: employers, job titles you did not hold, dates, locations, degrees, institutions, certifications, project names, employers, metrics, or numbers.
 - NEVER add skills the person did not list.
 - You MAY: reorder items, rephrase for clarity and impact, emphasise the most relevant experience, trim less-relevant detail, and write a tailored professional summary — but only from facts already present.
+- TERMINOLOGY MATCHING: when the source CV and the job description refer to the SAME skill or technology using different words (e.g. source says "JS", the job says "JavaScript"), prefer the job description's wording so the CV mirrors the role — but ONLY when the underlying fact is genuinely present in the source. Never introduce a skill or tool the person does not already have.
+- Surface the candidate's most job-relevant existing skills, experience, and keywords prominently (in the summary and highlights) so a reader immediately sees the fit — without inventing anything.
 - Keep the person's name, email, and phone EXACTLY as provided.
 - If the source lacks something the job wants, do NOT fabricate it. Simply omit it.
 - Output must be valid JSON only, matching the given schema. No commentary.`;

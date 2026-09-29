@@ -142,6 +142,16 @@ describe("factGround — invented content warnings", () => {
     expect(warnings.some((w) => w.includes("Rust"))).toBe(true);
   });
 
+  it("keeps rephrased skills that are grounded in the source (fuzzy match)", () => {
+    // Source lists "Mathematics"; a rephrase to "Applied Mathematics" shares the
+    // grounding token and must survive rather than being stripped.
+    const { cv, warnings } = factGround(source(), {
+      skills: [{ category: "Core", items: ["Applied Mathematics"] }],
+    });
+    expect(cv.skills[0].items).toEqual(["Applied Mathematics"]);
+    expect(warnings.some((w) => w.includes("Mathematics"))).toBe(false);
+  });
+
   it("warns on invented institutions, degrees, projects and certifications", () => {
     const { warnings } = factGround(source(), {
       education: [{ institution: "MIT", degree: "PhD Robotics" }],

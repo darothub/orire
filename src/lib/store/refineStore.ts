@@ -6,6 +6,7 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
+import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
 import { parseVerdict, type JudgeVerdict } from "@/lib/ai/judge";
 
 /** The four steps of the Refine module, in order. */
@@ -26,6 +27,7 @@ export interface ColError {
 export interface ColState {
   phase: ColPhase;
   result?: GroundingResult;
+  match?: JDMatch;
   error?: ColError;
 }
 
@@ -128,7 +130,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
             return;
           }
           const grounded = factGround(cv, parseModelJSON(data.raw));
-          set((s) => ({ cols: { ...s.cols, [provider]: { phase: "done", result: grounded } } }));
+          const match = jdMatch(grounded.cv, jd);
+          set((s) => ({ cols: { ...s.cols, [provider]: { phase: "done", result: grounded, match } } }));
         } catch (e) {
           const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
           set((s) => ({

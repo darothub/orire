@@ -10,6 +10,7 @@ import { ProviderSetup } from "@/components/ai/ProviderSetup";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import type { CVData } from "@/lib/cv/schema";
+import type { JDMatch } from "@/lib/ai/jdmatch";
 
 const STEP_INDEX: Record<RefineStep, number> = { connect: 0, sources: 1, job: 2, run: 3 };
 
@@ -485,6 +486,7 @@ function Column({ provider, state, before, onApply }: { provider: ProviderId; st
             <DeltaRow label="Certs" a={before.certifications} b={after.certifications} />
             <DeltaRow label="Skills" a={before.skills} b={after.skills} />
           </div>
+          {state.match && <MatchMeter match={state.match} />}
           {state.result.cv.basics.summary && (
             <div className="ai-summary cmp-summary"><span className="ed-label">Tailored summary</span><p>{state.result.cv.basics.summary}</p></div>
           )}
@@ -500,6 +502,41 @@ function Column({ provider, state, before, onApply }: { provider: ProviderId; st
         </>
       )}
     </motion.div>
+  );
+}
+
+function MatchMeter({ match }: { match: JDMatch }) {
+  const tone = match.score >= 75 ? "hi" : match.score >= 45 ? "mid" : "lo";
+  const shownMissing = match.missing.slice(0, 8);
+  return (
+    <div className={`jdm ${tone}`}>
+      <div className="jdm-head">
+        <span className="ed-label">JD match</span>
+        <span className="jdm-score">{match.score}%</span>
+      </div>
+      <div className="jdm-bar">
+        <motion.span
+          className="jdm-fill"
+          initial={{ width: 0 }}
+          animate={{ width: `${match.score}%` }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </div>
+      <div className="jdm-sub">
+        {match.matched.length}/{match.matched.length + match.missing.length} keywords covered
+      </div>
+      {shownMissing.length > 0 && (
+        <div className="jdm-missing">
+          <span className="jdm-missing-label">Still missing</span>
+          <div className="jdm-chips">
+            {shownMissing.map((k) => <span key={k}>{k}</span>)}
+            {match.missing.length > shownMissing.length && (
+              <span className="jdm-more">+{match.missing.length - shownMissing.length}</span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

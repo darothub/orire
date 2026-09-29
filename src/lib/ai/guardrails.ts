@@ -76,6 +76,63 @@ function sourceDateSet(src: CVData): Set<string> {
   return s;
 }
 
+/** Common skill aliases so a rephrase (e.g. "JS" -> "JavaScript") stays grounded. */
+const SKILL_ALIASES: Record<string, string> = {
+  js: "javascript",
+  ts: "typescript",
+  py: "python",
+  golang: "go",
+  k8s: "kubernetes",
+  postgres: "postgresql",
+  "node": "nodejs",
+  "node.js": "nodejs",
+  "react.js": "react",
+  "next.js": "nextjs",
+  "vue.js": "vue",
+  ml: "machine learning",
+  ai: "artificial intelligence",
+  nlp: "natural language processing",
+  "ci/cd": "cicd",
+  gcp: "google cloud",
+  aws: "amazon web services",
+};
+
+function canonSkill(v: string): string {
+  const n = norm(v).replace(/[.\-_/]/g, "");
+  return SKILL_ALIASES[norm(v)] ?? SKILL_ALIASES[n] ?? n;
+}
+
+function tokens(v: string): string[] {
+  return norm(v).split(/[^a-z0-9+#]+/).filter((t) => t.length > 1);
+}
+
+/**
+ * Build a fuzzy skill matcher. A candidate skill is considered grounded when it
+ * matches a source skill by: exact/canonical equality, alias expansion,
+ * substring in either direction, or full token containment. This lets the model
+ * rephrase ("JS" -> "JavaScript", "React.js" -> "React") without the rephrasing
+ * being stripped as "not in source", while still rejecting genuinely invented
+ * skills.
+ */
+function buildSkillMatcher(source: CVData): (candidate: string) => boolean {
+  const items = source.skills.flatMap((g) => g.items).map((s) => s.trim()).filter(Boolean);
+  const canon = new Set(items.map(canonSkill));
+  const tokenSet = new Set(items.flatMap(tokens));
+  const canonList = [...canon];
+
+  return (candidate: string): boolean => {
+    const c = canonSkill(candidate);
+    if (!c) return false;
+    if (canon.has(c)) return true;
+    for (const s of canonList) {
+      if (s.length >= 3 && c.length >= 3 && (s.includes(c) || c.includes(s))) return true;
+    }
+    const cTokens = tokens(candidate);
+    if (cTokens.length > 0 && cTokens.every((t) => tokenSet.has(t))) return true;
+    return false;
+  };
+}
+
 export function factGround(source: CVData, candidate: Record<string, unknown>): GroundingResult {
   const warnings: string[] = [];
 
@@ -85,7 +142,7 @@ export function factGround(source: CVData, candidate: Record<string, unknown>): 
   const degrees = new Set(source.education.map((e) => norm(e.degree)));
   const projectNames = new Set(source.projects.map((p) => norm(p.name)));
   const certNames = new Set(source.certifications.map((c) => norm(c.name)));
-  const skillItems = new Set(source.skills.flatMap((g) => g.items.map(norm)));
+  const skillMatcher = buildSkillMatcher(source);
   const dates = sourceDateSet(source);
 
   const cBasics = (candidate.basics ?? {}) as Record<string, unknown>;
@@ -156,7 +213,7 @@ export function factGround(source: CVData, candidate: Record<string, unknown>): 
     const g = (raw ?? {}) as Record<string, unknown>;
     const items = asStrArray(g.items);
     const kept = items.filter((it) => {
-      if (skillItems.has(norm(it))) return true;
+      if (skillMatcher(it)) return true;
       warnings.push(`Skill “${it}” is not in your source CV and was removed.`);
       return false;
     });
