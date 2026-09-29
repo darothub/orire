@@ -68,6 +68,9 @@ interface RefineState {
   runJudge: () => Promise<void>;
   runSimulate: () => Promise<void>;
   resetRun: () => void;
+  /** Reset only the judge verdict so a different judge can be picked while the
+   *  comparison results (cols) stay on screen. */
+  resetJudge: () => void;
   reset: () => void;
 }
 
@@ -238,6 +241,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
 
   resetRun: () =>
     set({ started: false, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
+
+  resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null }),
 
   reset: () =>
     set({

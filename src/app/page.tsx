@@ -11,6 +11,8 @@ import { ProviderSetup } from "@/components/ai/ProviderSetup";
 import { RateView } from "@/components/ai/RatingPanel";
 import { SimulateView } from "@/components/ai/SimulatePanel";
 import { ProgressView } from "@/components/ProgressPanel";
+import { HistoryView } from "@/components/HistoryView";
+import { ExportDialog } from "@/components/export/ExportDialog";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
@@ -80,6 +82,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "simulate" && <SimulateView />}
           {view === "rate" && <RateView />}
           {view === "progress" && <ProgressView />}
+          {view === "history" && <HistoryView />}
           {view === "connect" && <ConnectView />}
         </motion.div>
       </AnimatePresence>
@@ -89,6 +92,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   // Intentional one-shot hydration guard: render the client-only editor after
   // mount so SSR and first client render match. This is the sanctioned use of
   // setState-in-effect, not a data-sync mistake.
@@ -112,21 +116,6 @@ export default function Home() {
   const tpl = getTemplate(active);
   const ActiveTemplate = tpl.Component;
 
-  /** Print to PDF with a meaningful default filename (browsers use document.title). */
-  function exportPDF() {
-    const prev = document.title;
-    const name = cv.basics.fullName.trim();
-    document.title = name ? `${name} — CV` : "orire — CV";
-    const restore = () => {
-      document.title = prev;
-      window.removeEventListener("afterprint", restore);
-    };
-    window.addEventListener("afterprint", restore);
-    window.print();
-    // Safari may not fire afterprint reliably; restore defensively.
-    window.setTimeout(restore, 1000);
-  }
-
   return (
     <div className="app has-rail">
       <header className="app-bar">
@@ -146,7 +135,7 @@ export default function Home() {
             {mounted && previewEdit ? "Editing preview" : "Edit on preview"}
           </button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
-          <button className="btn-primary" onClick={exportPDF}>Export PDF</button>
+          <button className="btn-primary" onClick={() => setExportOpen(true)}>Export PDF</button>
         </div>
       </header>
 
@@ -193,6 +182,8 @@ export default function Home() {
           </AnimatePresence>
         </MotionConfig>
       </main>
+
+      <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
     </div>
   );
 }

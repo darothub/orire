@@ -16,7 +16,7 @@ export function JudgeBlock() {
   const verdict = useRefineStore((s) => s.verdict);
   const judgeErr = useRefineStore((s) => s.judgeErr);
   const runJudge = useRefineStore((s) => s.runJudge);
-  const resetRun = useRefineStore((s) => s.resetRun);
+  const resetJudge = useRefineStore((s) => s.resetJudge);
   const baseMatch = useRefineStore((s) => s.baseMatch);
   const keys = useSettingsStore((s) => s.keys);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
@@ -52,7 +52,7 @@ export function JudgeBlock() {
         <div className="imp-error">
           <strong>{judgeErr.title}{judgeErr.status ? ` (HTTP ${judgeErr.status})` : ""}</strong>
           <pre>{judgeErr.body}</pre>
-          <div className="imp-actions"><button className="flow-btn ghost" onClick={resetRun}>Back</button></div>
+          <div className="imp-actions"><button className="flow-btn ghost" onClick={resetJudge}>Back to results</button></div>
         </div>
       )}
       {judgePhase === "done" && verdict && (
@@ -99,7 +99,7 @@ export function JudgeBlock() {
           </div>
           <div className="imp-actions">
             <button className="flow-btn primary" onClick={applyWinner}>Apply winner</button>
-            <button className="flow-btn ghost" onClick={resetRun}>Re-judge</button>
+            <button className="flow-btn ghost" onClick={resetJudge}>Re-judge</button>
           </div>
         </motion.div>
       )}

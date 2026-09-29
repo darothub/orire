@@ -82,6 +82,9 @@ interface CVState {
   applyImport: (parsed: ParsedCV, mode: ImportMode) => void;
   /** Replace CV content with an AI-refined, fact-grounded result. */
   applyRefinedCV: (next: CVData) => void;
+  /** Load a saved CV snapshot (e.g. from export History) without touching the
+   *  rating baseline. */
+  loadCV: (next: CVData) => void;
   /** Manually snapshot the current CV as the initial baseline for rating. */
   captureBaseline: () => void;
   /** Forget the stored baseline. */
@@ -380,6 +383,8 @@ export const useCVStore = create<CVState>()(
       // so the final result can be rated against where the user started (req 16).
       applyRefinedCV: (next) =>
         set((s) => ({ cv: next, baseline: s.baseline ?? s.cv })),
+
+      loadCV: (next) => set({ cv: next }),
 
       captureBaseline: () => set((s) => ({ baseline: s.cv })),
       clearBaseline: () => set({ baseline: null }),
