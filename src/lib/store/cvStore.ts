@@ -66,10 +66,15 @@ interface CVState {
   setSkills: (next: SkillGroup[]) => void;
   /** Suggested skills (e.g. from the ideal-match gap) — never auto-applied. */
   skillSuggestions: string[];
+  /** Skills the user dismissed — persisted so they don't reappear next simulate. */
+  ignoredSkills: string[];
   setSkillSuggestions: (list: string[]) => void;
   acceptSkillSuggestion: (skill: string) => void;
   dismissSkillSuggestion: (skill: string) => void;
   clearSkillSuggestions: () => void;
+  clearIgnoredSkills: () => void;
+  /** Reveal/seed a section the ideal has (one empty item so it shows in the editor). */
+  addSuggestedSection: (key: SectionKey) => void;
   setProjects: (next: ProjectItem[]) => void;
   setCertifications: (next: CertificationItem[]) => void;
   setHighlights: (expId: string, next: string[]) => void;
@@ -91,6 +96,7 @@ export const useCVStore = create<CVState>()(
       activeTemplate: "aurora",
       baseline: null,
       skillSuggestions: [],
+      ignoredSkills: [],
 
       setBasics: (patch) =>
         set((s) => ({ cv: { ...s.cv, basics: { ...s.cv.basics, ...patch } } })),
@@ -232,10 +238,11 @@ export const useCVStore = create<CVState>()(
       setSkillSuggestions: (list) =>
         set((s) => {
           const have = new Set(s.cv.skills.flatMap((g) => g.items.map((i) => i.toLowerCase())));
+          const ignored = new Set(s.ignoredSkills.map((i) => i.toLowerCase()));
           const seen = new Set<string>();
           const cleaned = list
             .map((x) => x.trim())
-            .filter((x) => x && !have.has(x.toLowerCase()))
+            .filter((x) => x && !have.has(x.toLowerCase()) && !ignored.has(x.toLowerCase()))
             .filter((x) => {
               const k = x.toLowerCase();
               if (seen.has(k)) return false;
@@ -260,8 +267,32 @@ export const useCVStore = create<CVState>()(
           };
         }),
       dismissSkillSuggestion: (skill) =>
-        set((s) => ({ skillSuggestions: s.skillSuggestions.filter((x) => x.toLowerCase() !== skill.toLowerCase()) })),
-      clearSkillSuggestions: () => set({ skillSuggestions: [] }),
+        set((s) => {
+          const k = skill.toLowerCase();
+          const already = s.ignoredSkills.some((x) => x.toLowerCase() === k);
+          return {
+            skillSuggestions: s.skillSuggestions.filter((x) => x.toLowerCase() !== k),
+            ignoredSkills: already ? s.ignoredSkills : [...s.ignoredSkills, skill.trim()],
+          };
+        }),
+      clearSkillSuggestions: () =>
+        set((s) => {
+          const existing = new Set(s.ignoredSkills.map((x) => x.toLowerCase()));
+          const add = s.skillSuggestions.filter((x) => !existing.has(x.toLowerCase()));
+          return { skillSuggestions: [], ignoredSkills: [...s.ignoredSkills, ...add] };
+        }),
+      clearIgnoredSkills: () => set({ ignoredSkills: [] }),
+      addSuggestedSection: (key) =>
+        set((s) => {
+          const order = s.cv.order.includes(key) ? s.cv.order : [...s.cv.order, key];
+          const cv = { ...s.cv, order };
+          if (key === "experience" && cv.experience.length === 0) cv.experience = [emptyExperience()];
+          if (key === "education" && cv.education.length === 0) cv.education = [emptyEducation()];
+          if (key === "skills" && cv.skills.length === 0) cv.skills = [emptySkillGroup()];
+          if (key === "projects" && cv.projects.length === 0) cv.projects = [emptyProject()];
+          if (key === "certifications" && cv.certifications.length === 0) cv.certifications = [emptyCertification()];
+          return { cv };
+        }),
       setProjects: (next) => set((s) => ({ cv: { ...s.cv, projects: next } })),
       setCertifications: (next) => set((s) => ({ cv: { ...s.cv, certifications: next } })),
       setHighlights: (expId, next) =>
@@ -353,12 +384,12 @@ export const useCVStore = create<CVState>()(
       captureBaseline: () => set((s) => ({ baseline: s.cv })),
       clearBaseline: () => set({ baseline: null }),
 
-      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, skillSuggestions: [] }),
+      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, skillSuggestions: [], ignoredSkills: [] }),
     }),
     {
       name: "orire-cv-v1",
       version: 2,
-      partialize: (s) => ({ cv: s.cv, activeTemplate: s.activeTemplate, baseline: s.baseline }),
+      partialize: (s) => ({ cv: s.cv, activeTemplate: s.activeTemplate, baseline: s.baseline, ignoredSkills: s.ignoredSkills }),
       migrate: (persisted, version) => {
         const st = persisted as { cv?: Partial<CVData> } | undefined;
         if (st?.cv && version < 2) {

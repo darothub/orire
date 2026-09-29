@@ -552,9 +552,14 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
   const tone = gap.coverage >= 75 ? "hi" : gap.coverage >= 45 ? "mid" : "lo";
   const miss = gap.missingSkills.slice(0, 8);
   const setSkillSuggestions = useCVStore((s) => s.setSkillSuggestions);
+  const addSuggestedSection = useCVStore((s) => s.addSuggestedSection);
   const setView = useViewStore((s) => s.setView);
   const sendToEditor = () => {
     setSkillSuggestions(gap.missingSkills);
+    setView("edit");
+  };
+  const addSection = (k: SectionKey) => {
+    addSuggestedSection(k);
     setView("edit");
   };
   return (
@@ -589,7 +594,11 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
         <div className="jdm-missing">
           <span className="jdm-missing-label">Sections the ideal has</span>
           <div className="jdm-chips">
-            {gap.missingSections.map((k) => <span key={k}>{SECTION_LABELS[k as SectionKey]}</span>)}
+            {gap.missingSections.map((k) => (
+              <button key={k} className="jdm-sec-add" onClick={() => addSection(k as SectionKey)}>
+                ＋ {SECTION_LABELS[k as SectionKey]}
+              </button>
+            ))}
           </div>
         </div>
       )}

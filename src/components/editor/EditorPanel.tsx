@@ -284,7 +284,14 @@ export function EditorPanel() {
           <div className="ed-suggest">
             <div className="ed-suggest-head">
               <span className="ed-suggest-title">Suggested from the ideal match</span>
-              <button className="ed-suggest-clear" onClick={s.clearSkillSuggestions}>Dismiss all</button>
+              <div className="ed-suggest-actions">
+                {s.ignoredSkills.length > 0 && (
+                  <button className="ed-suggest-clear" onClick={s.clearIgnoredSkills} title="Allow previously dismissed skills to be suggested again">
+                    Reset ignored ({s.ignoredSkills.length})
+                  </button>
+                )}
+                <button className="ed-suggest-clear" onClick={s.clearSkillSuggestions}>Dismiss all</button>
+              </div>
             </div>
             <p className="ed-suggest-note">Add only skills you genuinely have — these come from the target role, not your CV.</p>
             <div className="ed-suggest-chips">

@@ -1485,3 +1485,17 @@
   color: var(--faint); font-size: 13px; line-height: 1; padding: 0 8px; cursor: pointer;
 }
 .ed-suggest-x:hover { color: #f08a8a; background: rgba(240,138,138,0.1); }
+
+/* section-add chips in the ideal gap + suggest head actions */
+.jdm-sec-add {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(139,124,255,0.4);
+  background: rgba(139,124,255,0.12);
+  color: var(--text, #e7ebf3);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.jdm-sec-add:hover { background: rgba(139,124,255,0.24); transform: translateY(-1px); }
+.ed-suggest-actions { display: flex; align-items: center; gap: 10px; }
