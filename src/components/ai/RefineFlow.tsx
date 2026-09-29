@@ -498,6 +498,7 @@ function JudgeBlock() {
 function Column({ provider, state, before, onApply }: { provider: ProviderId; state: ColState; before: ReturnType<typeof countFacts>; onApply: () => void }) {
   const setView = useViewStore((s) => s.setView);
   const ideal = useRefineStore((s) => s.ideal);
+  const baseMatch = useRefineStore((s) => s.baseMatch);
   const meta = PROVIDERS[provider];
   const after = state.result ? countFacts(state.result.cv) : null;
   const gap = ideal && state.result ? gapAnalysis(state.result.cv, ideal) : null;
@@ -528,7 +529,7 @@ function Column({ provider, state, before, onApply }: { provider: ProviderId; st
             <DeltaRow label="Certs" a={before.certifications} b={after.certifications} />
             <DeltaRow label="Skills" a={before.skills} b={after.skills} />
           </div>
-          {state.match && <MatchMeter match={state.match} />}
+          {state.match && <MatchMeter match={state.match} base={baseMatch} />}
           {gap && <IdealGap gap={gap} />}
           {state.result.cv.basics.summary && (
             <div className="ai-summary cmp-summary"><span className="ed-label">Tailored summary</span><p>{state.result.cv.basics.summary}</p></div>
@@ -611,16 +612,28 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
   );
 }
 
-function MatchMeter({ match }: { match: JDMatch }) {
+function MatchMeter({ match, base }: { match: JDMatch; base: JDMatch | null }) {
   const tone = match.score >= 75 ? "hi" : match.score >= 45 ? "mid" : "lo";
   const shownMissing = match.missing.slice(0, 8);
+  const delta = base ? match.score - base.score : null;
+  const deltaTone = delta == null ? "" : delta > 0 ? "up" : delta < 0 ? "down" : "flat";
   return (
     <div className={`jdm ${tone}`}>
       <div className="jdm-head">
         <span className="ed-label">JD match</span>
-        <span className="jdm-score">{match.score}%</span>
+        <span className="jdm-head-right">
+          {delta != null && (
+            <span className={`jdm-delta ${deltaTone}`} title={`Original CV matched ${base!.score}%`}>
+              {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {delta > 0 ? "+" : ""}{delta} pts
+            </span>
+          )}
+          <span className="jdm-score">{match.score}%</span>
+        </span>
       </div>
       <div className="jdm-bar">
+        {base && (
+          <span className="jdm-base" style={{ width: `${base.score}%` }} aria-hidden />
+        )}
         <motion.span
           className="jdm-fill"
           initial={{ width: 0 }}
@@ -630,6 +643,7 @@ function MatchMeter({ match }: { match: JDMatch }) {
       </div>
       <div className="jdm-sub">
         {match.matched.length}/{match.matched.length + match.missing.length} keywords covered
+        {delta != null && delta > 0 && <span className="jdm-sub-note"> · up from {base!.score}%</span>}
       </div>
       {shownMissing.length > 0 && (
         <div className="jdm-missing">

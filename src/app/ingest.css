@@ -1401,6 +1401,7 @@
 .jdm.mid .jdm-score { color: var(--accent-3); }
 .jdm.lo .jdm-score { color: #f08a8a; }
 .jdm-bar {
+  position: relative;
   margin: 7px 0 5px;
   height: 6px;
   border-radius: 999px;
@@ -1408,10 +1409,33 @@
   overflow: hidden;
 }
 .jdm-fill { display: block; height: 100%; border-radius: 999px; }
+/* "You started here" marker: the original CV's match line. */
+.jdm-base {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-right: 2px dashed rgba(255, 255, 255, 0.55);
+  z-index: 2;
+  pointer-events: none;
+}
 .jdm.hi .jdm-fill { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
 .jdm.mid .jdm-fill { background: linear-gradient(90deg, var(--accent-3), var(--accent-2)); }
 .jdm.lo .jdm-fill { background: linear-gradient(90deg, #f08a8a, var(--accent-3)); }
 .jdm-sub { color: var(--faint); font-size: 11px; }
+.jdm-sub-note { color: var(--accent); font-weight: 600; }
+.jdm-head-right { display: inline-flex; align-items: baseline; gap: 8px; }
+.jdm-delta {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+}
+.jdm-delta.up { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.jdm-delta.down { color: #f08a8a; background: rgba(240, 138, 138, 0.12); border-color: rgba(240, 138, 138, 0.4); }
+.jdm-delta.flat { color: var(--faint); }
 .jdm-missing { margin-top: 8px; }
 .jdm-missing-label { display: block; color: var(--faint); font-size: 11px; margin-bottom: 4px; }
 .jdm-chips { display: flex; flex-wrap: wrap; gap: 4px; }

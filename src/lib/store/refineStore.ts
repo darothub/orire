@@ -44,6 +44,9 @@ interface RefineState {
   started: boolean;
   cols: Record<ProviderId, ColState>;
 
+  /** JD match of the ORIGINAL CV (before any refine), computed once per run. */
+  baseMatch: JDMatch | null;
+
   judgeProvider: ProviderId;
   judgePhase: JudgePhase;
   verdict: JudgeVerdict | null;
@@ -79,6 +82,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   started: false,
   cols: idleCols(),
 
+  baseMatch: null,
+
   judgeProvider: "openai",
   judgePhase: "idle",
   verdict: null,
@@ -107,6 +112,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     set({
       started: true,
       cols: idleCols(),
+      baseMatch: jdMatch(cv, jd),
       judgePhase: "idle",
       verdict: null,
       judgeErr: null,
@@ -225,7 +231,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   },
 
   resetRun: () =>
-    set({ started: false, cols: idleCols(), judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
+    set({ started: false, cols: idleCols(), baseMatch: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
 
   reset: () =>
     set({
@@ -234,6 +240,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       jd: "",
       started: false,
       cols: idleCols(),
+      baseMatch: null,
       judgePhase: "idle",
       verdict: null,
       judgeErr: null,
