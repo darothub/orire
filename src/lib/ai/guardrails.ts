@@ -1,0 +1,214 @@
+/**
+ * orire — deterministic fact-grounding guardrails.
+ *
+ * The model's output is NEVER trusted as-is. After it returns, we:
+ *  1. Parse the JSON (tolerating code fences).
+ *  2. Coerce it into a valid CVData with fresh ids and the original section order.
+ *  3. LOCK identity facts (name/email/phone/location/links) to the source — the
+ *     model is not allowed to change who you are or how to reach you.
+ *  4. Detect any content that is NOT grounded in the source CV (invented
+ *     employers, institutions, dates, skills, etc.) and surface it as warnings
+ *     so the user can review before applying.
+ */
+
+import {
+  type CVData,
+  type ExperienceItem,
+  type EducationItem,
+  type SkillGroup,
+  type ProjectItem,
+  type CertificationItem,
+  uid,
+} from "@/lib/cv/schema";
+
+export interface GroundingResult {
+  cv: CVData;
+  /** Non-fatal, human-readable notes about content not found in the source. */
+  warnings: string[];
+}
+
+export class RefineParseError extends Error {}
+
+function norm(v: unknown): string {
+  return String(v ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function asStr(v: unknown): string {
+  return typeof v === "string" ? v : v == null ? "" : String(v);
+}
+
+function asStrArray(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map(asStr).map((s) => s.trim()).filter(Boolean);
+}
+
+/** Strip ```json fences and locate the outermost JSON object. */
+export function parseModelJSON(raw: string): Record<string, unknown> {
+  let text = raw.trim();
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) text = fence[1].trim();
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) {
+    throw new RefineParseError("Model did not return a JSON object.");
+  }
+  const slice = text.slice(start, end + 1);
+  try {
+    return JSON.parse(slice) as Record<string, unknown>;
+  } catch (e) {
+    throw new RefineParseError(
+      `Could not parse model JSON: ${(e as Error).message}`
+    );
+  }
+}
+
+/** Collect the set of every date string that appears anywhere in the source. */
+function sourceDateSet(src: CVData): Set<string> {
+  const s = new Set<string>();
+  const add = (d?: string) => {
+    const n = norm(d);
+    if (n) s.add(n);
+  };
+  src.experience.forEach((e) => (add(e.startDate), add(e.endDate)));
+  src.education.forEach((e) => (add(e.startDate), add(e.endDate)));
+  src.projects.forEach((p) => (add(p.startDate), add(p.endDate)));
+  src.certifications.forEach((c) => add(c.date));
+  return s;
+}
+
+export function factGround(source: CVData, candidate: Record<string, unknown>): GroundingResult {
+  const warnings: string[] = [];
+
+  // Source fact sets (normalised).
+  const companies = new Set(source.experience.map((e) => norm(e.company)));
+  const institutions = new Set(source.education.map((e) => norm(e.institution)));
+  const degrees = new Set(source.education.map((e) => norm(e.degree)));
+  const projectNames = new Set(source.projects.map((p) => norm(p.name)));
+  const certNames = new Set(source.certifications.map((c) => norm(c.name)));
+  const skillItems = new Set(source.skills.flatMap((g) => g.items.map(norm)));
+  const dates = sourceDateSet(source);
+
+  const cBasics = (candidate.basics ?? {}) as Record<string, unknown>;
+
+  // (3) Identity facts are LOCKED to the source — non-negotiable.
+  const basics: CVData["basics"] = {
+    fullName: source.basics.fullName,
+    email: source.basics.email,
+    phone: source.basics.phone,
+    location: source.basics.location,
+    links: source.basics.links,
+    // Tailorable, but still grounded: title + summary may be rephrased.
+    title: asStr(cBasics.title).trim() || source.basics.title,
+    summary: asStr(cBasics.summary).trim() || source.basics.summary,
+  };
+
+  // Experience — company + dates must be grounded.
+  const cExp = Array.isArray(candidate.experience) ? candidate.experience : [];
+  const experience: ExperienceItem[] = cExp.map((raw) => {
+    const e = (raw ?? {}) as Record<string, unknown>;
+    const company = asStr(e.company).trim();
+    if (company && !companies.has(norm(company))) {
+      warnings.push(`Employer “${company}” is not in your source CV.`);
+    }
+    for (const d of [asStr(e.startDate), asStr(e.endDate)]) {
+      if (d.trim() && !dates.has(norm(d))) {
+        warnings.push(`Date “${d}” (at ${company || "an entry"}) is not in your source CV.`);
+      }
+    }
+    return {
+      id: uid("exp"),
+      company,
+      role: asStr(e.role).trim(),
+      location: asStr(e.location).trim(),
+      startDate: asStr(e.startDate).trim(),
+      endDate: asStr(e.endDate).trim(),
+      current: Boolean(e.current),
+      highlights: asStrArray(e.highlights),
+    };
+  });
+
+  // Education — institution + degree grounded.
+  const cEdu = Array.isArray(candidate.education) ? candidate.education : [];
+  const education: EducationItem[] = cEdu.map((raw) => {
+    const e = (raw ?? {}) as Record<string, unknown>;
+    const institution = asStr(e.institution).trim();
+    const degree = asStr(e.degree).trim();
+    if (institution && !institutions.has(norm(institution))) {
+      warnings.push(`Institution “${institution}” is not in your source CV.`);
+    }
+    if (degree && !degrees.has(norm(degree))) {
+      warnings.push(`Degree “${degree}” is not in your source CV.`);
+    }
+    return {
+      id: uid("edu"),
+      institution,
+      degree,
+      field: asStr(e.field).trim(),
+      startDate: asStr(e.startDate).trim(),
+      endDate: asStr(e.endDate).trim(),
+      details: asStr(e.details).trim(),
+    };
+  });
+
+  // Skills — every item must exist in the source (no invented skills).
+  const cSkills = Array.isArray(candidate.skills) ? candidate.skills : [];
+  const skills: SkillGroup[] = cSkills.map((raw) => {
+    const g = (raw ?? {}) as Record<string, unknown>;
+    const items = asStrArray(g.items);
+    const kept = items.filter((it) => {
+      if (skillItems.has(norm(it))) return true;
+      warnings.push(`Skill “${it}” is not in your source CV and was removed.`);
+      return false;
+    });
+    return { id: uid("skl"), category: asStr(g.category).trim(), items: kept };
+  });
+
+  // Projects — name grounded.
+  const cProjects = Array.isArray(candidate.projects) ? candidate.projects : [];
+  const projects: ProjectItem[] = cProjects.map((raw) => {
+    const p = (raw ?? {}) as Record<string, unknown>;
+    const name = asStr(p.name).trim();
+    if (name && !projectNames.has(norm(name))) {
+      warnings.push(`Project “${name}” is not in your source CV.`);
+    }
+    return {
+      id: uid("prj"),
+      name,
+      role: asStr(p.role).trim(),
+      url: asStr(p.url).trim(),
+      startDate: asStr(p.startDate).trim(),
+      endDate: asStr(p.endDate).trim(),
+      highlights: asStrArray(p.highlights),
+    };
+  });
+
+  // Certifications — name grounded.
+  const cCerts = Array.isArray(candidate.certifications) ? candidate.certifications : [];
+  const certifications: CertificationItem[] = cCerts.map((raw) => {
+    const c = (raw ?? {}) as Record<string, unknown>;
+    const name = asStr(c.name).trim();
+    if (name && !certNames.has(norm(name))) {
+      warnings.push(`Certification “${name}” is not in your source CV.`);
+    }
+    return {
+      id: uid("crt"),
+      name,
+      issuer: asStr(c.issuer).trim(),
+      date: asStr(c.date).trim(),
+      url: asStr(c.url).trim(),
+    };
+  });
+
+  const cv: CVData = {
+    basics,
+    experience,
+    education,
+    skills,
+    projects,
+    certifications,
+    // Preserve the user's current section order/visibility.
+    order: source.order,
+  };
+
+  return { cv, warnings };
+}

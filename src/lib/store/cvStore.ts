@@ -59,6 +59,8 @@ interface CVState {
   setOrder: (order: CVData["order"]) => void;
   toggleSection: (key: SectionKey) => void;
   applyImport: (parsed: ParsedCV, mode: ImportMode) => void;
+  /** Replace CV content with an AI-refined, fact-grounded result. */
+  applyRefinedCV: (next: CVData) => void;
   reset: () => void;
 }
 
@@ -267,6 +269,8 @@ export const useCVStore = create<CVState>()(
             },
           };
         }),
+
+      applyRefinedCV: (next) => set(() => ({ cv: next })),
 
       reset: () => set({ cv: sampleCV, activeTemplate: "aurora" }),
     }),

@@ -244,3 +244,221 @@
     flex-wrap: wrap;
   }
 }
+
+/* ============ AI layer (settings + refine) ============ */
+.ai-modal {
+  max-width: 640px;
+}
+.ai-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 14px;
+}
+.ai-seg {
+  display: inline-flex;
+  gap: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  padding: 4px;
+}
+.ai-seg-btn {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.ai-seg-btn.on {
+  background: var(--accent);
+  color: #fff;
+}
+.ai-provider {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--panel-2);
+  opacity: 0.6;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+.ai-provider.active {
+  opacity: 1;
+  border-color: var(--accent);
+}
+.ai-provider-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ai-ok {
+  font-size: 11px;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.ai-warn {
+  font-size: 11px;
+  color: #b26a00;
+  border: 1px solid #e2a24a;
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.ai-key-row {
+  display: flex;
+  gap: 8px;
+}
+.ai-key-row .ed-input {
+  flex: 1;
+  font-family: var(--font-sans);
+}
+.ai-reveal {
+  border: 1px solid var(--line-2);
+  background: var(--panel);
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.ai-reveal:hover {
+  color: var(--text);
+}
+.ai-note {
+  margin-top: 18px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  border-top: 1px solid var(--line-2);
+  padding-top: 14px;
+}
+.ai-runbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+.ai-pill {
+  font-size: 12px;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+.ai-pill.muted {
+  color: var(--faint);
+}
+.ai-link {
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12.5px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.ai-jd {
+  resize: vertical;
+  min-height: 160px;
+  line-height: 1.5;
+  font-family: var(--font-sans);
+}
+.ai-preview {
+  margin-top: 8px;
+}
+.ai-delta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+.ai-delta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+.ai-delta-label {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.ai-delta-nums {
+  font-size: 13px;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-arrow {
+  color: var(--faint);
+}
+.ai-diff {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.ai-diff.up {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.ai-diff.down {
+  color: #b26a00;
+  background: #f5e6cf;
+}
+.ai-summary {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ai-summary p {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 0;
+}
+.ai-flags {
+  margin-top: 16px;
+  border: 1px solid #e2a24a;
+  background: #fbf3e6;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.ai-flags strong {
+  display: block;
+  color: #8a5300;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.ai-flags ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.ai-flags li {
+  font-size: 12.5px;
+  color: #6b4a12;
+  line-height: 1.5;
+}
+.ai-clean {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
