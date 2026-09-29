@@ -1,0 +1,246 @@
+/* orire — CV import modal */
+
+.imp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: start center;
+  padding: 6vh 16px 16px;
+  background: color-mix(in srgb, #0b1020 60%, transparent);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
+}
+
+.imp-modal {
+  width: min(760px, 100%);
+  background: var(--surface, #fff);
+  color: var(--ink, #14181f);
+  border: 1px solid color-mix(in srgb, #64748b 22%, transparent);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px -30px rgba(2, 6, 23, 0.6);
+  overflow: hidden;
+}
+
+.imp-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px 14px;
+  border-bottom: 1px solid color-mix(in srgb, #64748b 14%, transparent);
+}
+.imp-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+.imp-head p {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: color-mix(in srgb, currentColor 62%, transparent);
+}
+.imp-x {
+  border: none;
+  background: color-mix(in srgb, #64748b 12%, transparent);
+  color: inherit;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.15s ease;
+}
+.imp-x:hover {
+  background: color-mix(in srgb, #64748b 22%, transparent);
+}
+
+.imp-drop {
+  margin: 18px 22px;
+  border: 1.5px dashed color-mix(in srgb, #6366f1 45%, #94a3b8);
+  border-radius: 14px;
+  padding: 30px 20px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  background: color-mix(in srgb, #6366f1 5%, transparent);
+}
+.imp-drop:hover {
+  background: color-mix(in srgb, #6366f1 9%, transparent);
+}
+.imp-drop.over {
+  border-color: #6366f1;
+  background: color-mix(in srgb, #6366f1 16%, transparent);
+  transform: scale(1.005);
+}
+.imp-drop-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.imp-drop-ico {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.imp-drop-sub {
+  font-size: 0.76rem;
+  color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.imp-busy {
+  margin: 0 22px 16px;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, currentColor 65%, transparent);
+}
+
+.imp-results {
+  padding: 0 22px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.imp-card {
+  border: 1px solid color-mix(in srgb, #64748b 18%, transparent);
+  border-radius: 13px;
+  padding: 13px 14px;
+  background: color-mix(in srgb, #64748b 4%, transparent);
+}
+.imp-card-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.imp-badge {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 7px;
+  border-radius: 6px;
+  color: #fff;
+}
+.imp-badge.pdf {
+  background: #dc2626;
+}
+.imp-badge.docx {
+  background: #2563eb;
+}
+.imp-badge.unsupported {
+  background: #64748b;
+}
+.imp-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.imp-meta {
+  font-size: 0.74rem;
+  color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.imp-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 11px;
+}
+.imp-kv {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 0.78rem;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #6366f1 10%, transparent);
+}
+.imp-kv em {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+}
+.imp-kv.zero {
+  background: color-mix(in srgb, #ef4444 12%, transparent);
+}
+
+.imp-notes {
+  margin: 11px 0 0;
+  padding-left: 18px;
+  font-size: 0.76rem;
+  color: color-mix(in srgb, currentColor 60%, transparent);
+}
+.imp-notes li {
+  margin: 2px 0;
+}
+
+.imp-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 13px;
+}
+.imp-btn {
+  border: 1px solid color-mix(in srgb, #64748b 30%, transparent);
+  background: transparent;
+  color: inherit;
+  padding: 7px 13px;
+  border-radius: 9px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.imp-btn:hover {
+  background: color-mix(in srgb, #64748b 12%, transparent);
+}
+.imp-btn.primary {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+.imp-btn.primary:hover {
+  background: #4f46e5;
+}
+
+.imp-error {
+  margin-top: 11px;
+  border: 1px solid color-mix(in srgb, #ef4444 40%, transparent);
+  background: color-mix(in srgb, #ef4444 8%, transparent);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.imp-error strong {
+  display: block;
+  font-size: 0.8rem;
+  color: #b91c1c;
+  margin-bottom: 5px;
+}
+.imp-error pre {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.74rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: color-mix(in srgb, currentColor 80%, transparent);
+}
+
+.imp-applied {
+  margin: 0 22px 14px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  background: color-mix(in srgb, #16a34a 12%, transparent);
+  border: 1px solid color-mix(in srgb, #16a34a 34%, transparent);
+  color: #15803d;
+}
+
+@media (max-width: 560px) {
+  .imp-actions {
+    flex-wrap: wrap;
+  }
+}

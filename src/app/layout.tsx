@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./templates.css";
 import "./resume.css";
+import "./ingest.css";
 
 export const metadata: Metadata = {
   title: "orire — CV studio",

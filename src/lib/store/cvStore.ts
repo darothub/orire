@@ -12,8 +12,10 @@ import {
   emptySkillGroup,
 } from "@/lib/cv/schema";
 import { sampleCV } from "@/lib/cv/sample";
+import type { ParsedCV } from "@/lib/ingest/parse";
 
 type BasicsPatch = Partial<CVData["basics"]>;
+export type ImportMode = "replace" | "merge";
 
 interface CVState {
   cv: CVData;
@@ -38,6 +40,7 @@ interface CVState {
 
   setTemplate: (id: string) => void;
   setOrder: (order: CVData["order"]) => void;
+  applyImport: (parsed: ParsedCV, mode: ImportMode) => void;
   reset: () => void;
 }
 
@@ -119,6 +122,50 @@ export const useCVStore = create<CVState>()(
 
       setTemplate: (id) => set({ activeTemplate: id }),
       setOrder: (order) => set((s) => ({ cv: { ...s.cv, order } })),
+
+      applyImport: (parsed, mode) =>
+        set((s) => {
+          const p = parsed.basics;
+          if (mode === "replace") {
+            return {
+              cv: {
+                ...s.cv,
+                basics: {
+                  fullName: p.fullName ?? "",
+                  title: p.title ?? "",
+                  email: p.email ?? "",
+                  phone: p.phone ?? "",
+                  location: p.location ?? "",
+                  summary: p.summary ?? "",
+                  links: p.links ?? [],
+                },
+                experience: parsed.experience,
+                education: parsed.education,
+                skills: parsed.skills,
+              },
+            };
+          }
+          // merge: only fill empty basics fields; append list items.
+          const b = s.cv.basics;
+          return {
+            cv: {
+              ...s.cv,
+              basics: {
+                fullName: b.fullName || p.fullName || "",
+                title: b.title || p.title || "",
+                email: b.email || p.email || "",
+                phone: b.phone || p.phone || "",
+                location: b.location || p.location || "",
+                summary: b.summary || p.summary || "",
+                links: b.links.length ? b.links : p.links ?? [],
+              },
+              experience: [...s.cv.experience, ...parsed.experience],
+              education: [...s.cv.education, ...parsed.education],
+              skills: [...s.cv.skills, ...parsed.skills],
+            },
+          };
+        }),
+
       reset: () => set({ cv: sampleCV, activeTemplate: "aurora" }),
     }),
     { name: "orire-cv-v1" },

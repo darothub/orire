@@ -5,11 +5,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { EditorPanel } from "@/components/editor/EditorPanel";
 import { SectionOrder } from "@/components/editor/SectionOrder";
 import { TemplatePicker } from "@/components/templates/TemplatePicker";
+import { ImportPanel } from "@/components/ingest/ImportPanel";
 import { getTemplate } from "@/components/templates/registry";
 import { useCVStore } from "@/lib/store/cvStore";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [importing, setImporting] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const cv = useCVStore((s) => s.cv);
@@ -29,6 +31,7 @@ export default function Home() {
         </div>
         <div className="app-actions">
           <span className="template-pill">{mounted ? tpl.name : "—"}</span>
+          <button className="btn-ghost" onClick={() => setImporting(true)}>Import CV</button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
           <button className="btn-primary" onClick={() => window.print()}>Export PDF</button>
         </div>
@@ -81,6 +84,10 @@ export default function Home() {
           </div>
         </motion.section>
       </main>
+
+      <AnimatePresence>
+        {importing && <ImportPanel onClose={() => setImporting(false)} />}
+      </AnimatePresence>
     </div>
   );
 }
