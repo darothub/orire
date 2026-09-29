@@ -144,6 +144,7 @@ body {
 
 .pane {
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
 }
 .pane-work {

@@ -1586,3 +1586,69 @@
 .conn-cli-ok { color: var(--accent); font-size: 12px; font-weight: 600; }
 .conn-cli-err { color: var(--accent-3); font-size: 12px; line-height: 1.4; }
 .conn-cli-err em { color: var(--faint); font-style: normal; }
+
+/* Default-assistant switch (Connect view) */
+.conn-wrap { display: flex; flex-direction: column; gap: 18px; }
+.conn-default {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--panel), var(--panel-2));
+}
+.conn-default-head { display: flex; flex-direction: column; gap: 3px; }
+.conn-default-head .conn-hint { max-width: 60ch; }
+.conn-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  width: fit-content;
+}
+.conn-switch-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+.conn-switch-opt:hover { color: var(--text); }
+.conn-switch-opt.on {
+  background: var(--panel);
+  border-color: var(--line-2);
+  color: var(--text);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+}
+.conn-switch-warn { color: var(--accent-3); font-size: 15px; line-height: 0; }
+.conn-tag.default {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--accent);
+}
+.conn-card.is-default {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent) inset;
+}
+.conn-setdefault {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+.conn-setdefault:hover { color: var(--text); border-color: var(--accent); }

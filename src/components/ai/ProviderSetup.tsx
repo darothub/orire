@@ -37,6 +37,8 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
   const models = useSettingsStore((s) => s.models);
   const setKey = useSettingsStore((s) => s.setKey);
   const setModel = useSettingsStore((s) => s.setModel);
+  const defaultProvider = useSettingsStore((s) => s.provider);
+  const setProvider = useSettingsStore((s) => s.setProvider);
 
   const runProviders = useRefineStore((s) => s.runProviders);
   const toggleRunProvider = useRefineStore((s) => s.toggleRunProvider);
@@ -108,9 +110,44 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
   useEffect(() => {
     for (const p of CLI_IDS) void probeCli(p);
   }, []);
+  const isConnected = (p: ProviderId): boolean =>
+    isCLI(p) ? cli[p].phase === "done" && !!cli[p].status?.installed : Boolean(keys[p]?.trim());
 
   return (
-    <div className="conn-grid">
+    <div className="conn-wrap">
+      {!selectable && (
+        <div className="conn-default">
+          <div className="conn-default-head">
+            <span className="ed-label">Default assistant</span>
+            <span className="conn-hint">
+              Used for importing, structuring, simulation and single-pass refine. Comparison uses the
+              assistants you pick in Refine.
+            </span>
+          </div>
+          <div className="conn-switch" role="tablist" aria-label="Default assistant">
+            {PROVIDER_IDS.map((p) => {
+              const ready = isConnected(p);
+              const active = p === defaultProvider;
+              return (
+                <button
+                  key={p}
+                  role="tab"
+                  aria-selected={active}
+                  className={`conn-switch-opt${active ? " on" : ""}`}
+                  onClick={() => setProvider(p)}
+                  title={ready ? undefined : "Not connected yet — connect below to use it"}
+                >
+                  <span className={`conn-dot ${p}`} />
+                  {PROVIDERS[p].label}
+                  {!ready && <span className="conn-switch-warn" aria-hidden>•</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="conn-grid">
       {PROVIDER_IDS.map((p, i) => {
         const meta = PROVIDERS[p];
         const cliProvider = isCLI(p);
@@ -118,10 +155,11 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
         const cliReady = cliProvider && cliState.phase === "done" && !!cliState.status?.installed;
         const connected = cliProvider ? cliReady : Boolean(keys[p]?.trim());
         const selected = runProviders.includes(p);
+        const isDefault = !selectable && p === defaultProvider;
         return (
           <motion.div
             key={p}
-            className={`conn-card${selectable && selected ? " selected" : ""}`}
+            className={`conn-card${selectable && selected ? " selected" : ""}${isDefault ? " is-default" : ""}`}
             initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             transition={{ delay: 0.06 * i, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -131,6 +169,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                 <span className={`conn-dot ${p}`} />
                 <strong>{meta.label}</strong>
                 {cliProvider && <span className="conn-tag">CLI</span>}
+                {isDefault && <span className="conn-tag default">Default</span>}
               </div>
               {selectable ? (
                 <button
@@ -141,7 +180,11 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                   {selected ? "Selected" : "Select"}
                 </button>
               ) : connected ? (
-                <span className="conn-ok">Connected</span>
+                isDefault ? <span className="conn-ok">Connected</span> : (
+                  <button className="conn-setdefault" onClick={() => setProvider(p)} title="Use as default assistant">
+                    Set default
+                  </button>
+                )
               ) : (
                 <span className="conn-warn">{cliProvider ? "Not found" : "No key"}</span>
               )}
@@ -239,6 +282,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
           </motion.div>
         );
       })}
+      </div>
     </div>
   );
 }
