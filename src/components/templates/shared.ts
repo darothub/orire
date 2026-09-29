@@ -4,16 +4,17 @@ export const container: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.04 },
+    transition: { staggerChildren: 0.055, delayChildren: 0.12 },
   },
 };
 
 export const item: Variants = {
-  hidden: { opacity: 0, y: 12 },
+  hidden: { opacity: 0, y: 16, filter: "blur(3px)" },
   show: {
     opacity: 1,
     y: 0,
-    transition: { type: "spring", stiffness: 220, damping: 26 },
+    filter: "blur(0px)",
+    transition: { type: "spring", stiffness: 210, damping: 24 },
   },
 };
 

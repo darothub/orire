@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { EditorPanel } from "@/components/editor/EditorPanel";
 import { SectionOrder } from "@/components/editor/SectionOrder";
 import { TemplatePicker } from "@/components/templates/TemplatePicker";
@@ -98,19 +98,22 @@ export default function Home() {
         >
           {mounted && <TemplatePicker />}
           <div className="preview-stage">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={active}
-                initial={{ opacity: 0, y: 14, scale: 0.985 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.99 }}
-                transition={{ duration: 0.32, ease: "easeOut" }}
-                className="paper"
-                id="cv-paper"
-              >
-                {mounted && <ActiveTemplate cv={cv} />}
-              </motion.div>
-            </AnimatePresence>
+            <MotionConfig reducedMotion="user">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.div
+                  key={active}
+                  initial={{ opacity: 0, y: 26, scale: 0.965, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -18, scale: 0.975, filter: "blur(5px)" }}
+                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                  className="paper"
+                  id="cv-paper"
+                >
+                  {mounted && <ActiveTemplate cv={cv} />}
+                  <span key={`sweep-${active}`} className="tpl-sweep" aria-hidden />
+                </motion.div>
+              </AnimatePresence>
+            </MotionConfig>
           </div>
         </motion.section>
       </main>

@@ -22,8 +22,11 @@ export function TemplatePicker() {
             <motion.button
               key={t.id}
               layout
+              initial={false}
+              animate={{ scale: isActive ? 1.02 : 1 }}
               whileHover={{ y: -4 }}
               whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 320, damping: 26 }}
               className={`pick-card ${isActive ? "is-active" : ""}`}
               onClick={() => setTemplate(t.id)}
               aria-pressed={isActive}

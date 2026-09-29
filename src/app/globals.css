@@ -173,6 +173,7 @@ body {
   display: flex;
   justify-content: center;
   padding: 34px 34px 80px;
+  position: relative;
 }
 
 /* ---------- Editor ---------- */
@@ -402,6 +403,53 @@ body {
   border-radius: 10px;
   box-shadow: var(--shadow);
   overflow: hidden;
+  position: relative;
+}
+
+/* One-time light sweep that passes across a freshly mounted template (req 9). */
+.tpl-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.55) 45%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(255, 255, 255, 0.55) 55%,
+    transparent 70%
+  );
+  mix-blend-mode: soft-light;
+  transform: translateX(-120%);
+  animation: tpl-sweep 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s 1 both;
+}
+@keyframes tpl-sweep {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tpl-sweep {
+    animation: none;
+    display: none;
+  }
+}
+@media print {
+  .tpl-sweep {
+    display: none;
+  }
 }
 
 /* ---------- Aurora template ---------- */
