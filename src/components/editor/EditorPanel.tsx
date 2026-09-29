@@ -197,6 +197,72 @@ export function EditorPanel() {
           ))}
         </AnimatePresence>
       </section>
+
+      {/* Projects */}
+      <section className="ed-section">
+        <div className="ed-section-head">
+          <h3 className="ed-h3">Projects</h3>
+          <button className="ed-add" onClick={s.addProject}>+ Add</button>
+        </div>
+        <AnimatePresence initial={false}>
+          {cv.projects.map((prj) => (
+            <Card key={prj.id} onRemove={() => s.removeProject(prj.id)}>
+              <div className="ed-grid2">
+                <Field label="Name" value={prj.name} onChange={(v) => s.updateProject(prj.id, { name: v })} />
+                <Field label="Role" value={prj.role ?? ""} onChange={(v) => s.updateProject(prj.id, { role: v })} />
+                <Field label="URL" value={prj.url ?? ""} onChange={(v) => s.updateProject(prj.id, { url: v })} />
+                <Field label="Start" value={prj.startDate ?? ""} onChange={(v) => s.updateProject(prj.id, { startDate: v })} />
+                <Field label="End" value={prj.endDate ?? ""} onChange={(v) => s.updateProject(prj.id, { endDate: v })} />
+              </div>
+              <div className="ed-bullets">
+                <span className="ed-label">Highlights</span>
+                <AnimatePresence initial={false}>
+                  {prj.highlights.map((h, i) => (
+                    <motion.div
+                      key={i}
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="ed-bullet"
+                    >
+                      <span className="ed-dot" />
+                      <AutoTextarea
+                        className="ed-input ed-area"
+                        value={h}
+                        placeholder="Describe a concrete, factual outcome…"
+                        onChange={(e) => s.setProjectHighlight(prj.id, i, e.target.value)}
+                      />
+                      <button className="ed-mini" onClick={() => s.removeProjectHighlight(prj.id, i)} aria-label="Remove highlight">✕</button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+                <button className="ed-add ed-add-sm" onClick={() => s.addProjectHighlight(prj.id)}>+ Highlight</button>
+              </div>
+            </Card>
+          ))}
+        </AnimatePresence>
+      </section>
+
+      {/* Certifications */}
+      <section className="ed-section">
+        <div className="ed-section-head">
+          <h3 className="ed-h3">Certifications</h3>
+          <button className="ed-add" onClick={s.addCertification}>+ Add</button>
+        </div>
+        <AnimatePresence initial={false}>
+          {cv.certifications.map((crt) => (
+            <Card key={crt.id} onRemove={() => s.removeCertification(crt.id)}>
+              <div className="ed-grid2">
+                <Field label="Name" value={crt.name} onChange={(v) => s.updateCertification(crt.id, { name: v })} />
+                <Field label="Issuer" value={crt.issuer ?? ""} onChange={(v) => s.updateCertification(crt.id, { issuer: v })} />
+                <Field label="Date" value={crt.date ?? ""} onChange={(v) => s.updateCertification(crt.id, { date: v })} />
+                <Field label="URL" value={crt.url ?? ""} onChange={(v) => s.updateCertification(crt.id, { url: v })} />
+              </div>
+            </Card>
+          ))}
+        </AnimatePresence>
+      </section>
     </div>
   );
 }

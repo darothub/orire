@@ -12,6 +12,8 @@ import {
   type ExperienceItem,
   type EducationItem,
   type SkillGroup,
+  type ProjectItem,
+  type CertificationItem,
   type Link,
   type CVBasics,
   uid,
@@ -22,6 +24,8 @@ export interface ParsedCV {
   experience: ExperienceItem[];
   education: EducationItem[];
   skills: SkillGroup[];
+  projects: ProjectItem[];
+  certifications: CertificationItem[];
   /** Non-fatal notes about what was/wasn't detected. */
   notes: string[];
 }
@@ -32,7 +36,14 @@ const URL_RE = /((https?:\/\/)?(www\.)?[a-z0-9-]+\.[a-z]{2,}(\/[^\s,;]*)?)/gi;
 const DATE_RANGE_RE =
   /((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)?\.?\s*\d{4}|present|current)\s*[–—\-to]+\s*((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)?\.?\s*\d{4}|present|current)/i;
 
-type SectionKind = "summary" | "experience" | "education" | "skills" | "other";
+type SectionKind =
+  | "summary"
+  | "experience"
+  | "education"
+  | "skills"
+  | "projects"
+  | "certifications"
+  | "other";
 
 const HEADINGS: Record<Exclude<SectionKind, "other">, RegExp> = {
   summary: /^(professional\s+)?(summary|profile|about(\s+me)?|objective|overview)\s*:?\s*$/i,
@@ -41,6 +52,9 @@ const HEADINGS: Record<Exclude<SectionKind, "other">, RegExp> = {
   education: /^(education|academic(\s+background)?|qualifications)\s*:?\s*$/i,
   skills:
     /^(technical\s+|core\s+|key\s+)?(skills|competencies|technologies|expertise|tools)\s*:?\s*$/i,
+  projects: /^(projects|portfolio|selected\s+work|personal\s+projects)\s*:?\s*$/i,
+  certifications:
+    /^(certifications?|licen[sc]es?|certificates?|accreditations?|courses)\s*:?\s*$/i,
 };
 
 function detectHeading(line: string): Exclude<SectionKind, "other"> | null {
@@ -261,6 +275,71 @@ function parseSkills(lines: string[]): SkillGroup[] {
   return groups;
 }
 
+/** Line-driven projects parsing: bullets attach to the current project. */
+function parseProjects(lines: string[]): ProjectItem[] {
+  const out: ProjectItem[] = [];
+  let header: string[] = [];
+  let bullets: string[] = [];
+  let open = false;
+  const flush = () => {
+    if (open && (header.length || bullets.length)) {
+      const headerText = header.join(" — ");
+      const dateMatch = headerText.match(DATE_RANGE_RE);
+      const startDate = dateMatch ? dateMatch[1].trim() : "";
+      const endDate = dateMatch && !/present|current/i.test(dateMatch[2]) ? dateMatch[2].trim() : "";
+      const cleaned = headerText.replace(DATE_RANGE_RE, "").trim();
+      const urlMatch = cleaned.match(URL_RE);
+      const url = urlMatch ? urlMatch[0].replace(/[.,;]$/, "") : "";
+      const name = cleaned.replace(URL_RE, "").replace(/\s+[—–|·-]\s*$/, "").trim();
+      out.push({
+        id: uid("prj"),
+        name: name || cleaned,
+        role: "",
+        url,
+        startDate,
+        endDate,
+        highlights: bullets.length ? bullets : [""],
+      });
+    }
+    header = [];
+    bullets = [];
+    open = false;
+  };
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (isBullet(line)) {
+      bullets.push(stripBullet(line));
+    } else if (!open || bullets.length > 0) {
+      flush();
+      header = [line];
+      open = true;
+    } else {
+      header.push(line);
+    }
+  }
+  flush();
+  return out;
+}
+
+/** Each non-empty line becomes a certification; issuer/date split heuristically. */
+function parseCertifications(lines: string[]): CertificationItem[] {
+  const out: CertificationItem[] = [];
+  for (const raw of lines) {
+    const line = stripBullet(raw).trim();
+    if (!line) continue;
+    let date = "";
+    const dateMatch = line.match(/\b((?:19|20)\d{2})\b/);
+    if (dateMatch) date = dateMatch[1];
+    const noDate = line.replace(/\(?\b(?:19|20)\d{2}\b\)?/, "").replace(/[—–,|]\s*$/, "").trim();
+    const parts = noDate.split(/\s+[—–|]\s+|,\s+/);
+    const name = parts[0].trim();
+    const issuer = parts.length > 1 ? parts.slice(1).join(", ").trim() : "";
+    if (name) out.push({ id: uid("crt"), name, issuer, date, url: "" });
+  }
+  return out;
+}
+
 /** Main entry: raw extracted text -> structured, fact-grounded CV fragments. */
 export function parseCVText(rawText: string): ParsedCV {
   const notes: string[] = [];
@@ -300,6 +379,8 @@ export function parseCVText(rawText: string): ParsedCV {
     experience: [],
     education: [],
     skills: [],
+    projects: [],
+    certifications: [],
   };
   let current: Exclude<SectionKind, "other"> | null = null;
   for (const line of allLines) {
@@ -318,10 +399,12 @@ export function parseCVText(rawText: string): ParsedCV {
   const experience = parseExperience(buckets.experience);
   const education = parseEducation(buckets.education);
   const skills = parseSkills(buckets.skills);
+  const projects = parseProjects(buckets.projects);
+  const certifications = parseCertifications(buckets.certifications);
 
   if (!experience.length) notes.push("No experience entries detected under an Experience heading.");
   if (!education.length) notes.push("No education entries detected under an Education heading.");
   if (!skills.length) notes.push("No skills detected under a Skills heading.");
 
-  return { basics, experience, education, skills, notes };
+  return { basics, experience, education, skills, projects, certifications, notes };
 }

@@ -61,6 +61,57 @@ export function Noir({ cv }: { cv: CVData }) {
             ))}
           </motion.section>
         ) : null;
+      case "projects":
+        return cv.projects.length ? (
+          <motion.section key="projects" variants={item} layout className="nr-block">
+            <h2 className="nr-h2">Projects</h2>
+            {cv.projects.map((prj) => (
+              <motion.div key={prj.id} variants={item} layout className="nr-role">
+                <div className="nr-role-head">
+                  <p className="nr-role-title">{prj.name || "Project"}</p>
+                  <span className="nr-dates">{dateRange(prj.startDate, prj.endDate)}</span>
+                </div>
+                {(prj.role || prj.url) && (
+                  <p className="nr-co">
+                    {prj.role}
+                    {prj.role && prj.url ? " · " : ""}
+                    {prj.url && (
+                      <a href={normalizedHref(prj.url)} className="nr-link">{prj.url}</a>
+                    )}
+                  </p>
+                )}
+                {prj.highlights.filter(Boolean).length > 0 && (
+                  <ul className="nr-bullets">
+                    {prj.highlights.filter(Boolean).map((h, i) => (
+                      <li key={i}>{h}</li>
+                    ))}
+                  </ul>
+                )}
+              </motion.div>
+            ))}
+          </motion.section>
+        ) : null;
+      case "certifications":
+        return cv.certifications.length ? (
+          <motion.section key="certifications" variants={item} layout className="nr-block">
+            <h2 className="nr-h2">Certifications</h2>
+            {cv.certifications.map((crt) => (
+              <motion.div key={crt.id} variants={item} layout className="nr-role">
+                <div className="nr-role-head">
+                  <p className="nr-role-title">
+                    {crt.url ? (
+                      <a href={normalizedHref(crt.url)} className="nr-link">{crt.name || "Certification"}</a>
+                    ) : (
+                      crt.name || "Certification"
+                    )}
+                  </p>
+                  {crt.date && <span className="nr-dates">{crt.date}</span>}
+                </div>
+                {crt.issuer && <p className="nr-co">{crt.issuer}</p>}
+              </motion.div>
+            ))}
+          </motion.section>
+        ) : null;
       case "skills":
         return cv.skills.length ? (
           <motion.section key="skills" variants={item} layout className="nr-block">

@@ -7,9 +7,15 @@ import {
   type ExperienceItem,
   type EducationItem,
   type SkillGroup,
+  type ProjectItem,
+  type CertificationItem,
+  type SectionKey,
+  ALL_SECTIONS,
   emptyExperience,
   emptyEducation,
   emptySkillGroup,
+  emptyProject,
+  emptyCertification,
 } from "@/lib/cv/schema";
 import { sampleCV } from "@/lib/cv/sample";
 import type { ParsedCV } from "@/lib/ingest/parse";
@@ -37,6 +43,17 @@ interface CVState {
   addSkillGroup: () => void;
   updateSkillGroup: (id: string, patch: Partial<SkillGroup>) => void;
   removeSkillGroup: (id: string) => void;
+
+  addProject: () => void;
+  updateProject: (id: string, patch: Partial<ProjectItem>) => void;
+  removeProject: (id: string) => void;
+  setProjectHighlight: (prjId: string, index: number, value: string) => void;
+  addProjectHighlight: (prjId: string) => void;
+  removeProjectHighlight: (prjId: string, index: number) => void;
+
+  addCertification: () => void;
+  updateCertification: (id: string, patch: Partial<CertificationItem>) => void;
+  removeCertification: (id: string) => void;
 
   setTemplate: (id: string) => void;
   setOrder: (order: CVData["order"]) => void;
@@ -120,6 +137,67 @@ export const useCVStore = create<CVState>()(
       removeSkillGroup: (id) =>
         set((s) => ({ cv: { ...s.cv, skills: s.cv.skills.filter((g) => g.id !== id) } })),
 
+      addProject: () =>
+        set((s) => ({ cv: { ...s.cv, projects: [...s.cv.projects, emptyProject()] } })),
+      updateProject: (id, patch) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            projects: s.cv.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+          },
+        })),
+      removeProject: (id) =>
+        set((s) => ({ cv: { ...s.cv, projects: s.cv.projects.filter((p) => p.id !== id) } })),
+      setProjectHighlight: (prjId, index, value) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            projects: s.cv.projects.map((p) =>
+              p.id === prjId
+                ? { ...p, highlights: p.highlights.map((h, i) => (i === index ? value : h)) }
+                : p,
+            ),
+          },
+        })),
+      addProjectHighlight: (prjId) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            projects: s.cv.projects.map((p) =>
+              p.id === prjId ? { ...p, highlights: [...p.highlights, ""] } : p,
+            ),
+          },
+        })),
+      removeProjectHighlight: (prjId, index) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            projects: s.cv.projects.map((p) =>
+              p.id === prjId
+                ? { ...p, highlights: p.highlights.filter((_, i) => i !== index) }
+                : p,
+            ),
+          },
+        })),
+
+      addCertification: () =>
+        set((s) => ({
+          cv: { ...s.cv, certifications: [...s.cv.certifications, emptyCertification()] },
+        })),
+      updateCertification: (id, patch) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            certifications: s.cv.certifications.map((c) =>
+              c.id === id ? { ...c, ...patch } : c,
+            ),
+          },
+        })),
+      removeCertification: (id) =>
+        set((s) => ({
+          cv: { ...s.cv, certifications: s.cv.certifications.filter((c) => c.id !== id) },
+        })),
+
       setTemplate: (id) => set({ activeTemplate: id }),
       setOrder: (order) => set((s) => ({ cv: { ...s.cv, order } })),
 
@@ -142,6 +220,8 @@ export const useCVStore = create<CVState>()(
                 experience: parsed.experience,
                 education: parsed.education,
                 skills: parsed.skills,
+                projects: parsed.projects ?? [],
+                certifications: parsed.certifications ?? [],
               },
             };
           }
@@ -162,12 +242,29 @@ export const useCVStore = create<CVState>()(
               experience: [...s.cv.experience, ...parsed.experience],
               education: [...s.cv.education, ...parsed.education],
               skills: [...s.cv.skills, ...parsed.skills],
+              projects: [...s.cv.projects, ...(parsed.projects ?? [])],
+              certifications: [...s.cv.certifications, ...(parsed.certifications ?? [])],
             },
           };
         }),
 
       reset: () => set({ cv: sampleCV, activeTemplate: "aurora" }),
     }),
-    { name: "orire-cv-v1" },
+    {
+      name: "orire-cv-v1",
+      version: 2,
+      migrate: (persisted, version) => {
+        const st = persisted as { cv?: Partial<CVData> } | undefined;
+        if (st?.cv && version < 2) {
+          const cv = st.cv as CVData;
+          cv.projects = cv.projects ?? [];
+          cv.certifications = cv.certifications ?? [];
+          const order: SectionKey[] = Array.isArray(cv.order) ? [...cv.order] : [];
+          for (const k of ALL_SECTIONS) if (!order.includes(k)) order.push(k);
+          cv.order = order;
+        }
+        return st as unknown;
+      },
+    },
   ),
 );

@@ -67,6 +67,63 @@ export function Aurora({ cv }: { cv: CVData }) {
             ))}
           </motion.section>
         ) : null;
+      case "projects":
+        return cv.projects.length ? (
+          <motion.section key="projects" variants={item} layout className="au-block">
+            <h2 className="au-h2">Projects</h2>
+            <div className="au-timeline">
+              {cv.projects.map((prj) => (
+                <motion.div key={prj.id} variants={item} layout className="au-role">
+                  <div className="au-role-head">
+                    <div>
+                      <p className="au-role-title">{prj.name || "Project"}</p>
+                      {(prj.role || prj.url) && (
+                        <p className="au-role-co">
+                          {prj.role}
+                          {prj.role && prj.url ? " · " : ""}
+                          {prj.url && (
+                            <a href={normalizedHref(prj.url)} className="au-link">{prj.url}</a>
+                          )}
+                        </p>
+                      )}
+                    </div>
+                    <span className="au-dates">{dateRange(prj.startDate, prj.endDate)}</span>
+                  </div>
+                  {prj.highlights.filter(Boolean).length > 0 && (
+                    <ul className="au-bullets">
+                      {prj.highlights.filter(Boolean).map((h, i) => (
+                        <li key={i}>{h}</li>
+                      ))}
+                    </ul>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        ) : null;
+      case "certifications":
+        return cv.certifications.length ? (
+          <motion.section key="certifications" variants={item} layout className="au-block">
+            <h2 className="au-h2">Certifications</h2>
+            {cv.certifications.map((crt) => (
+              <motion.div key={crt.id} variants={item} layout className="au-role">
+                <div className="au-role-head">
+                  <div>
+                    <p className="au-role-title">
+                      {crt.url ? (
+                        <a href={normalizedHref(crt.url)} className="au-link">{crt.name || "Certification"}</a>
+                      ) : (
+                        crt.name || "Certification"
+                      )}
+                    </p>
+                    {crt.issuer && <p className="au-role-co">{crt.issuer}</p>}
+                  </div>
+                  {crt.date && <span className="au-dates">{crt.date}</span>}
+                </div>
+              </motion.div>
+            ))}
+          </motion.section>
+        ) : null;
       default:
         return null;
     }

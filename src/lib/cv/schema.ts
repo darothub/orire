@@ -44,6 +44,25 @@ export interface SkillGroup {
   items: string[];
 }
 
+export interface ProjectItem {
+  id: ID;
+  name: string;
+  role?: string;
+  url?: string;
+  startDate?: string;
+  endDate?: string;
+  /** Bullet points — discrete, editable facts. */
+  highlights: string[];
+}
+
+export interface CertificationItem {
+  id: ID;
+  name: string;
+  issuer?: string;
+  date?: string;
+  url?: string;
+}
+
 export interface CVBasics {
   fullName: string;
   title: string;
@@ -55,13 +74,21 @@ export interface CVBasics {
 }
 
 /** Ordered list of section keys — drives layout order (drag reorder in Phase 1). */
-export type SectionKey = "summary" | "experience" | "education" | "skills";
+export type SectionKey =
+  | "summary"
+  | "experience"
+  | "education"
+  | "skills"
+  | "projects"
+  | "certifications";
 
 export interface CVData {
   basics: CVBasics;
   experience: ExperienceItem[];
   education: EducationItem[];
   skills: SkillGroup[];
+  projects: ProjectItem[];
+  certifications: CertificationItem[];
   /** Render/section order. */
   order: SectionKey[];
 }
@@ -71,7 +98,19 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   experience: "Experience",
   education: "Education",
   skills: "Skills",
+  projects: "Projects",
+  certifications: "Certifications",
 };
+
+/** Canonical set of all sections — used for persist migration + order backfill. */
+export const ALL_SECTIONS: SectionKey[] = [
+  "summary",
+  "experience",
+  "education",
+  "skills",
+  "projects",
+  "certifications",
+];
 
 let seq = 0;
 /** Stable-ish id generator for client-created items. */
@@ -107,6 +146,22 @@ export function emptyEducation(): EducationItem {
 
 export function emptySkillGroup(): SkillGroup {
   return { id: uid("skl"), category: "", items: [] };
+}
+
+export function emptyProject(): ProjectItem {
+  return {
+    id: uid("prj"),
+    name: "",
+    role: "",
+    url: "",
+    startDate: "",
+    endDate: "",
+    highlights: [""],
+  };
+}
+
+export function emptyCertification(): CertificationItem {
+  return { id: uid("crt"), name: "", issuer: "", date: "", url: "" };
 }
 
 export function emptyLink(): Link {

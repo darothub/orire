@@ -70,6 +70,59 @@ export function Vertex({ cv }: { cv: CVData }) {
             ))}
           </motion.section>
         ) : null;
+      case "projects":
+        return cv.projects.length ? (
+          <motion.section key="projects" variants={item} layout className="vx-block">
+            <h2 className="vx-h2">Projects</h2>
+            {cv.projects.map((prj) => (
+              <motion.div key={prj.id} variants={item} layout className="vx-role">
+                <span className="vx-node" />
+                <div className="vx-role-head">
+                  <p className="vx-role-title">{prj.name || "Project"}</p>
+                  <span className="vx-dates">{dateRange(prj.startDate, prj.endDate)}</span>
+                </div>
+                {(prj.role || prj.url) && (
+                  <p className="vx-co">
+                    {prj.role}
+                    {prj.role && prj.url ? " · " : ""}
+                    {prj.url && (
+                      <a href={normalizedHref(prj.url)} className="vx-link">{prj.url}</a>
+                    )}
+                  </p>
+                )}
+                {prj.highlights.filter(Boolean).length > 0 && (
+                  <ul className="vx-bullets">
+                    {prj.highlights.filter(Boolean).map((h, i) => (
+                      <li key={i}>{h}</li>
+                    ))}
+                  </ul>
+                )}
+              </motion.div>
+            ))}
+          </motion.section>
+        ) : null;
+      case "certifications":
+        return cv.certifications.length ? (
+          <motion.section key="certifications" variants={item} layout className="vx-block">
+            <h2 className="vx-h2">Certifications</h2>
+            {cv.certifications.map((crt) => (
+              <motion.div key={crt.id} variants={item} layout className="vx-role">
+                <span className="vx-node" />
+                <div className="vx-role-head">
+                  <p className="vx-role-title">
+                    {crt.url ? (
+                      <a href={normalizedHref(crt.url)} className="vx-link">{crt.name || "Certification"}</a>
+                    ) : (
+                      crt.name || "Certification"
+                    )}
+                  </p>
+                  {crt.date && <span className="vx-dates">{crt.date}</span>}
+                </div>
+                {crt.issuer && <p className="vx-co">{crt.issuer}</p>}
+              </motion.div>
+            ))}
+          </motion.section>
+        ) : null;
       default:
         return null;
     }

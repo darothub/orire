@@ -154,6 +154,27 @@
   color: var(--muted);
   line-height: 1.5;
 }
+.r-certlist {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.r-cert {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.r-cert-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.r-cert-issuer {
+  font-size: 13px;
+  color: var(--a);
+  margin-top: 1px;
+}
 .r-skillgroup + .r-skillgroup {
   margin-top: 14px;
 }

@@ -98,6 +98,65 @@ export function Resume({
             </div>
           </motion.section>
         ) : null;
+      case "projects":
+        return cv.projects.length ? (
+          <motion.section key="projects" variants={item} layout className="r-section">
+            <h2 className="r-h2">Projects</h2>
+            <div className="r-list">
+              {cv.projects.map((prj) => (
+                <motion.div key={prj.id} variants={item} layout className="r-role">
+                  <div className="r-role-top">
+                    <p className="r-role-title">{prj.name || "Project"}</p>
+                    <span className="r-dates">{dateRange(prj.startDate, prj.endDate)}</span>
+                  </div>
+                  {(prj.role || prj.url) && (
+                    <p className="r-co">
+                      {prj.role}
+                      {prj.role && prj.url ? " · " : ""}
+                      {prj.url && (
+                        <a href={normalizedHref(prj.url)} className="r-link">
+                          {prj.url}
+                        </a>
+                      )}
+                    </p>
+                  )}
+                  {prj.highlights.filter(Boolean).length > 0 && (
+                    <ul className="r-bullets">
+                      {prj.highlights.filter(Boolean).map((h, i) => (
+                        <li key={i}>{h}</li>
+                      ))}
+                    </ul>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        ) : null;
+      case "certifications":
+        return cv.certifications.length ? (
+          <motion.section key="certifications" variants={item} layout className="r-section">
+            <h2 className="r-h2">Certifications</h2>
+            <div className="r-certlist">
+              {cv.certifications.map((crt) => (
+                <motion.div key={crt.id} variants={item} layout className="r-cert">
+                  <div className="r-cert-main">
+                    <p className="r-cert-name">
+                      {crt.url ? (
+                        <a href={normalizedHref(crt.url)} className="r-link">
+                          {crt.name || "Certification"}
+                        </a>
+                      ) : (
+                        crt.name || "Certification"
+                      )}
+                    </p>
+                    {crt.issuer && <p className="r-cert-issuer">{crt.issuer}</p>}
+                  </div>
+                  {crt.date && <span className="r-dates">{crt.date}</span>}
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+        ) : null;
       case "skills":
         return hasAside ? null : <div key="skills">{Skills}</div>;
       default:

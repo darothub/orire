@@ -72,5 +72,46 @@ export const sampleCV: CVData = {
       items: ["Figma", "Framer", "Maze", "Dovetail"],
     },
   ],
-  order: ["summary", "experience", "education", "skills"],
+  projects: [
+    {
+      id: "prj_1",
+      name: "Open Banking Design Kit",
+      role: "Creator & maintainer",
+      url: "github.com/adaok/ob-kit",
+      startDate: "2022",
+      endDate: "",
+      highlights: [
+        "Published an accessible component library adopted by 4 fintech teams.",
+        "Documented usage patterns with live, testable examples.",
+      ],
+    },
+    {
+      id: "prj_2",
+      name: "Calm Money — concept app",
+      role: "Design & research",
+      url: "adaok.design/calm-money",
+      startDate: "2021",
+      endDate: "2022",
+      highlights: [
+        "Explored anxiety-reducing spending flows validated with 30 users.",
+      ],
+    },
+  ],
+  certifications: [
+    {
+      id: "crt_1",
+      name: "Certified Professional in Accessibility Core Competencies (CPACC)",
+      issuer: "IAAP",
+      date: "2023",
+      url: "",
+    },
+    {
+      id: "crt_2",
+      name: "NN/g UX Certification",
+      issuer: "Nielsen Norman Group",
+      date: "2020",
+      url: "",
+    },
+  ],
+  order: ["summary", "experience", "projects", "education", "skills", "certifications"],
 };
