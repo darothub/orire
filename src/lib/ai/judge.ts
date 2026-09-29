@@ -1,0 +1,103 @@
+/**
+ * orire — LLM-as-judge (req 7).
+ *
+ * After two providers each return a fact-grounded CV, an impartial judge model
+ * scores them against the job description and picks a winner. The judge only
+ * evaluates — it never emits CV content — so its output needs validation
+ * (numeric clamping, valid winner) but not fact-grounding.
+ */
+
+import type { CVData } from "@/lib/cv/schema";
+import { parseModelJSON } from "@/lib/ai/guardrails";
+
+export interface JudgeCandidate {
+  id: string;
+  label: string;
+  cv: CVData;
+}
+
+export interface JudgeScore {
+  id: string;
+  relevance: number;
+  impact: number;
+  coverage: number;
+  conciseness: number;
+  overall: number;
+  rationale: string;
+}
+
+export interface JudgeVerdict {
+  scores: JudgeScore[];
+  winner: string;
+  reasoning: string;
+}
+
+export const JUDGE_SYSTEM = `You are an impartial senior hiring reviewer. You compare tailored CVs against a job description and judge which best fits the role.
+
+RULES:
+- Judge ONLY on how well each CV matches the job description: relevance of experience, demonstrated impact and clarity, coverage of the role's requirements, and conciseness.
+- Do NOT reward invented or exaggerated claims. If a CV appears to overstate, score it lower on impact.
+- Be decisive: pick a single winner.
+- Output valid JSON only, no prose outside the JSON.`;
+
+const JUDGE_SCHEMA = `Return ONLY this JSON shape:
+{
+  "scores": [
+    { "id": string, "relevance": 0-100, "impact": 0-100, "coverage": 0-100, "conciseness": 0-100, "overall": 0-100, "rationale": string }
+  ],
+  "winner": string,   // must equal one of the candidate ids
+  "reasoning": string // one short paragraph explaining the verdict
+}`;
+
+export function buildJudgePrompt(jobDescription: string, candidates: JudgeCandidate[]): string {
+  const blocks = candidates
+    .map(
+      (c) =>
+        `CANDIDATE id="${c.id}" (${c.label}):\n\`\`\`json\n${JSON.stringify(c.cv, null, 2)}\n\`\`\``
+    )
+    .join("\n\n");
+  return [
+    "TARGET JOB DESCRIPTION:",
+    "```",
+    jobDescription.trim(),
+    "```",
+    "",
+    `There are ${candidates.length} candidate CVs. Candidate ids: ${candidates.map((c) => `"${c.id}"`).join(", ")}.`,
+    "",
+    blocks,
+    "",
+    "Score each candidate and choose the single best match for the job.",
+    JUDGE_SCHEMA,
+  ].join("\n");
+}
+
+function clamp(v: unknown): number {
+  const n = typeof v === "number" ? v : Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
+/** Parse + validate judge output. Guarantees a valid winner among candidate ids. */
+export function parseVerdict(raw: string, candidateIds: string[]): JudgeVerdict {
+  const obj = parseModelJSON(raw);
+  const rawScores = Array.isArray(obj.scores) ? obj.scores : [];
+  const scores: JudgeScore[] = candidateIds.map((id) => {
+    const found = (rawScores as Record<string, unknown>[]).find((s) => String(s?.id) === id) ?? {};
+    return {
+      id,
+      relevance: clamp(found.relevance),
+      impact: clamp(found.impact),
+      coverage: clamp(found.coverage),
+      conciseness: clamp(found.conciseness),
+      overall: clamp(found.overall),
+      rationale: typeof found.rationale === "string" ? found.rationale : "",
+    };
+  });
+  // Ensure a valid winner: trust the model if valid, else highest overall.
+  let winner = typeof obj.winner === "string" && candidateIds.includes(obj.winner) ? obj.winner : "";
+  if (!winner) {
+    winner = scores.reduce((best, s) => (s.overall > (best?.overall ?? -1) ? s : best), scores[0])?.id ?? candidateIds[0];
+  }
+  const reasoning = typeof obj.reasoning === "string" ? obj.reasoning : "";
+  return { scores, winner, reasoning };
+}
