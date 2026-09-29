@@ -9,8 +9,9 @@ import { useViewStore } from "@/lib/store/viewStore";
 import { ProviderSetup } from "@/components/ai/ProviderSetup";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import type { ParsedCV } from "@/lib/ingest/parse";
-import type { CVData } from "@/lib/cv/schema";
+import { SECTION_LABELS, type CVData, type SectionKey } from "@/lib/cv/schema";
 import type { JDMatch } from "@/lib/ai/jdmatch";
+import { gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
 
 const STEP_INDEX: Record<RefineStep, number> = { connect: 0, sources: 1, job: 2, run: 3 };
 
@@ -363,12 +364,51 @@ function RunStep({ onBack }: { onBack: () => void }) {
         ))}
       </div>
 
+      <IdealBar />
+
       <JudgeBlock />
 
       <div className="step-nav">
         <button className="flow-btn ghost" onClick={onBack} disabled={anyRunning}>Back</button>
         <button className="flow-btn" onClick={resetRun} disabled={anyRunning}>{anyRunning ? "Running…" : "New run"}</button>
       </div>
+    </div>
+  );
+}
+
+function IdealBar() {
+  const idealPhase = useRefineStore((s) => s.idealPhase);
+  const idealErr = useRefineStore((s) => s.idealErr);
+  const runSimulate = useRefineStore((s) => s.runSimulate);
+  const cols = useRefineStore((s) => s.cols);
+  const runProviders = useRefineStore((s) => s.runProviders);
+
+  // Only meaningful once at least one refined result exists to compare against.
+  const anyDone = runProviders.some((p) => cols[p].phase === "done" && cols[p].result);
+  if (!anyDone) return null;
+
+  return (
+    <div className="ideal-bar">
+      {idealPhase === "idle" && (
+        <div className="ideal-bar-row">
+          <div>
+            <strong>Compare against a 100% match</strong>
+            <span className="ideal-bar-sub">Simulate the ideal candidate for this role, then see the gap beside each result.</span>
+          </div>
+          <button className="flow-btn primary" onClick={() => void runSimulate()}>Simulate ideal</button>
+        </div>
+      )}
+      {idealPhase === "running" && <div className="cmp-loading"><span className="cmp-spinner" /> Building the ideal candidate…</div>}
+      {idealPhase === "error" && idealErr && (
+        <div className="imp-error">
+          <strong>{idealErr.title}{idealErr.status ? ` (HTTP ${idealErr.status})` : ""}</strong>
+          <pre>{idealErr.body}</pre>
+          <div className="imp-actions"><button className="flow-btn ghost" onClick={() => void runSimulate()}>Retry</button></div>
+        </div>
+      )}
+      {idealPhase === "done" && (
+        <div className="ideal-bar-done">✓ Ideal profile ready — gap shown in each column below the JD match.</div>
+      )}
     </div>
   );
 }
@@ -457,8 +497,10 @@ function JudgeBlock() {
 
 function Column({ provider, state, before, onApply }: { provider: ProviderId; state: ColState; before: ReturnType<typeof countFacts>; onApply: () => void }) {
   const setView = useViewStore((s) => s.setView);
+  const ideal = useRefineStore((s) => s.ideal);
   const meta = PROVIDERS[provider];
   const after = state.result ? countFacts(state.result.cv) : null;
+  const gap = ideal && state.result ? gapAnalysis(state.result.cv, ideal) : null;
   return (
     <motion.div layout className="cmp-col">
       <div className="cmp-col-head">
@@ -487,6 +529,7 @@ function Column({ provider, state, before, onApply }: { provider: ProviderId; st
             <DeltaRow label="Skills" a={before.skills} b={after.skills} />
           </div>
           {state.match && <MatchMeter match={state.match} />}
+          {gap && <IdealGap gap={gap} />}
           {state.result.cv.basics.summary && (
             <div className="ai-summary cmp-summary"><span className="ed-label">Tailored summary</span><p>{state.result.cv.basics.summary}</p></div>
           )}
@@ -502,6 +545,49 @@ function Column({ provider, state, before, onApply }: { provider: ProviderId; st
         </>
       )}
     </motion.div>
+  );
+}
+
+function IdealGap({ gap }: { gap: GapAnalysis }) {
+  const tone = gap.coverage >= 75 ? "hi" : gap.coverage >= 45 ? "mid" : "lo";
+  const miss = gap.missingSkills.slice(0, 8);
+  return (
+    <div className={`jdm idg ${tone}`}>
+      <div className="jdm-head">
+        <span className="ed-label">vs ideal</span>
+        <span className="jdm-score">{gap.coverage}%</span>
+      </div>
+      <div className="jdm-bar">
+        <motion.span
+          className="jdm-fill"
+          initial={{ width: 0 }}
+          animate={{ width: `${gap.coverage}%` }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </div>
+      <div className="jdm-sub">
+        {gap.matchedSkills.length}/{gap.matchedSkills.length + gap.missingSkills.length} of the ideal&apos;s skills covered
+      </div>
+      {miss.length > 0 && (
+        <div className="jdm-missing">
+          <span className="jdm-missing-label">Ideal has, you don&apos;t</span>
+          <div className="jdm-chips">
+            {miss.map((k) => <span key={k}>{k}</span>)}
+            {gap.missingSkills.length > miss.length && (
+              <span className="jdm-more">+{gap.missingSkills.length - miss.length}</span>
+            )}
+          </div>
+        </div>
+      )}
+      {gap.missingSections.length > 0 && (
+        <div className="jdm-missing">
+          <span className="jdm-missing-label">Sections the ideal has</span>
+          <div className="jdm-chips">
+            {gap.missingSections.map((k) => <span key={k}>{SECTION_LABELS[k as SectionKey]}</span>)}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

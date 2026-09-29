@@ -7,7 +7,9 @@ import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
 import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
+import { coerceSimulatedCV } from "@/lib/ai/simulate";
 import { parseVerdict, type JudgeVerdict } from "@/lib/ai/judge";
+import type { CVData } from "@/lib/cv/schema";
 
 /** The four steps of the Refine module, in order. */
 export type RefineStep = "connect" | "sources" | "job" | "run";
@@ -32,6 +34,7 @@ export interface ColState {
 }
 
 type JudgePhase = "idle" | "running" | "error" | "done";
+type IdealPhase = "idle" | "running" | "error" | "done";
 
 interface RefineState {
   step: RefineStep;
@@ -46,6 +49,11 @@ interface RefineState {
   verdict: JudgeVerdict | null;
   judgeErr: ColError | null;
 
+  /** Simulated "ideal candidate" gap analysis (req 20), surfaced inside Refine. */
+  idealPhase: IdealPhase;
+  ideal: CVData | null;
+  idealErr: ColError | null;
+
   setStep: (s: RefineStep) => void;
   toggleRunProvider: (p: ProviderId) => void;
   setJd: (jd: string) => void;
@@ -53,6 +61,7 @@ interface RefineState {
 
   runAll: () => void;
   runJudge: () => Promise<void>;
+  runSimulate: () => Promise<void>;
   resetRun: () => void;
   reset: () => void;
 }
@@ -74,6 +83,10 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   judgePhase: "idle",
   verdict: null,
   judgeErr: null,
+
+  idealPhase: "idle",
+  ideal: null,
+  idealErr: null,
 
   setStep: (step) => set({ step }),
   toggleRunProvider: (p) =>
@@ -97,6 +110,9 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       judgePhase: "idle",
       verdict: null,
       judgeErr: null,
+      idealPhase: "idle",
+      ideal: null,
+      idealErr: null,
     });
 
     for (const provider of runProviders) {
@@ -174,8 +190,42 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     }
   },
 
+  runSimulate: async () => {
+    const { jd, runProviders, judgeProvider } = get();
+    if (!jd.trim()) return;
+    const { keys, models } = useSettingsStore.getState();
+    // Prefer a provider already used in the run; fall back to the judge provider.
+    const provider =
+      runProviders.find((p) => keys[p]?.trim()) ??
+      (keys[judgeProvider]?.trim() ? judgeProvider : undefined);
+    if (!provider) {
+      set({ idealPhase: "error", idealErr: { title: "No API key", body: "Add an API key to simulate the ideal candidate." } });
+      return;
+    }
+    set({ idealPhase: "running", idealErr: null, ideal: null });
+    try {
+      const res = await fetch("/api/ai/simulate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider, apiKey: keys[provider], model: models[provider], jobDescription: jd }),
+      });
+      const data = (await res.json()) as RefineResponse;
+      if (!data.ok || !data.raw) {
+        set({
+          idealPhase: "error",
+          idealErr: { title: `${PROVIDERS[provider].label} error`, body: data.error?.message ?? "Unknown error.", status: data.error?.status },
+        });
+        return;
+      }
+      set({ ideal: coerceSimulatedCV(data.raw), idealPhase: "done" });
+    } catch (e) {
+      const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
+      set({ idealPhase: "error", idealErr: { title: "Could not build the simulation", body: msg } });
+    }
+  },
+
   resetRun: () =>
-    set({ started: false, cols: idleCols(), judgePhase: "idle", verdict: null, judgeErr: null }),
+    set({ started: false, cols: idleCols(), judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
 
   reset: () =>
     set({
@@ -187,5 +237,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       judgePhase: "idle",
       verdict: null,
       judgeErr: null,
+      idealPhase: "idle",
+      ideal: null,
+      idealErr: null,
     }),
 }));

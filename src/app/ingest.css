@@ -1424,3 +1424,17 @@
   background: var(--panel);
 }
 .jdm-chips .jdm-more { color: var(--faint); border-style: dashed; }
+
+/* ── Ideal-match bar + per-column gap (Simulate inside Refine) ───── */
+.ideal-bar {
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(120deg, rgba(139,124,255,0.08), rgba(110,231,208,0.06));
+}
+.ideal-bar-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.ideal-bar-row strong { display: block; font-size: 13px; }
+.ideal-bar-sub { display: block; color: var(--faint); font-size: 11px; margin-top: 2px; }
+.ideal-bar-done { color: var(--accent); font-size: 12px; }
+.jdm.idg { border-color: rgba(139,124,255,0.35); background: rgba(139,124,255,0.06); }
