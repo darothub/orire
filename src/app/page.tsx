@@ -15,6 +15,7 @@ import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { useRefineStore } from "@/lib/store/refineStore";
 
 /** Edit workspace: section reorder + field editor. Right pane shows it live. */
 function EditView({ mounted }: { mounted: boolean }) {
@@ -100,6 +101,14 @@ export default function Home() {
   const previewEdit = useUIStore((s) => s.previewEdit);
   const togglePreviewEdit = useUIStore((s) => s.togglePreviewEdit);
 
+  // During a 2-provider Refine comparison, widen the workspace pane so the
+  // side-by-side columns breathe and de-emphasise the live preview.
+  const view = useViewStore((s) => s.view);
+  const refStep = useRefineStore((s) => s.step);
+  const refStarted = useRefineStore((s) => s.started);
+  const refCompare = useRefineStore((s) => s.runProviders.length === 2);
+  const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
+
   const tpl = getTemplate(active);
   const ActiveTemplate = tpl.Component;
 
@@ -141,7 +150,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="workspace">
+      <main className={`workspace${compareWide ? " is-compare" : ""}`}>
         <WorkspaceRail />
 
         <section className="pane pane-work" aria-label="Workspace">

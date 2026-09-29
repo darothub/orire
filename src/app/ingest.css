@@ -1290,6 +1290,20 @@
   background: var(--panel);
 }
 .src-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.src-chips span {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(110, 231, 208, 0.12);
+  border: 1px solid rgba(110, 231, 208, 0.3);
+  color: var(--text);
+}
+.src-chips span.zero {
+  background: var(--panel-2);
+  border-color: var(--line-2);
+  color: var(--faint);
+}
 
 /* Single-provider run collapses the compare grid to one column */
 .cmp-grid.single { grid-template-columns: 1fr; }
