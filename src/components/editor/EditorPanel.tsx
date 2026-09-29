@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, Reorder, useDragControls } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { AutoTextarea } from "./AutoTextarea";
 
@@ -52,29 +52,143 @@ function AreaField({
   );
 }
 
-function Card({
-  children,
+/**
+ * A draggable editor card (req 17). Only the grip handle starts a drag
+ * (dragListener={false} + dragControls), so the inputs inside stay fully
+ * editable and selectable.
+ */
+function SortableCard<T>({
+  value,
   onRemove,
+  children,
 }: {
-  children: React.ReactNode;
+  value: T;
   onRemove?: () => void;
+  children: React.ReactNode;
 }) {
+  const controls = useDragControls();
   return (
-    <motion.div
+    <Reorder.Item
+      value={value}
+      dragListener={false}
+      dragControls={controls}
       layout
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8, scale: 0.98 }}
       transition={{ type: "spring", stiffness: 260, damping: 28 }}
       className="ed-card"
+      whileDrag={{ scale: 1.02, boxShadow: "0 14px 34px rgba(0,0,0,0.18)", zIndex: 5 }}
     >
-      {onRemove && (
-        <button className="ed-remove" onClick={onRemove} aria-label="Remove">
-          ✕
+      <div className="ed-card-tools">
+        <button
+          className="ed-grip"
+          onPointerDown={(e) => controls.start(e)}
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
+        >
+          ⋮⋮
         </button>
-      )}
+        {onRemove && (
+          <button className="ed-remove-inline" onClick={onRemove} aria-label="Remove">
+            ✕
+          </button>
+        )}
+      </div>
       {children}
-    </motion.div>
+    </Reorder.Item>
+  );
+}
+
+/** A single draggable highlight bullet ("edit box", req 17 + 18). */
+function HighlightItem({
+  index,
+  value,
+  placeholder,
+  onChange,
+  onRemove,
+}: {
+  index: number;
+  value: string;
+  placeholder?: string;
+  onChange: (v: string) => void;
+  onRemove: () => void;
+}) {
+  const controls = useDragControls();
+  return (
+    <Reorder.Item
+      value={index}
+      dragListener={false}
+      dragControls={controls}
+      layout
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="ed-bullet"
+      whileDrag={{ scale: 1.01 }}
+    >
+      <button
+        className="ed-grip ed-grip-sm"
+        onPointerDown={(e) => controls.start(e)}
+        aria-label="Drag highlight"
+        title="Drag to reorder"
+      >
+        ⋮⋮
+      </button>
+      <AutoTextarea
+        className="ed-input ed-area"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <button className="ed-mini" onClick={onRemove} aria-label="Remove highlight">
+        ✕
+      </button>
+    </Reorder.Item>
+  );
+}
+
+/** Draggable list of highlight bullets. Reorders by index permutation. */
+function Highlights({
+  items,
+  placeholder,
+  onReorder,
+  onChange,
+  onRemove,
+  onAdd,
+}: {
+  items: string[];
+  placeholder?: string;
+  onReorder: (next: string[]) => void;
+  onChange: (index: number, value: string) => void;
+  onRemove: (index: number) => void;
+  onAdd: () => void;
+}) {
+  const indices = items.map((_, i) => i);
+  return (
+    <div className="ed-bullets">
+      <span className="ed-label">Highlights — drag ⋮⋮ to reorder</span>
+      <Reorder.Group
+        axis="y"
+        values={indices}
+        onReorder={(order) => onReorder((order as number[]).map((i) => items[i]))}
+        className="ed-bullet-list"
+      >
+        <AnimatePresence initial={false}>
+          {items.map((h, i) => (
+            <HighlightItem
+              key={i}
+              index={i}
+              value={h}
+              placeholder={placeholder}
+              onChange={(v) => onChange(i, v)}
+              onRemove={() => onRemove(i)}
+            />
+          ))}
+        </AnimatePresence>
+      </Reorder.Group>
+      <button className="ed-add ed-add-sm" onClick={onAdd}>+ Highlight</button>
+    </div>
   );
 }
 
@@ -103,52 +217,37 @@ export function EditorPanel() {
           <h3 className="ed-h3">Experience</h3>
           <button className="ed-add" onClick={s.addExperience}>+ Add</button>
         </div>
-        <AnimatePresence initial={false}>
-          {cv.experience.map((exp) => (
-            <Card key={exp.id} onRemove={() => s.removeExperience(exp.id)}>
-              <div className="ed-grid2">
-                <Field label="Role" value={exp.role} onChange={(v) => s.updateExperience(exp.id, { role: v })} />
-                <Field label="Company" value={exp.company} onChange={(v) => s.updateExperience(exp.id, { company: v })} />
-                <Field label="Location" value={exp.location ?? ""} onChange={(v) => s.updateExperience(exp.id, { location: v })} />
-                <Field label="Start" value={exp.startDate ?? ""} onChange={(v) => s.updateExperience(exp.id, { startDate: v })} />
-                <Field label="End" value={exp.endDate ?? ""} onChange={(v) => s.updateExperience(exp.id, { endDate: v })} />
-                <label className="ed-check">
-                  <input
-                    type="checkbox"
-                    checked={!!exp.current}
-                    onChange={(e) => s.updateExperience(exp.id, { current: e.target.checked })}
-                  />
-                  <span>Current role</span>
-                </label>
-              </div>
-              <div className="ed-bullets">
-                <span className="ed-label">Highlights</span>
-                <AnimatePresence initial={false}>
-                  {exp.highlights.map((h, i) => (
-                    <motion.div
-                      key={i}
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="ed-bullet"
-                    >
-                      <span className="ed-dot" />
-                      <AutoTextarea
-                        className="ed-input ed-area"
-                        value={h}
-                        placeholder="Describe a concrete, factual achievement…"
-                        onChange={(e) => s.setHighlight(exp.id, i, e.target.value)}
-                      />
-                      <button className="ed-mini" onClick={() => s.removeHighlight(exp.id, i)} aria-label="Remove highlight">✕</button>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                <button className="ed-add ed-add-sm" onClick={() => s.addHighlight(exp.id)}>+ Highlight</button>
-              </div>
-            </Card>
-          ))}
-        </AnimatePresence>
+        <Reorder.Group axis="y" values={cv.experience} onReorder={s.setExperience} className="ed-list">
+          <AnimatePresence initial={false}>
+            {cv.experience.map((exp) => (
+              <SortableCard key={exp.id} value={exp} onRemove={() => s.removeExperience(exp.id)}>
+                <div className="ed-grid2">
+                  <Field label="Role" value={exp.role} onChange={(v) => s.updateExperience(exp.id, { role: v })} />
+                  <Field label="Company" value={exp.company} onChange={(v) => s.updateExperience(exp.id, { company: v })} />
+                  <Field label="Location" value={exp.location ?? ""} onChange={(v) => s.updateExperience(exp.id, { location: v })} />
+                  <Field label="Start" value={exp.startDate ?? ""} onChange={(v) => s.updateExperience(exp.id, { startDate: v })} />
+                  <Field label="End" value={exp.endDate ?? ""} onChange={(v) => s.updateExperience(exp.id, { endDate: v })} />
+                  <label className="ed-check">
+                    <input
+                      type="checkbox"
+                      checked={!!exp.current}
+                      onChange={(e) => s.updateExperience(exp.id, { current: e.target.checked })}
+                    />
+                    <span>Current role</span>
+                  </label>
+                </div>
+                <Highlights
+                  items={exp.highlights}
+                  placeholder="Describe a concrete, factual achievement…"
+                  onReorder={(next) => s.setHighlights(exp.id, next)}
+                  onChange={(i, v) => s.setHighlight(exp.id, i, v)}
+                  onRemove={(i) => s.removeHighlight(exp.id, i)}
+                  onAdd={() => s.addHighlight(exp.id)}
+                />
+              </SortableCard>
+            ))}
+          </AnimatePresence>
+        </Reorder.Group>
       </section>
 
       {/* Education */}
@@ -157,20 +256,22 @@ export function EditorPanel() {
           <h3 className="ed-h3">Education</h3>
           <button className="ed-add" onClick={s.addEducation}>+ Add</button>
         </div>
-        <AnimatePresence initial={false}>
-          {cv.education.map((ed) => (
-            <Card key={ed.id} onRemove={() => s.removeEducation(ed.id)}>
-              <div className="ed-grid2">
-                <Field label="Degree" value={ed.degree} onChange={(v) => s.updateEducation(ed.id, { degree: v })} />
-                <Field label="Field" value={ed.field ?? ""} onChange={(v) => s.updateEducation(ed.id, { field: v })} />
-                <Field label="Institution" value={ed.institution} onChange={(v) => s.updateEducation(ed.id, { institution: v })} />
-                <Field label="Start" value={ed.startDate ?? ""} onChange={(v) => s.updateEducation(ed.id, { startDate: v })} />
-                <Field label="End" value={ed.endDate ?? ""} onChange={(v) => s.updateEducation(ed.id, { endDate: v })} />
-              </div>
-              <AreaField label="Details" value={ed.details ?? ""} onChange={(v) => s.updateEducation(ed.id, { details: v })} />
-            </Card>
-          ))}
-        </AnimatePresence>
+        <Reorder.Group axis="y" values={cv.education} onReorder={s.setEducation} className="ed-list">
+          <AnimatePresence initial={false}>
+            {cv.education.map((ed) => (
+              <SortableCard key={ed.id} value={ed} onRemove={() => s.removeEducation(ed.id)}>
+                <div className="ed-grid2">
+                  <Field label="Degree" value={ed.degree} onChange={(v) => s.updateEducation(ed.id, { degree: v })} />
+                  <Field label="Field" value={ed.field ?? ""} onChange={(v) => s.updateEducation(ed.id, { field: v })} />
+                  <Field label="Institution" value={ed.institution} onChange={(v) => s.updateEducation(ed.id, { institution: v })} />
+                  <Field label="Start" value={ed.startDate ?? ""} onChange={(v) => s.updateEducation(ed.id, { startDate: v })} />
+                  <Field label="End" value={ed.endDate ?? ""} onChange={(v) => s.updateEducation(ed.id, { endDate: v })} />
+                </div>
+                <AreaField label="Details" value={ed.details ?? ""} onChange={(v) => s.updateEducation(ed.id, { details: v })} />
+              </SortableCard>
+            ))}
+          </AnimatePresence>
+        </Reorder.Group>
       </section>
 
       {/* Skills */}
@@ -179,23 +280,25 @@ export function EditorPanel() {
           <h3 className="ed-h3">Skills</h3>
           <button className="ed-add" onClick={s.addSkillGroup}>+ Add group</button>
         </div>
-        <AnimatePresence initial={false}>
-          {cv.skills.map((g) => (
-            <Card key={g.id} onRemove={() => s.removeSkillGroup(g.id)}>
-              <Field label="Category" value={g.category} onChange={(v) => s.updateSkillGroup(g.id, { category: v })} />
-              <AreaField
-                label="Skills (comma separated)"
-                value={g.items.join(", ")}
-                placeholder="e.g. Figma, Prototyping, Research"
-                onChange={(v) =>
-                  s.updateSkillGroup(g.id, {
-                    items: v.split(",").map((x) => x.trim()).filter(Boolean),
-                  })
-                }
-              />
-            </Card>
-          ))}
-        </AnimatePresence>
+        <Reorder.Group axis="y" values={cv.skills} onReorder={s.setSkills} className="ed-list">
+          <AnimatePresence initial={false}>
+            {cv.skills.map((g) => (
+              <SortableCard key={g.id} value={g} onRemove={() => s.removeSkillGroup(g.id)}>
+                <Field label="Category" value={g.category} onChange={(v) => s.updateSkillGroup(g.id, { category: v })} />
+                <AreaField
+                  label="Skills (comma separated)"
+                  value={g.items.join(", ")}
+                  placeholder="e.g. Figma, Prototyping, Research"
+                  onChange={(v) =>
+                    s.updateSkillGroup(g.id, {
+                      items: v.split(",").map((x) => x.trim()).filter(Boolean),
+                    })
+                  }
+                />
+              </SortableCard>
+            ))}
+          </AnimatePresence>
+        </Reorder.Group>
       </section>
 
       {/* Projects */}
@@ -204,44 +307,29 @@ export function EditorPanel() {
           <h3 className="ed-h3">Projects</h3>
           <button className="ed-add" onClick={s.addProject}>+ Add</button>
         </div>
-        <AnimatePresence initial={false}>
-          {cv.projects.map((prj) => (
-            <Card key={prj.id} onRemove={() => s.removeProject(prj.id)}>
-              <div className="ed-grid2">
-                <Field label="Name" value={prj.name} onChange={(v) => s.updateProject(prj.id, { name: v })} />
-                <Field label="Role" value={prj.role ?? ""} onChange={(v) => s.updateProject(prj.id, { role: v })} />
-                <Field label="URL" value={prj.url ?? ""} onChange={(v) => s.updateProject(prj.id, { url: v })} />
-                <Field label="Start" value={prj.startDate ?? ""} onChange={(v) => s.updateProject(prj.id, { startDate: v })} />
-                <Field label="End" value={prj.endDate ?? ""} onChange={(v) => s.updateProject(prj.id, { endDate: v })} />
-              </div>
-              <div className="ed-bullets">
-                <span className="ed-label">Highlights</span>
-                <AnimatePresence initial={false}>
-                  {prj.highlights.map((h, i) => (
-                    <motion.div
-                      key={i}
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="ed-bullet"
-                    >
-                      <span className="ed-dot" />
-                      <AutoTextarea
-                        className="ed-input ed-area"
-                        value={h}
-                        placeholder="Describe a concrete, factual outcome…"
-                        onChange={(e) => s.setProjectHighlight(prj.id, i, e.target.value)}
-                      />
-                      <button className="ed-mini" onClick={() => s.removeProjectHighlight(prj.id, i)} aria-label="Remove highlight">✕</button>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                <button className="ed-add ed-add-sm" onClick={() => s.addProjectHighlight(prj.id)}>+ Highlight</button>
-              </div>
-            </Card>
-          ))}
-        </AnimatePresence>
+        <Reorder.Group axis="y" values={cv.projects} onReorder={s.setProjects} className="ed-list">
+          <AnimatePresence initial={false}>
+            {cv.projects.map((prj) => (
+              <SortableCard key={prj.id} value={prj} onRemove={() => s.removeProject(prj.id)}>
+                <div className="ed-grid2">
+                  <Field label="Name" value={prj.name} onChange={(v) => s.updateProject(prj.id, { name: v })} />
+                  <Field label="Role" value={prj.role ?? ""} onChange={(v) => s.updateProject(prj.id, { role: v })} />
+                  <Field label="URL" value={prj.url ?? ""} onChange={(v) => s.updateProject(prj.id, { url: v })} />
+                  <Field label="Start" value={prj.startDate ?? ""} onChange={(v) => s.updateProject(prj.id, { startDate: v })} />
+                  <Field label="End" value={prj.endDate ?? ""} onChange={(v) => s.updateProject(prj.id, { endDate: v })} />
+                </div>
+                <Highlights
+                  items={prj.highlights}
+                  placeholder="Describe a concrete, factual outcome…"
+                  onReorder={(next) => s.setProjectHighlights(prj.id, next)}
+                  onChange={(i, v) => s.setProjectHighlight(prj.id, i, v)}
+                  onRemove={(i) => s.removeProjectHighlight(prj.id, i)}
+                  onAdd={() => s.addProjectHighlight(prj.id)}
+                />
+              </SortableCard>
+            ))}
+          </AnimatePresence>
+        </Reorder.Group>
       </section>
 
       {/* Certifications */}
@@ -250,18 +338,20 @@ export function EditorPanel() {
           <h3 className="ed-h3">Certifications</h3>
           <button className="ed-add" onClick={s.addCertification}>+ Add</button>
         </div>
-        <AnimatePresence initial={false}>
-          {cv.certifications.map((crt) => (
-            <Card key={crt.id} onRemove={() => s.removeCertification(crt.id)}>
-              <div className="ed-grid2">
-                <Field label="Name" value={crt.name} onChange={(v) => s.updateCertification(crt.id, { name: v })} />
-                <Field label="Issuer" value={crt.issuer ?? ""} onChange={(v) => s.updateCertification(crt.id, { issuer: v })} />
-                <Field label="Date" value={crt.date ?? ""} onChange={(v) => s.updateCertification(crt.id, { date: v })} />
-                <Field label="URL" value={crt.url ?? ""} onChange={(v) => s.updateCertification(crt.id, { url: v })} />
-              </div>
-            </Card>
-          ))}
-        </AnimatePresence>
+        <Reorder.Group axis="y" values={cv.certifications} onReorder={s.setCertifications} className="ed-list">
+          <AnimatePresence initial={false}>
+            {cv.certifications.map((crt) => (
+              <SortableCard key={crt.id} value={crt} onRemove={() => s.removeCertification(crt.id)}>
+                <div className="ed-grid2">
+                  <Field label="Name" value={crt.name} onChange={(v) => s.updateCertification(crt.id, { name: v })} />
+                  <Field label="Issuer" value={crt.issuer ?? ""} onChange={(v) => s.updateCertification(crt.id, { issuer: v })} />
+                  <Field label="Date" value={crt.date ?? ""} onChange={(v) => s.updateCertification(crt.id, { date: v })} />
+                  <Field label="URL" value={crt.url ?? ""} onChange={(v) => s.updateCertification(crt.id, { url: v })} />
+                </div>
+              </SortableCard>
+            ))}
+          </AnimatePresence>
+        </Reorder.Group>
       </section>
     </div>
   );

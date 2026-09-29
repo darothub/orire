@@ -60,6 +60,14 @@ interface CVState {
   setTemplate: (id: string) => void;
   setOrder: (order: CVData["order"]) => void;
   toggleSection: (key: SectionKey) => void;
+  /** Drag-to-reorder within a section (req 17). */
+  setExperience: (next: ExperienceItem[]) => void;
+  setEducation: (next: EducationItem[]) => void;
+  setSkills: (next: SkillGroup[]) => void;
+  setProjects: (next: ProjectItem[]) => void;
+  setCertifications: (next: CertificationItem[]) => void;
+  setHighlights: (expId: string, next: string[]) => void;
+  setProjectHighlights: (prjId: string, next: string[]) => void;
   applyImport: (parsed: ParsedCV, mode: ImportMode) => void;
   /** Replace CV content with an AI-refined, fact-grounded result. */
   applyRefinedCV: (next: CVData) => void;
@@ -210,6 +218,26 @@ export const useCVStore = create<CVState>()(
 
       setTemplate: (id) => set({ activeTemplate: id }),
       setOrder: (order) => set((s) => ({ cv: { ...s.cv, order } })),
+
+      setExperience: (next) => set((s) => ({ cv: { ...s.cv, experience: next } })),
+      setEducation: (next) => set((s) => ({ cv: { ...s.cv, education: next } })),
+      setSkills: (next) => set((s) => ({ cv: { ...s.cv, skills: next } })),
+      setProjects: (next) => set((s) => ({ cv: { ...s.cv, projects: next } })),
+      setCertifications: (next) => set((s) => ({ cv: { ...s.cv, certifications: next } })),
+      setHighlights: (expId, next) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            experience: s.cv.experience.map((e) => (e.id === expId ? { ...e, highlights: next } : e)),
+          },
+        })),
+      setProjectHighlights: (prjId, next) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            projects: s.cv.projects.map((p) => (p.id === prjId ? { ...p, highlights: next } : p)),
+          },
+        })),
       toggleSection: (key) =>
         set((s) => {
           const present = s.cv.order.includes(key);

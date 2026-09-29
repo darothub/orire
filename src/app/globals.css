@@ -244,6 +244,76 @@ body {
   border-color: var(--accent-3);
 }
 
+/* ---------- Drag to reorder (req 17) ---------- */
+.ed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ed-card-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px -4px 0;
+}
+.ed-grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--faint);
+  cursor: grab;
+  font-size: 13px;
+  letter-spacing: -2px;
+  line-height: 1;
+  touch-action: none;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.ed-grip:hover {
+  color: var(--accent-2);
+  background: var(--bg);
+  border-color: var(--line-2);
+}
+.ed-grip:active {
+  cursor: grabbing;
+}
+.ed-grip-sm {
+  min-width: 22px;
+  height: 22px;
+  margin-top: 10px;
+  flex: none;
+}
+.ed-remove-inline {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+}
+.ed-remove-inline:hover {
+  color: var(--accent-3);
+  border-color: var(--accent-3);
+}
+.ed-bullet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .ed-grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
