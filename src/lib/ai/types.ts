@@ -7,7 +7,7 @@
  * server-side or sent to any third party other than the chosen provider.
  */
 
-export type ProviderId = "openai" | "anthropic" | "claude-cli";
+export type ProviderId = "openai" | "anthropic" | "claude-cli" | "codex-cli";
 
 export interface ProviderMeta {
   id: ProviderId;
@@ -20,6 +20,8 @@ export interface ProviderMeta {
   models: string[];
   /** Short note shown in place of a key field for CLI providers. */
   authHint?: string;
+  /** Executable name probed/spawned for CLI providers (e.g. "claude", "codex"). */
+  cliBin?: string;
 }
 
 export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
@@ -61,8 +63,19 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     kind: "cli",
     keyHint: "",
     authHint: "Uses your local Claude Code login — no API key needed.",
+    cliBin: "claude",
     defaultModel: "sonnet",
     models: ["sonnet", "opus", "haiku"],
+  },
+  "codex-cli": {
+    id: "codex-cli",
+    label: "Codex (CLI)",
+    kind: "cli",
+    keyHint: "",
+    authHint: "Uses your local Codex login (`codex login`) — no API key needed.",
+    cliBin: "codex",
+    defaultModel: "gpt-5-codex",
+    models: ["gpt-5-codex", "gpt-5", "o4-mini", "o3"],
   },
 };
 

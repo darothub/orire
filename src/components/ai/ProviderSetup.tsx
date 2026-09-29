@@ -14,6 +14,8 @@ const CLI_IDS = PROVIDER_IDS.filter((p) => isCLI(p));
 
 type FetchState = { phase: "idle" | "loading" | "done" | "error"; models: string[]; error?: string };
 
+type CliState = { phase: "idle" | "loading" | "done"; status?: CliStatus };
+
 function emptyRecord<T>(make: () => T): Record<ProviderId, T> {
   return Object.fromEntries(PROVIDER_IDS.map((p) => [p, make()])) as Record<ProviderId, T>;
 }
@@ -43,7 +45,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
   const [fetched, setFetched] = useState<Record<ProviderId, FetchState>>(() =>
     emptyRecord<FetchState>(() => ({ phase: "idle", models: [] }))
   );
-  const [cli, setCli] = useState<{ phase: "idle" | "loading" | "done"; status?: CliStatus }>({ phase: "idle" });
+  const [cli, setCli] = useState<Record<ProviderId, CliState>>(() => emptyRecord<CliState>(() => ({ phase: "idle" })));
   const timers = useRef<Record<ProviderId, ReturnType<typeof setTimeout> | null>>(emptyRecord(() => null));
 
   const loadModels = async (p: ProviderId) => {
@@ -92,18 +94,19 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keys.openai, keys.anthropic]);
 
-  // Probe CLI availability once, if any CLI provider exists.
-  const probeCli = async () => {
-    setCli({ phase: "loading" });
+  // Probe CLI availability per provider.
+  const probeCli = async (p: ProviderId) => {
+    setCli((c) => ({ ...c, [p]: { phase: "loading" } }));
     try {
-      const res = await fetch("/api/ai/cli");
-      setCli({ phase: "done", status: (await res.json()) as CliStatus });
+      const res = await fetch(`/api/ai/cli?provider=${encodeURIComponent(p)}`);
+      const status = (await res.json()) as CliStatus;
+      setCli((c) => ({ ...c, [p]: { phase: "done", status } }));
     } catch (e) {
-      setCli({ phase: "done", status: { installed: false, error: e instanceof Error ? e.message : String(e) } });
+      setCli((c) => ({ ...c, [p]: { phase: "done", status: { installed: false, error: e instanceof Error ? e.message : String(e) } } }));
     }
   };
   useEffect(() => {
-    if (CLI_IDS.length > 0) void probeCli();
+    for (const p of CLI_IDS) void probeCli(p);
   }, []);
 
   return (
@@ -111,7 +114,8 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
       {PROVIDER_IDS.map((p, i) => {
         const meta = PROVIDERS[p];
         const cliProvider = isCLI(p);
-        const cliReady = cliProvider && cli.phase === "done" && !!cli.status?.installed;
+        const cliState = cli[p];
+        const cliReady = cliProvider && cliState.phase === "done" && !!cliState.status?.installed;
         const connected = cliProvider ? cliReady : Boolean(keys[p]?.trim());
         const selected = runProviders.includes(p);
         return (
@@ -147,18 +151,18 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
               <div className="conn-field">
                 <span className="ed-label">Connection</span>
                 <div className="conn-cli-status">
-                  {cli.phase !== "done" ? (
-                    <span className="conn-hint">Checking for the Claude Code CLI…</span>
-                  ) : cli.status?.installed ? (
-                    <span className="conn-cli-ok">✓ {cli.status.version ?? "Claude Code"} detected</span>
+                  {cliState.phase !== "done" ? (
+                    <span className="conn-hint">Checking for the {meta.label} binary…</span>
+                  ) : cliState.status?.installed ? (
+                    <span className="conn-cli-ok">✓ {cliState.status.version ?? meta.label} detected</span>
                   ) : (
                     <span className="conn-cli-err">
-                      Not found — install Claude Code and sign in, then re-check.
-                      {cli.status?.error ? <em> ({cli.status.error})</em> : null}
+                      Not found — install {meta.label} and sign in, then re-check.
+                      {cliState.status?.error ? <em> ({cliState.status.error})</em> : null}
                     </span>
                   )}
-                  <button className="conn-refresh" onClick={() => void probeCli()} disabled={cli.phase === "loading"} title="Re-check">
-                    {cli.phase === "loading" ? "…" : "↻"}
+                  <button className="conn-refresh" onClick={() => void probeCli(p)} disabled={cliState.phase === "loading"} title="Re-check">
+                    {cliState.phase === "loading" ? "…" : "↻"}
                   </button>
                 </div>
                 <span className="conn-hint">{meta.authHint}</span>
@@ -192,7 +196,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                 Model
                 <span className="conn-hint">
                   {(() => {
-                    if (cliProvider) return " — alias (sonnet / opus / haiku) or a full model name";
+                    if (cliProvider) return ` — ${meta.models.slice(0, 3).join(" / ")} or any model name`;
                     const st = fetched[p];
                     if (!connected) return " — add a key to load your models";
                     if (st.phase === "loading") return " — loading your models…";

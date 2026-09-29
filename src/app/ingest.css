@@ -1564,6 +1564,7 @@
 
 /* Claude Code (CLI) provider */
 .conn-dot.claude-cli { background: #c15f3c; }
+.conn-dot.codex-cli { background: #6e56cf; }
 .conn-tag {
   margin-left: 8px;
   padding: 1px 7px;

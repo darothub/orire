@@ -14,7 +14,10 @@
 
 import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
-import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
+import { join } from "node:path";
+import { readFile, unlink } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { type ProviderId } from "@/lib/ai/types";
 
 export type ProviderCall =
   | { ok: true; content: string }
@@ -169,6 +172,83 @@ function callClaudeCLI(model: string, system: string, user: string): Promise<Pro
   });
 }
 
+/**
+ * Run a one-shot Codex request. Codex `exec` is non-interactive and takes a
+ * single PROMPT, so system+user are concatenated. The prompt is passed as an
+ * argv argument (spawn, no shell → injection-safe). We run read-only, in a temp
+ * cwd with --skip-git-repo-check (exec otherwise requires a git repo and could
+ * pick up a project AGENTS.md), and capture just the final agent message via
+ * --output-last-message so we don't have to parse the JSONL event stream.
+ */
+function callCodexCLI(model: string, system: string, user: string): Promise<ProviderCall> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const outFile = join(tmpdir(), `orire-codex-${randomUUID()}.txt`);
+    const finish = async (r: ProviderCall) => {
+      if (settled) return;
+      settled = true;
+      await unlink(outFile).catch(() => {});
+      resolve(r);
+    };
+
+    const prompt = system ? `${system}\n\n${user}` : user;
+    const args = [
+      "exec",
+      "--skip-git-repo-check",
+      "--sandbox",
+      "read-only",
+      "--output-last-message",
+      outFile,
+    ];
+    if (model) args.push("--model", model);
+    args.push(prompt);
+
+    const child = spawn("codex", args, {
+      cwd: tmpdir(),
+      env: process.env,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      void finish({ ok: false, body: `Codex CLI timed out after ${CLI_TIMEOUT_MS / 1000}s.` });
+    }, CLI_TIMEOUT_MS);
+
+    let out = "";
+    let err = "";
+    child.stdout.on("data", (d) => (out += d.toString()));
+    child.stderr.on("data", (d) => (err += d.toString()));
+
+    child.on("error", (e) => {
+      clearTimeout(timer);
+      const msg =
+        (e as NodeJS.ErrnoException).code === "ENOENT"
+          ? "Codex CLI not found. Install it (`npm i -g @openai/codex`), run `codex login`, and make sure `codex` is on your PATH."
+          : `Failed to launch Codex CLI: ${e.message}`;
+      void finish({ ok: false, body: msg });
+    });
+
+    child.on("close", (code) => {
+      clearTimeout(timer);
+      if (code !== 0) {
+        void finish({
+          ok: false,
+          status: code ?? undefined,
+          body: (err || out || `codex exited with code ${code}`).trim(),
+        });
+        return;
+      }
+      // Prefer the clean final-message file; fall back to stdout.
+      void readFile(outFile, "utf8")
+        .then((content) => {
+          const text = content.trim() || out.trim();
+          void finish({ ok: true, content: text });
+        })
+        .catch(() => void finish({ ok: true, content: out.trim() }));
+    });
+  });
+}
+
 /** Dispatch a prompt to the given provider, regardless of transport. */
 export async function runProvider(args: {
   provider: ProviderId;
@@ -179,9 +259,8 @@ export async function runProvider(args: {
   opts?: CallOpts;
 }): Promise<ProviderCall> {
   const { provider, apiKey, model, system, user, opts = {} } = args;
-  if (PROVIDERS[provider].kind === "cli") {
-    return callClaudeCLI(model, system, user);
-  }
+  if (provider === "claude-cli") return callClaudeCLI(model, system, user);
+  if (provider === "codex-cli") return callCodexCLI(model, system, user);
   if (provider === "openai") return callOpenAI(apiKey ?? "", model, system, user, opts);
   return callAnthropic(apiKey ?? "", model, system, user, opts);
 }

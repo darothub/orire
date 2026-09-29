@@ -16,16 +16,18 @@ interface SettingsState {
   setModel: (p: ProviderId, model: string) => void;
 }
 
+const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
+const blankKeys = (): Record<ProviderId, string> =>
+  Object.fromEntries(PROVIDER_IDS.map((p) => [p, ""])) as Record<ProviderId, string>;
+const defaultModels = (): Record<ProviderId, string> =>
+  Object.fromEntries(PROVIDER_IDS.map((p) => [p, PROVIDERS[p].defaultModel])) as Record<ProviderId, string>;
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       provider: "openai",
-      keys: { openai: "", anthropic: "", "claude-cli": "" },
-      models: {
-        openai: PROVIDERS.openai.defaultModel,
-        anthropic: PROVIDERS.anthropic.defaultModel,
-        "claude-cli": PROVIDERS["claude-cli"].defaultModel,
-      },
+      keys: blankKeys(),
+      models: defaultModels(),
       setProvider: (p) => set({ provider: p }),
       setKey: (p, key) => set((s) => ({ keys: { ...s.keys, [p]: key } })),
       setModel: (p, model) => set((s) => ({ models: { ...s.models, [p]: model } })),
