@@ -716,3 +716,167 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============ CV rating (req 16) ============ */
+.rate-modal {
+  max-width: 620px;
+}
+.rate-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 18px 0 6px;
+}
+.rate-hero.solo {
+  flex-direction: column;
+  gap: 12px;
+}
+.rate-ring {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.rate-ring svg {
+  transform: rotate(-90deg);
+}
+.rate-ring-track {
+  fill: none;
+  stroke: var(--line-2);
+  stroke-width: 7;
+}
+.rate-ring-fill {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.rate-ring-center {
+  position: absolute;
+  top: 32px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+.rate-ring-center strong {
+  font-size: 24px;
+  font-weight: 700;
+}
+.rate-ring-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rate-ring-sub {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+}
+.rate-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.rate-delta {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.rate-delta.up {
+  color: #16a34a;
+}
+.rate-delta.down {
+  color: #dc2626;
+}
+.rate-arrow-glyph {
+  font-size: 20px;
+  color: var(--faint);
+}
+.rate-note {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  text-align: center;
+  max-width: 380px;
+  margin: 0;
+}
+.rate-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+}
+.rate-metric-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.rate-metric-label {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+.rate-metric-nums {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12.5px;
+}
+.rate-before {
+  color: var(--faint);
+}
+.rate-arrow-sm {
+  color: var(--faint);
+  font-size: 11px;
+}
+.rate-after {
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.rate-diff {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 1px 6px;
+}
+.rate-diff.up {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.12);
+}
+.rate-diff.down {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.12);
+}
+.rate-track {
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line-2);
+  overflow: hidden;
+}
+.rate-fill,
+.rate-fill-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+}
+.rate-fill-ghost {
+  background: var(--faint);
+  opacity: 0.35;
+}
+.rate-metric-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--faint);
+  margin-top: 4px;
+}
+.rate-actions {
+  margin-top: 20px;
+}

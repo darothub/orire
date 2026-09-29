@@ -26,6 +26,8 @@ export type ImportMode = "replace" | "merge";
 interface CVState {
   cv: CVData;
   activeTemplate: string;
+  /** Snapshot of the CV before the first AI refinement — the "initial" for rating (req 16). */
+  baseline: CVData | null;
 
   setBasics: (patch: BasicsPatch) => void;
 
@@ -61,6 +63,10 @@ interface CVState {
   applyImport: (parsed: ParsedCV, mode: ImportMode) => void;
   /** Replace CV content with an AI-refined, fact-grounded result. */
   applyRefinedCV: (next: CVData) => void;
+  /** Manually snapshot the current CV as the initial baseline for rating. */
+  captureBaseline: () => void;
+  /** Forget the stored baseline. */
+  clearBaseline: () => void;
   reset: () => void;
 }
 
@@ -69,6 +75,7 @@ export const useCVStore = create<CVState>()(
     (set) => ({
       cv: sampleCV,
       activeTemplate: "aurora",
+      baseline: null,
 
       setBasics: (patch) =>
         set((s) => ({ cv: { ...s.cv, basics: { ...s.cv.basics, ...patch } } })),
@@ -270,9 +277,15 @@ export const useCVStore = create<CVState>()(
           };
         }),
 
-      applyRefinedCV: (next) => set(() => ({ cv: next })),
+      // Capture the pre-refine CV as the baseline the first time AI is applied,
+      // so the final result can be rated against where the user started (req 16).
+      applyRefinedCV: (next) =>
+        set((s) => ({ cv: next, baseline: s.baseline ?? s.cv })),
 
-      reset: () => set({ cv: sampleCV, activeTemplate: "aurora" }),
+      captureBaseline: () => set((s) => ({ baseline: s.cv })),
+      clearBaseline: () => set({ baseline: null }),
+
+      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null }),
     }),
     {
       name: "orire-cv-v1",

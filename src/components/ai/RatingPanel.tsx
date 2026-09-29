@@ -1,0 +1,152 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { useCVStore } from "@/lib/store/cvStore";
+import { scoreCV, diffScores, grade } from "@/lib/cv/rating";
+
+/** Colour a 0–100 value from red → amber → green. */
+function scoreColor(v: number): string {
+  const hue = Math.round((v / 100) * 130); // 0=red, 130=green
+  return `hsl(${hue} 70% 45%)`;
+}
+
+function Ring({ value, label, sub }: { value: number; label: string; sub?: string }) {
+  const r = 34;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="rate-ring">
+      <svg viewBox="0 0 84 84" width="84" height="84">
+        <circle cx="42" cy="42" r={r} className="rate-ring-track" />
+        <motion.circle
+          cx="42"
+          cy="42"
+          r={r}
+          className="rate-ring-fill"
+          stroke={scoreColor(value)}
+          strokeDasharray={c}
+          initial={{ strokeDashoffset: c }}
+          animate={{ strokeDashoffset: c - (value / 100) * c }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        />
+      </svg>
+      <div className="rate-ring-center">
+        <strong style={{ color: scoreColor(value) }}>{value}</strong>
+      </div>
+      <span className="rate-ring-label">{label}</span>
+      {sub && <span className="rate-ring-sub">{sub}</span>}
+    </div>
+  );
+}
+
+export function RatingPanel({ onClose }: { onClose: () => void }) {
+  const cv = useCVStore((s) => s.cv);
+  const baseline = useCVStore((s) => s.baseline);
+  const captureBaseline = useCVStore((s) => s.captureBaseline);
+  const clearBaseline = useCVStore((s) => s.clearBaseline);
+
+  const current = scoreCV(cv);
+  const diff = baseline ? diffScores(baseline, cv) : null;
+
+  return (
+    <motion.div
+      className="imp-backdrop"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="imp-modal ai-modal rate-modal"
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 24, scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 320, damping: 30 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="imp-head">
+          <div>
+            <h2>CV rating</h2>
+            <p>
+              A deterministic score across six dimensions — same CV, same result. No API key
+              needed.
+            </p>
+          </div>
+          <button className="imp-x" onClick={onClose} aria-label="Close">✕</button>
+        </header>
+
+        {diff ? (
+          <div className="rate-hero">
+            <Ring value={diff.before} label="Initial" />
+            <div className="rate-arrow">
+              <span className={`rate-delta ${diff.diff > 0 ? "up" : diff.diff < 0 ? "down" : ""}`}>
+                {diff.diff > 0 ? `+${diff.diff}` : diff.diff}
+              </span>
+              <span className="rate-arrow-glyph" aria-hidden>→</span>
+            </div>
+            <Ring value={diff.after} label="Final" sub={grade(diff.after)} />
+          </div>
+        ) : (
+          <div className="rate-hero solo">
+            <Ring value={current.overall} label="Current" sub={grade(current.overall)} />
+            <p className="rate-note">
+              No initial baseline saved yet. Refining or comparing with AI captures one
+              automatically — or snapshot the current CV now to measure future edits against it.
+            </p>
+          </div>
+        )}
+
+        <div className="rate-metrics">
+          {(diff ? diff.metrics : current.metrics.map((m) => ({ key: m.key, label: m.label, before: m.value, after: m.value, diff: 0 }))).map((m) => {
+            const meta = current.metrics.find((x) => x.key === m.key)!;
+            return (
+              <div key={m.key} className="rate-metric">
+                <div className="rate-metric-head">
+                  <span className="rate-metric-label">{m.label}</span>
+                  <span className="rate-metric-nums">
+                    {diff && (
+                      <>
+                        <span className="rate-before">{m.before}</span>
+                        <span className="rate-arrow-sm">→</span>
+                      </>
+                    )}
+                    <span className="rate-after" style={{ color: scoreColor(m.after) }}>{m.after}</span>
+                    {diff && m.diff !== 0 && (
+                      <span className={`rate-diff ${m.diff > 0 ? "up" : "down"}`}>
+                        {m.diff > 0 ? `+${m.diff}` : m.diff}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <span className="rate-track">
+                  {diff && (
+                    <span className="rate-fill-ghost" style={{ width: `${m.before}%` }} />
+                  )}
+                  <motion.span
+                    className="rate-fill"
+                    style={{ background: scoreColor(m.after) }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${m.after}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                  />
+                </span>
+                <span className="rate-metric-hint">{meta.hint}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="imp-actions rate-actions">
+          {baseline ? (
+            <>
+              <button className="imp-btn" onClick={clearBaseline}>Clear baseline</button>
+              <button className="imp-btn" onClick={captureBaseline}>Reset baseline to current</button>
+            </>
+          ) : (
+            <button className="imp-btn primary" onClick={captureBaseline}>Use current CV as baseline</button>
+          )}
+          <button className="imp-btn" onClick={onClose}>Done</button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

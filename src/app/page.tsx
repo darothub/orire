@@ -9,6 +9,7 @@ import { ImportPanel } from "@/components/ingest/ImportPanel";
 import { SettingsModal } from "@/components/ai/SettingsModal";
 import { RefinePanel } from "@/components/ai/RefinePanel";
 import { ComparePanel } from "@/components/ai/ComparePanel";
+import { RatingPanel } from "@/components/ai/RatingPanel";
 import { getTemplate } from "@/components/templates/registry";
 import { useCVStore } from "@/lib/store/cvStore";
 
@@ -18,6 +19,7 @@ export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refining, setRefining] = useState(false);
   const [comparing, setComparing] = useState(false);
+  const [rating, setRating] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const cv = useCVStore((s) => s.cv);
@@ -54,6 +56,7 @@ export default function Home() {
           <span className="template-pill">{mounted ? tpl.name : "—"}</span>
           <button className="btn-ghost" onClick={() => setRefining(true)}>Refine to JD</button>
           <button className="btn-ghost" onClick={() => setComparing(true)}>Compare</button>
+          <button className="btn-ghost" onClick={() => setRating(true)}>Rate</button>
           <button className="btn-ghost" onClick={() => setImporting(true)}>Import CV</button>
           <button className="btn-ghost" onClick={() => setSettingsOpen(true)}>Settings</button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
@@ -130,6 +133,7 @@ export default function Home() {
             }}
           />
         )}
+        {rating && <RatingPanel onClose={() => setRating(false)} />}
       </AnimatePresence>
     </div>
   );
