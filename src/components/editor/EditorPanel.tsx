@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, Reorder, useDragControls } from "framer-motion";
+import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { AutoTextarea } from "./AutoTextarea";
 
@@ -280,6 +280,33 @@ export function EditorPanel() {
           <h3 className="ed-h3">Skills</h3>
           <button className="ed-add" onClick={s.addSkillGroup}>+ Add group</button>
         </div>
+        {s.skillSuggestions.length > 0 && (
+          <div className="ed-suggest">
+            <div className="ed-suggest-head">
+              <span className="ed-suggest-title">Suggested from the ideal match</span>
+              <button className="ed-suggest-clear" onClick={s.clearSkillSuggestions}>Dismiss all</button>
+            </div>
+            <p className="ed-suggest-note">Add only skills you genuinely have — these come from the target role, not your CV.</p>
+            <div className="ed-suggest-chips">
+              <AnimatePresence initial={false}>
+                {s.skillSuggestions.map((sk) => (
+                  <motion.span
+                    key={sk}
+                    layout
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    transition={{ duration: 0.18 }}
+                    className="ed-suggest-chip"
+                  >
+                    <button className="ed-suggest-add" onClick={() => s.acceptSkillSuggestion(sk)} title="Add to your skills">＋ {sk}</button>
+                    <button className="ed-suggest-x" onClick={() => s.dismissSkillSuggestion(sk)} aria-label={`Dismiss ${sk}`}>×</button>
+                  </motion.span>
+                ))}
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
         <Reorder.Group axis="y" values={cv.skills} onReorder={s.setSkills} className="ed-list">
           <AnimatePresence initial={false}>
             {cv.skills.map((g) => (

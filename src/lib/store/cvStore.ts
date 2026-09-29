@@ -64,6 +64,12 @@ interface CVState {
   setExperience: (next: ExperienceItem[]) => void;
   setEducation: (next: EducationItem[]) => void;
   setSkills: (next: SkillGroup[]) => void;
+  /** Suggested skills (e.g. from the ideal-match gap) — never auto-applied. */
+  skillSuggestions: string[];
+  setSkillSuggestions: (list: string[]) => void;
+  acceptSkillSuggestion: (skill: string) => void;
+  dismissSkillSuggestion: (skill: string) => void;
+  clearSkillSuggestions: () => void;
   setProjects: (next: ProjectItem[]) => void;
   setCertifications: (next: CertificationItem[]) => void;
   setHighlights: (expId: string, next: string[]) => void;
@@ -84,6 +90,7 @@ export const useCVStore = create<CVState>()(
       cv: sampleCV,
       activeTemplate: "aurora",
       baseline: null,
+      skillSuggestions: [],
 
       setBasics: (patch) =>
         set((s) => ({ cv: { ...s.cv, basics: { ...s.cv.basics, ...patch } } })),
@@ -222,6 +229,39 @@ export const useCVStore = create<CVState>()(
       setExperience: (next) => set((s) => ({ cv: { ...s.cv, experience: next } })),
       setEducation: (next) => set((s) => ({ cv: { ...s.cv, education: next } })),
       setSkills: (next) => set((s) => ({ cv: { ...s.cv, skills: next } })),
+      setSkillSuggestions: (list) =>
+        set((s) => {
+          const have = new Set(s.cv.skills.flatMap((g) => g.items.map((i) => i.toLowerCase())));
+          const seen = new Set<string>();
+          const cleaned = list
+            .map((x) => x.trim())
+            .filter((x) => x && !have.has(x.toLowerCase()))
+            .filter((x) => {
+              const k = x.toLowerCase();
+              if (seen.has(k)) return false;
+              seen.add(k);
+              return true;
+            });
+          return { skillSuggestions: cleaned };
+        }),
+      acceptSkillSuggestion: (skill) =>
+        set((s) => {
+          const value = skill.trim();
+          if (!value) return {};
+          const exists = s.cv.skills.some((g) => g.items.some((i) => i.toLowerCase() === value.toLowerCase()));
+          const groups = s.cv.skills.length ? s.cv.skills : [emptySkillGroup()];
+          const nextSkills = exists
+            ? groups
+            : groups.map((g, idx) => (idx === groups.length - 1 ? { ...g, items: [...g.items, value] } : g));
+          const order = s.cv.order.includes("skills") ? s.cv.order : [...s.cv.order, "skills" as SectionKey];
+          return {
+            cv: { ...s.cv, skills: nextSkills, order },
+            skillSuggestions: s.skillSuggestions.filter((x) => x.toLowerCase() !== value.toLowerCase()),
+          };
+        }),
+      dismissSkillSuggestion: (skill) =>
+        set((s) => ({ skillSuggestions: s.skillSuggestions.filter((x) => x.toLowerCase() !== skill.toLowerCase()) })),
+      clearSkillSuggestions: () => set({ skillSuggestions: [] }),
       setProjects: (next) => set((s) => ({ cv: { ...s.cv, projects: next } })),
       setCertifications: (next) => set((s) => ({ cv: { ...s.cv, certifications: next } })),
       setHighlights: (expId, next) =>
@@ -313,11 +353,12 @@ export const useCVStore = create<CVState>()(
       captureBaseline: () => set((s) => ({ baseline: s.cv })),
       clearBaseline: () => set({ baseline: null }),
 
-      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null }),
+      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, skillSuggestions: [] }),
     }),
     {
       name: "orire-cv-v1",
       version: 2,
+      partialize: (s) => ({ cv: s.cv, activeTemplate: s.activeTemplate, baseline: s.baseline }),
       migrate: (persisted, version) => {
         const st = persisted as { cv?: Partial<CVData> } | undefined;
         if (st?.cv && version < 2) {

@@ -1438,3 +1438,50 @@
 .ideal-bar-sub { display: block; color: var(--faint); font-size: 11px; margin-top: 2px; }
 .ideal-bar-done { color: var(--accent); font-size: 12px; }
 .jdm.idg { border-color: rgba(139,124,255,0.35); background: rgba(139,124,255,0.06); }
+
+/* ── Skill suggestions (from ideal-match gap) ───────────────────── */
+.idg-send {
+  margin-top: 9px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(139,124,255,0.4);
+  background: rgba(139,124,255,0.12);
+  color: var(--text, #e7ebf3);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.idg-send:hover { background: rgba(139,124,255,0.22); transform: translateY(-1px); }
+
+.ed-suggest {
+  margin: 4px 0 12px;
+  padding: 11px 12px;
+  border: 1px solid rgba(139,124,255,0.32);
+  border-radius: 11px;
+  background: linear-gradient(120deg, rgba(139,124,255,0.09), rgba(110,231,208,0.05));
+}
+.ed-suggest-head { display: flex; align-items: center; justify-content: space-between; }
+.ed-suggest-title { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; }
+.ed-suggest-clear {
+  border: none; background: none; color: var(--faint); font-size: 11px; cursor: pointer;
+}
+.ed-suggest-clear:hover { color: var(--text, #e7ebf3); text-decoration: underline; }
+.ed-suggest-note { color: var(--faint); font-size: 11px; margin: 3px 0 8px; }
+.ed-suggest-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ed-suggest-chip {
+  display: inline-flex; align-items: stretch;
+  border: 1px solid var(--line-2); border-radius: 999px; overflow: hidden;
+  background: var(--panel);
+}
+.ed-suggest-add {
+  border: none; background: none; color: var(--text, #e7ebf3);
+  font-size: 12px; padding: 4px 9px; cursor: pointer; transition: background 0.15s ease;
+}
+.ed-suggest-add:hover { background: rgba(110,231,208,0.16); color: var(--accent); }
+.ed-suggest-x {
+  border: none; border-left: 1px solid var(--line-2); background: none;
+  color: var(--faint); font-size: 13px; line-height: 1; padding: 0 8px; cursor: pointer;
+}
+.ed-suggest-x:hover { color: #f08a8a; background: rgba(240,138,138,0.1); }

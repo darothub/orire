@@ -551,6 +551,12 @@ function Column({ provider, state, before, onApply }: { provider: ProviderId; st
 function IdealGap({ gap }: { gap: GapAnalysis }) {
   const tone = gap.coverage >= 75 ? "hi" : gap.coverage >= 45 ? "mid" : "lo";
   const miss = gap.missingSkills.slice(0, 8);
+  const setSkillSuggestions = useCVStore((s) => s.setSkillSuggestions);
+  const setView = useViewStore((s) => s.setView);
+  const sendToEditor = () => {
+    setSkillSuggestions(gap.missingSkills);
+    setView("edit");
+  };
   return (
     <div className={`jdm idg ${tone}`}>
       <div className="jdm-head">
@@ -586,6 +592,11 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
             {gap.missingSections.map((k) => <span key={k}>{SECTION_LABELS[k as SectionKey]}</span>)}
           </div>
         </div>
+      )}
+      {gap.missingSkills.length > 0 && (
+        <button className="idg-send" onClick={sendToEditor}>
+          Add missing skills in editor →
+        </button>
       )}
     </div>
   );
