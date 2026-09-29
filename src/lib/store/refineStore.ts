@@ -46,6 +46,8 @@ interface RefineState {
 
   /** JD match of the ORIGINAL CV (before any refine), computed once per run. */
   baseMatch: JDMatch | null;
+  /** Snapshot of the ORIGINAL CV at run time, for vs-ideal baseline gap. */
+  baseCV: CVData | null;
 
   judgeProvider: ProviderId;
   judgePhase: JudgePhase;
@@ -83,6 +85,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   cols: idleCols(),
 
   baseMatch: null,
+  baseCV: null,
 
   judgeProvider: "openai",
   judgePhase: "idle",
@@ -113,6 +116,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       started: true,
       cols: idleCols(),
       baseMatch: jdMatch(cv, jd),
+      baseCV: cv,
       judgePhase: "idle",
       verdict: null,
       judgeErr: null,
@@ -231,7 +235,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   },
 
   resetRun: () =>
-    set({ started: false, cols: idleCols(), baseMatch: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
+    set({ started: false, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
 
   reset: () =>
     set({
@@ -241,6 +245,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       started: false,
       cols: idleCols(),
       baseMatch: null,
+      baseCV: null,
       judgePhase: "idle",
       verdict: null,
       judgeErr: null,

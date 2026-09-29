@@ -555,6 +555,11 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
   const setSkillSuggestions = useCVStore((s) => s.setSkillSuggestions);
   const addSuggestedSection = useCVStore((s) => s.addSuggestedSection);
   const setView = useViewStore((s) => s.setView);
+  const baseCV = useRefineStore((s) => s.baseCV);
+  const ideal = useRefineStore((s) => s.ideal);
+  const baseGap = baseCV && ideal ? gapAnalysis(baseCV, ideal) : null;
+  const delta = baseGap ? gap.coverage - baseGap.coverage : null;
+  const deltaTone = delta == null ? "" : delta > 0 ? "up" : delta < 0 ? "down" : "flat";
   const sendToEditor = () => {
     setSkillSuggestions(gap.missingSkills);
     setView("edit");
@@ -567,9 +572,19 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
     <div className={`jdm idg ${tone}`}>
       <div className="jdm-head">
         <span className="ed-label">vs ideal</span>
-        <span className="jdm-score">{gap.coverage}%</span>
+        <span className="jdm-head-right">
+          {delta != null && (
+            <span className={`jdm-delta ${deltaTone}`} title={`Original CV covered ${baseGap!.coverage}% of the ideal`}>
+              {delta > 0 ? "▲" : delta < 0 ? "▼" : "="} {delta > 0 ? "+" : ""}{delta} pts
+            </span>
+          )}
+          <span className="jdm-score">{gap.coverage}%</span>
+        </span>
       </div>
       <div className="jdm-bar">
+        {baseGap && (
+          <span className="jdm-base" style={{ width: `${baseGap.coverage}%` }} aria-hidden />
+        )}
         <motion.span
           className="jdm-fill"
           initial={{ width: 0 }}
@@ -579,6 +594,7 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
       </div>
       <div className="jdm-sub">
         {gap.matchedSkills.length}/{gap.matchedSkills.length + gap.missingSkills.length} of the ideal&apos;s skills covered
+        {delta != null && delta > 0 && <span className="jdm-sub-note"> · up from {baseGap!.coverage}%</span>}
       </div>
       {miss.length > 0 && (
         <div className="jdm-missing">
