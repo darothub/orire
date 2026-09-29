@@ -183,7 +183,10 @@
   display: flex;
   gap: 8px;
   margin-top: 13px;
+  align-items: center;
 }
+.imp-btn:disabled { opacity: 0.55; cursor: default; }
+.imp-ai-hint { font-size: 11px; color: var(--faint); margin-left: 2px; }
 .imp-btn {
   border: 1px solid color-mix(in srgb, #64748b 30%, transparent);
   background: transparent;
@@ -1394,6 +1397,21 @@
 }
 .conn-field { display: flex; flex-direction: column; gap: 5px; }
 .conn-hint { color: var(--faint); font-weight: 400; font-size: 11px; }
+.conn-refresh {
+  margin-left: 6px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: 6px;
+  width: 20px;
+  height: 18px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.conn-refresh:disabled { opacity: 0.5; cursor: default; }
+.conn-model-err { display: block; margin-top: 5px; color: #f08a8a; font-size: 11px; }
 .conn-key-row { display: flex; gap: 8px; }
 .conn-key-row .ed-input { flex: 1; }
 .conn-reveal {

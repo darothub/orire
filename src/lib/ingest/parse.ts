@@ -408,3 +408,111 @@ export function parseCVText(rawText: string): ParsedCV {
 
   return { basics, experience, education, skills, projects, certifications, notes };
 }
+
+/* --------------------------------------------------------------------------
+ * AI-structured import: map a model's JSON object into the same ParsedCV shape.
+ *
+ * Fact-grounding still holds: the model is instructed (STRUCTURE_SYSTEM) to use
+ * ONLY text present in the uploaded document. Here we merely coerce its JSON
+ * into typed fragments with fresh ids — no invention, no cross-CV filtering
+ * (the uploaded document IS the source of truth for an import).
+ * ------------------------------------------------------------------------ */
+
+function s(v: unknown): string {
+  return typeof v === "string" ? v : v == null ? "" : String(v);
+}
+function sArr(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  return v.map(s).map((x) => x.trim()).filter(Boolean);
+}
+function rec(v: unknown): Record<string, unknown> {
+  return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
+}
+
+/** Coerce a model JSON object (STRUCTURE schema) into a ParsedCV. */
+export function parsedCVFromModelJSON(obj: Record<string, unknown>): ParsedCV {
+  const notes: string[] = [];
+  const b = rec(obj.basics);
+
+  const links: Link[] = (Array.isArray(b.links) ? b.links : [])
+    .map((l) => rec(l))
+    .map((l) => ({ url: s(l.url).trim(), label: s(l.label).trim() }))
+    .filter((l) => l.url)
+    .map((l) => ({ id: uid("lnk"), label: l.label || "Website", url: l.url }));
+
+  const basics: Partial<CVBasics> = {};
+  const fullName = s(b.fullName).trim();
+  const title = s(b.title).trim();
+  const email = s(b.email).trim();
+  const phone = s(b.phone).trim();
+  const location = s(b.location).trim();
+  const summary = s(b.summary).trim();
+  if (fullName) basics.fullName = fullName;
+  if (title) basics.title = title;
+  if (email) basics.email = email;
+  if (phone) basics.phone = phone;
+  if (location) basics.location = location;
+  if (summary) basics.summary = summary;
+  if (links.length) basics.links = links;
+
+  const experience: ExperienceItem[] = (Array.isArray(obj.experience) ? obj.experience : [])
+    .map((r) => rec(r))
+    .map((e) => ({
+      id: uid("exp"),
+      company: s(e.company).trim(),
+      role: s(e.role).trim(),
+      location: s(e.location).trim(),
+      startDate: s(e.startDate).trim(),
+      endDate: s(e.endDate).trim(),
+      current: Boolean(e.current),
+      highlights: sArr(e.highlights),
+    }))
+    .filter((e) => e.company || e.role || e.highlights.length);
+
+  const education: EducationItem[] = (Array.isArray(obj.education) ? obj.education : [])
+    .map((r) => rec(r))
+    .map((e) => ({
+      id: uid("edu"),
+      institution: s(e.institution).trim(),
+      degree: s(e.degree).trim(),
+      field: s(e.field).trim(),
+      startDate: s(e.startDate).trim(),
+      endDate: s(e.endDate).trim(),
+      details: s(e.details).trim(),
+    }))
+    .filter((e) => e.institution || e.degree);
+
+  const skills: SkillGroup[] = (Array.isArray(obj.skills) ? obj.skills : [])
+    .map((r) => rec(r))
+    .map((g) => ({ id: uid("skl"), category: s(g.category).trim(), items: sArr(g.items) }))
+    .filter((g) => g.items.length);
+
+  const projects: ProjectItem[] = (Array.isArray(obj.projects) ? obj.projects : [])
+    .map((r) => rec(r))
+    .map((p) => ({
+      id: uid("prj"),
+      name: s(p.name).trim(),
+      role: s(p.role).trim(),
+      url: s(p.url).trim(),
+      startDate: s(p.startDate).trim(),
+      endDate: s(p.endDate).trim(),
+      highlights: sArr(p.highlights),
+    }))
+    .filter((p) => p.name || p.highlights.length);
+
+  const certifications: CertificationItem[] = (Array.isArray(obj.certifications) ? obj.certifications : [])
+    .map((r) => rec(r))
+    .map((c) => ({
+      id: uid("crt"),
+      name: s(c.name).trim(),
+      issuer: s(c.issuer).trim(),
+      date: s(c.date).trim(),
+      url: s(c.url).trim(),
+    }))
+    .filter((c) => c.name);
+
+  if (!basics.fullName) notes.push("The assistant did not return a name — please set it manually.");
+  if (!experience.length) notes.push("No experience entries were returned.");
+
+  return { basics, experience, education, skills, projects, certifications, notes };
+}

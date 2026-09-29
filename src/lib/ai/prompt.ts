@@ -61,3 +61,27 @@ export function buildUserPrompt(cv: CVData, jobDescription: string): string {
     SCHEMA_HINT,
   ].join("\n");
 }
+
+export const STRUCTURE_SYSTEM = `You convert the raw text of a CV/résumé into structured JSON.
+
+ABSOLUTE RULES (fact-grounding):
+- Use ONLY information that literally appears in the provided text. The text is the single source of truth.
+- NEVER invent, add, guess, or infer: names, employers, titles, dates, locations, degrees, institutions, skills, certifications, metrics, or contact details.
+- Do NOT translate, embellish, summarise beyond what is written, or add proficiency levels.
+- Preserve the person's name, email, and phone EXACTLY as written.
+- Keep each distinct bullet/achievement as its own "highlights" entry, verbatim (you may only strip leading bullet glyphs and surrounding whitespace).
+- Assign each experience/education/project/skill line to the correct field. If you cannot confidently classify something, omit it rather than guess.
+- If a field is absent from the text, use an empty string "" (or an empty array). Never fill it with a placeholder.
+- Output MUST be valid JSON only, matching the given schema. No markdown, no commentary.`;
+
+export function buildStructurePrompt(rawText: string): string {
+  return [
+    "RAW CV TEXT (the only allowed source of facts):",
+    "```",
+    rawText.trim(),
+    "```",
+    "",
+    "Extract the information above into structured JSON, obeying every fact-grounding rule.",
+    SCHEMA_HINT,
+  ].join("\n");
+}
