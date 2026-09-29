@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useViewStore } from "@/lib/store/viewStore";
-import { PROVIDERS } from "@/lib/ai/types";
+import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
 import { coerceSimulatedCV, gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
 import { RefineParseError } from "@/lib/ai/guardrails";
@@ -28,7 +28,7 @@ export function SimulateView() {
   const setView = useViewStore((s) => s.setView);
 
   const meta = PROVIDERS[provider];
-  const hasKey = Boolean(keys[provider]?.trim());
+  const hasKey = needsKey(provider) ? Boolean(keys[provider]?.trim()) : true;
   const Tpl = getTemplate(activeTemplate).Component;
 
   const [jd, setJd] = useState("");
@@ -40,7 +40,7 @@ export function SimulateView() {
 
   async function run() {
     if (!hasKey) {
-      setErr({ title: "No API key", body: `Add your ${meta.label} key in Settings first.` });
+      setErr({ title: "Not connected", body: `Connect ${meta.label} first.` });
       setPhase("error");
       return;
     }
@@ -53,7 +53,7 @@ export function SimulateView() {
       const res = await fetch("/api/ai/simulate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: keys[provider], model: models[provider], jobDescription: jd }),
+        body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
       });
       const data = (await res.json()) as RefineResponse;
       if (!data.ok || !data.raw) {

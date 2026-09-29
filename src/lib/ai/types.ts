@@ -7,21 +7,26 @@
  * server-side or sent to any third party other than the chosen provider.
  */
 
-export type ProviderId = "openai" | "anthropic";
+export type ProviderId = "openai" | "anthropic" | "claude-cli";
 
 export interface ProviderMeta {
   id: ProviderId;
   label: string;
-  /** Human label for the key, e.g. "sk-…". */
+  /** How the connection authenticates. "api" = BYO key; "cli" = local binary. */
+  kind: "api" | "cli";
+  /** Human label for the key, e.g. "sk-…". Empty for CLI providers. */
   keyHint: string;
   defaultModel: string;
   models: string[];
+  /** Short note shown in place of a key field for CLI providers. */
+  authHint?: string;
 }
 
 export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   openai: {
     id: "openai",
     label: "OpenAI (ChatGPT)",
+    kind: "api",
     keyHint: "sk-…",
     defaultModel: "gpt-4o",
     models: [
@@ -38,6 +43,7 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   anthropic: {
     id: "anthropic",
     label: "Anthropic (Claude)",
+    kind: "api",
     keyHint: "sk-ant-…",
     defaultModel: "claude-3-7-sonnet-latest",
     models: [
@@ -49,7 +55,26 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
       "claude-opus-4-0",
     ],
   },
+  "claude-cli": {
+    id: "claude-cli",
+    label: "Claude Code (CLI)",
+    kind: "cli",
+    keyHint: "",
+    authHint: "Uses your local Claude Code login — no API key needed.",
+    defaultModel: "sonnet",
+    models: ["sonnet", "opus", "haiku"],
+  },
 };
+
+/** True when a provider authenticates with a BYO API key (vs a local CLI login). */
+export function needsKey(provider: ProviderId): boolean {
+  return PROVIDERS[provider].kind === "api";
+}
+
+/** True when a provider is backed by a local command-line binary. */
+export function isCLI(provider: ProviderId): boolean {
+  return PROVIDERS[provider].kind === "cli";
+}
 
 /** Request payload posted to /api/ai/refine. */
 export interface RefineRequest {

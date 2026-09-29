@@ -20,15 +20,30 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       provider: "openai",
-      keys: { openai: "", anthropic: "" },
+      keys: { openai: "", anthropic: "", "claude-cli": "" },
       models: {
         openai: PROVIDERS.openai.defaultModel,
         anthropic: PROVIDERS.anthropic.defaultModel,
+        "claude-cli": PROVIDERS["claude-cli"].defaultModel,
       },
       setProvider: (p) => set({ provider: p }),
       setKey: (p, key) => set((s) => ({ keys: { ...s.keys, [p]: key } })),
       setModel: (p, model) => set((s) => ({ models: { ...s.models, [p]: model } })),
     }),
-    { name: "orire-settings-v1" }
+    {
+      name: "orire-settings-v1",
+      // Deep-merge so providers added after a user first persisted (e.g. the CLI
+      // connection) are backfilled with their defaults instead of coming back
+      // undefined.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<SettingsState>;
+        return {
+          ...current,
+          ...p,
+          keys: { ...current.keys, ...(p.keys ?? {}) },
+          models: { ...current.models, ...(p.models ?? {}) },
+        };
+      },
+    }
   )
 );

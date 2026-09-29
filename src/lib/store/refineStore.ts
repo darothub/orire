@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useCVStore } from "@/lib/store/cvStore";
-import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
 import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
@@ -72,10 +72,12 @@ interface RefineState {
 }
 
 const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
-const idleCols = (): Record<ProviderId, ColState> => ({
-  openai: { phase: "idle" },
-  anthropic: { phase: "idle" },
-});
+/** A provider is runnable when it's a CLI (local login) or has a BYO key set. */
+function providerReady(p: ProviderId, keys: Record<ProviderId, string>): boolean {
+  return needsKey(p) ? Boolean(keys[p]?.trim()) : true;
+}
+const idleCols = (): Record<ProviderId, ColState> =>
+  Object.fromEntries(PROVIDER_IDS.map((p) => [p, { phase: "idle" as ColPhase }])) as Record<ProviderId, ColState>;
 
 export const useRefineStore = create<RefineState>((set, get) => ({
   step: "connect",
@@ -126,7 +128,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     });
 
     for (const provider of runProviders) {
-      if (!keys[provider]?.trim()) {
+      if (!providerReady(provider, keys)) {
         set((s) => ({ cols: { ...s.cols, [provider]: { phase: "nokey" } } }));
         continue;
       }
@@ -136,7 +138,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
           const res = await fetch("/api/ai/refine", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ provider, apiKey: keys[provider], model: models[provider], jobDescription: jd, cv }),
+            body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd, cv }),
           });
           const data = (await res.json()) as RefineResponse;
           if (!data.ok || !data.raw) {
@@ -173,8 +175,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const done = PROVIDER_IDS.filter((p) => cols[p].phase === "done" && cols[p].result);
     if (done.length < 2) return;
     const { keys, models } = useSettingsStore.getState();
-    if (!keys[judgeProvider]?.trim()) {
-      set({ judgePhase: "error", judgeErr: { title: "No API key", body: `Add your ${PROVIDERS[judgeProvider].label} key first.` } });
+    if (!providerReady(judgeProvider, keys)) {
+      set({ judgePhase: "error", judgeErr: { title: "Not connected", body: `Connect ${PROVIDERS[judgeProvider].label} first.` } });
       return;
     }
     set({ judgePhase: "running", judgeErr: null, verdict: null });
@@ -183,7 +185,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       const res = await fetch("/api/ai/judge", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider: judgeProvider, apiKey: keys[judgeProvider], model: models[judgeProvider], jobDescription: jd, candidates }),
+        body: JSON.stringify({ provider: judgeProvider, apiKey: keys[judgeProvider] ?? "", model: models[judgeProvider], jobDescription: jd, candidates }),
       });
       const data = (await res.json()) as RefineResponse;
       if (!data.ok || !data.raw) {
@@ -206,10 +208,10 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const { keys, models } = useSettingsStore.getState();
     // Prefer a provider already used in the run; fall back to the judge provider.
     const provider =
-      runProviders.find((p) => keys[p]?.trim()) ??
-      (keys[judgeProvider]?.trim() ? judgeProvider : undefined);
+      runProviders.find((p) => providerReady(p, keys)) ??
+      (providerReady(judgeProvider, keys) ? judgeProvider : undefined);
     if (!provider) {
-      set({ idealPhase: "error", idealErr: { title: "No API key", body: "Add an API key to simulate the ideal candidate." } });
+      set({ idealPhase: "error", idealErr: { title: "Not connected", body: "Connect an assistant to simulate the ideal candidate." } });
       return;
     }
     set({ idealPhase: "running", idealErr: null, ideal: null });
@@ -217,7 +219,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       const res = await fetch("/api/ai/simulate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: keys[provider], model: models[provider], jobDescription: jd }),
+        body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
       });
       const data = (await res.json()) as RefineResponse;
       if (!data.ok || !data.raw) {

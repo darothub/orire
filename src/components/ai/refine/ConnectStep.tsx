@@ -3,12 +3,12 @@
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { ProviderSetup } from "@/components/ai/ProviderSetup";
-import { PROVIDERS } from "@/lib/ai/types";
+import { PROVIDERS, needsKey } from "@/lib/ai/types";
 
 export function ConnectStep({ onNext }: { onNext: () => void }) {
   const runProviders = useRefineStore((s) => s.runProviders);
   const keys = useSettingsStore((s) => s.keys);
-  const selectedMissingKey = runProviders.filter((p) => !keys[p]?.trim());
+  const selectedMissingKey = runProviders.filter((p) => needsKey(p) && !keys[p]?.trim());
   const ready = runProviders.length >= 1 && selectedMissingKey.length === 0;
 
   return (

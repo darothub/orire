@@ -4,20 +4,31 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRefineStore } from "@/lib/store/refineStore";
-import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, isCLI, type ProviderId } from "@/lib/ai/types";
 import type { ModelsResponse } from "@/app/api/ai/models/route";
+import type { CliStatus } from "@/app/api/ai/cli/route";
 
 const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
+const API_IDS = PROVIDER_IDS.filter((p) => !isCLI(p));
+const CLI_IDS = PROVIDER_IDS.filter((p) => isCLI(p));
 
 type FetchState = { phase: "idle" | "loading" | "done" | "error"; models: string[]; error?: string };
 
+function emptyRecord<T>(make: () => T): Record<ProviderId, T> {
+  return Object.fromEntries(PROVIDER_IDS.map((p) => [p, make()])) as Record<ProviderId, T>;
+}
+
 /**
- * Shared provider connection UI (BYO key). Used both as the standalone
- * "Connect" workspace and as the first step of the Refine module.
+ * Shared provider connection UI. Used both as the standalone "Connect" workspace
+ * and as the first step of the Refine module.
  *
- * When `selectable` is true, each provider card also carries a run toggle bound
- * to the Refine store — pick one assistant for a single tailored pass, or two to
- * compare them in parallel.
+ * Two connection kinds:
+ *   - API providers (OpenAI, Anthropic): BYO key + model discovery.
+ *   - CLI providers (Claude Code): no key — uses the local login; we probe the
+ *     binary for availability and offer model aliases.
+ *
+ * When `selectable` is true, each card carries a run toggle bound to the Refine
+ * store — pick one assistant for a single pass, or two to compare in parallel.
  */
 export function ProviderSetup({ selectable = false }: { selectable?: boolean }) {
   const keys = useSettingsStore((s) => s.keys);
@@ -28,13 +39,12 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
   const runProviders = useRefineStore((s) => s.runProviders);
   const toggleRunProvider = useRefineStore((s) => s.toggleRunProvider);
 
-  const [reveal, setReveal] = useState<Record<ProviderId, boolean>>({ openai: false, anthropic: false });
-  const [fetched, setFetched] = useState<Record<ProviderId, FetchState>>({
-    openai: { phase: "idle", models: [] },
-    anthropic: { phase: "idle", models: [] },
-  });
-  // Debounce auto-fetch so we don't hit the provider on every keystroke.
-  const timers = useRef<Record<ProviderId, ReturnType<typeof setTimeout> | null>>({ openai: null, anthropic: null });
+  const [reveal, setReveal] = useState<Record<ProviderId, boolean>>(() => emptyRecord(() => false));
+  const [fetched, setFetched] = useState<Record<ProviderId, FetchState>>(() =>
+    emptyRecord<FetchState>(() => ({ phase: "idle", models: [] }))
+  );
+  const [cli, setCli] = useState<{ phase: "idle" | "loading" | "done"; status?: CliStatus }>({ phase: "idle" });
+  const timers = useRef<Record<ProviderId, ReturnType<typeof setTimeout> | null>>(emptyRecord(() => null));
 
   const loadModels = async (p: ProviderId) => {
     const key = useSettingsStore.getState().keys[p]?.trim();
@@ -52,8 +62,6 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
         return;
       }
       setFetched((f) => ({ ...f, [p]: { phase: "done", models: data.models! } }));
-      // If the selected model isn't offered by this key, adopt a sensible default
-      // from the provider's real list (prevents not_found_error on a stale model).
       const current = useSettingsStore.getState().models[p];
       const list = data.models;
       if (list.length > 0 && !list.includes(current)) {
@@ -66,10 +74,10 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
     }
   };
 
-  // Auto-fetch once a key is present (and whenever it changes), debounced.
+  // Auto-fetch models once an API key is present (debounced).
   useEffect(() => {
     const t = timers.current;
-    for (const p of PROVIDER_IDS) {
+    for (const p of API_IDS) {
       const key = keys[p]?.trim();
       if (t[p]) clearTimeout(t[p]!);
       if (!key) {
@@ -79,16 +87,32 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
       t[p] = setTimeout(() => void loadModels(p), 600);
     }
     return () => {
-      for (const p of PROVIDER_IDS) if (t[p]) clearTimeout(t[p]!);
+      for (const p of API_IDS) if (t[p]) clearTimeout(t[p]!);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keys.openai, keys.anthropic]);
+
+  // Probe CLI availability once, if any CLI provider exists.
+  const probeCli = async () => {
+    setCli({ phase: "loading" });
+    try {
+      const res = await fetch("/api/ai/cli");
+      setCli({ phase: "done", status: (await res.json()) as CliStatus });
+    } catch (e) {
+      setCli({ phase: "done", status: { installed: false, error: e instanceof Error ? e.message : String(e) } });
+    }
+  };
+  useEffect(() => {
+    if (CLI_IDS.length > 0) void probeCli();
+  }, []);
 
   return (
     <div className="conn-grid">
       {PROVIDER_IDS.map((p, i) => {
         const meta = PROVIDERS[p];
-        const hasKey = Boolean(keys[p]?.trim());
+        const cliProvider = isCLI(p);
+        const cliReady = cliProvider && cli.phase === "done" && !!cli.status?.installed;
+        const connected = cliProvider ? cliReady : Boolean(keys[p]?.trim());
         const selected = runProviders.includes(p);
         return (
           <motion.div
@@ -102,6 +126,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
               <div className="conn-brand">
                 <span className={`conn-dot ${p}`} />
                 <strong>{meta.label}</strong>
+                {cliProvider && <span className="conn-tag">CLI</span>}
               </div>
               {selectable ? (
                 <button
@@ -111,49 +136,71 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                 >
                   {selected ? "Selected" : "Select"}
                 </button>
-              ) : hasKey ? (
+              ) : connected ? (
                 <span className="conn-ok">Connected</span>
               ) : (
-                <span className="conn-warn">No key</span>
+                <span className="conn-warn">{cliProvider ? "Not found" : "No key"}</span>
               )}
             </div>
 
-            <label className="conn-field">
-              <span className="ed-label">API key</span>
-              <div className="conn-key-row">
-                <input
-                  className="ed-input"
-                  type={reveal[p] ? "text" : "password"}
-                  value={keys[p] ?? ""}
-                  placeholder={meta.keyHint}
-                  autoComplete="off"
-                  spellCheck={false}
-                  onChange={(e) => setKey(p, e.target.value)}
-                />
-                <button
-                  className="conn-reveal"
-                  onClick={() => setReveal((r) => ({ ...r, [p]: !r[p] }))}
-                  aria-label={reveal[p] ? "Hide key" : "Show key"}
-                >
-                  {reveal[p] ? "Hide" : "Show"}
-                </button>
+            {cliProvider ? (
+              <div className="conn-field">
+                <span className="ed-label">Connection</span>
+                <div className="conn-cli-status">
+                  {cli.phase !== "done" ? (
+                    <span className="conn-hint">Checking for the Claude Code CLI…</span>
+                  ) : cli.status?.installed ? (
+                    <span className="conn-cli-ok">✓ {cli.status.version ?? "Claude Code"} detected</span>
+                  ) : (
+                    <span className="conn-cli-err">
+                      Not found — install Claude Code and sign in, then re-check.
+                      {cli.status?.error ? <em> ({cli.status.error})</em> : null}
+                    </span>
+                  )}
+                  <button className="conn-refresh" onClick={() => void probeCli()} disabled={cli.phase === "loading"} title="Re-check">
+                    {cli.phase === "loading" ? "…" : "↻"}
+                  </button>
+                </div>
+                <span className="conn-hint">{meta.authHint}</span>
               </div>
-            </label>
+            ) : (
+              <label className="conn-field">
+                <span className="ed-label">API key</span>
+                <div className="conn-key-row">
+                  <input
+                    className="ed-input"
+                    type={reveal[p] ? "text" : "password"}
+                    value={keys[p] ?? ""}
+                    placeholder={meta.keyHint}
+                    autoComplete="off"
+                    spellCheck={false}
+                    onChange={(e) => setKey(p, e.target.value)}
+                  />
+                  <button
+                    className="conn-reveal"
+                    onClick={() => setReveal((r) => ({ ...r, [p]: !r[p] }))}
+                    aria-label={reveal[p] ? "Hide key" : "Show key"}
+                  >
+                    {reveal[p] ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </label>
+            )}
 
             <label className="conn-field">
               <span className="ed-label">
                 Model
                 <span className="conn-hint">
                   {(() => {
+                    if (cliProvider) return " — alias (sonnet / opus / haiku) or a full model name";
                     const st = fetched[p];
-                    if (!hasKey) return " — add a key to load your models";
+                    if (!connected) return " — add a key to load your models";
                     if (st.phase === "loading") return " — loading your models…";
                     if (st.phase === "done") return ` — ${st.models.length} from your account`;
-                    if (st.phase === "error") return " — pick one or type any model ID";
                     return " — pick one or type any model ID";
                   })()}
                 </span>
-                {hasKey && (
+                {!cliProvider && connected && (
                   <button
                     type="button"
                     className="conn-refresh"
@@ -179,7 +226,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                   <option key={m} value={m} />
                 ))}
               </datalist>
-              {fetched[p].phase === "error" && fetched[p].error && (
+              {!cliProvider && fetched[p].phase === "error" && fetched[p].error && (
                 <span className="conn-model-err" title={fetched[p].error}>
                   Couldn’t load models: {fetched[p].error!.slice(0, 120)}
                 </span>

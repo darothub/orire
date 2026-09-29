@@ -5,7 +5,7 @@ import { useRefineStore } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useViewStore } from "@/lib/store/viewStore";
-import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
 
 export function JudgeBlock() {
   const cols = useRefineStore((s) => s.cols);
@@ -39,7 +39,7 @@ export function JudgeBlock() {
           <span className="cmp-judge-label">Let an LLM judge pick the best</span>
           <div className="cmp-judge-controls">
             <select className="ed-input cmp-judge-sel" value={judgeProvider} onChange={(e) => setJudgeProvider(e.target.value as ProviderId)}>
-              {runProviders.filter((p) => keys[p]?.trim()).map((p) => (
+              {runProviders.filter((p) => !needsKey(p) || keys[p]?.trim()).map((p) => (
                 <option key={p} value={p}>Judge: {PROVIDERS[p].label}</option>
               ))}
             </select>

@@ -1561,3 +1561,27 @@
 }
 .jdm-sec-add:hover { background: rgba(139,124,255,0.24); transform: translateY(-1px); }
 .ed-suggest-actions { display: flex; align-items: center; gap: 10px; }
+
+/* Claude Code (CLI) provider */
+.conn-dot.claude-cli { background: #c15f3c; }
+.conn-tag {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+.conn-cli-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+.conn-cli-ok { color: var(--accent); font-size: 12px; font-weight: 600; }
+.conn-cli-err { color: var(--accent-3); font-size: 12px; line-height: 1.4; }
+.conn-cli-err em { color: var(--faint); font-style: normal; }
