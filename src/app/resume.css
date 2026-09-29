@@ -1,0 +1,434 @@
+/* ===================== Resume engine base ===================== */
+.resume {
+  --bg: #ffffff;
+  --ink: #1a1d24;
+  --muted: #5b6472;
+  --soft: #3a3f52;
+  --a: #4b3ff0;
+  --rule: #e7e9ef;
+  --chip-bg: #f3f4f8;
+  --chip-bd: #e7e9ef;
+  --chip-ink: #4b5563;
+  --disp: var(--font-serif);
+  --body: var(--font-sans);
+  --name-size: 40px;
+  --name-color: var(--ink);
+  --h2-color: #7b8496;
+  --h2-size: 12px;
+  --h2-space: 2px;
+  --h2-transform: uppercase;
+  --h2-weight: 600;
+  --aside-w: 220px;
+  --pad: 56px 60px;
+  --header-align: left;
+
+  min-height: 1123px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  padding: var(--pad);
+}
+
+.r-header {
+  text-align: var(--header-align);
+  padding-bottom: 22px;
+  margin-bottom: 26px;
+  border-bottom: 1px solid var(--rule);
+}
+.r-name {
+  font-family: var(--disp);
+  font-size: var(--name-size);
+  line-height: 1.05;
+  letter-spacing: -0.5px;
+  color: var(--name-color);
+}
+.r-title {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--a);
+}
+.r-contact {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 13px;
+  color: var(--muted);
+  justify-content: var(--header-align);
+}
+.r-link {
+  color: var(--a);
+  text-decoration: none;
+}
+
+.r-grid {
+  display: grid;
+  gap: 40px;
+}
+.lay-aside-right .r-grid {
+  grid-template-columns: 1fr var(--aside-w);
+}
+.lay-aside-left .r-grid {
+  grid-template-columns: var(--aside-w) 1fr;
+}
+.r-main {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.r-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.r-h2 {
+  font-size: var(--h2-size);
+  letter-spacing: var(--h2-space);
+  text-transform: var(--h2-transform);
+  font-weight: var(--h2-weight);
+  color: var(--h2-color);
+  margin-bottom: 12px;
+}
+.r-summary {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--soft);
+}
+.r-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.r-role-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+.r-role-title {
+  font-family: var(--disp);
+  font-size: 17px;
+  color: var(--ink);
+}
+.r-dates {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex: none;
+}
+.r-co {
+  font-size: 13.5px;
+  color: var(--a);
+  margin-top: 1px;
+}
+.r-bullets {
+  margin-top: 10px;
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.r-bullets li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--soft);
+}
+.r-bullets li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--a);
+}
+.r-details {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.r-skillgroup + .r-skillgroup {
+  margin-top: 14px;
+}
+.r-skillcat {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+.r-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.r-chip {
+  font-size: 12px;
+  color: var(--chip-ink);
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-bd);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* ===================== Themes ===================== */
+
+/* 05 Slate — corporate blue, left accent rail */
+.t-slate {
+  --a: #2563eb;
+  --h2-color: #2563eb;
+  --disp: var(--font-sans);
+  --name-size: 34px;
+  border-left: 6px solid #2563eb;
+}
+.t-slate .r-name { font-weight: 800; letter-spacing: -0.8px; }
+
+/* 06 Ivory — warm cream, centered serif */
+.t-ivory {
+  --bg: #fbf7ef;
+  --ink: #2a2620;
+  --a: #a8743a;
+  --h2-color: #a8743a;
+  --rule: #e6ddcb;
+  --chip-bg: #f1e9d9;
+  --chip-bd: #e2d6bd;
+  --muted: #7a7264;
+  --soft: #45403a;
+  --header-align: center;
+  --name-size: 44px;
+}
+
+/* 07 Carbon — dark tech, cyan, mono headings */
+.t-carbon {
+  --bg: #0d1117;
+  --ink: #e6edf3;
+  --soft: #c3ccd6;
+  --muted: #8b949e;
+  --a: #22d3ee;
+  --h2-color: #22d3ee;
+  --rule: #21262d;
+  --chip-bg: #161b22;
+  --chip-bd: #2a3038;
+  --chip-ink: #b6c2cf;
+  --disp: var(--font-sans);
+}
+.t-carbon .r-h2 { font-family: ui-monospace, Menlo, monospace; }
+.t-carbon .r-role-title { font-weight: 700; }
+
+/* 08 Coral — soft peach, rounded, friendly (aside-left) */
+.t-coral {
+  --bg: #fff6f3;
+  --ink: #3b2a28;
+  --a: #ef5d7a;
+  --h2-color: #ef5d7a;
+  --rule: #f6ddd6;
+  --chip-bg: #ffe6de;
+  --chip-bd: #ffd2c6;
+  --chip-ink: #a24b47;
+  --soft: #5b4744;
+  --muted: #9b7f7a;
+  --disp: var(--font-sans);
+}
+.t-coral .r-name { font-weight: 800; }
+
+/* 09 Onyx — near-black minimal, uppercase tracking */
+.t-onyx {
+  --a: #111318;
+  --h2-color: #9aa0ab;
+  --ink: #111318;
+  --disp: var(--font-sans);
+  --name-size: 32px;
+  --h2-space: 3px;
+}
+.t-onyx .r-name { text-transform: uppercase; letter-spacing: 4px; font-weight: 700; font-size: 26px; }
+.t-onyx .r-co { color: #111318; font-weight: 600; }
+.t-onyx .r-bullets li::before { border-radius: 0; }
+
+/* 10 Verde — deep green + gold serif (aside-right) */
+.t-verde {
+  --bg: #ffffff;
+  --ink: #17251d;
+  --a: #1f6b46;
+  --h2-color: #1f6b46;
+  --rule: #d9e5dd;
+  --chip-bg: #eef4ef;
+  --chip-bd: #d3e2d7;
+  --chip-ink: #2f5a42;
+  --soft: #354b3f;
+  --muted: #6a7d70;
+}
+.t-verde .r-title { color: #b08a2e; }
+
+/* 11 Sapphire — royal blue gradient banner header */
+.t-sapphire {
+  --a: #1d4ed8;
+  --h2-color: #1d4ed8;
+  --rule: #dbe4f5;
+  --chip-bg: #eef3fd;
+  --chip-bd: #d3e0f7;
+  --chip-ink: #1e3a8a;
+  --pad: 0 0 56px;
+}
+.t-sapphire .r-header {
+  background: linear-gradient(120deg, #1d4ed8, #4f46e5);
+  color: #fff;
+  padding: 46px 60px;
+  border-bottom: none;
+  margin-bottom: 30px;
+}
+.t-sapphire .r-name { color: #fff; }
+.t-sapphire .r-title { color: #dbe4ff; }
+.t-sapphire .r-contact { color: #e5ecff; }
+.t-sapphire .r-link { color: #fff; text-decoration: underline; }
+.t-sapphire .r-main { padding: 0 60px; }
+
+/* 12 Marigold — editorial amber, huge display serif */
+.t-marigold {
+  --bg: #fffdf7;
+  --ink: #241f16;
+  --a: #d98a00;
+  --h2-color: #b46f00;
+  --rule: #ece2cb;
+  --chip-bg: #f7edd6;
+  --chip-bd: #e8d8b4;
+  --chip-ink: #8a6410;
+  --soft: #423a2b;
+  --muted: #8a7f66;
+  --name-size: 52px;
+}
+
+/* 13 Frost — icy light blue/gray (aside-left) */
+.t-frost {
+  --bg: #f7fafc;
+  --ink: #1f2933;
+  --a: #3b82a6;
+  --h2-color: #3b82a6;
+  --rule: #dbe6ec;
+  --chip-bg: #e8f1f5;
+  --chip-bd: #cfe0e8;
+  --chip-ink: #35657a;
+  --soft: #3a4652;
+  --muted: #78899a;
+  --disp: var(--font-sans);
+}
+
+/* 14 Crimson — bold red, condensed uppercase headings */
+.t-crimson {
+  --a: #dc2626;
+  --h2-color: #dc2626;
+  --rule: #f0d5d5;
+  --chip-bg: #fdeaea;
+  --chip-bd: #f6cccc;
+  --chip-ink: #a11d1d;
+  --disp: var(--font-sans);
+  --name-size: 38px;
+  --h2-space: 1.5px;
+}
+.t-crimson .r-name { font-weight: 800; text-transform: uppercase; letter-spacing: -0.5px; }
+.t-crimson .r-h2 { font-weight: 800; }
+
+/* 15 Nordic — muted desaturated, airy serif */
+.t-nordic {
+  --bg: #fbfbfa;
+  --ink: #2b2d2c;
+  --a: #6b7d76;
+  --h2-color: #98a29d;
+  --rule: #e7e8e5;
+  --chip-bg: #eef0ee;
+  --chip-bd: #dfe2df;
+  --chip-ink: #55605b;
+  --soft: #454a48;
+  --muted: #8d938f;
+  --pad: 64px 72px;
+  --name-size: 42px;
+}
+
+/* 16 Mono — pure monochrome typewriter */
+.t-mono {
+  --bg: #ffffff;
+  --ink: #111;
+  --a: #111;
+  --h2-color: #111;
+  --rule: #111;
+  --soft: #222;
+  --muted: #555;
+  --disp: ui-monospace, "SF Mono", Menlo, monospace;
+  --body: ui-monospace, "SF Mono", Menlo, monospace;
+  --name-size: 30px;
+  --h2-space: 2px;
+}
+.t-mono .r-chip { background: none; border: none; padding: 0 8px 0 0; border-radius: 0; }
+.t-mono .r-chips { gap: 0; }
+.t-mono .r-chip::after { content: "·"; margin-left: 8px; color: #999; }
+.t-mono .r-bullets li::before { content: "-"; background: none; width: auto; height: auto; top: 0; border-radius: 0; }
+
+/* 17 Plum — purple/magenta modern (aside-right) */
+.t-plum {
+  --a: #9333ea;
+  --h2-color: #9333ea;
+  --rule: #ecdcf7;
+  --chip-bg: #f6ecfd;
+  --chip-bd: #e6cdf7;
+  --chip-ink: #7222b3;
+  --soft: #3a3444;
+  --muted: #837a8f;
+  --disp: var(--font-sans);
+}
+.t-plum .r-name { font-weight: 800; }
+
+/* 18 Sand — desert neutral warm gray (aside-left) */
+.t-sand {
+  --bg: #faf7f2;
+  --ink: #33302a;
+  --a: #9a7b4f;
+  --h2-color: #9a7b4f;
+  --rule: #e8e1d5;
+  --chip-bg: #f0eae0;
+  --chip-bd: #e0d6c4;
+  --chip-ink: #6f5c3c;
+  --soft: #4a453c;
+  --muted: #8c8370;
+}
+
+/* 19 Aqua — teal, rounded chips */
+.t-aqua {
+  --a: #0d9488;
+  --h2-color: #0d9488;
+  --rule: #d3ece9;
+  --chip-bg: #e6f6f4;
+  --chip-bd: #c7e8e3;
+  --chip-ink: #0b7167;
+  --soft: #2f3d3b;
+  --muted: #6f8480;
+  --disp: var(--font-sans);
+}
+.t-aqua .r-name { font-weight: 800; }
+
+/* 20 Graphite — grayscale + single orange accent (aside-right) */
+.t-graphite {
+  --bg: #ffffff;
+  --ink: #1b1d21;
+  --a: #ea580c;
+  --h2-color: #6b7280;
+  --rule: #e5e7eb;
+  --chip-bg: #f3f4f6;
+  --chip-bd: #e5e7eb;
+  --chip-ink: #4b5563;
+  --soft: #363a42;
+  --muted: #6b7280;
+  --disp: var(--font-sans);
+}
+.t-graphite .r-name { font-weight: 800; letter-spacing: -0.8px; }
+.t-graphite .r-title { color: #ea580c; }
+.t-graphite .r-role-title { border-left: 3px solid #ea580c; padding-left: 10px; }
+
+/* Print: keep dark themes readable, avoid clipping */
+@media print {
+  .resume { min-height: auto; }
+}

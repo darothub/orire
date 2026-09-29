@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, MotionConfig } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { TEMPLATES } from "./registry";
 
@@ -32,7 +32,9 @@ export function TemplatePicker() {
               <div className="pick-thumb" aria-hidden>
                 <div className="pick-scale">
                   <div className="paper pick-paper">
-                    <t.Component cv={cv} />
+                    <MotionConfig reducedMotion="always">
+                      <t.Component cv={cv} />
+                    </MotionConfig>
                   </div>
                 </div>
               </div>
