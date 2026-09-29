@@ -157,33 +157,41 @@ export default function Home() {
           <Workspace mounted={mounted} />
         </section>
 
-        <motion.section
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut", delay: 0.05 }}
-          className="pane pane-preview"
-          aria-label="Live preview"
-        >
-          {mounted && <TemplatePicker />}
-          <div className="preview-stage">
-            <MotionConfig reducedMotion="user">
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.div
-                  key={active}
-                  initial={{ opacity: 0, y: 26, scale: 0.965, filter: "blur(6px)" }}
-                  animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, y: -18, scale: 0.975, filter: "blur(5px)" }}
-                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                  className={`paper${mounted && previewEdit ? " is-editing" : ""}`}
-                  id="cv-paper"
-                >
-                  {mounted && <ActiveTemplate cv={cv} />}
-                  <span key={`sweep-${active}`} className="tpl-sweep" aria-hidden />
-                </motion.div>
-              </AnimatePresence>
-            </MotionConfig>
-          </div>
-        </motion.section>
+        <MotionConfig reducedMotion="user">
+          <AnimatePresence initial={false}>
+            {!compareWide && (
+              <motion.section
+                key="preview"
+                initial={{ opacity: 0, x: "6%" }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: "100%" }}
+                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                className="pane pane-preview"
+                aria-label="Live preview"
+              >
+                {mounted && <TemplatePicker />}
+                <div className="preview-stage">
+                  <MotionConfig reducedMotion="user">
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      <motion.div
+                        key={active}
+                        initial={{ opacity: 0, y: 26, scale: 0.965, filter: "blur(6px)" }}
+                        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                        exit={{ opacity: 0, y: -18, scale: 0.975, filter: "blur(5px)" }}
+                        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                        className={`paper${mounted && previewEdit ? " is-editing" : ""}`}
+                        id="cv-paper"
+                      >
+                        {mounted && <ActiveTemplate cv={cv} />}
+                        <span key={`sweep-${active}`} className="tpl-sweep" aria-hidden />
+                      </motion.div>
+                    </AnimatePresence>
+                  </MotionConfig>
+                </div>
+              </motion.section>
+            )}
+          </AnimatePresence>
+        </MotionConfig>
       </main>
     </div>
   );

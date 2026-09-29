@@ -239,7 +239,11 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                 Model
                 <span className="conn-hint">
                   {(() => {
-                    if (cliProvider) return ` — ${meta.models.slice(0, 3).join(" / ")} or any model name`;
+                    if (cliProvider) {
+                      return meta.models.length > 0
+                        ? ` — ${meta.models.slice(0, 3).join(" / ")} or any model name`
+                        : " — leave blank to use the model your login exposes";
+                    }
                     const st = fetched[p];
                     if (!connected) return " — add a key to load your models";
                     if (st.phase === "loading") return " — loading your models…";
@@ -265,7 +269,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                 value={models[p]}
                 spellCheck={false}
                 autoComplete="off"
-                placeholder={meta.defaultModel}
+                placeholder={cliProvider && !meta.defaultModel ? "Assistant default" : meta.defaultModel}
                 onChange={(e) => setModel(p, e.target.value)}
               />
               <datalist id={`models-${p}`}>

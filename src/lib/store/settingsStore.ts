@@ -34,6 +34,17 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "orire-settings-v1",
+      version: 1,
+      // Drop a stale forced Codex model (gpt-5-codex) persisted before we
+      // switched CLI providers to the assistant's own default. Without this, a
+      // returning user keeps sending an unsupported model on ChatGPT-plan logins.
+      migrate: (persisted, version) => {
+        const s = (persisted ?? {}) as Partial<SettingsState>;
+        if (version < 1 && s.models && s.models["codex-cli"] === "gpt-5-codex") {
+          s.models = { ...s.models, "codex-cli": "" };
+        }
+        return s as SettingsState;
+      },
       // Deep-merge so providers added after a user first persisted (e.g. the CLI
       // connection) are backfilled with their defaults instead of coming back
       // undefined.

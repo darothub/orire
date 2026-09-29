@@ -74,8 +74,11 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
     keyHint: "",
     authHint: "Uses your local Codex login (`codex login`) — no API key needed.",
     cliBin: "codex",
-    defaultModel: "gpt-5-codex",
-    models: ["gpt-5-codex", "gpt-5", "o4-mini", "o3"],
+    // Empty = let Codex use the model your account/login exposes. ChatGPT-plan
+    // logins reject e.g. gpt-5-codex, so we never force a model; users may type
+    // one their account supports to override.
+    defaultModel: "",
+    models: [],
   },
 };
 

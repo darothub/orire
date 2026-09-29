@@ -135,11 +135,23 @@ body {
   display: grid;
   grid-template-columns: 76px minmax(380px, 42%) 1fr;
   min-height: 0;
+  position: relative;
+  overflow-x: clip;
   transition: grid-template-columns 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
-/* Compare focus: give the workspace pane most of the width, keep a slim preview. */
+/* Compare focus: the preview pane slides fully off-screen (AnimatePresence in
+   page.tsx unmounts it), so the workspace pane takes the full remaining width.
+   During its slide-out the pane is still in the DOM, so pin it absolutely to the
+   right edge and off grid flow so it doesn't fight the 2-column layout. */
 .workspace.is-compare {
-  grid-template-columns: 76px minmax(0, 1fr) minmax(240px, 26%);
+  grid-template-columns: 76px 1fr;
+}
+.workspace.is-compare .pane-preview {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 42%;
 }
 
 .pane {
