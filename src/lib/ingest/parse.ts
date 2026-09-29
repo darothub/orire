@@ -203,7 +203,7 @@ function finishEducation(lines: string[]): EducationItem | null {
     if (yearMatch) endDate = yearMatch[0];
   }
   const instIdx = text.findIndex((l) => INST_RE.test(l));
-  let institution = (instIdx >= 0 ? text[instIdx] : text[0]).replace(DATE_RANGE_RE, "").trim();
+  const institution = (instIdx >= 0 ? text[instIdx] : text[0]).replace(DATE_RANGE_RE, "").trim();
   const degLine = text.find((l, i) => i !== instIdx && DEGREE_RE.test(l));
   let degree = degLine ? degLine.replace(DATE_RANGE_RE, "").trim() : "";
   if (!degree && instIdx !== 0 && text[0] !== institution) {

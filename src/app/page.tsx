@@ -25,6 +25,10 @@ export default function Home() {
   const [rating, setRating] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
+  // Intentional one-shot hydration guard: render the client-only editor after
+  // mount so SSR and first client render match. This is the sanctioned use of
+  // setState-in-effect, not a data-sync mistake.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const cv = useCVStore((s) => s.cv);
