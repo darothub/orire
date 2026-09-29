@@ -12,6 +12,8 @@ import { ComparePanel } from "@/components/ai/ComparePanel";
 import { RatingPanel } from "@/components/ai/RatingPanel";
 import { SimulatePanel } from "@/components/ai/SimulatePanel";
 import { getTemplate } from "@/components/templates/registry";
+import { ProgressPanel } from "@/components/ProgressPanel";
+import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 
 export default function Home() {
@@ -22,11 +24,14 @@ export default function Home() {
   const [comparing, setComparing] = useState(false);
   const [rating, setRating] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const cv = useCVStore((s) => s.cv);
   const active = useCVStore((s) => s.activeTemplate);
   const reset = useCVStore((s) => s.reset);
+  const previewEdit = useUIStore((s) => s.previewEdit);
+  const togglePreviewEdit = useUIStore((s) => s.togglePreviewEdit);
 
   const tpl = getTemplate(active);
   const ActiveTemplate = tpl.Component;
@@ -56,12 +61,21 @@ export default function Home() {
         </div>
         <div className="app-actions">
           <span className="template-pill">{mounted ? tpl.name : "—"}</span>
+          <button
+            className={`btn-ghost${mounted && previewEdit ? " is-active" : ""}`}
+            onClick={togglePreviewEdit}
+            aria-pressed={mounted && previewEdit}
+            title="Click text on the preview to edit it in place"
+          >
+            {mounted && previewEdit ? "Editing preview" : "Edit on preview"}
+          </button>
           <button className="btn-ghost" onClick={() => setRefining(true)}>Refine to JD</button>
           <button className="btn-ghost" onClick={() => setComparing(true)}>Compare</button>
           <button className="btn-ghost" onClick={() => setRating(true)}>Rate</button>
           <button className="btn-ghost" onClick={() => setSimulating(true)}>Simulate</button>
           <button className="btn-ghost" onClick={() => setImporting(true)}>Import CV</button>
           <button className="btn-ghost" onClick={() => setSettingsOpen(true)}>Settings</button>
+          <button className="btn-ghost" onClick={() => setProgressOpen(true)}>Progress</button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
           <button className="btn-primary" onClick={exportPDF}>Export PDF</button>
         </div>
@@ -106,7 +120,7 @@ export default function Home() {
                   animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
                   exit={{ opacity: 0, y: -18, scale: 0.975, filter: "blur(5px)" }}
                   transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                  className="paper"
+                  className={`paper${mounted && previewEdit ? " is-editing" : ""}`}
                   id="cv-paper"
                 >
                   {mounted && <ActiveTemplate cv={cv} />}
@@ -140,6 +154,7 @@ export default function Home() {
           />
         )}
         {rating && <RatingPanel onClose={() => setRating(false)} />}
+        {progressOpen && <ProgressPanel onClose={() => setProgressOpen(false)} />}
         {simulating && (
           <SimulatePanel
             onClose={() => setSimulating(false)}

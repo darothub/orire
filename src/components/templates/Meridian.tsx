@@ -3,19 +3,37 @@
 import { motion } from "framer-motion";
 import type { CVData, SectionKey } from "@/lib/cv/schema";
 import { container, item, dateRange, normalizedHref } from "./shared";
+import { EditableText } from "./EditableText";
+import { useCVStore } from "@/lib/store/cvStore";
+import { useUIStore } from "@/lib/store/uiStore";
 
 /** Meridian — Swiss minimalist: mono labels, hairline rules, gutter-aligned dates. */
 export function Meridian({ cv }: { cv: CVData }) {
   const { basics } = cv;
+  const previewEdit = useUIStore((s) => s.previewEdit);
+  const setBasics = useCVStore((s) => s.setBasics);
+  const updateExperience = useCVStore((s) => s.updateExperience);
+  const setHighlight = useCVStore((s) => s.setHighlight);
+  const updateEducation = useCVStore((s) => s.updateEducation);
+  const updateProject = useCVStore((s) => s.updateProject);
+  const setProjectHighlight = useCVStore((s) => s.setProjectHighlight);
+  const updateCertification = useCVStore((s) => s.updateCertification);
   const num = (key: SectionKey) => String(cv.order.indexOf(key) + 1).padStart(2, "0");
 
   const section = (key: SectionKey) => {
     switch (key) {
       case "summary":
-        return basics.summary ? (
+        return basics.summary || previewEdit ? (
           <motion.section key="summary" variants={item} layout className="md-row">
             <div className="md-label">{num("summary")} — Profile</div>
-            <p className="md-summary">{basics.summary}</p>
+            <EditableText
+              as="p"
+              className="md-summary"
+              value={basics.summary}
+              placeholder="Write a short professional summary…"
+              multiline
+              onCommit={(v) => setBasics({ summary: v })}
+            />
           </motion.section>
         ) : null;
       case "experience":
@@ -27,16 +45,36 @@ export function Meridian({ cv }: { cv: CVData }) {
                 <motion.div key={exp.id} variants={item} layout className="md-entry">
                   <div className="md-meta">{dateRange(exp.startDate, exp.endDate, exp.current)}</div>
                   <div className="md-entry-body">
-                    <p className="md-title">{exp.role || "Role"}</p>
+                    <EditableText
+                      as="p"
+                      className="md-title"
+                      value={exp.role}
+                      placeholder="Role"
+                      onCommit={(v) => updateExperience(exp.id, { role: v })}
+                    />
                     <p className="md-co">
-                      {exp.company}
+                      <EditableText
+                        as="span"
+                        value={exp.company}
+                        placeholder="Company"
+                        onCommit={(v) => updateExperience(exp.id, { company: v })}
+                      />
                       {exp.location ? `, ${exp.location}` : ""}
                     </p>
-                    {exp.highlights.filter(Boolean).length > 0 && (
+                    {(exp.highlights.filter(Boolean).length > 0 || previewEdit) && (
                       <ul className="md-bullets">
-                        {exp.highlights.filter(Boolean).map((h, i) => (
-                          <li key={i}>{h}</li>
-                        ))}
+                        {exp.highlights.map((h, i) =>
+                          h || previewEdit ? (
+                            <EditableText
+                              as="li"
+                              key={i}
+                              value={h}
+                              placeholder="Achievement…"
+                              multiline
+                              onCommit={(v) => setHighlight(exp.id, i, v)}
+                            />
+                          ) : null,
+                        )}
                       </ul>
                     )}
                   </div>
@@ -55,10 +93,21 @@ export function Meridian({ cv }: { cv: CVData }) {
                   <div className="md-meta">{dateRange(ed.startDate, ed.endDate)}</div>
                   <div className="md-entry-body">
                     <p className="md-title">
-                      {ed.degree}
+                      <EditableText
+                        as="span"
+                        value={ed.degree}
+                        placeholder="Degree"
+                        onCommit={(v) => updateEducation(ed.id, { degree: v })}
+                      />
                       {ed.field ? `, ${ed.field}` : ""}
                     </p>
-                    <p className="md-co">{ed.institution}</p>
+                    <EditableText
+                      as="p"
+                      className="md-co"
+                      value={ed.institution}
+                      placeholder="Institution"
+                      onCommit={(v) => updateEducation(ed.id, { institution: v })}
+                    />
                     {ed.details && <p className="md-details">{ed.details}</p>}
                   </div>
                 </motion.div>
@@ -75,7 +124,13 @@ export function Meridian({ cv }: { cv: CVData }) {
                 <motion.div key={prj.id} variants={item} layout className="md-entry">
                   <div className="md-meta">{dateRange(prj.startDate, prj.endDate)}</div>
                   <div className="md-entry-body">
-                    <p className="md-title">{prj.name || "Project"}</p>
+                    <EditableText
+                      as="p"
+                      className="md-title"
+                      value={prj.name}
+                      placeholder="Project"
+                      onCommit={(v) => updateProject(prj.id, { name: v })}
+                    />
                     {(prj.role || prj.url) && (
                       <p className="md-co">
                         {prj.role}
@@ -85,11 +140,20 @@ export function Meridian({ cv }: { cv: CVData }) {
                         )}
                       </p>
                     )}
-                    {prj.highlights.filter(Boolean).length > 0 && (
+                    {(prj.highlights.filter(Boolean).length > 0 || previewEdit) && (
                       <ul className="md-bullets">
-                        {prj.highlights.filter(Boolean).map((h, i) => (
-                          <li key={i}>{h}</li>
-                        ))}
+                        {prj.highlights.map((h, i) =>
+                          h || previewEdit ? (
+                            <EditableText
+                              as="li"
+                              key={i}
+                              value={h}
+                              placeholder="Detail…"
+                              multiline
+                              onCommit={(v) => setProjectHighlight(prj.id, i, v)}
+                            />
+                          ) : null,
+                        )}
                       </ul>
                     )}
                   </div>
@@ -111,10 +175,23 @@ export function Meridian({ cv }: { cv: CVData }) {
                       {crt.url ? (
                         <a href={normalizedHref(crt.url)} className="md-link">{crt.name || "Certification"}</a>
                       ) : (
-                        crt.name || "Certification"
+                        <EditableText
+                          as="span"
+                          value={crt.name}
+                          placeholder="Certification"
+                          onCommit={(v) => updateCertification(crt.id, { name: v })}
+                        />
                       )}
                     </p>
-                    {crt.issuer && <p className="md-co">{crt.issuer}</p>}
+                    {(crt.issuer || previewEdit) && (
+                      <EditableText
+                        as="p"
+                        className="md-co"
+                        value={crt.issuer ?? ""}
+                        placeholder="Issuer"
+                        onCommit={(v) => updateCertification(crt.id, { issuer: v })}
+                      />
+                    )}
                   </div>
                 </div>
               ))}
@@ -146,8 +223,22 @@ export function Meridian({ cv }: { cv: CVData }) {
     <motion.article variants={container} initial="hidden" animate="show" className="meridian" aria-label="CV preview">
       <motion.header variants={item} layout className="md-header">
         <div>
-          <h1 className="md-name">{basics.fullName || "Your Name"}</h1>
-          {basics.title && <p className="md-role">{basics.title}</p>}
+          <EditableText
+            as="h1"
+            className="md-name"
+            value={basics.fullName}
+            placeholder="Your Name"
+            onCommit={(v) => setBasics({ fullName: v })}
+          />
+          {(basics.title || previewEdit) && (
+            <EditableText
+              as="p"
+              className="md-role"
+              value={basics.title}
+              placeholder="Your professional title"
+              onCommit={(v) => setBasics({ title: v })}
+            />
+          )}
         </div>
         <div className="md-contact">
           {[basics.location, basics.email, basics.phone].filter(Boolean).map((c, i) => (

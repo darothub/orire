@@ -3,6 +3,9 @@
 import { motion } from "framer-motion";
 import type { CVData, SectionKey } from "@/lib/cv/schema";
 import { container, item, dateRange, normalizedHref } from "./shared";
+import { EditableText } from "./EditableText";
+import { useCVStore } from "@/lib/store/cvStore";
+import { useUIStore } from "@/lib/store/uiStore";
 
 export type Layout = "single" | "aside-left" | "aside-right";
 
@@ -22,6 +25,15 @@ export function Resume({
 }) {
   const { basics } = cv;
   const hasAside = layout !== "single";
+  const previewEdit = useUIStore((s) => s.previewEdit);
+  const setBasics = useCVStore((s) => s.setBasics);
+  const updateExperience = useCVStore((s) => s.updateExperience);
+  const setHighlight = useCVStore((s) => s.setHighlight);
+  const updateEducation = useCVStore((s) => s.updateEducation);
+  const updateProject = useCVStore((s) => s.updateProject);
+  const setProjectHighlight = useCVStore((s) => s.setProjectHighlight);
+  const updateCertification = useCVStore((s) => s.updateCertification);
+  const updateSkillGroup = useCVStore((s) => s.updateSkillGroup);
 
   const Skills = cv.skills.length && cv.order.includes("skills") ? (
     <motion.section variants={item} layout className="r-section r-skills-sec">
@@ -29,7 +41,13 @@ export function Resume({
       <div className="r-skills">
         {cv.skills.map((g) => (
           <div key={g.id} className="r-skillgroup">
-            <p className="r-skillcat">{g.category}</p>
+            <EditableText
+              as="p"
+              className="r-skillcat"
+              value={g.category}
+              placeholder="Category"
+              onCommit={(v) => updateSkillGroup(g.id, { category: v })}
+            />
             <div className="r-chips">
               {g.items.map((s, i) => (
                 <span key={i} className="r-chip">{s}</span>
@@ -44,10 +62,17 @@ export function Resume({
   const section = (key: SectionKey) => {
     switch (key) {
       case "summary":
-        return basics.summary ? (
+        return basics.summary || previewEdit ? (
           <motion.section key="summary" variants={item} layout className="r-section">
             <h2 className="r-h2">Profile</h2>
-            <p className="r-summary">{basics.summary}</p>
+            <EditableText
+              as="p"
+              className="r-summary"
+              value={basics.summary}
+              placeholder="Write a short professional summary…"
+              multiline
+              onCommit={(v) => setBasics({ summary: v })}
+            />
           </motion.section>
         ) : null;
       case "experience":
@@ -58,18 +83,38 @@ export function Resume({
               {cv.experience.map((exp) => (
                 <motion.div key={exp.id} variants={item} layout className="r-role">
                   <div className="r-role-top">
-                    <p className="r-role-title">{exp.role || "Role"}</p>
+                    <EditableText
+                      as="p"
+                      className="r-role-title"
+                      value={exp.role}
+                      placeholder="Role"
+                      onCommit={(v) => updateExperience(exp.id, { role: v })}
+                    />
                     <span className="r-dates">{dateRange(exp.startDate, exp.endDate, exp.current)}</span>
                   </div>
                   <p className="r-co">
-                    {exp.company}
+                    <EditableText
+                      as="span"
+                      value={exp.company}
+                      placeholder="Company"
+                      onCommit={(v) => updateExperience(exp.id, { company: v })}
+                    />
                     {exp.location ? ` · ${exp.location}` : ""}
                   </p>
-                  {exp.highlights.filter(Boolean).length > 0 && (
+                  {(exp.highlights.filter(Boolean).length > 0 || previewEdit) && (
                     <ul className="r-bullets">
-                      {exp.highlights.filter(Boolean).map((h, i) => (
-                        <li key={i}>{h}</li>
-                      ))}
+                      {exp.highlights.map((h, i) =>
+                        h || previewEdit ? (
+                          <EditableText
+                            as="li"
+                            key={i}
+                            value={h}
+                            placeholder="Achievement…"
+                            multiline
+                            onCommit={(v) => setHighlight(exp.id, i, v)}
+                          />
+                        ) : null,
+                      )}
                     </ul>
                   )}
                 </motion.div>
@@ -86,12 +131,23 @@ export function Resume({
                 <motion.div key={ed.id} variants={item} layout className="r-role">
                   <div className="r-role-top">
                     <p className="r-role-title">
-                      {ed.degree}
+                      <EditableText
+                        as="span"
+                        value={ed.degree}
+                        placeholder="Degree"
+                        onCommit={(v) => updateEducation(ed.id, { degree: v })}
+                      />
                       {ed.field ? ` · ${ed.field}` : ""}
                     </p>
                     <span className="r-dates">{dateRange(ed.startDate, ed.endDate)}</span>
                   </div>
-                  <p className="r-co">{ed.institution}</p>
+                  <EditableText
+                    as="p"
+                    className="r-co"
+                    value={ed.institution}
+                    placeholder="Institution"
+                    onCommit={(v) => updateEducation(ed.id, { institution: v })}
+                  />
                   {ed.details && <p className="r-details">{ed.details}</p>}
                 </motion.div>
               ))}
@@ -106,7 +162,13 @@ export function Resume({
               {cv.projects.map((prj) => (
                 <motion.div key={prj.id} variants={item} layout className="r-role">
                   <div className="r-role-top">
-                    <p className="r-role-title">{prj.name || "Project"}</p>
+                    <EditableText
+                      as="p"
+                      className="r-role-title"
+                      value={prj.name}
+                      placeholder="Project"
+                      onCommit={(v) => updateProject(prj.id, { name: v })}
+                    />
                     <span className="r-dates">{dateRange(prj.startDate, prj.endDate)}</span>
                   </div>
                   {(prj.role || prj.url) && (
@@ -120,11 +182,20 @@ export function Resume({
                       )}
                     </p>
                   )}
-                  {prj.highlights.filter(Boolean).length > 0 && (
+                  {(prj.highlights.filter(Boolean).length > 0 || previewEdit) && (
                     <ul className="r-bullets">
-                      {prj.highlights.filter(Boolean).map((h, i) => (
-                        <li key={i}>{h}</li>
-                      ))}
+                      {prj.highlights.map((h, i) =>
+                        h || previewEdit ? (
+                          <EditableText
+                            as="li"
+                            key={i}
+                            value={h}
+                            placeholder="Detail…"
+                            multiline
+                            onCommit={(v) => setProjectHighlight(prj.id, i, v)}
+                          />
+                        ) : null,
+                      )}
                     </ul>
                   )}
                 </motion.div>
@@ -146,10 +217,23 @@ export function Resume({
                           {crt.name || "Certification"}
                         </a>
                       ) : (
-                        crt.name || "Certification"
+                        <EditableText
+                          as="span"
+                          value={crt.name}
+                          placeholder="Certification"
+                          onCommit={(v) => updateCertification(crt.id, { name: v })}
+                        />
                       )}
                     </p>
-                    {crt.issuer && <p className="r-cert-issuer">{crt.issuer}</p>}
+                    {(crt.issuer || previewEdit) && (
+                      <EditableText
+                        as="p"
+                        className="r-cert-issuer"
+                        value={crt.issuer ?? ""}
+                        placeholder="Issuer"
+                        onCommit={(v) => updateCertification(crt.id, { issuer: v })}
+                      />
+                    )}
                   </div>
                   {crt.date && <span className="r-dates">{crt.date}</span>}
                 </motion.div>
@@ -166,8 +250,22 @@ export function Resume({
 
   const header = (
     <motion.header variants={item} layout className="r-header">
-      <h1 className="r-name">{basics.fullName || "Your Name"}</h1>
-      {basics.title && <p className="r-title">{basics.title}</p>}
+      <EditableText
+        as="h1"
+        className="r-name"
+        value={basics.fullName}
+        placeholder="Your Name"
+        onCommit={(v) => setBasics({ fullName: v })}
+      />
+      {(basics.title || previewEdit) && (
+        <EditableText
+          as="p"
+          className="r-title"
+          value={basics.title}
+          placeholder="Your professional title"
+          onCommit={(v) => setBasics({ title: v })}
+        />
+      )}
       <div className="r-contact">
         {[basics.location, basics.email, basics.phone].filter(Boolean).map((c, i) => (
           <span key={i}>{c}</span>

@@ -3,18 +3,37 @@
 import { motion } from "framer-motion";
 import type { CVData, SectionKey } from "@/lib/cv/schema";
 import { container, item, dateRange, normalizedHref } from "./shared";
+import { EditableText } from "./EditableText";
+import { useCVStore } from "@/lib/store/cvStore";
+import { useUIStore } from "@/lib/store/uiStore";
 
 /** Aurora — editorial light, luminous gradient spine, two-column rhythm. */
 export function Aurora({ cv }: { cv: CVData }) {
   const { basics } = cv;
+  const previewEdit = useUIStore((s) => s.previewEdit);
+  const setBasics = useCVStore((s) => s.setBasics);
+  const updateExperience = useCVStore((s) => s.updateExperience);
+  const setHighlight = useCVStore((s) => s.setHighlight);
+  const updateEducation = useCVStore((s) => s.updateEducation);
+  const updateProject = useCVStore((s) => s.updateProject);
+  const setProjectHighlight = useCVStore((s) => s.setProjectHighlight);
+  const updateCertification = useCVStore((s) => s.updateCertification);
+  const updateSkillGroup = useCVStore((s) => s.updateSkillGroup);
 
   const renderSection = (key: SectionKey) => {
     switch (key) {
       case "summary":
-        return basics.summary ? (
+        return basics.summary || previewEdit ? (
           <motion.section key="summary" variants={item} layout className="au-block">
             <h2 className="au-h2">Profile</h2>
-            <p className="au-summary">{basics.summary}</p>
+            <EditableText
+              as="p"
+              className="au-summary"
+              value={basics.summary}
+              placeholder="Write a short professional summary…"
+              multiline
+              onCommit={(v) => setBasics({ summary: v })}
+            />
           </motion.section>
         ) : null;
       case "experience":
@@ -26,19 +45,39 @@ export function Aurora({ cv }: { cv: CVData }) {
                 <motion.div key={exp.id} variants={item} layout className="au-role">
                   <div className="au-role-head">
                     <div>
-                      <p className="au-role-title">{exp.role || "Role"}</p>
+                      <EditableText
+                        as="p"
+                        className="au-role-title"
+                        value={exp.role}
+                        placeholder="Role"
+                        onCommit={(v) => updateExperience(exp.id, { role: v })}
+                      />
                       <p className="au-role-co">
-                        {exp.company}
+                        <EditableText
+                          as="span"
+                          value={exp.company}
+                          placeholder="Company"
+                          onCommit={(v) => updateExperience(exp.id, { company: v })}
+                        />
                         {exp.location ? ` · ${exp.location}` : ""}
                       </p>
                     </div>
                     <span className="au-dates">{dateRange(exp.startDate, exp.endDate, exp.current)}</span>
                   </div>
-                  {exp.highlights.filter(Boolean).length > 0 && (
+                  {(exp.highlights.filter(Boolean).length > 0 || previewEdit) && (
                     <ul className="au-bullets">
-                      {exp.highlights.filter(Boolean).map((h, i) => (
-                        <li key={i}>{h}</li>
-                      ))}
+                      {exp.highlights.map((h, i) =>
+                        h || previewEdit ? (
+                          <EditableText
+                            as="li"
+                            key={i}
+                            value={h}
+                            placeholder="Achievement…"
+                            multiline
+                            onCommit={(v) => setHighlight(exp.id, i, v)}
+                          />
+                        ) : null,
+                      )}
                     </ul>
                   )}
                 </motion.div>
@@ -55,10 +94,21 @@ export function Aurora({ cv }: { cv: CVData }) {
                 <div className="au-role-head">
                   <div>
                     <p className="au-role-title">
-                      {ed.degree}
+                      <EditableText
+                        as="span"
+                        value={ed.degree}
+                        placeholder="Degree"
+                        onCommit={(v) => updateEducation(ed.id, { degree: v })}
+                      />
                       {ed.field ? ` · ${ed.field}` : ""}
                     </p>
-                    <p className="au-role-co">{ed.institution}</p>
+                    <EditableText
+                      as="p"
+                      className="au-role-co"
+                      value={ed.institution}
+                      placeholder="Institution"
+                      onCommit={(v) => updateEducation(ed.id, { institution: v })}
+                    />
                   </div>
                   <span className="au-dates">{dateRange(ed.startDate, ed.endDate)}</span>
                 </div>
@@ -76,7 +126,13 @@ export function Aurora({ cv }: { cv: CVData }) {
                 <motion.div key={prj.id} variants={item} layout className="au-role">
                   <div className="au-role-head">
                     <div>
-                      <p className="au-role-title">{prj.name || "Project"}</p>
+                      <EditableText
+                        as="p"
+                        className="au-role-title"
+                        value={prj.name}
+                        placeholder="Project"
+                        onCommit={(v) => updateProject(prj.id, { name: v })}
+                      />
                       {(prj.role || prj.url) && (
                         <p className="au-role-co">
                           {prj.role}
@@ -89,11 +145,20 @@ export function Aurora({ cv }: { cv: CVData }) {
                     </div>
                     <span className="au-dates">{dateRange(prj.startDate, prj.endDate)}</span>
                   </div>
-                  {prj.highlights.filter(Boolean).length > 0 && (
+                  {(prj.highlights.filter(Boolean).length > 0 || previewEdit) && (
                     <ul className="au-bullets">
-                      {prj.highlights.filter(Boolean).map((h, i) => (
-                        <li key={i}>{h}</li>
-                      ))}
+                      {prj.highlights.map((h, i) =>
+                        h || previewEdit ? (
+                          <EditableText
+                            as="li"
+                            key={i}
+                            value={h}
+                            placeholder="Detail…"
+                            multiline
+                            onCommit={(v) => setProjectHighlight(prj.id, i, v)}
+                          />
+                        ) : null,
+                      )}
                     </ul>
                   )}
                 </motion.div>
@@ -113,10 +178,23 @@ export function Aurora({ cv }: { cv: CVData }) {
                       {crt.url ? (
                         <a href={normalizedHref(crt.url)} className="au-link">{crt.name || "Certification"}</a>
                       ) : (
-                        crt.name || "Certification"
+                        <EditableText
+                          as="span"
+                          value={crt.name}
+                          placeholder="Certification"
+                          onCommit={(v) => updateCertification(crt.id, { name: v })}
+                        />
                       )}
                     </p>
-                    {crt.issuer && <p className="au-role-co">{crt.issuer}</p>}
+                    {(crt.issuer || previewEdit) && (
+                      <EditableText
+                        as="p"
+                        className="au-role-co"
+                        value={crt.issuer ?? ""}
+                        placeholder="Issuer"
+                        onCommit={(v) => updateCertification(crt.id, { issuer: v })}
+                      />
+                    )}
                   </div>
                   {crt.date && <span className="au-dates">{crt.date}</span>}
                 </div>
@@ -132,8 +210,22 @@ export function Aurora({ cv }: { cv: CVData }) {
   return (
     <motion.article variants={container} initial="hidden" animate="show" className="aurora" aria-label="CV preview">
       <motion.header variants={item} layout className="au-header">
-        <h1 className="au-name">{basics.fullName || "Your Name"}</h1>
-        {basics.title && <p className="au-title">{basics.title}</p>}
+        <EditableText
+          as="h1"
+          className="au-name"
+          value={basics.fullName}
+          placeholder="Your Name"
+          onCommit={(v) => setBasics({ fullName: v })}
+        />
+        {(basics.title || previewEdit) && (
+          <EditableText
+            as="p"
+            className="au-title"
+            value={basics.title}
+            placeholder="Your professional title"
+            onCommit={(v) => setBasics({ title: v })}
+          />
+        )}
         <div className="au-contact">
           {[basics.location, basics.email, basics.phone].filter(Boolean).map((c, i) => (
             <span key={i}>{c}</span>
@@ -154,7 +246,13 @@ export function Aurora({ cv }: { cv: CVData }) {
               <h2 className="au-h2">Skills</h2>
               {cv.skills.map((g) => (
                 <motion.div key={g.id} variants={item} layout className="au-skillgroup">
-                  <p className="au-skillcat">{g.category}</p>
+                  <EditableText
+                    as="p"
+                    className="au-skillcat"
+                    value={g.category}
+                    placeholder="Category"
+                    onCommit={(v) => updateSkillGroup(g.id, { category: v })}
+                  />
                   <div className="au-chips">
                     {g.items.map((s, i) => (
                       <span key={i} className="au-chip">{s}</span>
