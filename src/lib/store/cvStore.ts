@@ -57,6 +57,7 @@ interface CVState {
 
   setTemplate: (id: string) => void;
   setOrder: (order: CVData["order"]) => void;
+  toggleSection: (key: SectionKey) => void;
   applyImport: (parsed: ParsedCV, mode: ImportMode) => void;
   reset: () => void;
 }
@@ -200,6 +201,25 @@ export const useCVStore = create<CVState>()(
 
       setTemplate: (id) => set({ activeTemplate: id }),
       setOrder: (order) => set((s) => ({ cv: { ...s.cv, order } })),
+      toggleSection: (key) =>
+        set((s) => {
+          const present = s.cv.order.includes(key);
+          if (present) {
+            return { cv: { ...s.cv, order: s.cv.order.filter((k) => k !== key) } };
+          }
+          // Re-insert at its canonical position so placement stays sensible.
+          const canonicalIdx = ALL_SECTIONS.indexOf(key);
+          const next = [...s.cv.order];
+          let insertAt = next.length;
+          for (let i = 0; i < next.length; i++) {
+            if (ALL_SECTIONS.indexOf(next[i]) > canonicalIdx) {
+              insertAt = i;
+              break;
+            }
+          }
+          next.splice(insertAt, 0, key);
+          return { cv: { ...s.cv, order: next } };
+        }),
 
       applyImport: (parsed, mode) =>
         set((s) => {

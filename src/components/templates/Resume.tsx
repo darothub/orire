@@ -23,7 +23,7 @@ export function Resume({
   const { basics } = cv;
   const hasAside = layout !== "single";
 
-  const Skills = cv.skills.length ? (
+  const Skills = cv.skills.length && cv.order.includes("skills") ? (
     <motion.section variants={item} layout className="r-section r-skills-sec">
       <h2 className="r-h2">Skills</h2>
       <div className="r-skills">
@@ -182,7 +182,8 @@ export function Resume({
   );
 
   const main = <div className="r-main">{cv.order.map(section)}</div>;
-  const aside = hasAside ? <aside className="r-aside">{Skills}</aside> : null;
+  const showAside = hasAside && Boolean(Skills);
+  const aside = showAside ? <aside className="r-aside">{Skills}</aside> : null;
 
   return (
     <motion.article
@@ -193,7 +194,7 @@ export function Resume({
       aria-label="CV preview"
     >
       {header}
-      {hasAside ? (
+      {showAside ? (
         <div className="r-grid">
           {layout === "aside-left" ? (
             <>

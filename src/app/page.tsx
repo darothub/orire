@@ -21,6 +21,21 @@ export default function Home() {
   const tpl = getTemplate(active);
   const ActiveTemplate = tpl.Component;
 
+  /** Print to PDF with a meaningful default filename (browsers use document.title). */
+  function exportPDF() {
+    const prev = document.title;
+    const name = cv.basics.fullName.trim();
+    document.title = name ? `${name} — CV` : "orire — CV";
+    const restore = () => {
+      document.title = prev;
+      window.removeEventListener("afterprint", restore);
+    };
+    window.addEventListener("afterprint", restore);
+    window.print();
+    // Safari may not fire afterprint reliably; restore defensively.
+    window.setTimeout(restore, 1000);
+  }
+
   return (
     <div className="app">
       <header className="app-bar">
@@ -33,7 +48,7 @@ export default function Home() {
           <span className="template-pill">{mounted ? tpl.name : "—"}</span>
           <button className="btn-ghost" onClick={() => setImporting(true)}>Import CV</button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
-          <button className="btn-primary" onClick={() => window.print()}>Export PDF</button>
+          <button className="btn-primary" onClick={exportPDF}>Export PDF</button>
         </div>
       </header>
 

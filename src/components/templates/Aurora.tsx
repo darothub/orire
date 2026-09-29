@@ -149,7 +149,7 @@ export function Aurora({ cv }: { cv: CVData }) {
       <div className="au-grid">
         <div className="au-main">{cv.order.filter((k) => k !== "skills").map(renderSection)}</div>
         <aside className="au-side">
-          {cv.skills.length > 0 && (
+          {cv.skills.length > 0 && cv.order.includes("skills") && (
             <motion.section variants={item} layout className="au-block">
               <h2 className="au-h2">Skills</h2>
               {cv.skills.map((g) => (

@@ -507,29 +507,68 @@ body {
   background-clip: padding-box;
 }
 
-/* ---------- Print ---------- */
+/* ---------- Print / PDF export ---------- */
+@page {
+  size: A4;
+  margin: 12mm;
+}
 @media print {
+  html,
   body {
     background: #fff;
   }
+  /* Keep template colours/gradients in the exported PDF. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
   .app-bar,
   .pane-edit,
-  .pane-head {
+  .pane-head,
+  .picker,
+  .order-bar {
     display: none !important;
   }
   .workspace {
     display: block;
+    padding: 0;
+    gap: 0;
+  }
+  .pane-preview {
+    padding: 0;
+    border: none;
+    background: none;
   }
   .preview-stage {
     padding: 0;
+    overflow: visible;
   }
   .paper {
     box-shadow: none;
     border-radius: 0;
     width: 100%;
     min-height: auto;
+    margin: 0;
   }
   .aurora {
     padding: 24px 28px;
+  }
+  /* Avoid slicing an entry across a page boundary. */
+  section,
+  .r-role,
+  .au-role,
+  .nr-role,
+  .md-entry,
+  .vx-role,
+  .r-cert,
+  li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+    page-break-after: avoid;
   }
 }

@@ -149,7 +149,7 @@ export function Vertex({ cv }: { cv: CVData }) {
           </div>
         </motion.div>
 
-        {cv.skills.length > 0 && (
+        {cv.skills.length > 0 && cv.order.includes("skills") && (
           <motion.div variants={item} className="vx-side-block">
             <h3 className="vx-side-h">Skills</h3>
             {cv.skills.map((g) => (
