@@ -1373,6 +1373,7 @@
   color: #0b0d12;
 }
 .conn-field { display: flex; flex-direction: column; gap: 5px; }
+.conn-hint { color: var(--faint); font-weight: 400; font-size: 11px; }
 .conn-key-row { display: flex; gap: 8px; }
 .conn-key-row .ed-input { flex: 1; }
 .conn-reveal {

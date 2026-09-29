@@ -84,12 +84,21 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
             </label>
 
             <label className="conn-field">
-              <span className="ed-label">Model</span>
-              <select className="ed-input" value={models[p]} onChange={(e) => setModel(p, e.target.value)}>
+              <span className="ed-label">Model <span className="conn-hint">— pick one or type any model ID</span></span>
+              <input
+                className="ed-input"
+                list={`models-${p}`}
+                value={models[p]}
+                spellCheck={false}
+                autoComplete="off"
+                placeholder={meta.defaultModel}
+                onChange={(e) => setModel(p, e.target.value)}
+              />
+              <datalist id={`models-${p}`}>
                 {meta.models.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m} />
                 ))}
-              </select>
+              </datalist>
             </label>
           </motion.div>
         );
