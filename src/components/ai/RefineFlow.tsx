@@ -423,6 +423,7 @@ function JudgeBlock() {
   const judgeErr = useRefineStore((s) => s.judgeErr);
   const runJudge = useRefineStore((s) => s.runJudge);
   const resetRun = useRefineStore((s) => s.resetRun);
+  const baseMatch = useRefineStore((s) => s.baseMatch);
   const keys = useSettingsStore((s) => s.keys);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const setView = useViewStore((s) => s.setView);
@@ -470,6 +471,23 @@ function JudgeBlock() {
             </div>
           </div>
           {verdict.reasoning && <p className="cmp-reasoning">{verdict.reasoning}</p>}
+          {(() => {
+            const w = verdict.winner as ProviderId;
+            const wm = cols[w]?.match;
+            if (!wm || !baseMatch) return null;
+            const d = wm.score - baseMatch.score;
+            const tone = d > 0 ? "up" : d < 0 ? "down" : "flat";
+            return (
+              <div className={`cmp-verdict-match ${tone}`}>
+                <span className="cvm-icon" aria-hidden>{d > 0 ? "▲" : d < 0 ? "▼" : "="}</span>
+                <span className="cvm-text">
+                  Winner {d > 0 ? "improves" : d < 0 ? "lowers" : "keeps"} JD match{" "}
+                  <b>{baseMatch.score}%</b> → <b>{wm.score}%</b>
+                  <span className="cvm-delta"> ({d > 0 ? "+" : ""}{d} pts)</span>
+                </span>
+              </div>
+            );
+          })()}
           <div className="cmp-scorecards">
             {verdict.scores.map((sc) => (
               <div key={sc.id} className={`cmp-scorecard ${sc.id === verdict.winner ? "win" : ""}`}>

@@ -644,6 +644,26 @@
   padding: 12px 14px;
   margin: 12px 0 0;
 }
+.cmp-verdict-match {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  margin: 10px 0 0;
+  padding: 9px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--line-2);
+  background: var(--panel-2);
+}
+.cmp-verdict-match .cvm-icon { font-size: 12px; font-weight: 700; line-height: 1; }
+.cmp-verdict-match .cvm-text { color: var(--text); }
+.cmp-verdict-match .cvm-text b { font-variant-numeric: tabular-nums; }
+.cmp-verdict-match .cvm-delta { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cmp-verdict-match.up { border-color: color-mix(in srgb, var(--accent) 40%, transparent); background: color-mix(in srgb, var(--accent) 10%, var(--panel-2)); }
+.cmp-verdict-match.up .cvm-icon, .cmp-verdict-match.up .cvm-delta { color: var(--accent); }
+.cmp-verdict-match.down { border-color: rgba(240, 138, 138, 0.4); background: rgba(240, 138, 138, 0.08); }
+.cmp-verdict-match.down .cvm-icon, .cmp-verdict-match.down .cvm-delta { color: #f08a8a; }
+.cmp-verdict-match.flat .cvm-icon, .cmp-verdict-match.flat .cvm-delta { color: var(--faint); }
 .cmp-scorecards {
   display: grid;
   grid-template-columns: 1fr 1fr;
