@@ -462,3 +462,116 @@
   border-radius: 12px;
   padding: 12px 14px;
 }
+
+/* ============ Compare (parallel providers) ============ */
+.cmp-modal {
+  max-width: 900px;
+}
+.cmp-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+.cmp-col {
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--panel-2);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+.cmp-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cmp-col-head strong {
+  font-size: 14px;
+  color: var(--text);
+}
+.cmp-model {
+  font-size: 11.5px;
+  color: var(--faint);
+  margin-top: 2px;
+}
+.cmp-status {
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 2px 9px;
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+  text-transform: lowercase;
+}
+.cmp-status.running {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.cmp-status.done {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.cmp-status.error {
+  color: #b00020;
+  border-color: #e0879a;
+}
+.cmp-status.nokey {
+  color: #b26a00;
+  border-color: #e2a24a;
+}
+.cmp-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 18px;
+}
+.cmp-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line-2);
+  border-top-color: var(--accent);
+  animation: cmp-spin 0.7s linear infinite;
+}
+@keyframes cmp-spin {
+  to { transform: rotate(360deg); }
+}
+.cmp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 18px;
+}
+.cmp-delta {
+  grid-template-columns: 1fr;
+  margin-top: 12px;
+}
+.cmp-summary {
+  margin-top: 12px;
+}
+.cmp-summary p {
+  font-size: 12.5px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.cmp-flags,
+.cmp-clean {
+  margin-top: 12px;
+}
+.cmp-actions {
+  margin-top: auto;
+  padding-top: 12px;
+}
+@media (max-width: 720px) {
+  .cmp-grid {
+    grid-template-columns: 1fr;
+  }
+}

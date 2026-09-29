@@ -8,6 +8,7 @@ import { TemplatePicker } from "@/components/templates/TemplatePicker";
 import { ImportPanel } from "@/components/ingest/ImportPanel";
 import { SettingsModal } from "@/components/ai/SettingsModal";
 import { RefinePanel } from "@/components/ai/RefinePanel";
+import { ComparePanel } from "@/components/ai/ComparePanel";
 import { getTemplate } from "@/components/templates/registry";
 import { useCVStore } from "@/lib/store/cvStore";
 
@@ -16,6 +17,7 @@ export default function Home() {
   const [importing, setImporting] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refining, setRefining] = useState(false);
+  const [comparing, setComparing] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const cv = useCVStore((s) => s.cv);
@@ -51,6 +53,7 @@ export default function Home() {
         <div className="app-actions">
           <span className="template-pill">{mounted ? tpl.name : "—"}</span>
           <button className="btn-ghost" onClick={() => setRefining(true)}>Refine to JD</button>
+          <button className="btn-ghost" onClick={() => setComparing(true)}>Compare</button>
           <button className="btn-ghost" onClick={() => setImporting(true)}>Import CV</button>
           <button className="btn-ghost" onClick={() => setSettingsOpen(true)}>Settings</button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
@@ -114,6 +117,15 @@ export default function Home() {
             onClose={() => setRefining(false)}
             onOpenSettings={() => {
               setRefining(false);
+              setSettingsOpen(true);
+            }}
+          />
+        )}
+        {comparing && (
+          <ComparePanel
+            onClose={() => setComparing(false)}
+            onOpenSettings={() => {
+              setComparing(false);
               setSettingsOpen(true);
             }}
           />
