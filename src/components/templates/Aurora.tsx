@@ -2,31 +2,10 @@
 
 import { motion } from "framer-motion";
 import type { CVData, SectionKey } from "@/lib/cv/schema";
+import { container, item, dateRange, normalizedHref } from "./shared";
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.05 },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 220, damping: 26 } },
-};
-
-function dateRange(start?: string, end?: string, current?: boolean) {
-  const e = current ? "Present" : end || "";
-  if (start && e) return `${start} — ${e}`;
-  return start || e || "";
-}
-
-/**
- * "Aurora" — an editorial, print-ready CV template.
- * Refined serif display, a luminous gradient spine, and calm two-column rhythm.
- */
-export function AuroraTemplate({ cv }: { cv: CVData }) {
+/** Aurora — editorial light, luminous gradient spine, two-column rhythm. */
+export function Aurora({ cv }: { cv: CVData }) {
   const { basics } = cv;
 
   const renderSection = (key: SectionKey) => {
@@ -38,7 +17,6 @@ export function AuroraTemplate({ cv }: { cv: CVData }) {
             <p className="au-summary">{basics.summary}</p>
           </motion.section>
         ) : null;
-
       case "experience":
         return cv.experience.length ? (
           <motion.section key="experience" variants={item} layout className="au-block">
@@ -68,7 +46,6 @@ export function AuroraTemplate({ cv }: { cv: CVData }) {
             </div>
           </motion.section>
         ) : null;
-
       case "education":
         return cv.education.length ? (
           <motion.section key="education" variants={item} layout className="au-block">
@@ -90,22 +67,13 @@ export function AuroraTemplate({ cv }: { cv: CVData }) {
             ))}
           </motion.section>
         ) : null;
-
-      case "skills":
-        return null; // rendered in sidebar
       default:
         return null;
     }
   };
 
   return (
-    <motion.article
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="aurora"
-      aria-label="CV preview"
-    >
+    <motion.article variants={container} initial="hidden" animate="show" className="aurora" aria-label="CV preview">
       <motion.header variants={item} layout className="au-header">
         <h1 className="au-name">{basics.fullName || "Your Name"}</h1>
         {basics.title && <p className="au-title">{basics.title}</p>}
@@ -114,7 +82,7 @@ export function AuroraTemplate({ cv }: { cv: CVData }) {
             <span key={i}>{c}</span>
           ))}
           {basics.links.filter((l) => l.url).map((l) => (
-            <a key={l.id} href={`https://${l.url.replace(/^https?:\/\//, "")}`} className="au-link">
+            <a key={l.id} href={normalizedHref(l.url)} className="au-link">
               {l.label || l.url}
             </a>
           ))}
@@ -122,8 +90,7 @@ export function AuroraTemplate({ cv }: { cv: CVData }) {
       </motion.header>
 
       <div className="au-grid">
-        <div className="au-main">{cv.order.map(renderSection)}</div>
-
+        <div className="au-main">{cv.order.filter((k) => k !== "skills").map(renderSection)}</div>
         <aside className="au-side">
           {cv.skills.length > 0 && (
             <motion.section variants={item} layout className="au-block">
@@ -133,9 +100,7 @@ export function AuroraTemplate({ cv }: { cv: CVData }) {
                   <p className="au-skillcat">{g.category}</p>
                   <div className="au-chips">
                     {g.items.map((s, i) => (
-                      <span key={i} className="au-chip">
-                        {s}
-                      </span>
+                      <span key={i} className="au-chip">{s}</span>
                     ))}
                   </div>
                 </motion.div>

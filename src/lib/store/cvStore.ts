@@ -37,6 +37,7 @@ interface CVState {
   removeSkillGroup: (id: string) => void;
 
   setTemplate: (id: string) => void;
+  setOrder: (order: CVData["order"]) => void;
   reset: () => void;
 }
 
@@ -117,6 +118,7 @@ export const useCVStore = create<CVState>()(
         set((s) => ({ cv: { ...s.cv, skills: s.cv.skills.filter((g) => g.id !== id) } })),
 
       setTemplate: (id) => set({ activeTemplate: id }),
+      setOrder: (order) => set((s) => ({ cv: { ...s.cv, order } })),
       reset: () => set({ cv: sampleCV, activeTemplate: "aurora" }),
     }),
     { name: "orire-cv-v1" },
