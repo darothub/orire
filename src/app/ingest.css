@@ -880,3 +880,143 @@
 .rate-actions {
   margin-top: 20px;
 }
+
+/* ============ JD simulation (req 20) ============ */
+.sim-modal {
+  max-width: 780px;
+}
+.sim-jd {
+  min-height: 150px;
+  resize: vertical;
+  width: 100%;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.sim-result {
+  margin-top: 4px;
+}
+.sim-gap {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--panel-2);
+}
+.sim-cov {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.sim-cov-svg {
+  transform: rotate(-90deg);
+}
+.sim-cov-center {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+.sim-cov-center strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+.sim-gap-lists {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.sim-gap-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sim-gap-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.sim-gap-title.miss {
+  color: #dc2626;
+}
+.sim-gap-title.match {
+  color: #16a34a;
+}
+.sim-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sim-chip {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+}
+.sim-chip.miss {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.25);
+}
+.sim-chip.match {
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.25);
+}
+.sim-perfect {
+  font-size: 13px;
+  color: #15803d;
+  margin: 0;
+}
+.sim-note {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 14px 0 0;
+}
+.sim-preview-wrap {
+  position: relative;
+  margin-top: 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f4f5f7;
+  max-height: 440px;
+  overflow-y: auto;
+}
+.sim-ribbon {
+  position: absolute;
+  top: 12px;
+  right: -34px;
+  transform: rotate(45deg);
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 44px;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+.sim-paper {
+  transform: scale(0.82);
+  transform-origin: top center;
+  width: 122%;
+  margin: 0 -11% -18% -11%;
+  pointer-events: none;
+}
+@media (max-width: 720px) {
+  .sim-gap {
+    flex-direction: column;
+    align-items: center;
+  }
+}
