@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
+import { useViewStore } from "@/lib/store/viewStore";
 import { scoreCV, diffScores, grade } from "@/lib/cv/rating";
 
 /** Colour a 0–100 value from red → amber → green. */
@@ -38,41 +39,29 @@ function Ring({ value, label, sub }: { value: number; label: string; sub?: strin
   );
 }
 
-export function RatingPanel({ onClose }: { onClose: () => void }) {
+export function RateView() {
   const cv = useCVStore((s) => s.cv);
   const baseline = useCVStore((s) => s.baseline);
   const captureBaseline = useCVStore((s) => s.captureBaseline);
   const clearBaseline = useCVStore((s) => s.clearBaseline);
+  const setView = useViewStore((s) => s.setView);
 
   const current = scoreCV(cv);
   const diff = baseline ? diffScores(baseline, cv) : null;
 
   return (
     <motion.div
-      className="imp-backdrop"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
+      className="ws-view rate-view"
+      initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
-      <motion.div
-        className="imp-modal ai-modal rate-modal"
-        initial={{ opacity: 0, y: 24, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 24, scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="imp-head">
-          <div>
-            <h2>CV rating</h2>
-            <p>
-              A deterministic score across six dimensions — same CV, same result. No API key
-              needed.
-            </p>
-          </div>
-          <button className="imp-x" onClick={onClose} aria-label="Close">✕</button>
-        </header>
+      <div className="ws-head">
+        <div>
+          <h2>Rate</h2>
+          <p>How your final CV scores against the initial — deterministic across six dimensions. No API key needed.</p>
+        </div>
+      </div>
 
         {diff ? (
           <div className="rate-hero">
@@ -144,9 +133,8 @@ export function RatingPanel({ onClose }: { onClose: () => void }) {
           ) : (
             <button className="imp-btn primary" onClick={captureBaseline}>Use current CV as baseline</button>
           )}
-          <button className="imp-btn" onClick={onClose}>Done</button>
+          <button className="imp-btn" onClick={() => setView("edit")}>Back to edit</button>
         </div>
-      </motion.div>
     </motion.div>
   );
 }

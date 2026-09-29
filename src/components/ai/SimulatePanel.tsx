@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
 import { coerceSimulatedCV, gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
@@ -18,12 +19,13 @@ function coverageColor(v: number): string {
   return `hsl(${hue} 70% 45%)`;
 }
 
-export function SimulatePanel({ onClose, onOpenSettings }: { onClose: () => void; onOpenSettings: () => void }) {
+export function SimulateView() {
   const userCV = useCVStore((s) => s.cv);
   const activeTemplate = useCVStore((s) => s.activeTemplate);
   const provider = useSettingsStore((s) => s.provider);
   const keys = useSettingsStore((s) => s.keys);
   const models = useSettingsStore((s) => s.models);
+  const setView = useViewStore((s) => s.setView);
 
   const meta = PROVIDERS[provider];
   const hasKey = Boolean(keys[provider]?.trim());
@@ -83,21 +85,12 @@ export function SimulatePanel({ onClose, onOpenSettings }: { onClose: () => void
 
   return (
     <motion.div
-      className="imp-backdrop"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
+      className="ws-view sim-view"
+      initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
-      <motion.div
-        className="imp-modal ai-modal sim-modal"
-        initial={{ opacity: 0, y: 24, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 24, scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="imp-head">
+        <div className="ws-head">
           <div>
             <h2>Simulate a 100% match</h2>
             <p>
@@ -105,12 +98,11 @@ export function SimulatePanel({ onClose, onOpenSettings }: { onClose: () => void
               gap. This profile is <strong>simulated</strong>, not your facts.
             </p>
           </div>
-          <button className="imp-x" onClick={onClose} aria-label="Close">✕</button>
-        </header>
+        </div>
 
         <div className="ai-runbar">
           <span className={`ai-pill ${hasKey ? "" : "muted"}`}>{meta.label} · {models[provider]}</span>
-          <button className="ai-link" onClick={onOpenSettings}>Settings</button>
+          <button className="ai-link" onClick={() => setView("connect")}>Connect AI</button>
         </div>
 
         <AnimatePresence mode="wait">
@@ -126,7 +118,7 @@ export function SimulatePanel({ onClose, onOpenSettings }: { onClose: () => void
                 disabled={phase === "running"}
               />
               <div className="imp-actions">
-                <button className="imp-btn" onClick={onClose}>Cancel</button>
+                <button className="imp-btn" onClick={() => setView("edit")}>Cancel</button>
                 <button className="imp-btn primary" onClick={run} disabled={phase === "running" || !jd.trim()}>
                   {phase === "running" ? (
                     <><span className="cmp-spinner" /> Building ideal candidate…</>
@@ -224,12 +216,11 @@ export function SimulatePanel({ onClose, onOpenSettings }: { onClose: () => void
               <div className="imp-actions">
                 <button className="imp-btn" onClick={copyJD}>{copied ? "Copied ✓" : "Copy job description"}</button>
                 <button className="imp-btn" onClick={() => setPhase("input")}>New simulation</button>
-                <button className="imp-btn primary" onClick={onClose}>Done</button>
+                <button className="imp-btn primary" onClick={() => setView("edit")}>Done</button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
     </motion.div>
   );
 }

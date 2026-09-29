@@ -36,34 +36,24 @@ const REQS: Req[] = [
   { n: 21, title: "Guardrails, evaluation, determinism", status: "done", note: "Post-hoc fact-grounding; deterministic scoring & gaps." },
 ];
 
-export function ProgressPanel({ onClose }: { onClose: () => void }) {
+export function ProgressView() {
   const done = REQS.filter((r) => r.status === "done").length;
   const planned = REQS.length - done;
   const pct = Math.round((done / REQS.length) * 100);
 
   return (
     <motion.div
-      className="imp-backdrop"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
+      className="ws-view prog-view"
+      initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
-      <motion.div
-        className="imp-modal ai-modal prog-modal"
-        initial={{ opacity: 0, y: 24, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 24, scale: 0.98 }}
-        transition={{ type: "spring", stiffness: 320, damping: 30 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="imp-head">
+        <div className="ws-head">
           <div>
             <h2>What’s shipped</h2>
             <p>Progress against the original 21-point brief.</p>
           </div>
-          <button className="imp-x" onClick={onClose} aria-label="Close">✕</button>
-        </header>
+        </div>
 
         <div className="prog-summary">
           <div className="prog-bar">
@@ -101,7 +91,6 @@ export function ProgressPanel({ onClose }: { onClose: () => void }) {
             </motion.li>
           ))}
         </ul>
-      </motion.div>
     </motion.div>
   );
 }

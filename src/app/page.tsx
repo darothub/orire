@@ -5,26 +5,89 @@ import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { EditorPanel } from "@/components/editor/EditorPanel";
 import { SectionOrder } from "@/components/editor/SectionOrder";
 import { TemplatePicker } from "@/components/templates/TemplatePicker";
-import { ImportPanel } from "@/components/ingest/ImportPanel";
-import { SettingsModal } from "@/components/ai/SettingsModal";
-import { RefinePanel } from "@/components/ai/RefinePanel";
-import { ComparePanel } from "@/components/ai/ComparePanel";
-import { RatingPanel } from "@/components/ai/RatingPanel";
-import { SimulatePanel } from "@/components/ai/SimulatePanel";
+import { WorkspaceRail } from "@/components/WorkspaceRail";
+import { RefineFlow } from "@/components/ai/RefineFlow";
+import { ProviderSetup } from "@/components/ai/ProviderSetup";
+import { RateView } from "@/components/ai/RatingPanel";
+import { SimulateView } from "@/components/ai/SimulatePanel";
+import { ProgressView } from "@/components/ProgressPanel";
 import { getTemplate } from "@/components/templates/registry";
-import { ProgressPanel } from "@/components/ProgressPanel";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
+import { useViewStore } from "@/lib/store/viewStore";
+
+/** Edit workspace: section reorder + field editor. Right pane shows it live. */
+function EditView({ mounted }: { mounted: boolean }) {
+  return (
+    <motion.div
+      className="ws-view edit-view"
+      initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="ws-head">
+        <div>
+          <h2>Edit</h2>
+          <p>Changes appear live on the right. Drag sections, cards and bullets to reorder.</p>
+        </div>
+      </div>
+      {mounted ? (
+        <>
+          <SectionOrder />
+          <EditorPanel />
+        </>
+      ) : (
+        <div className="pane-skeleton" />
+      )}
+    </motion.div>
+  );
+}
+
+/** Standalone connection view — reused as Refine's first step via ProviderSetup. */
+function ConnectView() {
+  return (
+    <motion.div
+      className="ws-view connect-view"
+      initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="ws-head">
+        <div>
+          <h2>Connect AI</h2>
+          <p>
+            Bring your own key. Nothing is stored server-side — keys live only in this browser and
+            are sent straight to the provider you pick.
+          </p>
+        </div>
+      </div>
+      <ProviderSetup />
+    </motion.div>
+  );
+}
+
+function Workspace({ mounted }: { mounted: boolean }) {
+  const view = useViewStore((s) => s.view);
+  const dir = useViewStore((s) => s.dir);
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <AnimatePresence mode="wait" custom={dir} initial={false}>
+        <motion.div key={view} className="ws-swap" custom={dir}>
+          {view === "edit" && <EditView mounted={mounted} />}
+          {view === "refine" && <RefineFlow />}
+          {view === "simulate" && <SimulateView />}
+          {view === "rate" && <RateView />}
+          {view === "progress" && <ProgressView />}
+          {view === "connect" && <ConnectView />}
+        </motion.div>
+      </AnimatePresence>
+    </MotionConfig>
+  );
+}
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [refining, setRefining] = useState(false);
-  const [comparing, setComparing] = useState(false);
-  const [rating, setRating] = useState(false);
-  const [simulating, setSimulating] = useState(false);
-  const [progressOpen, setProgressOpen] = useState(false);
   // Intentional one-shot hydration guard: render the client-only editor after
   // mount so SSR and first client render match. This is the sanctioned use of
   // setState-in-effect, not a data-sync mistake.
@@ -56,7 +119,7 @@ export default function Home() {
   }
 
   return (
-    <div className="app">
+    <div className="app has-rail">
       <header className="app-bar">
         <div className="brand">
           <span className="brand-dot" />
@@ -73,39 +136,17 @@ export default function Home() {
           >
             {mounted && previewEdit ? "Editing preview" : "Edit on preview"}
           </button>
-          <button className="btn-ghost" onClick={() => setRefining(true)}>Refine to JD</button>
-          <button className="btn-ghost" onClick={() => setComparing(true)}>Compare</button>
-          <button className="btn-ghost" onClick={() => setRating(true)}>Rate</button>
-          <button className="btn-ghost" onClick={() => setSimulating(true)}>Simulate</button>
-          <button className="btn-ghost" onClick={() => setImporting(true)}>Import CV</button>
-          <button className="btn-ghost" onClick={() => setSettingsOpen(true)}>Settings</button>
-          <button className="btn-ghost" onClick={() => setProgressOpen(true)}>Progress</button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
           <button className="btn-primary" onClick={exportPDF}>Export PDF</button>
         </div>
       </header>
 
       <main className="workspace">
-        <motion.section
-          initial={{ opacity: 0, x: -16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="pane pane-edit"
-          aria-label="Editor"
-        >
-          <div className="pane-head">
-            <h2>Edit</h2>
-            <p>Changes appear live on the right.</p>
-          </div>
-          {mounted ? (
-            <>
-              <SectionOrder />
-              <EditorPanel />
-            </>
-          ) : (
-            <div className="pane-skeleton" />
-          )}
-        </motion.section>
+        <WorkspaceRail />
+
+        <section className="pane pane-work" aria-label="Workspace">
+          <Workspace mounted={mounted} />
+        </section>
 
         <motion.section
           initial={{ opacity: 0, x: 16 }}
@@ -135,40 +176,6 @@ export default function Home() {
           </div>
         </motion.section>
       </main>
-
-      <AnimatePresence>
-        {importing && <ImportPanel onClose={() => setImporting(false)} />}
-        {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
-        {refining && (
-          <RefinePanel
-            onClose={() => setRefining(false)}
-            onOpenSettings={() => {
-              setRefining(false);
-              setSettingsOpen(true);
-            }}
-          />
-        )}
-        {comparing && (
-          <ComparePanel
-            onClose={() => setComparing(false)}
-            onOpenSettings={() => {
-              setComparing(false);
-              setSettingsOpen(true);
-            }}
-          />
-        )}
-        {rating && <RatingPanel onClose={() => setRating(false)} />}
-        {progressOpen && <ProgressPanel onClose={() => setProgressOpen(false)} />}
-        {simulating && (
-          <SimulatePanel
-            onClose={() => setSimulating(false)}
-            onOpenSettings={() => {
-              setSimulating(false);
-              setSettingsOpen(true);
-            }}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }
