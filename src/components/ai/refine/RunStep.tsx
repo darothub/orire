@@ -14,6 +14,7 @@ export function RunStep({ onBack }: { onBack: () => void }) {
   const cols = useRefineStore((s) => s.cols);
   const runAll = useRefineStore((s) => s.runAll);
   const resetRun = useRefineStore((s) => s.resetRun);
+  const planBlock = useRefineStore((s) => s.planBlock);
   const cv = useCVStore((s) => s.cv);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const setView = useViewStore((s) => s.setView);
@@ -37,6 +38,13 @@ export function RunStep({ onBack }: { onBack: () => void }) {
           <strong>{single ? "Ready to tailor with " : "Ready to compare "}{runProviders.map((p) => PROVIDERS[p].label).join(" vs ")}</strong>
           <p>{single ? "One assistant will rewrite your CV for the role." : "Both assistants run in parallel on the same job — then an LLM judge can pick the best."}</p>
           <button className="flow-btn primary lg" onClick={runAll}>{single ? "Refine my CV" : "Run comparison"}</button>
+          {planBlock && (
+            <div className="plan-block" role="alert">
+              <strong>{planBlock.title}</strong>
+              <span>{planBlock.body}</span>
+              <button className="flow-btn ghost sm" onClick={() => setView("connect")}>See plans</button>
+            </div>
+          )}
         </div>
         <div className="step-nav">
           <button className="flow-btn ghost" onClick={onBack}>Back</button>

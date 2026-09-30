@@ -4,7 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRefineStore } from "@/lib/store/refineStore";
+import { usePlanStore } from "@/lib/store/planStore";
 import { PROVIDERS, isCLI, type ProviderId } from "@/lib/ai/types";
+import { PLANS, providerCountAllowed } from "@/lib/plan/plan";
 import type { ModelsResponse } from "@/app/api/ai/models/route";
 import type { CliStatus } from "@/app/api/ai/cli/route";
 
@@ -42,6 +44,8 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
 
   const runProviders = useRefineStore((s) => s.runProviders);
   const toggleRunProvider = useRefineStore((s) => s.toggleRunProvider);
+  const plan = usePlanStore((s) => s.plan);
+  const planMeta = PLANS[plan];
 
   const [reveal, setReveal] = useState<Record<ProviderId, boolean>>(() => emptyRecord(() => false));
   const [fetched, setFetched] = useState<Record<ProviderId, FetchState>>(() =>
@@ -115,6 +119,17 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
 
   return (
     <div className="conn-wrap">
+      {selectable && (
+        <div className="conn-planhint">
+          <span className="conn-dot openai" aria-hidden />
+          <span>
+            <strong>{planMeta.label}</strong> —{" "}
+            {planMeta.allowCompare
+              ? `compare up to ${planMeta.maxProviders} assistants in parallel.`
+              : "single assistant only. Upgrade to Pro to compare two side by side."}
+          </span>
+        </div>
+      )}
       {!selectable && (
         <div className="conn-default">
           <div className="conn-default-head">
@@ -172,13 +187,21 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                 {isDefault && <span className="conn-tag default">Default</span>}
               </div>
               {selectable ? (
-                <button
-                  className={`conn-select${selected ? " on" : ""}`}
-                  onClick={() => toggleRunProvider(p)}
-                  aria-pressed={selected}
-                >
-                  {selected ? "Selected" : "Select"}
-                </button>
+                (() => {
+                  const gate = providerCountAllowed(plan, runProviders.length + 1);
+                  const atLimit = !selected && !gate.allowed;
+                  return (
+                    <button
+                      className={`conn-select${selected ? " on" : ""}`}
+                      onClick={() => !atLimit && toggleRunProvider(p)}
+                      aria-pressed={selected}
+                      disabled={atLimit}
+                      title={atLimit ? gate.reason : undefined}
+                    >
+                      {selected ? "Selected" : atLimit ? "Locked" : "Select"}
+                    </button>
+                  );
+                })()
               ) : connected ? (
                 isDefault ? <span className="conn-ok">Connected</span> : (
                   <button className="conn-setdefault" onClick={() => setProvider(p)} title="Use as default assistant">

@@ -2,10 +2,13 @@
 
 import { create } from "zustand";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { usePlanStore } from "@/lib/store/planStore";
 import { useCVStore } from "@/lib/store/cvStore";
-import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, needsKey, isCLI, type ProviderId } from "@/lib/ai/types";
+import { providerCountAllowed, withinMonthlyCap, modelAllowedOnPlan } from "@/lib/plan/plan";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
+import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
 import { coerceSimulatedCV } from "@/lib/ai/simulate";
 import { parseVerdict, type JudgeVerdict } from "@/lib/ai/judge";
@@ -59,6 +62,9 @@ interface RefineState {
   ideal: CVData | null;
   idealErr: ColError | null;
 
+  /** Plan-level block (cap reached / compare not allowed) shown as a banner. */
+  planBlock: ColError | null;
+
   setStep: (s: RefineStep) => void;
   toggleRunProvider: (p: ProviderId) => void;
   setJd: (jd: string) => void;
@@ -101,6 +107,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   ideal: null,
   idealErr: null,
 
+  planBlock: null,
+
   setStep: (step) => set({ step }),
   toggleRunProvider: (p) =>
     set((s) => ({
@@ -117,8 +125,23 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const { keys, models } = useSettingsStore.getState();
     const cv = useCVStore.getState().cv;
 
+    // ---- Plan gate: assistant count + monthly cap (run-level, blocks start).
+    const plan = usePlanStore.getState().plan;
+    const used = usePlanStore.getState().usedThisMonth();
+    const countGate = providerCountAllowed(plan, runProviders.length);
+    if (!countGate.allowed) {
+      set({ planBlock: { title: "Plan limit", body: countGate.reason ?? "Not allowed on your plan." } });
+      return;
+    }
+    const capGate = withinMonthlyCap(plan, used);
+    if (!capGate.allowed) {
+      set({ planBlock: { title: "Monthly limit reached", body: capGate.reason ?? "Upgrade for more refines." } });
+      return;
+    }
+
     set({
       started: true,
+      planBlock: null,
       cols: idleCols(),
       baseMatch: jdMatch(cv, jd),
       baseCV: cv,
@@ -129,10 +152,23 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       ideal: null,
       idealErr: null,
     });
+    usePlanStore.getState().recordRefine();
 
     for (const provider of runProviders) {
       if (!providerReady(provider, keys)) {
         set((s) => ({ cols: { ...s.cols, [provider]: { phase: "nokey" } } }));
+        continue;
+      }
+      // ---- Plan gate: premium models require a BYO key on key-gated plans.
+      const hasOwnKey = isCLI(provider) ? true : Boolean(keys[provider]?.trim());
+      const modelGate = modelAllowedOnPlan(plan, provider, models[provider] ?? "", hasOwnKey);
+      if (!modelGate.allowed) {
+        set((s) => ({
+          cols: {
+            ...s.cols,
+            [provider]: { phase: "error", error: { title: "Model not available on your plan", body: modelGate.reason ?? "Upgrade or switch model." } },
+          },
+        }));
         continue;
       }
       set((s) => ({ cols: { ...s.cols, [provider]: { phase: "running" } } }));
@@ -160,7 +196,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
             }));
             return;
           }
-          const grounded = factGround(cv, parseModelJSON(data.raw));
+          const grounded = factGround(cv, applyRefinePatch(cv, parseModelJSON(data.raw)));
           const match = jdMatch(grounded.cv, jd);
           set((s) => ({ cols: { ...s.cols, [provider]: { phase: "done", result: grounded, match } } }));
         } catch (e) {
@@ -240,7 +276,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   },
 
   resetRun: () =>
-    set({ started: false, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
+    set({ started: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
 
   resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null }),
 
@@ -250,6 +286,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       runProviders: [],
       jd: "",
       started: false,
+      planBlock: null,
       cols: idleCols(),
       baseMatch: null,
       baseCV: null,

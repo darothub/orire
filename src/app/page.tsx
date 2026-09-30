@@ -8,6 +8,7 @@ import { TemplatePicker } from "@/components/templates/TemplatePicker";
 import { WorkspaceRail } from "@/components/WorkspaceRail";
 import { RefineFlow } from "@/components/ai/RefineFlow";
 import { ProviderSetup } from "@/components/ai/ProviderSetup";
+import { PlanPanel } from "@/components/PlanPanel";
 import { RateView } from "@/components/ai/RatingPanel";
 import { SimulateView } from "@/components/ai/SimulatePanel";
 import { ProgressView } from "@/components/ProgressPanel";
@@ -69,6 +70,7 @@ function ConnectView() {
         </div>
       </div>
       <ProviderSetup />
+      <PlanPanel />
     </motion.div>
   );
 }
