@@ -1519,6 +1519,118 @@ body {
 .plan-manage:hover { border-color: var(--accent); background: rgba(255, 255, 255, 0.03); }
 .plan-manage:disabled { opacity: 0.6; cursor: default; }
 
+/* ── Teams panel (B3) ─────────────────────────────────────────────────── */
+.team-panel {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.015);
+}
+.team-head { display: flex; align-items: center; justify-content: space-between; }
+.team-seats { font-size: 11px; color: var(--muted); letter-spacing: 0.02em; }
+.team-sub { display: block; margin-top: 10px; }
+.team-notice,
+.team-error {
+  overflow: hidden;
+  margin-top: 10px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.team-notice { border: 1px solid rgba(120, 220, 170, 0.35); background: rgba(70, 200, 140, 0.08); color: #a9e9c9; }
+.team-error { border: 1px solid rgba(240, 130, 130, 0.35); background: rgba(220, 80, 80, 0.08); color: #f0b2b2; }
+.team-create { margin-top: 12px; }
+.team-row { display: flex; gap: 8px; margin-top: 8px; }
+.team-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 11px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  font-size: 13px;
+}
+.team-input:focus { outline: none; border-color: var(--accent); }
+.team-input:disabled { opacity: 0.55; }
+.team-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.2s ease, background 0.2s ease, opacity 0.2s ease;
+}
+.team-btn:hover { border-color: var(--accent); }
+.team-btn:disabled { opacity: 0.5; cursor: default; }
+.team-btn-primary { border-color: var(--accent); background: var(--accent); color: #0b0b12; }
+.team-btn-primary:hover { filter: brightness(1.06); }
+.team-btn-danger { border-color: rgba(240, 130, 130, 0.4); color: #f0b2b2; }
+.team-btn-danger:hover { border-color: #f0b2b2; background: rgba(220, 80, 80, 0.08); }
+.team-body { margin-top: 12px; }
+.team-title { display: flex; align-items: center; gap: 8px; }
+.team-plan-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.team-members { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.team-member {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.15);
+}
+.team-member-main { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.team-member-name { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-member-role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.team-x {
+  padding: 4px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.team-x:hover { color: #f0b2b2; border-color: rgba(240, 130, 130, 0.4); }
+.team-x:disabled { opacity: 0.5; cursor: default; }
+.team-invite { margin-top: 12px; }
+.team-seatsleft { display: block; margin-top: 6px; font-size: 11px; color: var(--muted); }
+.team-pending { margin-top: 14px; }
+.team-invites { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.team-invite-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 7px 10px;
+  border: 1px dashed var(--line-2);
+  border-radius: 9px;
+}
+.team-invite-email { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-invite-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.team-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.team-link:hover { text-decoration: underline; }
+.team-foot { margin-top: 14px; }
+
 .conn-planhint {
   display: flex;
   align-items: center;

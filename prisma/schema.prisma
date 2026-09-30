@@ -26,6 +26,8 @@ model User {
   refineRuns  RefineRun[]
   entitlement Entitlement?
   usage       UsageCounter[]
+  ownedTeams      Team[]       @relation("TeamOwner")
+  teamMemberships TeamMember[]
 }
 
 model Account {
@@ -124,4 +126,59 @@ model UsageCounter {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, month])
+}
+
+// ---------- Teams / seats (Phase B3) ----------
+
+/// A Teams/Coach workspace. Owned by a user whose personal entitlement is the
+/// "teams" plan (bought via Stripe in B2). Members inherit Teams capability
+/// (premium tiers without a personal key) for as long as they hold a seat.
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String
+  plan      String   @default("teams")
+  seatLimit Int      @default(5)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner   User         @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members TeamMember[]
+  invites TeamInvite[]
+
+  @@index([ownerId])
+}
+
+/// A held seat on a team. A user may hold at most one seat (enforced in code).
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      String   @default("member") // owner | admin | member
+  createdAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@unique([userId])
+  @@index([teamId])
+}
+
+/// A pending email invite. Redeemed via a single-use token embedded in a link.
+model TeamInvite {
+  id          String    @id @default(cuid())
+  teamId      String
+  email       String
+  role        String    @default("member")
+  token       String    @unique
+  invitedById String
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([email])
 }

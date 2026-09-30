@@ -24,10 +24,10 @@ import {
 import {
   consumeMonthlyRefine,
   getEntitlementSummary,
-  getPlanId,
   getUsedThisMonth,
   setPlanId,
 } from "@/lib/entitlement/entitlement";
+import { getEffectivePlanId } from "@/lib/team/team";
 import { signRunToken } from "@/lib/plan/runToken";
 
 export interface RunSelection {
@@ -60,7 +60,7 @@ export async function authorizeRefineRun(selections: RunSelection[]): Promise<Au
   const userId = session?.user?.id ?? null;
   const signedIn = Boolean(userId);
 
-  const plan: PlanId = userId ? await getPlanId(userId) : "free";
+  const plan: PlanId = userId ? await getEffectivePlanId(userId) : "free";
   const usedThisMonth = userId ? await getUsedThisMonth(userId) : 0;
   const cap = PLANS[plan].monthlyRefines;
 
@@ -103,13 +103,18 @@ export async function readEntitlement(): Promise<AuthorizeResult | null> {
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (!userId) return null;
-  const summary = await getEntitlementSummary(userId);
+  // Effective plan folds in team membership so a seated member's mirror shows
+  // the team's capability (and unlimited cap), not just their personal plan.
+  const [plan, usedThisMonth] = await Promise.all([
+    getEffectivePlanId(userId),
+    getUsedThisMonth(userId),
+  ]);
   return {
     ok: true,
     signedIn: true,
-    plan: summary.plan,
-    usedThisMonth: summary.usedThisMonth,
-    cap: summary.cap,
+    plan,
+    usedThisMonth,
+    cap: PLANS[plan].monthlyRefines,
   };
 }
 

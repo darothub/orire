@@ -1,0 +1,95 @@
+/**
+ * orire — team server actions (Phase B3).
+ *
+ * Thin `"use server"` wrappers the TeamPanel client calls. Each re-derives the
+ * caller from the session (never trusts a client-supplied user id) and delegates
+ * to the invariant-enforcing helpers in `@/lib/team/team`.
+ */
+
+"use server";
+
+import { auth } from "@/lib/auth/auth";
+import { getPlanId } from "@/lib/entitlement/entitlement";
+import { canOwnTeam } from "@/lib/team/policy";
+import {
+  acceptInvite,
+  createTeam,
+  deleteTeam,
+  getTeamContext,
+  inviteToTeam,
+  leaveTeam,
+  removeMember,
+  revokeInvite,
+  type TeamContext,
+  type TeamOpResult,
+} from "@/lib/team/team";
+
+export interface TeamOverview {
+  signedIn: boolean;
+  /** True when the caller could create a team (Teams plan, no team yet). */
+  canCreate: boolean;
+  team: TeamContext | null;
+}
+
+const NOT_SIGNED_IN: TeamOpResult = { ok: false, error: "Sign in first." };
+
+export async function teamOverview(): Promise<TeamOverview> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return { signedIn: false, canCreate: false, team: null };
+  const [team, personal] = await Promise.all([getTeamContext(userId), getPlanId(userId)]);
+  return {
+    signedIn: true,
+    canCreate: team === null && canOwnTeam(personal),
+    team,
+  };
+}
+
+export async function createTeamAction(name: string): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return createTeam(userId, name);
+}
+
+export async function inviteMemberAction(email: string): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return inviteToTeam(userId, email);
+}
+
+export async function acceptInviteAction(token: string): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return acceptInvite(userId, session?.user?.email ?? null, token);
+}
+
+export async function revokeInviteAction(inviteId: string): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return revokeInvite(userId, inviteId);
+}
+
+export async function removeMemberAction(targetUserId: string): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return removeMember(userId, targetUserId);
+}
+
+export async function leaveTeamAction(): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return leaveTeam(userId);
+}
+
+export async function deleteTeamAction(): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return deleteTeam(userId);
+}
