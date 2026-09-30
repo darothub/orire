@@ -13,16 +13,52 @@ function safeName(name: string): string {
   return n || "cv";
 }
 
-/** Render the live CV paper to a high-res canvas, excluding decorative sweeps. */
+/** Render the live CV paper to a high-res canvas, excluding decorative sweeps.
+ *
+ * The paper is `width:794px; max-width:100%`, so in a narrow preview pane it
+ * shrinks — and it also carries a live framer-motion `transform`/`filter` plus
+ * an optional CSS `zoom` (Text size). All of those make html-to-image mismeasure
+ * (white gutter on the right, skill pills reflowing onto each other). We pin the
+ * node to its true 794px, strip the transient transforms, force a reflow, then
+ * capture at the exact painted size — and always restore the original styles. */
 async function paperCanvas(el: HTMLElement): Promise<HTMLCanvasElement> {
-  return toCanvas(el, {
-    pixelRatio: 2,
-    backgroundColor: "#ffffff",
-    cacheBust: true,
-    filter: (node) =>
-      !(node instanceof HTMLElement && node.classList.contains("tpl-sweep")),
-    style: { boxShadow: "none", borderRadius: "0", margin: "0" },
-  });
+  const saved = el.getAttribute("style");
+  el.style.transform = "none";
+  el.style.filter = "none";
+  el.style.setProperty("zoom", "1");
+  el.style.maxWidth = "none";
+  el.style.width = "794px";
+  el.style.borderRadius = "0";
+  el.style.boxShadow = "none";
+  el.style.overflow = "visible";
+  // Force layout so the measurements below reflect the overrides.
+  void el.offsetWidth;
+  const width = el.offsetWidth;
+  const height = el.offsetHeight;
+
+  try {
+    return await toCanvas(el, {
+      pixelRatio: 2,
+      width,
+      height,
+      backgroundColor: "#ffffff",
+      cacheBust: true,
+      filter: (node) =>
+        !(node instanceof HTMLElement && node.classList.contains("tpl-sweep")),
+      style: {
+        transform: "none",
+        filter: "none",
+        zoom: "1",
+        margin: "0",
+        borderRadius: "0",
+        boxShadow: "none",
+      },
+    });
+  } finally {
+    if (saved === null) el.removeAttribute("style");
+    else el.setAttribute("style", saved);
+    void el.offsetWidth;
+  }
 }
 
 /**
