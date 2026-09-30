@@ -13,6 +13,7 @@ import { SimulateView } from "@/components/ai/SimulatePanel";
 import { ProgressView } from "@/components/ProgressPanel";
 import { HistoryView } from "@/components/HistoryView";
 import { ExportView } from "@/components/export/ExportView";
+import { CommandPalette } from "@/components/CommandPalette";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
@@ -134,6 +135,16 @@ export default function Home() {
           <span className="brand-tag">CV studio</span>
         </div>
         <div className="app-actions">
+          <button
+            className="cmdk-hint-btn"
+            onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
+            title="Open command palette"
+            aria-label="Open command palette"
+          >
+            <span className="cmdk-search-ic" aria-hidden>⌕</span>
+            <span className="cmdk-hint-lbl">Search</span>
+            <kbd>⌘K</kbd>
+          </button>
           <span className="template-pill">{mounted ? tpl.name : "—"}</span>
           <button
             className={`btn-ghost${mounted && previewEdit ? " is-active" : ""}`}
@@ -192,6 +203,8 @@ export default function Home() {
           </AnimatePresence>
         </MotionConfig>
       </main>
+
+      <CommandPalette />
     </div>
   );
 }
