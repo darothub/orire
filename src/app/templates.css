@@ -10,6 +10,8 @@
   gap: 14px;
   overflow-x: auto;
   padding-bottom: 6px;
+  perspective: 1100px;
+  perspective-origin: center 40%;
 }
 .pick-card {
   position: relative;
@@ -21,10 +23,13 @@
   border-radius: 12px;
   padding: 8px;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .pick-card:hover {
   border-color: var(--faint);
+  box-shadow: 0 22px 48px -22px rgba(0, 0, 0, 0.75);
 }
 .pick-card.is-active {
   border-color: transparent;
@@ -42,14 +47,28 @@
   height: 4px;
   border-radius: 3px;
   margin-bottom: 8px;
+  transform: translateZ(45px);
 }
 .pick-thumb {
+  position: relative;
   width: 136px;
   height: 192px;
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
   border: 1px solid var(--paper-line);
+  transform: translateZ(30px);
+}
+.pick-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+.pick-card:hover .pick-sheen {
+  opacity: 1;
 }
 .pick-scale {
   width: 794px;
