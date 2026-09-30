@@ -51,3 +51,4 @@ next-env.d.ts
 *.app
 *.exe
 .npmrc
+!.env.example

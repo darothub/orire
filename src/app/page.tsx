@@ -16,6 +16,8 @@ import { HistoryView } from "@/components/HistoryView";
 import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
+import { AccountButton } from "@/components/auth/AccountButton";
+import { CloudSync } from "@/components/auth/CloudSync";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
@@ -189,8 +191,10 @@ export default function Home() {
           </button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
           <button className="btn-primary" onClick={() => setView("export")}>Export PDF</button>
+          <AccountButton />
         </div>
       </header>
+      <CloudSync />
 
       <main className={`workspace${compareWide ? " is-compare" : ""}`}>
         <WorkspaceRail />

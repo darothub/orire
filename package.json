@@ -8,14 +8,22 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "postinstall": "prisma generate",
+    "db:up": "docker start orire-pg || docker run -d --name orire-pg -e POSTGRES_USER=orire -e POSTGRES_PASSWORD=orire -e POSTGRES_DB=orire -p 5433:5432 postgres:16-alpine",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.11.3",
+    "@prisma/client": "^6.19.3",
     "framer-motion": "^13.4.6",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
     "mammoth": "^1.13.0",
     "next": "16.3.7",
+    "next-auth": "^5.0.0-beta.32",
+    "nodemailer": "^8.0.11",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "unpdf": "^1.8.1",
@@ -24,10 +32,12 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.7",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^2.1.9"

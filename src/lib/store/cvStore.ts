@@ -85,6 +85,8 @@ interface CVState {
   /** Load a saved CV snapshot (e.g. from export History) without touching the
    *  rating baseline. */
   loadCV: (next: CVData) => void;
+  /** Replace the full working document from a saved cloud copy. */
+  hydrateFromCloud: (d: { cv: CVData; template: string; baseline: CVData | null }) => void;
   /** Manually snapshot the current CV as the initial baseline for rating. */
   captureBaseline: () => void;
   /** Forget the stored baseline. */
@@ -385,6 +387,9 @@ export const useCVStore = create<CVState>()(
         set((s) => ({ cv: next, baseline: s.baseline ?? s.cv })),
 
       loadCV: (next) => set({ cv: next }),
+
+      hydrateFromCloud: ({ cv, template, baseline }) =>
+        set({ cv, activeTemplate: template, baseline }),
 
       captureBaseline: () => set((s) => ({ baseline: s.cv })),
       clearBaseline: () => set({ baseline: null }),
