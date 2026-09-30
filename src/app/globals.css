@@ -1631,6 +1631,29 @@ body {
 .team-link:hover { text-decoration: underline; }
 .team-foot { margin-top: 14px; }
 
+.team-keys { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line-2); }
+.team-keys-hint { margin: 4px 0 10px; }
+.team-key-row {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.team-key-row:last-child { border-bottom: none; }
+.team-key-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.team-key-name { font-size: 13px; font-weight: 600; }
+.team-key-label {
+  font-size: 11.5px;
+  font-family: var(--mono, ui-monospace, monospace);
+  color: var(--accent);
+}
+.team-key-empty { color: var(--muted); font-family: inherit; }
+.team-key-controls { align-items: center; }
+
 .conn-planhint {
   display: flex;
   align-items: center;

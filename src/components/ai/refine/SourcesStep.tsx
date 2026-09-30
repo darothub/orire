@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore, type ImportMode } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { usePooledStore } from "@/lib/store/pooledStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
@@ -40,7 +41,8 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const facts = countFacts(cv);
   const hasContent = facts.experience + facts.education + facts.skills + facts.projects > 0;
   const apiKey = keys[provider]?.trim() ?? "";
-  const hasAIKey = needsKey(provider) ? apiKey.length > 0 : true;
+  const pooled = usePooledStore((s) => s.providers);
+  const hasAIKey = needsKey(provider) ? apiKey.length > 0 || pooled.includes(provider) : true;
   const providerLabel = PROVIDERS[provider].label;
 
   const upload = useCallback(async (files: FileList | File[]) => {

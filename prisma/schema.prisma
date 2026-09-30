@@ -145,6 +145,7 @@ model Team {
   owner   User         @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members TeamMember[]
   invites TeamInvite[]
+  keys    TeamKey[]
 
   @@index([ownerId])
 }
@@ -181,4 +182,25 @@ model TeamInvite {
 
   @@index([teamId])
   @@index([email])
+}
+
+/// A pooled provider API key owned by a team (Phase B3b). The secret is stored
+/// encrypted at rest (AES-256-GCM); ciphertext/iv/tag are never returned to the
+/// client. Seated members run premium on the team's key without a personal one.
+model TeamKey {
+  id         String   @id @default(cuid())
+  teamId     String
+  provider   String // ProviderId: openai | anthropic
+  ciphertext String
+  iv         String
+  tag        String
+  label      String? // optional masked hint, e.g. "sk-…4f2a"
+  createdById String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, provider])
+  @@index([teamId])
 }

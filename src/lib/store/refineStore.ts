@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
+import { usePooledStore } from "@/lib/store/pooledStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { PROVIDERS, needsKey, isCLI, type ProviderId } from "@/lib/ai/types";
 import { authorizeRefineRun } from "@/app/actions/refine";
@@ -81,9 +82,11 @@ interface RefineState {
 }
 
 const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
-/** A provider is runnable when it's a CLI (local login) or has a BYO key set. */
+/** A provider is runnable when it's a CLI (local login), has a BYO key, or the
+ *  member's team has a pooled key for it (Phase B3b). */
 function providerReady(p: ProviderId, keys: Record<ProviderId, string>): boolean {
-  return needsKey(p) ? Boolean(keys[p]?.trim()) : true;
+  if (!needsKey(p)) return true;
+  return Boolean(keys[p]?.trim()) || usePooledStore.getState().has(p);
 }
 const idleCols = (): Record<ProviderId, ColState> =>
   Object.fromEntries(PROVIDER_IDS.map((p) => [p, { phase: "idle" as ColPhase }])) as Record<ProviderId, ColState>;
@@ -157,7 +160,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const selections = runProviders.map((provider) => ({
       provider,
       model: models[provider] ?? "",
-      hasOwnKey: isCLI(provider) ? true : Boolean(keys[provider]?.trim()),
+      hasOwnKey: isCLI(provider) ? true : Boolean(keys[provider]?.trim()) || usePooledStore.getState().has(provider),
     }));
     let authz;
     try {

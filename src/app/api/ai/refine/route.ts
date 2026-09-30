@@ -11,6 +11,7 @@ import type { CVData } from "@/lib/cv/schema";
 import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
 import { PROVIDERS, needsKey, isCLI, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider } from "@/lib/ai/server/providerCall";
+import { effectiveProviderKey } from "@/lib/ai/server/pooledKey";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan } from "@/lib/plan/plan";
 
@@ -41,7 +42,9 @@ export async function POST(req: Request) {
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
-  const apiKey = (body.apiKey ?? "").trim();
+  // Personal BYO key, or the caller's team pooled key (Phase B3b) when signed
+  // in and seated. The pooled secret is resolved server-side and never sent back.
+  const apiKey = await effectiveProviderKey(provider, body.apiKey ?? "");
   if (needsKey(provider) && !apiKey) {
     return NextResponse.json(fail(provider, "Missing API key. Add it in Settings."), { status: 400 });
   }

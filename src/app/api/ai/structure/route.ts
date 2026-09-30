@@ -16,6 +16,7 @@ import { parseModelJSON } from "@/lib/ai/guardrails";
 import { parsedCVFromModelJSON, type ParsedCV } from "@/lib/ingest/parse";
 import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
 import { runProvider } from "@/lib/ai/server/providerCall";
+import { effectiveProviderKey } from "@/lib/ai/server/pooledKey";
 
 export const runtime = "nodejs";
 
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
-  const apiKey = (body.apiKey ?? "").trim();
+  const apiKey = await effectiveProviderKey(provider, body.apiKey ?? "");
   if (needsKey(provider) && !apiKey) {
     return NextResponse.json(fail(provider, "Missing API key. Add it in Settings."), { status: 400 });
   }

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
+import { usePooledStore } from "@/lib/store/pooledStore";
 import {
   acceptInviteAction,
   createTeamAction,
@@ -14,6 +16,15 @@ import {
   teamOverview,
   type TeamOverview,
 } from "@/app/actions/team";
+import {
+  listTeamKeysAction,
+  removeTeamKeyAction,
+  setTeamKeyAction,
+} from "@/app/actions/teamKeys";
+import type { PooledKeyDTO } from "@/lib/team/keys";
+
+/** Providers that can hold a pooled team key (CLI logins are excluded). */
+const POOLABLE: ProviderId[] = ["openai", "anthropic"];
 
 /**
  * Teams panel (Phase B3). Lets a Teams-plan owner create a shared workspace,
@@ -33,6 +44,13 @@ export function TeamPanel() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [poolKeys, setPoolKeys] = useState<PooledKeyDTO[]>([]);
+  const [poolDraft, setPoolDraft] = useState<Record<string, string>>({});
+  const refreshPooled = usePooledStore((s) => s.refresh);
+
+  const loadKeys = useCallback(async () => {
+    setPoolKeys(await listTeamKeysAction());
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,12 +82,16 @@ export function TeamPanel() {
           window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
         }
       }
-      if (!cancelled) await load();
+      if (!cancelled) {
+        await load();
+        await loadKeys();
+        await refreshPooled();
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [signedIn, load]);
+  }, [signedIn, load, loadKeys, refreshPooled]);
 
   const run = async (fn: () => Promise<{ ok: boolean; error?: string }>, ok?: string) => {
     setBusy(true);
@@ -86,8 +108,23 @@ export function TeamPanel() {
     return r.ok;
   };
 
-  const inviteLink = (token: string) => {
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const runKey = async (fn: () => Promise<{ ok: boolean; error?: string }>, ok?: string) => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const r = await fn();
+    if (r.ok) {
+      if (ok) setNotice(ok);
+      await loadKeys();
+      await refreshPooled();
+    } else {
+      setError(r.error ?? "Something went wrong.");
+    }
+    setBusy(false);
+    return r.ok;
+  };
+
+  const inviteLink = (token: string) => {    const origin = typeof window !== "undefined" ? window.location.origin : "";
     return `${origin}/?invite=${token}`;
   };
 
@@ -234,6 +271,62 @@ export function TeamPanel() {
               <span className="team-seatsleft">
                 {team.seatsLeft > 0 ? `${team.seatsLeft} seat${team.seatsLeft === 1 ? "" : "s"} left` : "All seats filled"}
               </span>
+            </div>
+          )}
+
+          {team.canManage && (
+            <div className="team-keys">
+              <span className="ed-label team-sub">Pooled provider keys</span>
+              <p className="conn-hint team-keys-hint">
+                Store a key once so seated members run premium models on it — no personal key needed.
+                Keys are encrypted at rest and never shown again.
+              </p>
+              {POOLABLE.map((p) => {
+                const existing = poolKeys.find((k) => k.provider === p);
+                const draft = poolDraft[p] ?? "";
+                return (
+                  <div key={p} className="team-key-row">
+                    <div className="team-key-main">
+                      <span className="team-key-name">{PROVIDERS[p].label}</span>
+                      {existing ? (
+                        <span className="team-key-label">{existing.label}</span>
+                      ) : (
+                        <span className="team-key-label team-key-empty">Not set</span>
+                      )}
+                    </div>
+                    <div className="team-row team-key-controls">
+                      <input
+                        className="team-input"
+                        type="password"
+                        placeholder={existing ? "Replace key…" : `${PROVIDERS[p].label} API key`}
+                        value={draft}
+                        onChange={(e) => setPoolDraft((d) => ({ ...d, [p]: e.target.value }))}
+                        disabled={busy}
+                      />
+                      <button
+                        className="team-btn team-btn-primary"
+                        disabled={busy || draft.trim().length < 8}
+                        onClick={() =>
+                          void runKey(() => setTeamKeyAction(p, draft), `${PROVIDERS[p].label} key saved.`).then(
+                            (ok) => ok && setPoolDraft((d) => ({ ...d, [p]: "" }))
+                          )
+                        }
+                      >
+                        {busy ? "…" : "Save"}
+                      </button>
+                      {existing && (
+                        <button
+                          className="team-x"
+                          disabled={busy}
+                          onClick={() => void runKey(() => removeTeamKeyAction(p), `${PROVIDERS[p].label} key removed.`)}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { usePooledStore } from "@/lib/store/pooledStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
@@ -28,7 +29,8 @@ export function SimulateView() {
   const setView = useViewStore((s) => s.setView);
 
   const meta = PROVIDERS[provider];
-  const hasKey = needsKey(provider) ? Boolean(keys[provider]?.trim()) : true;
+  const pooled = usePooledStore((s) => s.providers);
+  const hasKey = needsKey(provider) ? Boolean(keys[provider]?.trim()) || pooled.includes(provider) : true;
   const Tpl = getTemplate(activeTemplate).Component;
 
   const [jd, setJd] = useState("");
