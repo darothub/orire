@@ -12,12 +12,13 @@ import { RateView } from "@/components/ai/RatingPanel";
 import { SimulateView } from "@/components/ai/SimulatePanel";
 import { ProgressView } from "@/components/ProgressPanel";
 import { HistoryView } from "@/components/HistoryView";
-import { ExportDialog } from "@/components/export/ExportDialog";
+import { ExportView } from "@/components/export/ExportView";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useRefineStore } from "@/lib/store/refineStore";
+import { useStyleStore, paperStyleVars } from "@/lib/store/styleStore";
 
 /** Edit workspace: section reorder + field editor. Right pane shows it live. */
 function EditView({ mounted }: { mounted: boolean }) {
@@ -83,6 +84,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "rate" && <RateView />}
           {view === "progress" && <ProgressView />}
           {view === "history" && <HistoryView />}
+          {view === "export" && <ExportView />}
           {view === "connect" && <ConnectView />}
         </motion.div>
       </AnimatePresence>
@@ -92,7 +94,6 @@ function Workspace({ mounted }: { mounted: boolean }) {
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
   // Intentional one-shot hydration guard: render the client-only editor after
   // mount so SSR and first client render match. This is the sanctioned use of
   // setState-in-effect, not a data-sync mistake.
@@ -108,10 +109,18 @@ export default function Home() {
   // During a 2-provider Refine comparison, widen the workspace pane so the
   // side-by-side columns breathe and de-emphasise the live preview.
   const view = useViewStore((s) => s.view);
+  const setView = useViewStore((s) => s.setView);
   const refStep = useRefineStore((s) => s.step);
   const refStarted = useRefineStore((s) => s.started);
   const refCompare = useRefineStore((s) => s.runProviders.length === 2);
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
+
+  // Live typography (font / size / alignment) applied to the CV paper so the
+  // preview — and the exported PDF captured from it — reflect the choices.
+  const fontId = useStyleStore((s) => s.fontId);
+  const size = useStyleStore((s) => s.size);
+  const cvAlign = useStyleStore((s) => s.align);
+  const paperVars = mounted ? paperStyleVars({ fontId, size, align: cvAlign }) : {};
 
   const tpl = getTemplate(active);
   const ActiveTemplate = tpl.Component;
@@ -135,7 +144,7 @@ export default function Home() {
             {mounted && previewEdit ? "Editing preview" : "Edit on preview"}
           </button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
-          <button className="btn-primary" onClick={() => setExportOpen(true)}>Export PDF</button>
+          <button className="btn-primary" onClick={() => setView("export")}>Export PDF</button>
         </div>
       </header>
 
@@ -170,6 +179,7 @@ export default function Home() {
                         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                         className={`paper${mounted && previewEdit ? " is-editing" : ""}`}
                         id="cv-paper"
+                        style={paperVars}
                       >
                         {mounted && <ActiveTemplate cv={cv} />}
                         <span key={`sweep-${active}`} className="tpl-sweep" aria-hidden />
@@ -182,8 +192,6 @@ export default function Home() {
           </AnimatePresence>
         </MotionConfig>
       </main>
-
-      <ExportDialog open={exportOpen} onClose={() => setExportOpen(false)} />
     </div>
   );
 }
