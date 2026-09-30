@@ -1348,3 +1348,92 @@ body {
   padding: 1px 5px;
   margin-right: 3px;
 }
+
+/* ---------- Preview zoom + A4 page-break guides ---------- */
+.pane-preview { position: relative; }
+.preview-stage { justify-content: safe center; }
+.pane-preview { overflow-x: auto; }
+
+.pv-toolbar {
+  position: sticky;
+  top: 12px;
+  z-index: 8;
+  width: fit-content;
+  margin: 2px auto -40px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: rgba(18, 21, 29, 0.72);
+  backdrop-filter: blur(10px) saturate(1.1);
+  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.7);
+}
+.pv-btn,
+.pv-pct,
+.pv-chip {
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.14s ease, color 0.14s ease, opacity 0.14s ease;
+}
+.pv-btn { width: 30px; font-size: 18px; line-height: 1; display: grid; place-items: center; }
+.pv-pct { min-width: 52px; font-variant-numeric: tabular-nums; }
+.pv-chip { padding: 0 11px; }
+.pv-btn:hover,
+.pv-pct:hover,
+.pv-chip:hover { background: rgba(255, 255, 255, 0.09); }
+.pv-btn:disabled { opacity: 0.32; cursor: default; }
+.pv-chip.is-on { background: rgba(139, 124, 255, 0.18); color: #d9d3ff; }
+.pv-div { width: 1px; height: 18px; background: var(--line-2); margin: 0 3px; }
+
+.paper-frame {
+  position: relative;
+  flex: none;
+  transition: width 0.18s ease, height 0.18s ease;
+}
+.paper-scaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+.page-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+.page-guide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1.5px dashed rgba(139, 124, 255, 0.6);
+}
+.page-guide::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1.5px;
+  height: 24px;
+  background: linear-gradient(180deg, rgba(139, 124, 255, 0.12), transparent);
+}
+.page-guide-lbl {
+  position: absolute;
+  right: 8px;
+  top: 5px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: #6f63c9;
+  background: rgba(18, 21, 29, 0.9);
+  border: 1px solid rgba(139, 124, 255, 0.4);
+  border-radius: 999px;
+  padding: 1px 8px;
+}

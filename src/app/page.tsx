@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { EditorPanel } from "@/components/editor/EditorPanel";
 import { SectionOrder } from "@/components/editor/SectionOrder";
@@ -14,12 +14,14 @@ import { ProgressView } from "@/components/ProgressPanel";
 import { HistoryView } from "@/components/HistoryView";
 import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
+import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useStyleStore, paperStyleVars } from "@/lib/store/styleStore";
+import { usePreviewStore } from "@/lib/store/previewStore";
 
 /** Edit workspace: section reorder + field editor. Right pane shows it live. */
 function EditView({ mounted }: { mounted: boolean }) {
@@ -123,6 +125,35 @@ export default function Home() {
   const cvAlign = useStyleStore((s) => s.align);
   const paperVars = mounted ? paperStyleVars({ fontId, size, align: cvAlign }) : {};
 
+  // Live-preview viewport: zoom + A4 page-break guides. We measure the paper's
+  // rendered height (so guides land on real A4 boundaries) and the stage width
+  // (so "Fit" can size the paper to the pane), keeping both fresh on resize.
+  const zoom = usePreviewStore((s) => s.zoom);
+  const showGuides = usePreviewStore((s) => s.showGuides);
+  const setFitZoom = usePreviewStore((s) => s.setFitZoom);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [paperH, setPaperH] = useState(1123);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const paper = document.getElementById("cv-paper");
+    const stage = stageRef.current;
+    if (!paper || !stage) return;
+    const measure = () => {
+      setPaperH(paper.offsetHeight || 1123);
+      const avail = stage.clientWidth - 68; // matches .preview-stage h-padding
+      setFitZoom(avail / 794);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(paper);
+    ro.observe(stage);
+    return () => ro.disconnect();
+  }, [mounted, active, cv, setFitZoom]);
+
+  const A4_PX = 1123;
+  const pageCount = Math.max(1, Math.ceil((paperH - 2) / A4_PX));
+
   const tpl = getTemplate(active);
   const ActiveTemplate = tpl.Component;
 
@@ -179,24 +210,44 @@ export default function Home() {
                 aria-label="Live preview"
               >
                 {mounted && <TemplatePicker />}
-                <div className="preview-stage">
-                  <MotionConfig reducedMotion="user">
-                    <AnimatePresence mode="popLayout" initial={false}>
-                      <motion.div
-                        key={active}
-                        initial={{ opacity: 0, y: 26, scale: 0.965, filter: "blur(6px)" }}
-                        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                        exit={{ opacity: 0, y: -18, scale: 0.975, filter: "blur(5px)" }}
-                        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                        className={`paper${mounted && previewEdit ? " is-editing" : ""}`}
-                        id="cv-paper"
-                        style={paperVars}
-                      >
-                        {mounted && <ActiveTemplate cv={cv} />}
-                        <span key={`sweep-${active}`} className="tpl-sweep" aria-hidden />
-                      </motion.div>
-                    </AnimatePresence>
-                  </MotionConfig>
+                {mounted && <PreviewToolbar />}
+                <div className="preview-stage" ref={stageRef}>
+                  <div
+                    className="paper-frame"
+                    style={{ width: 794 * zoom, height: paperH * zoom }}
+                  >
+                    <div
+                      className="paper-scaler"
+                      style={{ transform: `scale(${zoom})`, width: 794, height: paperH }}
+                    >
+                      <MotionConfig reducedMotion="user">
+                        <AnimatePresence mode="popLayout" initial={false}>
+                          <motion.div
+                            key={active}
+                            initial={{ opacity: 0, y: 26, scale: 0.965, filter: "blur(6px)" }}
+                            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                            exit={{ opacity: 0, y: -18, scale: 0.975, filter: "blur(5px)" }}
+                            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                            className={`paper${mounted && previewEdit ? " is-editing" : ""}`}
+                            id="cv-paper"
+                            style={paperVars}
+                          >
+                            {mounted && <ActiveTemplate cv={cv} />}
+                            <span key={`sweep-${active}`} className="tpl-sweep" aria-hidden />
+                          </motion.div>
+                        </AnimatePresence>
+                      </MotionConfig>
+                      {mounted && showGuides && pageCount > 1 && (
+                        <div className="page-guides" aria-hidden>
+                          {Array.from({ length: pageCount - 1 }, (_, i) => (
+                            <div key={i} className="page-guide" style={{ top: (i + 1) * A4_PX }}>
+                              <span className="page-guide-lbl">Page {i + 2}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </motion.section>
             )}
