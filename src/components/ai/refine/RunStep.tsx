@@ -37,7 +37,7 @@ export function RunStep({ onBack }: { onBack: () => void }) {
           <div className="run-ready-icon">✦</div>
           <strong>{single ? "Ready to tailor with " : "Ready to compare "}{runProviders.map((p) => PROVIDERS[p].label).join(" vs ")}</strong>
           <p>{single ? "One assistant will rewrite your CV for the role." : "Both assistants run in parallel on the same job — then an LLM judge can pick the best."}</p>
-          <button className="flow-btn primary lg" onClick={runAll}>{single ? "Refine my CV" : "Run comparison"}</button>
+          <button className="flow-btn primary lg" onClick={() => void runAll()}>{single ? "Refine my CV" : "Run comparison"}</button>
           {planBlock && (
             <div className="plan-block" role="alert">
               <strong>{planBlock.title}</strong>

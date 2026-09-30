@@ -1,39 +1,55 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useSession } from "next-auth/react";
 import { usePlanStore } from "@/lib/store/planStore";
+import { devSetPlan } from "@/app/actions/refine";
 import { PLANS, PLAN_ORDER, type PlanId } from "@/lib/plan/plan";
 
 /**
  * Plan / subscription panel. In this local build switching a plan is instant
  * (no billing) so the entitlement gates — compare, model tiers, monthly cap —
- * can be exercised end-to-end. Enforcement lives in the refine store; this is
- * the surface that sets the active plan and shows what it unlocks.
+ * can be exercised end-to-end. Enforcement is server-side (Phase B1): when
+ * signed in, a plan switch goes through the `devSetPlan` action and the usage
+ * shown here mirrors the Postgres counter; signed out, it's a local trial.
  */
 export function PlanPanel() {
+  const { status } = useSession();
+  const signedIn = status === "authenticated";
   const plan = usePlanStore((s) => s.plan);
   const setPlan = usePlanStore((s) => s.setPlan);
-  const usageMonth = usePlanStore((s) => s.usageMonth);
-  const refinesUsed = usePlanStore((s) => s.refinesUsed);
+  const syncFromServer = usePlanStore((s) => s.syncFromServer);
+  const used = usePlanStore((s) => s.usedThisMonth());
 
   const active = PLANS[plan];
   const cap = active.monthlyRefines;
-  const used = usageMonth === currentMonth() ? refinesUsed : 0;
   const pctUsed = cap ? Math.min(100, Math.round((used / cap) * 100)) : 0;
+
+  const pick = async (id: PlanId) => {
+    if (signedIn) {
+      const r = await devSetPlan(id);
+      if (r) syncFromServer({ plan: r.plan, usedThisMonth: r.usedThisMonth });
+    } else {
+      setPlan(id);
+    }
+  };
 
   return (
     <div className="plan-panel">
       <div className="plan-head">
         <span className="ed-label">Plan</span>
         <span className="conn-hint">
-          Switch instantly to try each tier’s limits. Premium models stay behind your own key on
-          Free/Pro/Career — that’s what keeps the flat price sustainable.
+          {signedIn
+            ? "Switch instantly to try each tier’s limits — enforced server-side against your account."
+            : "Sign in to save your plan. Switching here is a local trial until you do."}
+          {" "}Premium models stay behind your own key on Free/Pro/Career — that’s what keeps the
+          flat price sustainable.
         </span>
       </div>
 
       <div className="plan-grid">
         {PLAN_ORDER.map((id, i) => (
-          <PlanCard key={id} id={id} active={id === plan} index={i} onPick={() => setPlan(id)} />
+          <PlanCard key={id} id={id} active={id === plan} index={i} onPick={() => void pick(id)} />
         ))}
       </div>
 
@@ -96,9 +112,4 @@ function PlanCard({
       )}
     </motion.button>
   );
-}
-
-function currentMonth(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }

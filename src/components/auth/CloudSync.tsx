@@ -3,7 +3,9 @@
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useCVStore } from "@/lib/store/cvStore";
+import { usePlanStore } from "@/lib/store/planStore";
 import { loadWorkingCV, saveWorkingCV } from "@/app/actions/cv";
+import { readEntitlement } from "@/app/actions/refine";
 
 /**
  * Bridges the local CV (Zustand + localStorage) with the signed-in user's cloud
@@ -38,9 +40,28 @@ export function CloudSync() {
     };
   }, [status]);
 
-  // Reset the guard on sign-out so a later sign-in re-syncs.
+  // Reset the guard on sign-out so a later sign-in re-syncs. Also drop the
+  // server-authoritative plan mirror back to the free local default.
   useEffect(() => {
-    if (status === "unauthenticated") hydratedFor.current = false;
+    if (status === "unauthenticated") {
+      hydratedFor.current = false;
+      usePlanStore.getState().clearServer();
+    }
+  }, [status]);
+
+  // Mirror the server-truth plan + usage whenever we become authenticated, so
+  // the plan UI shows the enforceable numbers (not the local trial counter).
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    (async () => {
+      const ent = await readEntitlement();
+      if (cancelled || !ent) return;
+      usePlanStore.getState().syncFromServer({ plan: ent.plan, usedThisMonth: ent.usedThisMonth });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [status]);
 
   // Debounced autosave of edits while signed in.

@@ -9,8 +9,10 @@
 import { NextResponse } from "next/server";
 import type { CVData } from "@/lib/cv/schema";
 import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
-import { PROVIDERS, needsKey, type ProviderId, type RefineResponse } from "@/lib/ai/types";
+import { PROVIDERS, needsKey, isCLI, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider } from "@/lib/ai/server/providerCall";
+import { verifyRunToken } from "@/lib/plan/runToken";
+import { modelAllowedOnPlan } from "@/lib/plan/plan";
 
 export const runtime = "nodejs";
 
@@ -20,6 +22,7 @@ interface Body {
   model?: string;
   jobDescription?: string;
   cv?: CVData;
+  runToken?: string;
 }
 
 function fail(provider: ProviderId, message: string, status?: number): RefineResponse {
@@ -51,6 +54,31 @@ export async function POST(req: Request) {
   }
   if (!(body.jobDescription ?? "").trim()) {
     return NextResponse.json(fail(provider, "Paste a job description to refine against."), { status: 400 });
+  }
+
+  // Server-enforced gate (Phase B1): every provider call must carry a run token
+  // minted by `authorizeRefineRun`, which checked the plan + usage in Postgres.
+  const check = verifyRunToken(body.runToken);
+  if (!check.ok) {
+    return NextResponse.json(fail(provider, check.reason ?? "Run not authorized.", 403), { status: 403 });
+  }
+  if (!check.payload!.p.includes(provider)) {
+    return NextResponse.json(
+      fail(provider, "This assistant wasn’t part of the authorized run.", 403),
+      { status: 403 }
+    );
+  }
+
+  // Per-column model-tier enforcement, driven by the plan attested in the token.
+  // `hasOwnKey` is what the server can actually see: a CLI provider or a key on
+  // this request. Premium models on key-gated plans need that BYO key.
+  const hasOwnKey = isCLI(provider) || apiKey.length > 0;
+  const modelGate = modelAllowedOnPlan(check.payload!.plan, provider, model, hasOwnKey);
+  if (!modelGate.allowed) {
+    return NextResponse.json(
+      fail(provider, modelGate.reason ?? "That model isn’t available on your plan.", 402),
+      { status: 200 }
+    );
   }
 
   const user = buildPatchPrompt(body.cv, body.jobDescription!);

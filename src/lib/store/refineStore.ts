@@ -5,7 +5,7 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { PROVIDERS, needsKey, isCLI, type ProviderId } from "@/lib/ai/types";
-import { providerCountAllowed, withinMonthlyCap, modelAllowedOnPlan } from "@/lib/plan/plan";
+import { authorizeRefineRun } from "@/app/actions/refine";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
@@ -70,7 +70,7 @@ interface RefineState {
   setJd: (jd: string) => void;
   setJudgeProvider: (p: ProviderId) => void;
 
-  runAll: () => void;
+  runAll: () => Promise<void>;
   runJudge: () => Promise<void>;
   runSimulate: () => Promise<void>;
   resetRun: () => void;
@@ -119,56 +119,70 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   setJd: (jd) => set({ jd }),
   setJudgeProvider: (judgeProvider) => set({ judgeProvider }),
 
-  runAll: () => {
+  runAll: async () => {
     const { jd, runProviders } = get();
     if (!jd.trim() || runProviders.length === 0) return;
     const { keys, models } = useSettingsStore.getState();
     const cv = useCVStore.getState().cv;
 
-    // ---- Plan gate: assistant count + monthly cap (run-level, blocks start).
-    const plan = usePlanStore.getState().plan;
-    const used = usePlanStore.getState().usedThisMonth();
-    const countGate = providerCountAllowed(plan, runProviders.length);
-    if (!countGate.allowed) {
-      set({ planBlock: { title: "Plan limit", body: countGate.reason ?? "Not allowed on your plan." } });
-      return;
-    }
-    const capGate = withinMonthlyCap(plan, used);
-    if (!capGate.allowed) {
-      set({ planBlock: { title: "Monthly limit reached", body: capGate.reason ?? "Upgrade for more refines." } });
+    const resetStarted = () =>
+      set({
+        started: true,
+        planBlock: null,
+        cols: idleCols(),
+        baseMatch: jdMatch(cv, jd),
+        baseCV: cv,
+        judgePhase: "idle",
+        verdict: null,
+        judgeErr: null,
+        idealPhase: "idle",
+        ideal: null,
+        idealErr: null,
+      });
+
+    // Don't spend a refine on a run where no selected assistant is usable.
+    const anyReady = runProviders.some((p) => providerReady(p, keys));
+    if (!anyReady) {
+      resetStarted();
+      for (const provider of runProviders) {
+        set((s) => ({ cols: { ...s.cols, [provider]: { phase: "nokey" } } }));
+      }
       return;
     }
 
-    set({
-      started: true,
-      planBlock: null,
-      cols: idleCols(),
-      baseMatch: jdMatch(cv, jd),
-      baseCV: cv,
-      judgePhase: "idle",
-      verdict: null,
-      judgeErr: null,
-      idealPhase: "idle",
-      ideal: null,
-      idealErr: null,
-    });
+    // ---- Server-enforced gate (Phase B1): the server checks plan + usage in
+    // Postgres, consumes one refine, and returns a signed run token that
+    // /api/ai/refine requires. This is the enforceable version of the gate —
+    // the client can no longer unlock paid capability from devtools.
+    const selections = runProviders.map((provider) => ({
+      provider,
+      model: models[provider] ?? "",
+      hasOwnKey: isCLI(provider) ? true : Boolean(keys[provider]?.trim()),
+    }));
+    let authz;
+    try {
+      authz = await authorizeRefineRun(selections);
+    } catch (e) {
+      set({ planBlock: { title: "Couldn’t start run", body: e instanceof Error ? e.message : String(e) } });
+      return;
+    }
+    // Reconcile the client mirror with server truth (signed-in users only).
+    if (authz.signedIn) {
+      usePlanStore.getState().syncFromServer({ plan: authz.plan, usedThisMonth: authz.usedThisMonth });
+    }
+    if (!authz.ok || !authz.token) {
+      set({ planBlock: authz.block ?? { title: "Plan limit", body: "Not allowed on your plan." } });
+      return;
+    }
+    const runToken = authz.token;
+
+    resetStarted();
+    // Local trial counter (anonymous only; no-op when server-authoritative).
     usePlanStore.getState().recordRefine();
 
     for (const provider of runProviders) {
       if (!providerReady(provider, keys)) {
         set((s) => ({ cols: { ...s.cols, [provider]: { phase: "nokey" } } }));
-        continue;
-      }
-      // ---- Plan gate: premium models require a BYO key on key-gated plans.
-      const hasOwnKey = isCLI(provider) ? true : Boolean(keys[provider]?.trim());
-      const modelGate = modelAllowedOnPlan(plan, provider, models[provider] ?? "", hasOwnKey);
-      if (!modelGate.allowed) {
-        set((s) => ({
-          cols: {
-            ...s.cols,
-            [provider]: { phase: "error", error: { title: "Model not available on your plan", body: modelGate.reason ?? "Upgrade or switch model." } },
-          },
-        }));
         continue;
       }
       set((s) => ({ cols: { ...s.cols, [provider]: { phase: "running" } } }));
@@ -177,7 +191,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
           const res = await fetch("/api/ai/refine", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd, cv }),
+            body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd, cv, runToken }),
           });
           const data = (await res.json()) as RefineResponse;
           if (!data.ok || !data.raw) {
