@@ -8,7 +8,7 @@
 
 import { NextResponse } from "next/server";
 import type { CVData } from "@/lib/cv/schema";
-import { SYSTEM_PROMPT, buildUserPrompt } from "@/lib/ai/prompt";
+import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
 import { PROVIDERS, needsKey, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider } from "@/lib/ai/server/providerCall";
 
@@ -53,10 +53,10 @@ export async function POST(req: Request) {
     return NextResponse.json(fail(provider, "Paste a job description to refine against."), { status: 400 });
   }
 
-  const user = buildUserPrompt(body.cv, body.jobDescription!);
+  const user = buildPatchPrompt(body.cv, body.jobDescription!);
 
   try {
-    const out = await runProvider({ provider, apiKey, model, system: SYSTEM_PROMPT, user });
+    const out = await runProvider({ provider, apiKey, model, system: PATCH_SYSTEM, user });
     if (!out.ok) {
       return NextResponse.json(
         { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,

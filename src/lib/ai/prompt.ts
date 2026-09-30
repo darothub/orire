@@ -85,3 +85,94 @@ export function buildStructurePrompt(rawText: string): string {
     SCHEMA_HINT,
   ].join("\n");
 }
+
+/* ------------------------------------------------------------------ *
+ * Patch-mode refine (token-lean).
+ *
+ * Rather than re-emitting the entire CV (identity, dates, URLs, etc. — all of
+ * which the deterministic guardrails LOCK to the source anyway), we ask the
+ * model to return ONLY the tailorable content, referencing source experience
+ * and projects by index. This roughly halves output tokens with no loss of
+ * grounding: applyRefinePatch reconstructs a full candidate from source + patch
+ * and the same factGround pass runs over it unchanged.
+ * ------------------------------------------------------------------ */
+
+export const PATCH_SYSTEM = `You are a meticulous CV editor. You tailor an existing CV to a target job description.
+
+You will receive the SOURCE CV with each experience and project pre-numbered like [#0], [#1].
+Return ONLY a compact JSON "patch" of the content you want to CHANGE — never the whole CV.
+
+ABSOLUTE RULES (fact-grounding):
+- Use ONLY facts already in the source CV. NEVER invent or alter employers, titles you did not hold, dates, locations, degrees, institutions, certifications, project names, metrics, or numbers, and NEVER add skills the person did not list.
+- You MAY: reorder items, rephrase highlights for clarity/impact, emphasise the most relevant experience, trim less-relevant highlights, and write a tailored summary — but only from facts already present.
+- TERMINOLOGY MATCHING: when source and job description name the SAME existing skill/tech differently, prefer the job's wording — but only when the fact is genuinely present.
+- Reference each experience/project by its source index ("ref"). Do not emit company names, dates, emails, phone, or URLs — those are carried from the source automatically.
+- Output MUST be valid JSON only (no markdown, no prose), matching the patch schema.`;
+
+const PATCH_SCHEMA_HINT = `Return ONLY this JSON shape (omit any field you don't want to change):
+{
+  "title": string,                 // tailored headline (optional)
+  "summary": string,               // tailored professional summary (optional)
+  "order": [number],               // source experience indices in the new display order (optional)
+  "experience": [                  // one entry per source experience you keep, by ref
+    { "ref": number, "role": string, "highlights": [string] }
+  ],
+  "projects": [
+    { "ref": number, "role": string, "highlights": [string] }
+  ],
+  "skills": [                      // reorder/regroup EXISTING skills only
+    { "category": string, "items": [string] }
+  ]
+}`;
+
+function indexedSource(cv: CVData): string {
+  const exp = cv.experience
+    .map((e, i) => {
+      const when = [e.startDate, e.endDate].filter(Boolean).join("–");
+      const head = `[#${i}] ${e.role || "—"} @ ${e.company || "—"}${when ? ` (${when})` : ""}`;
+      const bullets = (e.highlights ?? []).map((h) => `    - ${h}`).join("\n");
+      return bullets ? `${head}\n${bullets}` : head;
+    })
+    .join("\n");
+  const prj = cv.projects
+    .map((p, i) => {
+      const bullets = (p.highlights ?? []).map((h) => `    - ${h}`).join("\n");
+      const head = `[#${i}] ${p.name || "—"}${p.role ? ` — ${p.role}` : ""}`;
+      return bullets ? `${head}\n${bullets}` : head;
+    })
+    .join("\n");
+  const skills = cv.skills
+    .map((g) => `- ${g.category || "Skills"}: ${g.items.join(", ")}`)
+    .join("\n");
+  return [
+    `NAME: ${cv.basics.fullName}`,
+    cv.basics.title ? `CURRENT TITLE: ${cv.basics.title}` : "",
+    cv.basics.summary ? `CURRENT SUMMARY: ${cv.basics.summary}` : "",
+    "",
+    "EXPERIENCE (reference by [#index]):",
+    exp || "(none)",
+    "",
+    prj ? "PROJECTS (reference by [#index]):" : "",
+    prj,
+    "",
+    skills ? "SKILLS (reorder/regroup existing only):" : "",
+    skills,
+  ]
+    .filter((l) => l !== "")
+    .join("\n");
+}
+
+export function buildPatchPrompt(cv: CVData, jobDescription: string): string {
+  return [
+    "SOURCE CV (the only allowed source of facts):",
+    indexedSource(cv),
+    "",
+    "TARGET JOB DESCRIPTION:",
+    "```",
+    jobDescription.trim(),
+    "```",
+    "",
+    "Produce the tailoring patch. Reorder and rephrase to best match the job, obeying every fact-grounding rule.",
+    PATCH_SCHEMA_HINT,
+  ].join("\n");
+}
