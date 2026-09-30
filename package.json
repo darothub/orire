@@ -26,6 +26,7 @@
     "nodemailer": "^8.0.11",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "stripe": "^17.7.0",
     "unpdf": "^1.8.1",
     "zustand": "^5.0.15"
   },

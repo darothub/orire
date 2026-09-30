@@ -1,17 +1,22 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { usePlanStore } from "@/lib/store/planStore";
-import { devSetPlan } from "@/app/actions/refine";
+import { devSetPlan, readEntitlement } from "@/app/actions/refine";
+import { billingStatus, openBillingPortal, startCheckout, type BillingStatus } from "@/app/actions/billing";
 import { PLANS, PLAN_ORDER, type PlanId } from "@/lib/plan/plan";
 
 /**
- * Plan / subscription panel. In this local build switching a plan is instant
- * (no billing) so the entitlement gates — compare, model tiers, monthly cap —
- * can be exercised end-to-end. Enforcement is server-side (Phase B1): when
- * signed in, a plan switch goes through the `devSetPlan` action and the usage
- * shown here mirrors the Postgres counter; signed out, it's a local trial.
+ * Plan / subscription panel.
+ *
+ * When Stripe is configured (Phase B2), signed-in users subscribe to paid
+ * plans via Checkout and manage/cancel through the Customer Portal — the
+ * webhook writes the authoritative entitlement. When Stripe is NOT configured
+ * (local dev with no billing keys) it falls back to B1's instant `devSetPlan`
+ * so the gates can still be exercised end-to-end. Enforcement is server-side
+ * either way; the usage shown here mirrors the Postgres counter when signed in.
  */
 export function PlanPanel() {
   const { status } = useSession();
@@ -21,17 +26,89 @@ export function PlanPanel() {
   const syncFromServer = usePlanStore((s) => s.syncFromServer);
   const used = usePlanStore((s) => s.usedThisMonth());
 
+  const [billing, setBilling] = useState<BillingStatus | null>(null);
+  const [busy, setBusy] = useState<PlanId | "portal" | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
   const active = PLANS[plan];
   const cap = active.monthlyRefines;
   const pctUsed = cap ? Math.min(100, Math.round((used / cap) * 100)) : 0;
+  const useStripe = signedIn && billing?.configured === true;
+
+  // Load billing capability + reconcile entitlement when signed in. Also picks
+  // up a return from Checkout (?billing=success) to refresh the mirror.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      if (!signedIn) {
+        if (!cancelled) setBilling(null);
+        return;
+      }
+      const [b, ent] = await Promise.all([billingStatus(), readEntitlement()]);
+      if (cancelled) return;
+      setBilling(b);
+      if (ent) syncFromServer({ plan: ent.plan, usedThisMonth: ent.usedThisMonth });
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        const flag = params.get("billing");
+        if (flag) {
+          if (flag === "success") setNotice("Subscription active — welcome aboard.");
+          else if (flag === "cancelled") setNotice("Checkout cancelled — no changes made.");
+          params.delete("billing");
+          const qs = params.toString();
+          window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [signedIn, syncFromServer]);
+
+  const redirect = (url: string) => {
+    if (typeof window !== "undefined") window.location.assign(url);
+  };
+
+  const manage = async () => {
+    setNotice(null);
+    setBusy("portal");
+    const r = await openBillingPortal();
+    if (r.url) redirect(r.url);
+    else {
+      setNotice(r.error ?? "Could not open the billing portal.");
+      setBusy(null);
+    }
+  };
 
   const pick = async (id: PlanId) => {
-    if (signedIn) {
-      const r = await devSetPlan(id);
-      if (r) syncFromServer({ plan: r.plan, usedThisMonth: r.usedThisMonth });
-    } else {
+    setNotice(null);
+    if (!signedIn) {
       setPlan(id);
+      return;
     }
+    if (useStripe) {
+      if (id === "free") {
+        // Downgrades are handled in the Customer Portal to keep Stripe in sync.
+        if (billing?.hasSubscription) {
+          await manage();
+          return;
+        }
+        const r = await devSetPlan(id);
+        if (r) syncFromServer({ plan: r.plan, usedThisMonth: r.usedThisMonth });
+        return;
+      }
+      setBusy(id);
+      const r = await startCheckout(id);
+      if (r.url) redirect(r.url);
+      else {
+        setNotice(r.error ?? "Could not start checkout.");
+        setBusy(null);
+      }
+      return;
+    }
+    // Dev fallback (Stripe not configured): instant plan switch.
+    const r = await devSetPlan(id);
+    if (r) syncFromServer({ plan: r.plan, usedThisMonth: r.usedThisMonth });
   };
 
   return (
@@ -40,7 +117,9 @@ export function PlanPanel() {
         <span className="ed-label">Plan</span>
         <span className="conn-hint">
           {signedIn
-            ? "Switch instantly to try each tier’s limits — enforced server-side against your account."
+            ? useStripe
+              ? "Subscribe securely via Stripe. Manage or cancel anytime from the billing portal."
+              : "Switch instantly to try each tier’s limits — enforced server-side against your account."
             : "Sign in to save your plan. Switching here is a local trial until you do."}
           {" "}Premium models stay behind your own key on Free/Pro/Career — that’s what keeps the
           flat price sustainable.
@@ -49,9 +128,19 @@ export function PlanPanel() {
 
       <div className="plan-grid">
         {PLAN_ORDER.map((id, i) => (
-          <PlanCard key={id} id={id} active={id === plan} index={i} onPick={() => void pick(id)} />
+          <PlanCard
+            key={id}
+            id={id}
+            active={id === plan}
+            index={i}
+            busy={busy === id}
+            useStripe={useStripe}
+            onPick={() => void pick(id)}
+          />
         ))}
       </div>
+
+      {notice && <div className="plan-notice" role="status">{notice}</div>}
 
       <div className="plan-usage">
         <div className="plan-usage-row">
@@ -70,6 +159,11 @@ export function PlanPanel() {
             />
           </div>
         )}
+        {useStripe && billing?.canManage && (
+          <button className="plan-manage" onClick={() => void manage()} disabled={busy === "portal"}>
+            {busy === "portal" ? "Opening…" : "Manage billing"}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -79,19 +173,25 @@ function PlanCard({
   id,
   active,
   index,
+  busy,
+  useStripe,
   onPick,
 }: {
   id: PlanId;
   active: boolean;
   index: number;
+  busy: boolean;
+  useStripe: boolean;
   onPick: () => void;
 }) {
   const p = PLANS[id];
+  const cta = active ? "Current" : useStripe && id !== "free" ? "Subscribe" : "Select";
   return (
     <motion.button
       className={`plan-card${active ? " is-active" : ""}`}
       onClick={onPick}
       aria-pressed={active}
+      disabled={busy}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.05 * index, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
@@ -107,6 +207,7 @@ function PlanCard({
           <li key={perk}>{perk}</li>
         ))}
       </ul>
+      <span className="plan-cta">{busy ? "…" : cta}</span>
       {active && (
         <motion.span layoutId="plan-ring" className="plan-ring" transition={{ type: "spring", stiffness: 300, damping: 30 }} />
       )}

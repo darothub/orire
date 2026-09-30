@@ -1481,6 +1481,44 @@ body {
 .plan-bar { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
 .plan-bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--grad); }
 
+.plan-cta {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.85;
+}
+.plan-card.is-active .plan-cta { color: var(--text); opacity: 1; }
+
+.plan-notice {
+  margin: 12px 0 2px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.plan-manage {
+  margin-top: 12px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.plan-manage:hover { border-color: var(--accent); background: rgba(255, 255, 255, 0.03); }
+.plan-manage:disabled { opacity: 0.6; cursor: default; }
+
 .conn-planhint {
   display: flex;
   align-items: center;

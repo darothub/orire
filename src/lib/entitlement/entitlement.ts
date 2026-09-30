@@ -86,3 +86,78 @@ export async function setPlanId(userId: string, plan: PlanId): Promise<void> {
     update: { plan },
   });
 }
+
+/* ------------------------------------------------------------------ *
+ * Stripe billing (Phase B2)
+ *
+ * The webhook is the source of truth for paid plans: Checkout and the
+ * Customer Portal both fan out to subscription events, which call
+ * `applyStripeSubscription` / `clearStripeSubscription` here. Checkout
+ * itself only needs `linkStripeCustomer` so the customer id is on the row
+ * before the first subscription event lands.
+ * ------------------------------------------------------------------ */
+
+/** The full entitlement row for a user (null when none exists yet). */
+export async function getEntitlementRow(userId: string) {
+  return prisma.entitlement.findUnique({ where: { userId } });
+}
+
+/** Find the user id that owns a Stripe customer (null when unlinked). */
+export async function findUserIdByStripeCustomer(customerId: string): Promise<string | null> {
+  const row = await prisma.entitlement.findUnique({ where: { stripeCustomerId: customerId } });
+  return row?.userId ?? null;
+}
+
+/** Attach a Stripe customer id to a user's entitlement row (idempotent). */
+export async function linkStripeCustomer(userId: string, customerId: string): Promise<void> {
+  await prisma.entitlement.upsert({
+    where: { userId },
+    create: { userId, plan: "free", stripeCustomerId: customerId },
+    update: { stripeCustomerId: customerId },
+  });
+}
+
+export interface StripeSubscriptionState {
+  plan: PlanId;
+  status: string;
+  stripeSubscriptionId: string;
+  currentPeriodEnd: Date | null;
+}
+
+/**
+ * Apply an active/updated Stripe subscription to the entitlement identified by
+ * its Stripe customer id. No-ops (returns false) when the customer isn't linked
+ * to a user — the webhook logs and acks so Stripe stops retrying.
+ */
+export async function applyStripeSubscription(
+  customerId: string,
+  state: StripeSubscriptionState,
+): Promise<boolean> {
+  const plan = PLAN_IDS.has(state.plan) ? state.plan : "free";
+  const row = await prisma.entitlement.findUnique({ where: { stripeCustomerId: customerId } });
+  if (!row) return false;
+  await prisma.entitlement.update({
+    where: { stripeCustomerId: customerId },
+    data: {
+      plan,
+      status: state.status,
+      stripeSubscriptionId: state.stripeSubscriptionId,
+      currentPeriodEnd: state.currentPeriodEnd,
+    },
+  });
+  return true;
+}
+
+/**
+ * Downgrade the entitlement for a Stripe customer back to free (subscription
+ * canceled/deleted). Keeps the customer id so a future resubscribe reuses it.
+ */
+export async function clearStripeSubscription(customerId: string, status = "canceled"): Promise<boolean> {
+  const row = await prisma.entitlement.findUnique({ where: { stripeCustomerId: customerId } });
+  if (!row) return false;
+  await prisma.entitlement.update({
+    where: { stripeCustomerId: customerId },
+    data: { plan: "free", status, stripeSubscriptionId: null, currentPeriodEnd: null },
+  });
+  return true;
+}
