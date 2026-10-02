@@ -13,6 +13,7 @@ import { PlanPanel } from "@/components/PlanPanel";
 import { TeamPanel } from "@/components/TeamPanel";
 import { RateView } from "@/components/ai/RatingPanel";
 import { SimulateView } from "@/components/ai/SimulatePanel";
+import { TargetView } from "@/components/ai/TargetPanel";
 import { ProgressView } from "@/components/ProgressPanel";
 import { HistoryView } from "@/components/HistoryView";
 import { ExportView } from "@/components/export/ExportView";
@@ -93,6 +94,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "rebrand" && <RebrandFlow />}
           {view === "refine" && <RefineFlow />}
           {view === "simulate" && <SimulateView />}
+          {view === "target" && <TargetView />}
           {view === "rate" && <RateView />}
           {view === "progress" && <ProgressView />}
           {view === "history" && <HistoryView />}
@@ -126,6 +128,9 @@ export default function Home() {
   const refStarted = useRefineStore((s) => s.started);
   const refCompare = useRefineStore((s) => s.runProviders.length === 2);
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
+  // The Target page renders its own side-by-side split, so it also takes the
+  // full workspace width and hides the single live-preview pane.
+  const wide = compareWide || view === "target";
 
   // Re-brand (req 3): while in the re-brand workspace with a draft, the right
   // pane previews the restructured draft in the auditioned template so the user
@@ -211,7 +216,7 @@ export default function Home() {
       </header>
       <CloudSync />
 
-      <main className={`workspace${compareWide ? " is-compare" : ""}`}>
+      <main className={`workspace${wide ? " is-compare" : ""}`}>
         <WorkspaceRail />
 
         <section className="pane pane-work" aria-label="Workspace">
@@ -220,7 +225,7 @@ export default function Home() {
 
         <MotionConfig reducedMotion="user">
           <AnimatePresence initial={false}>
-            {!compareWide && (
+            {!wide && (
               <motion.section
                 key="preview"
                 initial={{ opacity: 0, x: "6%" }}

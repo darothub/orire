@@ -6,6 +6,7 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePooledStore } from "@/lib/store/pooledStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { useTargetStore } from "@/lib/store/targetStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
 import { coerceSimulatedCV, gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
@@ -27,6 +28,7 @@ export function SimulateView() {
   const keys = useSettingsStore((s) => s.keys);
   const models = useSettingsStore((s) => s.models);
   const setView = useViewStore((s) => s.setView);
+  const setTarget = useTargetStore((s) => s.setTarget);
 
   const meta = PROVIDERS[provider];
   const pooled = usePooledStore((s) => s.providers);
@@ -218,7 +220,15 @@ export function SimulateView() {
               <div className="imp-actions">
                 <button className="imp-btn" onClick={copyJD}>{copied ? "Copied ✓" : "Copy job description"}</button>
                 <button className="imp-btn" onClick={() => setPhase("input")}>New simulation</button>
-                <button className="imp-btn primary" onClick={() => setView("edit")}>Done</button>
+                <button
+                  className="imp-btn primary"
+                  onClick={() => {
+                    setTarget(ideal, jd);
+                    setView("target");
+                  }}
+                >
+                  🎯 Lock as target
+                </button>
               </div>
             </motion.div>
           )}
