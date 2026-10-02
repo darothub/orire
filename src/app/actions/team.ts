@@ -13,6 +13,7 @@ import { getPlanId } from "@/lib/entitlement/entitlement";
 import { canOwnTeam } from "@/lib/team/policy";
 import { listTeamAudit, type TeamAuditDTO } from "@/lib/team/audit";
 import { getTeamUsage, type TeamUsage } from "@/lib/team/usage";
+import { sendTeamDigest } from "@/lib/team/digest";
 import {
   acceptInvite,
   createTeam,
@@ -68,6 +69,32 @@ export async function teamUsageAction(window?: number): Promise<TeamUsage | null
   const team = await getTeamContext(userId);
   if (!team || !team.canManage) return null;
   return getTeamUsage(team.team.id, window);
+}
+
+export interface DigestActionResult {
+  ok: boolean;
+  /** True when a real SMTP transport delivered the mail; false = dev-logged. */
+  delivered: boolean;
+  recipients: number;
+  error?: string;
+}
+
+/** Email the current team's usage digest to its owner/admins (managers only). */
+export async function sendTeamDigestAction(window?: number): Promise<DigestActionResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return { ok: false, delivered: false, recipients: 0, error: "Sign in first." };
+  const team = await getTeamContext(userId);
+  if (!team || !team.canManage) {
+    return { ok: false, delivered: false, recipients: 0, error: "Not allowed." };
+  }
+  const res = await sendTeamDigest(team.team.id, window);
+  return {
+    ok: res.ok,
+    delivered: res.delivered,
+    recipients: res.recipients.length,
+    error: res.error,
+  };
 }
 
 export async function createTeamAction(name: string): Promise<TeamOpResult> {

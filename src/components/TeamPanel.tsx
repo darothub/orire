@@ -14,6 +14,7 @@ import {
   removeMemberAction,
   renameTeamAction,
   revokeInviteAction,
+  sendTeamDigestAction,
   setMemberRoleAction,
   teamAuditAction,
   teamOverview,
@@ -97,6 +98,21 @@ export function TeamPanel() {
     },
     [loadUsage],
   );
+
+  const emailDigest = useCallback(async () => {
+    setError(null);
+    setNotice(null);
+    const r = await sendTeamDigestAction(usageWindow);
+    if (!r.ok) {
+      setError(r.error ?? "Could not send the digest.");
+      return;
+    }
+    setNotice(
+      r.delivered
+        ? `Usage digest emailed to ${r.recipients} manager${r.recipients === 1 ? "" : "s"}.`
+        : `Digest prepared for ${r.recipients} manager${r.recipients === 1 ? "" : "s"} (logged to server — no SMTP configured).`,
+    );
+  }, [usageWindow]);
 
   const exportUsageCsv = useCallback(() => {
     if (!usage) return;
@@ -712,13 +728,22 @@ export function TeamPanel() {
                   )}
 
                   {usage.members.length > 0 && (
-                    <button
-                      type="button"
-                      className="team-usage-export"
-                      onClick={exportUsageCsv}
-                    >
-                      ↓ Export CSV
-                    </button>
+                    <div className="team-usage-actions">
+                      <button
+                        type="button"
+                        className="team-usage-export"
+                        onClick={exportUsageCsv}
+                      >
+                        ↓ Export CSV
+                      </button>
+                      <button
+                        type="button"
+                        className="team-usage-export"
+                        onClick={emailDigest}
+                      >
+                        ✉ Email digest
+                      </button>
+                    </div>
                   )}
                 </div>
               )}

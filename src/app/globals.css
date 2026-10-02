@@ -1750,6 +1750,8 @@ body {
 .team-usage-trend-val { font-size: 11px; color: var(--text); font-variant-numeric: tabular-nums; }
 .team-usage-trend-label { font-size: 10.5px; color: var(--muted); }
 .team-usage-export { margin-top: 12px; width: 100%; padding: 6px 10px; font-size: 11.5px; color: var(--muted); background: transparent; border: 1px solid var(--line-2); border-radius: 8px; cursor: pointer; transition: color 0.2s, border-color 0.2s, background 0.2s; }
+.team-usage-actions { display: flex; gap: 8px; }
+.team-usage-actions .team-usage-export { flex: 1; }
 .team-usage-export:hover { color: var(--text); border-color: var(--line-1); background: rgba(255, 255, 255, 0.03); }
 
 .team-keys { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line-2); }
