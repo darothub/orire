@@ -1519,6 +1519,30 @@ body {
 .plan-manage:hover { border-color: var(--accent); background: rgba(255, 255, 255, 0.03); }
 .plan-manage:disabled { opacity: 0.6; cursor: default; }
 
+.plan-team-note {
+  margin: 12px 0 2px;
+  padding: 9px 12px;
+  border: 1px solid rgba(124, 162, 255, 0.32);
+  border-radius: 9px;
+  background: rgba(124, 162, 255, 0.08);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text);
+}
+.plan-subline {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.plan-subline.is-warn { color: #ffb4a8; }
+.plan-seats {
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Teams panel (B3) ─────────────────────────────────────────────────── */
 .team-panel {
   margin-top: 16px;

@@ -21,6 +21,16 @@ import {
   getEntitlementSummary,
   linkStripeCustomer,
 } from "@/lib/entitlement/entitlement";
+import { getTeamContext } from "@/lib/team/team";
+
+export interface TeamBillingContext {
+  onTeam: boolean;
+  isOwner: boolean;
+  name: string | null;
+  plan: PlanId;
+  seatsUsed: number;
+  seatLimit: number;
+}
 
 export interface BillingStatus {
   configured: boolean;
@@ -30,6 +40,12 @@ export interface BillingStatus {
   hasSubscription: boolean;
   /** True when a Customer Portal session can be opened (customer exists). */
   canManage: boolean;
+  /** Raw Stripe subscription status (active, trialing, past_due…), or null. */
+  status: string | null;
+  /** Current period end as ISO (renewal/cancel date), or null. */
+  renewsAt: string | null;
+  /** Team the user is seated on, for owner-vs-member billing clarity. */
+  team: TeamBillingContext | null;
 }
 
 export interface RedirectResult {
@@ -52,16 +68,42 @@ export async function billingStatus(): Promise<BillingStatus> {
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (!userId) {
-    return { configured, signedIn: false, plan: "free", hasSubscription: false, canManage: false };
+    return {
+      configured,
+      signedIn: false,
+      plan: "free",
+      hasSubscription: false,
+      canManage: false,
+      status: null,
+      renewsAt: null,
+      team: null,
+    };
   }
-  const [summary, row] = await Promise.all([getEntitlementSummary(userId), getEntitlementRow(userId)]);
+  const [summary, row, teamCtx] = await Promise.all([
+    getEntitlementSummary(userId),
+    getEntitlementRow(userId),
+    getTeamContext(userId),
+  ]);
   const hasSubscription = Boolean(row?.stripeSubscriptionId) && summary.plan !== "free";
+  const team: TeamBillingContext | null = teamCtx
+    ? {
+        onTeam: true,
+        isOwner: teamCtx.role === "owner",
+        name: teamCtx.team.name,
+        plan: teamCtx.team.plan,
+        seatsUsed: teamCtx.members.length,
+        seatLimit: teamCtx.team.seatLimit,
+      }
+    : null;
   return {
     configured,
     signedIn: true,
     plan: summary.plan,
     hasSubscription,
     canManage: configured && Boolean(row?.stripeCustomerId),
+    status: row?.status ?? null,
+    renewsAt: row?.currentPeriodEnd?.toISOString() ?? null,
+    team,
   };
 }
 

@@ -6,6 +6,12 @@ import { useSession } from "next-auth/react";
 import { usePlanStore } from "@/lib/store/planStore";
 import { devSetPlan, readEntitlement } from "@/app/actions/refine";
 import { billingStatus, openBillingPortal, startCheckout, type BillingStatus } from "@/app/actions/billing";
+import {
+  isTeamProvided,
+  seatLine,
+  subscriptionLine,
+  teamProvidedNote,
+} from "@/lib/billing/summary";
 import { PLANS, PLAN_ORDER, type PlanId } from "@/lib/plan/plan";
 
 /**
@@ -34,6 +40,10 @@ export function PlanPanel() {
   const cap = active.monthlyRefines;
   const pctUsed = cap ? Math.min(100, Math.round((used / cap) * 100)) : 0;
   const useStripe = signedIn && billing?.configured === true;
+  const subLine = billing ? subscriptionLine(billing) : null;
+  const teamNote = billing ? teamProvidedNote(billing.team) : null;
+  const seats = billing ? seatLine(billing.team) : null;
+  const teamProvided = billing ? isTeamProvided(billing.team) : false;
 
   // Load billing capability + reconcile entitlement when signed in. Also picks
   // up a return from Checkout (?billing=success) to refresh the mirror.
@@ -54,6 +64,7 @@ export function PlanPanel() {
         if (flag) {
           if (flag === "success") setNotice("Subscription active — welcome aboard.");
           else if (flag === "cancelled") setNotice("Checkout cancelled — no changes made.");
+          else if (flag === "portal") setNotice("Billing updated.");
           params.delete("billing");
           const qs = params.toString();
           window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
@@ -140,6 +151,10 @@ export function PlanPanel() {
         ))}
       </div>
 
+      {teamNote && (
+        <div className="plan-team-note" role="note">{teamNote}</div>
+      )}
+
       {notice && <div className="plan-notice" role="status">{notice}</div>}
 
       <div className="plan-usage">
@@ -159,7 +174,13 @@ export function PlanPanel() {
             />
           </div>
         )}
-        {useStripe && billing?.canManage && (
+        {subLine && (
+          <div className={`plan-subline${subLine.tone === "warn" ? " is-warn" : ""}`}>
+            {subLine.text}
+          </div>
+        )}
+        {seats && <div className="plan-seats">{seats}</div>}
+        {useStripe && billing?.canManage && !teamProvided && (
           <button className="plan-manage" onClick={() => void manage()} disabled={busy === "portal"}>
             {busy === "portal" ? "Opening…" : "Manage billing"}
           </button>
