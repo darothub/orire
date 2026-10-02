@@ -11,6 +11,7 @@
 import { auth } from "@/lib/auth/auth";
 import { getPlanId } from "@/lib/entitlement/entitlement";
 import { canOwnTeam } from "@/lib/team/policy";
+import { listTeamAudit, type TeamAuditDTO } from "@/lib/team/audit";
 import {
   acceptInvite,
   createTeam,
@@ -46,6 +47,16 @@ export async function teamOverview(): Promise<TeamOverview> {
     canCreate: team === null && canOwnTeam(personal),
     team,
   };
+}
+
+/** Recent team activity, visible to owners/admins of the caller's team. */
+export async function teamAuditAction(): Promise<TeamAuditDTO[]> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return [];
+  const team = await getTeamContext(userId);
+  if (!team || !team.canManage) return [];
+  return listTeamAudit(team.team.id);
 }
 
 export async function createTeamAction(name: string): Promise<TeamOpResult> {

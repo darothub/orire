@@ -146,6 +146,7 @@ model Team {
   members TeamMember[]
   invites TeamInvite[]
   keys    TeamKey[]
+  audits  TeamAudit[]
 
   @@index([ownerId])
 }
@@ -203,4 +204,25 @@ model TeamKey {
 
   @@unique([teamId, provider])
   @@index([teamId])
+}
+
+/// An immutable audit record of a team management action (Phase B3e): renames,
+/// role changes, ownership transfers, invites/revokes, joins, removals, leaves.
+/// Actor/target display names are snapshotted as `detail`-adjacent strings so the
+/// log still reads correctly after a member is removed or renamed. Cascade-deleted
+/// with the team.
+model TeamAudit {
+  id         String   @id @default(cuid())
+  teamId     String
+  action     String // see TeamAuditAction in src/lib/team/audit.ts
+  actorId    String
+  actorName  String?
+  targetId   String?
+  targetName String?
+  detail     String?
+  createdAt  DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId, createdAt])
 }

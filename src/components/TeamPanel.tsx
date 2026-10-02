@@ -15,10 +15,12 @@ import {
   renameTeamAction,
   revokeInviteAction,
   setMemberRoleAction,
+  teamAuditAction,
   teamOverview,
   transferOwnershipAction,
   type TeamOverview,
 } from "@/app/actions/team";
+import type { TeamAuditDTO } from "@/lib/team/audit";
 import {
   listTeamKeysAction,
   removeTeamKeyAction,
@@ -28,6 +30,23 @@ import type { PooledKeyDTO } from "@/lib/team/keys";
 
 /** Providers that can hold a pooled team key (CLI logins are excluded). */
 const POOLABLE: ProviderId[] = ["openai", "anthropic"];
+
+/** Compact relative time, e.g. "just now", "4m ago", "3d ago". */
+function timeAgo(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "";
+  const s = Math.max(0, Math.round((Date.now() - then) / 1000));
+  if (s < 45) return "just now";
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24);
+  if (d < 7) return `${d}d ago`;
+  const w = Math.round(d / 7);
+  if (w < 5) return `${w}w ago`;
+  return new Date(iso).toLocaleDateString();
+}
 
 /**
  * Teams panel (Phase B3). Lets a Teams-plan owner create a shared workspace,
@@ -51,7 +70,13 @@ export function TeamPanel() {
   const [poolDraft, setPoolDraft] = useState<Record<string, string>>({});
   const [renaming, setRenaming] = useState(false);
   const [renameDraft, setRenameDraft] = useState("");
+  const [audit, setAudit] = useState<TeamAuditDTO[]>([]);
+  const [showAudit, setShowAudit] = useState(false);
   const refreshPooled = usePooledStore((s) => s.refresh);
+
+  const loadAudit = useCallback(async () => {
+    setAudit(await teamAuditAction());
+  }, []);
 
   const loadKeys = useCallback(async () => {
     setPoolKeys(await listTeamKeysAction());
@@ -90,13 +115,14 @@ export function TeamPanel() {
       if (!cancelled) {
         await load();
         await loadKeys();
+        await loadAudit();
         await refreshPooled();
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [signedIn, load, loadKeys, refreshPooled]);
+  }, [signedIn, load, loadKeys, loadAudit, refreshPooled]);
 
   const run = async (fn: () => Promise<{ ok: boolean; error?: string }>, ok?: string) => {
     setBusy(true);
@@ -106,6 +132,7 @@ export function TeamPanel() {
     if (r.ok) {
       if (ok) setNotice(ok);
       await load();
+      await loadAudit();
     } else {
       setError(r.error ?? "Something went wrong.");
     }
@@ -457,6 +484,35 @@ export function TeamPanel() {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {team.canManage && (
+            <div className="team-activity">
+              <button
+                type="button"
+                className="team-activity-toggle"
+                onClick={() => setShowAudit((v) => !v)}
+                aria-expanded={showAudit}
+              >
+                {showAudit ? "▾" : "▸"} Activity{audit.length ? ` (${audit.length})` : ""}
+              </button>
+              {showAudit && (
+                audit.length === 0 ? (
+                  <p className="team-activity-empty">No activity yet.</p>
+                ) : (
+                  <ul className="team-activity-list">
+                    {audit.map((e) => (
+                      <li key={e.id} className="team-activity-item">
+                        <span className="team-activity-text">{e.summary}</span>
+                        <time className="team-activity-time" dateTime={e.at}>
+                          {timeAgo(e.at)}
+                        </time>
+                      </li>
+                    ))}
+                  </ul>
+                )
+              )}
             </div>
           )}
 

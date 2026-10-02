@@ -1647,6 +1647,16 @@ body {
 .team-link:hover { text-decoration: underline; }
 .team-foot { margin-top: 14px; }
 
+.team-activity { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line-2); }
+.team-activity-toggle { background: none; border: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; padding: 2px 0; letter-spacing: 0.02em; }
+.team-activity-toggle:hover { color: var(--text); }
+.team-activity-empty { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+.team-activity-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; }
+.team-activity-item { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 12.5px; line-height: 1.4; padding: 3px 0; border-bottom: 1px solid var(--line); }
+.team-activity-item:last-child { border-bottom: none; }
+.team-activity-text { color: var(--text); }
+.team-activity-time { color: var(--muted); font-size: 11px; white-space: nowrap; flex: 0 0 auto; }
+
 .team-keys { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line-2); }
 .team-keys-hint { margin: 4px 0 10px; }
 .team-key-row {

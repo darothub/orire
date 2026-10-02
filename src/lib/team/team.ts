@@ -16,6 +16,7 @@ import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/db/prisma";
 import type { PlanId } from "@/lib/plan/plan";
 import { getPlanId } from "@/lib/entitlement/entitlement";
+import { recordAudit } from "@/lib/team/audit";
 import {
   canOwnTeam,
   canManageTeam,
@@ -142,7 +143,7 @@ export async function createTeam(userId: string, name: string): Promise<TeamOpRe
   if (await findMembership(userId)) {
     return { ok: false, error: "You're already on a team. Leave it before creating a new one." };
   }
-  await prisma.team.create({
+  const team = await prisma.team.create({
     data: {
       name: valid.name,
       ownerId: userId,
@@ -150,6 +151,7 @@ export async function createTeam(userId: string, name: string): Promise<TeamOpRe
       members: { create: { userId, role: "owner" } },
     },
   });
+  await recordAudit({ teamId: team.id, action: "team.created", actorId: userId, detail: valid.name });
   return { ok: true };
 }
 
@@ -161,7 +163,15 @@ export async function renameTeam(userId: string, name: string): Promise<TeamOpRe
   if (!membership || !canRenameTeam(membership.role as TeamRole)) {
     return { ok: false, error: "Only owners and admins can rename the team." };
   }
+  const current = await prisma.team.findUnique({ where: { id: membership.teamId }, select: { name: true } });
+  if (current && current.name === valid.name) return { ok: true };
   await prisma.team.update({ where: { id: membership.teamId }, data: { name: valid.name } });
+  await recordAudit({
+    teamId: membership.teamId,
+    action: "team.renamed",
+    actorId: userId,
+    detail: `“${current?.name ?? "—"}” → “${valid.name}”`,
+  });
   return { ok: true };
 }
 
@@ -188,6 +198,12 @@ export async function transferOwnership(userId: string, targetUserId: string): P
     prisma.teamMember.update({ where: { userId }, data: { role: "admin" } }),
     prisma.team.update({ where: { id: membership.teamId }, data: { ownerId: targetUserId } }),
   ]);
+  await recordAudit({
+    teamId: membership.teamId,
+    action: "ownership.transferred",
+    actorId: userId,
+    targetId: targetUserId,
+  });
   return { ok: true };
 }
 
@@ -227,6 +243,13 @@ export async function inviteToTeam(userId: string, email: string, role: TeamRole
   await prisma.teamInvite.create({
     data: { teamId: team.id, email: target, role, token, invitedById: userId, expiresAt },
   });
+  await recordAudit({
+    teamId: team.id,
+    action: "member.invited",
+    actorId: userId,
+    targetName: target,
+    detail: role === "member" ? null : `as ${role}`,
+  });
   return { ok: true };
 }
 
@@ -254,6 +277,7 @@ export async function acceptInvite(userId: string, userEmail: string | null, tok
     prisma.teamMember.create({ data: { teamId: invite.teamId, userId, role: invite.role } }),
     prisma.teamInvite.update({ where: { id: invite.id }, data: { acceptedAt: new Date() } }),
   ]);
+  await recordAudit({ teamId: invite.teamId, action: "member.joined", actorId: userId });
   void userEmail; // reserved: could warn when the invite email differs from the account
   return { ok: true };
 }
@@ -267,6 +291,12 @@ export async function revokeInvite(userId: string, inviteId: string): Promise<Te
   const invite = await prisma.teamInvite.findUnique({ where: { id: inviteId } });
   if (!invite || invite.teamId !== membership.teamId) return { ok: false, error: "Invite not found." };
   await prisma.teamInvite.delete({ where: { id: inviteId } });
+  await recordAudit({
+    teamId: membership.teamId,
+    action: "invite.revoked",
+    actorId: userId,
+    targetName: invite.email,
+  });
   return { ok: true };
 }
 
@@ -280,6 +310,12 @@ export async function removeMember(userId: string, targetUserId: string): Promis
   if (!target || target.teamId !== membership.teamId) return { ok: false, error: "That person isn't on your team." };
   if (target.role === "owner") return { ok: false, error: "The owner can't be removed." };
   await prisma.teamMember.delete({ where: { userId: targetUserId } });
+  await recordAudit({
+    teamId: membership.teamId,
+    action: "member.removed",
+    actorId: userId,
+    targetId: targetUserId,
+  });
   return { ok: true };
 }
 
@@ -303,6 +339,13 @@ export async function setMemberRole(
     return { ok: false, error: "Only the owner can change roles (to admin or member)." };
   }
   await prisma.teamMember.update({ where: { userId: targetUserId }, data: { role } });
+  await recordAudit({
+    teamId: membership.teamId,
+    action: "role.changed",
+    actorId: userId,
+    targetId: targetUserId,
+    detail: `${target.role} → ${role}`,
+  });
   return { ok: true };
 }
 
@@ -314,6 +357,7 @@ export async function leaveTeam(userId: string): Promise<TeamOpResult> {
     return { ok: false, error: "Owners can't leave — delete the team instead." };
   }
   await prisma.teamMember.delete({ where: { userId } });
+  await recordAudit({ teamId: membership.teamId, action: "member.left", actorId: userId });
   return { ok: true };
 }
 
