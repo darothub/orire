@@ -33,6 +33,8 @@ export interface TeamUsageMember {
   prevMonth: number;
   /** Total refines across the whole window (for secondary ranking + sparklines). */
   windowTotal: number;
+  /** Per-window-month counts, aligned to `months` (oldest → newest). */
+  monthly: number[];
 }
 
 export interface MonthTotal {
@@ -82,6 +84,40 @@ export function usageDelta(current: number, previous: number): string {
   return `${d > 0 ? "+" : "−"}${Math.abs(d)}`;
 }
 
+/** Escape a single CSV field (quote when it contains a comma, quote, or newline). */
+function csvField(value: string): string {
+  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+/** Render a team usage view as CSV (member rows + a team total row). Pure. */
+export function usageToCsv(usage: TeamUsage): string {
+  const header = ["Member", "Email", ...usage.months.map(formatMonthLabel), "Window total"];
+  const lines = [header.map(csvField).join(",")];
+  for (const m of usage.members) {
+    lines.push(
+      [
+        m.name ?? "",
+        m.email ?? "",
+        ...m.monthly.map((n) => String(n)),
+        String(m.windowTotal),
+      ]
+        .map(csvField)
+        .join(","),
+    );
+  }
+  lines.push(
+    [
+      "Team total",
+      "",
+      ...usage.monthlyTotals.map((t) => String(t.total)),
+      String(usage.monthlyTotals.reduce((s, t) => s + t.total, 0)),
+    ]
+      .map(csvField)
+      .join(","),
+  );
+  return lines.join("\n");
+}
+
 /** Pure aggregation: fold counter rows into a per-member + team-total view. */
 export function buildTeamUsage(
   members: UsageMemberInput[],
@@ -102,6 +138,7 @@ export function buildTeamUsage(
     thisMonth: get(m.userId, month),
     prevMonth: get(m.userId, prevMonth),
     windowTotal: months.reduce((s, mm) => s + get(m.userId, mm), 0),
+    monthly: months.map((mm) => get(m.userId, mm)),
   }));
   rows.sort(
     (a, b) =>

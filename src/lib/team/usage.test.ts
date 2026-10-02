@@ -4,6 +4,7 @@ import {
   formatMonthLabel,
   monthWindow,
   usageDelta,
+  usageToCsv,
   type UsageCounterRow,
   type UsageMemberInput,
 } from "./usage";
@@ -63,6 +64,14 @@ describe("buildTeamUsage", () => {
     expect(ada.prevMonth).toBe(2);
     expect(ada.windowTotal).toBe(6);
   });
+  it("exposes a per-member monthly series aligned to the window", () => {
+    const ada = u.members.find((m) => m.userId === "u1")!;
+    expect(ada.monthly).toEqual([0, 2, 4]); // Aug, Sep, Oct
+    const bo = u.members.find((m) => m.userId === "u2")!;
+    expect(bo.monthly).toEqual([1, 0, 9]);
+    const cy = u.members.find((m) => m.userId === "u3")!;
+    expect(cy.monthly).toEqual([0, 0, 0]);
+  });
   it("zeroes members with no counters", () => {
     const cy = u.members.find((m) => m.userId === "u3")!;
     expect(cy.thisMonth).toBe(0);
@@ -106,5 +115,34 @@ describe("buildTeamUsage", () => {
     expect(empty.members).toEqual([]);
     expect(empty.totalThisMonth).toBe(0);
     expect(empty.monthlyTotals.every((m) => m.total === 0)).toBe(true);
+  });
+});
+
+describe("usageToCsv", () => {
+  const u = buildTeamUsage(members, counters, months);
+  const csv = usageToCsv(u);
+  const lines = csv.split("\n");
+
+  it("writes a header with month labels and a window-total column", () => {
+    expect(lines[0]).toBe("Member,Email,Aug 2025,Sep 2025,Oct 2025,Window total");
+  });
+  it("writes one row per member in ranked order", () => {
+    // ranked: u2 (Bo), u1 (Ada), u3 (null name)
+    expect(lines[1]).toBe("Bo,bo@x.io,1,0,9,10");
+    expect(lines[2]).toBe("Ada,ada@x.io,0,2,4,6");
+    expect(lines[3]).toBe(",cy@x.io,0,0,0,0");
+  });
+  it("appends a team total row", () => {
+    expect(lines[4]).toBe("Team total,,1,2,13,16");
+  });
+  it("quotes fields containing commas or quotes", () => {
+    const csv2 = usageToCsv(
+      buildTeamUsage(
+        [{ userId: "x", name: "Doe, Jane", email: 'a"b@x.io' }],
+        [{ userId: "x", month: "2025-10", refinesUsed: 2 }],
+        months,
+      ),
+    );
+    expect(csv2.split("\n")[1]).toBe('"Doe, Jane","a""b@x.io",0,0,2,2');
   });
 });

@@ -22,7 +22,7 @@ import {
   type TeamOverview,
 } from "@/app/actions/team";
 import type { TeamAuditDTO } from "@/lib/team/audit";
-import { formatMonthLabel, usageDelta, type TeamUsage } from "@/lib/team/usage";
+import { formatMonthLabel, usageDelta, usageToCsv, type TeamUsage } from "@/lib/team/usage";
 import {
   listTeamKeysAction,
   removeTeamKeyAction,
@@ -85,6 +85,19 @@ export function TeamPanel() {
   const loadUsage = useCallback(async () => {
     setUsage(await teamUsageAction());
   }, []);
+
+  const exportUsageCsv = useCallback(() => {
+    if (!usage) return;
+    const blob = new Blob([usageToCsv(usage)], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `orire-usage-${usage.month}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, [usage]);
 
   const loadKeys = useCallback(async () => {
     setPoolKeys(await listTeamKeysAction());
@@ -519,29 +532,82 @@ export function TeamPanel() {
                       {formatMonthLabel(usage.prevMonth)}
                     </span>
                   </div>
+
+                  {(() => {
+                    const trendMax = Math.max(1, ...usage.monthlyTotals.map((t) => t.total));
+                    return (
+                      <div className="team-usage-trend" role="img" aria-label="Team refine trend">
+                        {usage.monthlyTotals.map((t) => (
+                          <span key={t.month} className="team-usage-trend-col">
+                            <span className="team-usage-trend-bar">
+                              <span
+                                className="team-usage-trend-fill"
+                                style={{ height: `${Math.round((t.total / trendMax) * 100)}%` }}
+                              />
+                            </span>
+                            <span className="team-usage-trend-val">{t.total}</span>
+                            <span className="team-usage-trend-label">
+                              {formatMonthLabel(t.month).split(" ")[0]}
+                            </span>
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
                   {usage.members.length === 0 ? (
                     <p className="team-activity-empty">No members yet.</p>
                   ) : (
-                    <ul className="team-usage-list">
-                      {usage.members.map((m) => {
-                        const max = usage.members[0]?.thisMonth || 1;
-                        const pct = Math.round((m.thisMonth / max) * 100);
-                        return (
-                          <li key={m.userId} className="team-usage-item">
-                            <span className="team-usage-name" title={m.email ?? undefined}>
-                              {m.name || m.email || "Member"}
-                            </span>
-                            <span className="team-usage-bar" aria-hidden>
+                    (() => {
+                      const barMax = usage.members[0]?.thisMonth || 1;
+                      const sparkMax = Math.max(
+                        1,
+                        ...usage.members.flatMap((m) => m.monthly),
+                      );
+                      return (
+                        <ul className="team-usage-list">
+                          {usage.members.map((m) => (
+                            <li key={m.userId} className="team-usage-item">
+                              <span className="team-usage-name" title={m.email ?? undefined}>
+                                {m.name || m.email || "Member"}
+                              </span>
+                              <span className="team-usage-count">{m.thisMonth}</span>
+                              <span className="team-usage-bar" aria-hidden>
+                                <span
+                                  className="team-usage-bar-fill"
+                                  style={{ width: `${Math.round((m.thisMonth / barMax) * 100)}%` }}
+                                />
+                              </span>
                               <span
-                                className="team-usage-bar-fill"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </span>
-                            <span className="team-usage-count">{m.thisMonth}</span>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                                className="team-usage-spark"
+                                aria-hidden
+                                title={`3-month total: ${m.windowTotal}`}
+                              >
+                                {m.monthly.map((n, i) => (
+                                  <span key={i} className="team-usage-spark-col">
+                                    <span
+                                      className="team-usage-spark-fill"
+                                      style={{ height: `${Math.round((n / sparkMax) * 100)}%` }}
+                                    />
+                                  </span>
+                                ))}
+                              </span>
+                              <span className="team-usage-window">{m.windowTotal}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()
+                  )}
+
+                  {usage.members.length > 0 && (
+                    <button
+                      type="button"
+                      className="team-usage-export"
+                      onClick={exportUsageCsv}
+                    >
+                      ↓ Export CSV
+                    </button>
                   )}
                 </div>
               )}
