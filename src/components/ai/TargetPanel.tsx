@@ -5,7 +5,7 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { getTemplate } from "@/components/templates/registry";
-import { gapAnalysis } from "@/lib/ai/simulate";
+import { targetMatch } from "@/lib/ai/simulate";
 import { SECTION_LABELS, type SectionKey } from "@/lib/cv/schema";
 
 function coverageColor(v: number): string {
@@ -18,8 +18,10 @@ export function TargetView() {
   const activeTemplate = useCVStore((s) => s.activeTemplate);
   const setView = useViewStore((s) => s.setView);
   const ideal = useTargetStore((s) => s.ideal);
+  const jd = useTargetStore((s) => s.jd);
   const label = useTargetStore((s) => s.label);
   const createdAt = useTargetStore((s) => s.createdAt);
+  const baseScore = useTargetStore((s) => s.baseScore);
   const clearTarget = useTargetStore((s) => s.clearTarget);
 
   const MineTpl = getTemplate(activeTemplate).Component;
@@ -50,7 +52,9 @@ export function TargetView() {
     );
   }
 
-  const gap = gapAnalysis(cv, ideal);
+  const match = targetMatch(cv, ideal, jd);
+  const gap = match.gap;
+  const delta = match.score - baseScore;
   const IdealTpl = getTemplate(activeTemplate).Component;
   const dateLabel = createdAt
     ? new Date(createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
@@ -82,27 +86,50 @@ export function TargetView() {
               cy="42"
               r="34"
               className="rate-ring-fill"
-              stroke={coverageColor(gap.coverage)}
+              stroke={coverageColor(match.score)}
               strokeDasharray={2 * Math.PI * 34}
               initial={{ strokeDashoffset: 2 * Math.PI * 34 }}
-              animate={{ strokeDashoffset: 2 * Math.PI * 34 * (1 - gap.coverage / 100) }}
+              animate={{ strokeDashoffset: 2 * Math.PI * 34 * (1 - match.score / 100) }}
               transition={{ duration: 0.6, ease: "easeOut" }}
             />
           </svg>
           <div className="sim-cov-center">
-            <strong style={{ color: coverageColor(gap.coverage) }}>{gap.coverage}%</strong>
+            <strong style={{ color: coverageColor(match.score) }}>{match.score}%</strong>
           </div>
           <span className="rate-ring-label">Match</span>
         </div>
 
         <div className="tgt-meter-body">
           <div className="tgt-stat-row">
-            <span className="tgt-stat match">{gap.matchedSkills.length} matched</span>
-            <span className="tgt-stat miss">{gap.missingSkills.length} to add</span>
-            {gap.missingSections.length > 0 && (
-              <span className="tgt-stat miss">{gap.missingSections.length} section{gap.missingSections.length > 1 ? "s" : ""} missing</span>
+            {delta !== 0 ? (
+              <span className={`tgt-stat ${delta > 0 ? "match" : "miss"}`}>
+                {delta > 0 ? "▲" : "▼"} {Math.abs(delta)}% since locked
+              </span>
+            ) : (
+              <span className="tgt-stat">Baseline {baseScore}% when locked</span>
             )}
+            <span className="tgt-stat match">{gap.matchedSkills.length} skills matched</span>
+            <span className="tgt-stat miss">{gap.missingSkills.length} to add</span>
           </div>
+
+          <div className="tgt-signals">
+            {match.metrics.map((m) => (
+              <div key={m.key} className="tgt-signal" title={m.hint}>
+                <span className="tgt-signal-label">{m.label}</span>
+                <span className="tgt-signal-bar">
+                  <motion.span
+                    className="tgt-signal-fill"
+                    style={{ background: coverageColor(m.score) }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${m.score}%` }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                  />
+                </span>
+                <span className="tgt-signal-val">{m.score}%</span>
+              </div>
+            ))}
+          </div>
+
           {gap.missingSkills.length > 0 ? (
             <div className="tgt-chips">
               {gap.missingSkills.slice(0, 18).map((s) => (

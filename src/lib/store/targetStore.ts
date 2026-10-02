@@ -24,8 +24,10 @@ interface TargetState {
   label: string;
   /** Epoch ms the target was set; null when unset. */
   createdAt: number | null;
+  /** Match score of the user's CV at the moment the target was locked. */
+  baseScore: number;
 
-  setTarget: (ideal: CVData, jd: string, label?: string) => void;
+  setTarget: (ideal: CVData, jd: string, baseScore: number, label?: string) => void;
   clearTarget: () => void;
 }
 
@@ -45,20 +47,22 @@ export const useTargetStore = create<TargetState>()(
       jd: "",
       label: "",
       createdAt: null,
+      baseScore: 0,
 
-      setTarget: (ideal, jd, label) =>
+      setTarget: (ideal, jd, baseScore, label) =>
         set({
           ideal,
           jd,
+          baseScore,
           label: label?.trim() || deriveLabel(ideal, jd),
           createdAt: Date.now(),
         }),
 
-      clearTarget: () => set({ ideal: null, jd: "", label: "", createdAt: null }),
+      clearTarget: () => set({ ideal: null, jd: "", label: "", createdAt: null, baseScore: 0 }),
     }),
     {
       name: "orire-target-v1",
-      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, label: s.label, createdAt: s.createdAt }),
+      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore }),
     },
   ),
 );

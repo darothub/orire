@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { coerceSimulatedCV, gapAnalysis, buildSimulatePrompt } from "@/lib/ai/simulate";
+import { coerceSimulatedCV, gapAnalysis, buildSimulatePrompt, targetMatch, jdKeywords } from "@/lib/ai/simulate";
 import type { CVData } from "@/lib/cv/schema";
 
 const IDEAL_JSON = JSON.stringify({
@@ -97,6 +97,60 @@ describe("gapAnalysis", () => {
   it("returns zero coverage when the ideal lists no skills", () => {
     const ideal = coerceSimulatedCV(JSON.stringify({ basics: { summary: "s" } }));
     expect(gapAnalysis(userCV(), ideal).coverage).toBe(0);
+  });
+});
+
+describe("jdKeywords", () => {
+  it("ranks salient terms by frequency and drops stopwords", () => {
+    const kws = jdKeywords("Kubernetes Kubernetes platform with the team and the team");
+    expect(kws).toContain("kubernetes");
+    expect(kws).toContain("platform");
+    expect(kws).not.toContain("the");
+    expect(kws).not.toContain("and");
+    expect(kws).not.toContain("with");
+    expect(kws[0]).toBe("kubernetes");
+  });
+
+  it("is deterministic for the same input", () => {
+    const jd = "Go PostgreSQL latency scaling observability";
+    expect(jdKeywords(jd)).toEqual(jdKeywords(jd));
+  });
+});
+
+describe("targetMatch", () => {
+  it("is deterministic and returns an overall 0–100 score", () => {
+    const ideal = coerceSimulatedCV(IDEAL_JSON);
+    const a = targetMatch(userCV(), ideal, "Go Kubernetes PostgreSQL");
+    const b = targetMatch(userCV(), ideal, "Go Kubernetes PostgreSQL");
+    expect(a.score).toBe(b.score);
+    expect(a.score).toBeGreaterThanOrEqual(0);
+    expect(a.score).toBeLessThanOrEqual(100);
+  });
+
+  it("includes the JD-keyword metric only when a JD is supplied", () => {
+    const ideal = coerceSimulatedCV(IDEAL_JSON);
+    const withJd = targetMatch(userCV(), ideal, "Go Kubernetes");
+    const noJd = targetMatch(userCV(), ideal, "");
+    expect(withJd.metrics.some((m) => m.key === "keywords")).toBe(true);
+    expect(noJd.metrics.some((m) => m.key === "keywords")).toBe(false);
+  });
+
+  it("rises when the user adds a quantified bullet (edit-sensitive)", () => {
+    const ideal = coerceSimulatedCV(IDEAL_JSON);
+    const before = targetMatch(userCV(), ideal, "backend");
+    const improved = userCV();
+    improved.experience[0].highlights = ["Cut latency by 40% across services"];
+    const after = targetMatch(improved, ideal, "backend");
+    const dBefore = before.metrics.find((m) => m.key === "metrics")!.score;
+    const dAfter = after.metrics.find((m) => m.key === "metrics")!.score;
+    expect(dAfter).toBeGreaterThan(dBefore);
+  });
+
+  it("surfaces the underlying skill gap", () => {
+    const ideal = coerceSimulatedCV(IDEAL_JSON);
+    const m = targetMatch(userCV(), ideal, "");
+    expect(m.gap.matchedSkills).toContain("Go");
+    expect(m.gap.missingSkills).toEqual(expect.arrayContaining(["Kubernetes", "PostgreSQL"]));
   });
 });
 

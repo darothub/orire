@@ -97,6 +97,29 @@ body {
   border: 1px solid var(--line-2);
   border-radius: 999px;
 }
+.tgt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: hsl(var(--tgt-hue, 130) 55% 60%);
+  background: hsl(var(--tgt-hue, 130) 60% 45% / 0.1);
+  border: 1px solid hsl(var(--tgt-hue, 130) 60% 45% / 0.35);
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+  font-variant-numeric: tabular-nums;
+}
+.tgt-chip:hover {
+  transform: translateY(-1px);
+  background: hsl(var(--tgt-hue, 130) 60% 45% / 0.18);
+}
+.tgt-chip-ic { font-size: 13px; filter: saturate(1.1); }
+.tgt-chip-delta { font-size: 11px; font-weight: 800; }
+.tgt-chip-delta.up { color: #16a34a; }
+.tgt-chip-delta.down { color: #dc2626; }
 .btn-ghost,
 .btn-primary {
   font-size: 13px;

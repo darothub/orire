@@ -1133,6 +1133,49 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+.tgt-signals {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin: 2px 0;
+}
+.tgt-signal {
+  display: grid;
+  grid-template-columns: 128px 1fr 42px;
+  align-items: center;
+  gap: 10px;
+}
+.tgt-signal-label {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tgt-signal-bar {
+  position: relative;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.tgt-signal-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  border-radius: 999px;
+}
+.tgt-signal-val {
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 560px) {
+  .tgt-signal { grid-template-columns: 96px 1fr 36px; }
+}
 .tgt-actions {
   display: flex;
   flex-wrap: wrap;

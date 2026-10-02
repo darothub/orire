@@ -9,7 +9,7 @@ import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
-import { coerceSimulatedCV, gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
+import { coerceSimulatedCV, gapAnalysis, targetMatch, type GapAnalysis } from "@/lib/ai/simulate";
 import { RefineParseError } from "@/lib/ai/guardrails";
 import { getTemplate } from "@/components/templates/registry";
 import { SECTION_LABELS, type CVData, type SectionKey } from "@/lib/cv/schema";
@@ -223,7 +223,7 @@ export function SimulateView() {
                 <button
                   className="imp-btn primary"
                   onClick={() => {
-                    setTarget(ideal, jd);
+                    setTarget(ideal, jd, targetMatch(userCV, ideal, jd).score);
                     setView("target");
                   }}
                 >

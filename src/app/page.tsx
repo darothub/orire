@@ -25,6 +25,8 @@ import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { useTargetStore } from "@/lib/store/targetStore";
+import { targetMatch } from "@/lib/ai/simulate";
 import { useRebrandStore } from "@/lib/store/rebrandStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useStyleStore, paperStyleVars } from "@/lib/store/styleStore";
@@ -103,6 +105,38 @@ function Workspace({ mounted }: { mounted: boolean }) {
         </motion.div>
       </AnimatePresence>
     </MotionConfig>
+  );
+}
+
+/** Compact header chip: live match to the locked target + trend since locking. */
+function TargetChip({ mounted }: { mounted: boolean }) {
+  const ideal = useTargetStore((s) => s.ideal);
+  const jd = useTargetStore((s) => s.jd);
+  const baseScore = useTargetStore((s) => s.baseScore);
+  const cv = useCVStore((s) => s.cv);
+  const setView = useViewStore((s) => s.setView);
+
+  if (!mounted || !ideal) return null;
+
+  const score = targetMatch(cv, ideal, jd).score;
+  const delta = score - baseScore;
+  const hue = Math.round((score / 100) * 130);
+
+  return (
+    <button
+      className="tgt-chip"
+      onClick={() => setView("target")}
+      title="Open the Target page — edit your CV against the locked ideal"
+      style={{ ["--tgt-hue" as string]: String(hue) }}
+    >
+      <span className="tgt-chip-ic" aria-hidden>🎯</span>
+      <span className="tgt-chip-val">{score}%</span>
+      {delta !== 0 && (
+        <span className={`tgt-chip-delta ${delta > 0 ? "up" : "down"}`}>
+          {delta > 0 ? "▲" : "▼"}{Math.abs(delta)}
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -201,6 +235,7 @@ export default function Home() {
             <kbd>⌘K</kbd>
           </button>
           <span className="template-pill">{mounted ? tpl.name : "—"}</span>
+          <TargetChip mounted={mounted} />
           <button
             className={`btn-ghost${mounted && previewEdit ? " is-active" : ""}`}
             onClick={togglePreviewEdit}

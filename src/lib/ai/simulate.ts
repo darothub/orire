@@ -209,3 +209,120 @@ export function gapAnalysis(userCV: CVData, ideal: CVData): GapAnalysis {
 
   return { coverage, matchedSkills: matched, missingSkills: missing, missingSections };
 }
+
+/* ── Enriched, deterministic target match (slice B) ──────────────────────
+ * A single 0–100 "match" number that moves as the user edits — not only when
+ * they add a skill. Four weighted, deterministic signals; no model call.      */
+
+export interface TargetMatchMetric {
+  key: "skills" | "keywords" | "sections" | "metrics";
+  label: string;
+  score: number;
+  hint: string;
+}
+
+export interface TargetMatch {
+  /** 0–100 overall, weighted over the applicable metrics. */
+  score: number;
+  metrics: TargetMatchMetric[];
+  /** Underlying skill/section gap, reused for chips. */
+  gap: GapAnalysis;
+}
+
+const STOPWORDS = new Set([
+  "the", "and", "for", "with", "you", "your", "our", "are", "will", "have", "has",
+  "this", "that", "from", "they", "them", "their", "a", "an", "to", "of", "in", "on",
+  "as", "at", "by", "or", "be", "is", "we", "it", "its", "but", "not", "can", "all",
+  "who", "job", "role", "work", "team", "teams", "year", "years", "experience", "ability",
+  "strong", "about", "across", "within", "including", "etc", "per", "using", "use",
+  "plus", "new", "well", "help", "like", "must", "should", "would", "into", "more",
+  "most", "other", "such", "than", "then", "these", "those", "what", "when", "which",
+  "while", "both", "each", "any", "may", "also", "out", "up", "if", "so", "do",
+]);
+
+function tokens(s: string): string[] {
+  return s.toLowerCase().match(/[a-z][a-z0-9+#.]{1,}/g) ?? [];
+}
+
+/** Salient keywords from a job description, most-frequent first (deterministic). */
+export function jdKeywords(jd: string, limit = 40): string[] {
+  const freq = new Map<string, number>();
+  for (const t of tokens(jd)) {
+    if (t.length < 3 || STOPWORDS.has(t)) continue;
+    freq.set(t, (freq.get(t) ?? 0) + 1);
+  }
+  return [...freq.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([w]) => w);
+}
+
+/** All user CV free text, lowercased, as a token set for word-level matching. */
+function cvTokenSet(cv: CVData): Set<string> {
+  const parts: Array<string | undefined> = [
+    cv.basics.title,
+    cv.basics.summary,
+    ...cv.skills.flatMap((g) => [g.category, ...g.items]),
+    ...cv.experience.flatMap((e) => [e.role, e.company, ...e.highlights]),
+    ...cv.projects.flatMap((p) => [p.name, p.role, ...p.highlights]),
+    ...cv.education.flatMap((e) => [e.degree, e.field, e.institution, e.details]),
+    ...cv.certifications.flatMap((c) => [c.name, c.issuer]),
+  ];
+  return new Set(tokens(parts.join(" ")));
+}
+
+/** Share of experience/project bullets that carry a concrete number/metric. */
+function metricDensity(cv: CVData): number {
+  const bullets = [
+    ...cv.experience.flatMap((e) => e.highlights),
+    ...cv.projects.flatMap((p) => p.highlights),
+  ].filter((b) => b.trim());
+  if (bullets.length === 0) return 0;
+  const withNum = bullets.filter((b) => /\d/.test(b)).length;
+  return Math.round((withNum / bullets.length) * 100);
+}
+
+const MATCH_WEIGHTS: Record<TargetMatchMetric["key"], number> = {
+  skills: 0.4,
+  keywords: 0.25,
+  sections: 0.15,
+  metrics: 0.2,
+};
+
+/** Deterministic, edit-sensitive match of the user's CV to a locked ideal. */
+export function targetMatch(userCV: CVData, ideal: CVData, jd = ""): TargetMatch {
+  const gap = gapAnalysis(userCV, ideal);
+
+  const kws = jdKeywords(jd);
+  const cvTokens = cvTokenSet(userCV);
+  const kwScore = kws.length === 0
+    ? null
+    : Math.round((kws.filter((k) => cvTokens.has(k)).length / kws.length) * 100);
+
+  const sectionTotal = ideal.order.length;
+  const sectionScore = sectionTotal === 0
+    ? 100
+    : Math.round(((sectionTotal - gap.missingSections.length) / sectionTotal) * 100);
+
+  const metrics: TargetMatchMetric[] = [
+    { key: "skills", label: "Skills coverage", score: gap.coverage, hint: "Skills the ideal lists that you also have." },
+  ];
+  if (kwScore !== null) {
+    metrics.push({ key: "keywords", label: "JD keywords", score: kwScore, hint: "Key terms from the job description present in your CV." });
+  }
+  metrics.push(
+    { key: "sections", label: "Sections", score: sectionScore, hint: "Sections the ideal profile has that you also fill." },
+    { key: "metrics", label: "Quantified impact", score: metricDensity(userCV), hint: "Share of your bullets backed by a concrete number." },
+  );
+
+  let wSum = 0;
+  let acc = 0;
+  for (const m of metrics) {
+    const w = MATCH_WEIGHTS[m.key];
+    acc += m.score * w;
+    wSum += w;
+  }
+  const score = wSum === 0 ? 0 : Math.round(acc / wSum);
+
+  return { score, metrics, gap };
+}
