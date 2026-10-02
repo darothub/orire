@@ -19,8 +19,10 @@ import {
   inviteToTeam,
   leaveTeam,
   removeMember,
+  renameTeam,
   revokeInvite,
   setMemberRole,
+  transferOwnership,
   type TeamContext,
   type TeamOpResult,
 } from "@/lib/team/team";
@@ -96,6 +98,20 @@ export async function leaveTeamAction(): Promise<TeamOpResult> {
   const userId = session?.user?.id ?? null;
   if (!userId) return NOT_SIGNED_IN;
   return leaveTeam(userId);
+}
+
+export async function renameTeamAction(name: string): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return renameTeam(userId, name);
+}
+
+export async function transferOwnershipAction(targetUserId: string): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return transferOwnership(userId, targetUserId);
 }
 
 export async function deleteTeamAction(): Promise<TeamOpResult> {

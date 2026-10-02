@@ -2,6 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   canOwnTeam,
   canManageTeam,
+  canRenameTeam,
+  canLeaveTeam,
+  canTransferOwnership,
   canSetMemberRole,
   isAssignableRole,
   seatsAvailable,
@@ -10,6 +13,7 @@ import {
   effectivePlan,
   inviteIsLive,
   normalizeEmail,
+  validateTeamName,
 } from "./policy";
 
 describe("team policy", () => {
@@ -83,5 +87,32 @@ describe("team policy", () => {
 
   it("normalizes email", () => {
     expect(normalizeEmail("  Foo@Bar.COM ")).toBe("foo@bar.com");
+  });
+
+  it("only the owner can transfer ownership, and not to another owner", () => {
+    expect(canTransferOwnership("owner", "admin")).toBe(true);
+    expect(canTransferOwnership("owner", "member")).toBe(true);
+    expect(canTransferOwnership("owner", "owner")).toBe(false);
+    expect(canTransferOwnership("admin", "member")).toBe(false);
+    expect(canTransferOwnership("member", "member")).toBe(false);
+  });
+
+  it("owners and admins can rename; members cannot", () => {
+    expect(canRenameTeam("owner")).toBe(true);
+    expect(canRenameTeam("admin")).toBe(true);
+    expect(canRenameTeam("member")).toBe(false);
+  });
+
+  it("anyone but the owner can leave", () => {
+    expect(canLeaveTeam("owner")).toBe(false);
+    expect(canLeaveTeam("admin")).toBe(true);
+    expect(canLeaveTeam("member")).toBe(true);
+  });
+
+  it("validates team names", () => {
+    expect(validateTeamName("  Acme Coaching ")).toEqual({ ok: true, name: "Acme Coaching" });
+    expect(validateTeamName(" a ").ok).toBe(false);
+    expect(validateTeamName("x".repeat(61)).ok).toBe(false);
+    expect(validateTeamName("x".repeat(60)).ok).toBe(true);
   });
 });

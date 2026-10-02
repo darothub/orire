@@ -49,6 +49,37 @@ export function canSetMemberRole(
 }
 
 /**
+ * Only the current owner may hand the team to another seated member. The target
+ * must be a different, non-owner member of the same team. After a transfer the
+ * old owner becomes an admin (handled in the DB op), so the team always has
+ * exactly one owner.
+ */
+export function canTransferOwnership(actorRole: TeamRole, targetRole: TeamRole): boolean {
+  return actorRole === "owner" && targetRole !== "owner";
+}
+
+/** Owners and admins can rename the team; plain members cannot. */
+export function canRenameTeam(role: TeamRole): boolean {
+  return canManageTeam(role);
+}
+
+/**
+ * Anyone except the owner can leave outright. The owner must either transfer
+ * ownership first (then leave) or delete the team, so a team is never orphaned.
+ */
+export function canLeaveTeam(role: TeamRole): boolean {
+  return role !== "owner";
+}
+
+/** Validate a proposed team name; returns a trimmed name or an error string. */
+export function validateTeamName(name: string): { ok: true; name: string } | { ok: false; error: string } {
+  const clean = name.trim();
+  if (clean.length < 2) return { ok: false, error: "Give your team a name (2+ characters)." };
+  if (clean.length > 60) return { ok: false, error: "Team names are at most 60 characters." };
+  return { ok: true, name: clean };
+}
+
+/**
  * Seats left on a team. Pending (unaccepted, unexpired) invites are reserved so
  * a team can't over-commit past its seat limit before invitees accept.
  */

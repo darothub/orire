@@ -12,9 +12,11 @@ import {
   inviteMemberAction,
   leaveTeamAction,
   removeMemberAction,
+  renameTeamAction,
   revokeInviteAction,
   setMemberRoleAction,
   teamOverview,
+  transferOwnershipAction,
   type TeamOverview,
 } from "@/app/actions/team";
 import {
@@ -47,6 +49,8 @@ export function TeamPanel() {
   const [copied, setCopied] = useState<string | null>(null);
   const [poolKeys, setPoolKeys] = useState<PooledKeyDTO[]>([]);
   const [poolDraft, setPoolDraft] = useState<Record<string, string>>({});
+  const [renaming, setRenaming] = useState(false);
+  const [renameDraft, setRenameDraft] = useState("");
   const refreshPooled = usePooledStore((s) => s.refresh);
 
   const loadKeys = useCallback(async () => {
@@ -225,8 +229,52 @@ export function TeamPanel() {
       {team && (
         <div className="team-body">
           <div className="team-title">
-            <strong>{team.team.name}</strong>
-            <span className="team-plan-badge">{team.team.plan}</span>
+            {renaming ? (
+              <div className="team-row team-rename">
+                <input
+                  className="team-input"
+                  value={renameDraft}
+                  placeholder="Team name"
+                  maxLength={60}
+                  autoFocus
+                  onChange={(e) => setRenameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setRenaming(false);
+                  }}
+                />
+                <button
+                  className="team-btn team-btn-primary"
+                  disabled={busy || renameDraft.trim().length < 2}
+                  onClick={() =>
+                    void run(() => renameTeamAction(renameDraft), "Team renamed.").then(
+                      (ok) => ok && setRenaming(false),
+                    )
+                  }
+                >
+                  {busy ? "…" : "Save"}
+                </button>
+                <button className="team-link" disabled={busy} onClick={() => setRenaming(false)}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <>
+                <strong>{team.team.name}</strong>
+                <span className="team-plan-badge">{team.team.plan}</span>
+                {team.canManage && (
+                  <button
+                    className="team-link team-rename-link"
+                    title="Rename team"
+                    onClick={() => {
+                      setRenameDraft(team.team.name);
+                      setRenaming(true);
+                    }}
+                  >
+                    Rename
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           <ul className="team-members">
@@ -257,6 +305,22 @@ export function TeamPanel() {
                         Make member
                       </button>
                     )}
+                    <button
+                      className="team-role-btn team-owner-btn"
+                      title="Transfer ownership to this member"
+                      disabled={busy}
+                      onClick={() => {
+                        const who = m.name || m.email || "this member";
+                        if (
+                          typeof window !== "undefined" &&
+                          !window.confirm(`Make ${who} the owner? You'll step down to admin.`)
+                        )
+                          return;
+                        void run(() => transferOwnershipAction(m.userId), "Ownership transferred.");
+                      }}
+                    >
+                      Make owner
+                    </button>
                     <button
                       className="team-x"
                       title="Remove member"

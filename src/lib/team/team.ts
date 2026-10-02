@@ -19,11 +19,14 @@ import { getPlanId } from "@/lib/entitlement/entitlement";
 import {
   canOwnTeam,
   canManageTeam,
+  canRenameTeam,
   canSetMemberRole,
+  canTransferOwnership,
   effectivePlan,
   hasSeatFor,
   normalizeEmail,
   seatsAvailable,
+  validateTeamName,
   type TeamRole,
 } from "@/lib/team/policy";
 
@@ -130,8 +133,8 @@ export interface TeamOpResult {
 
 /** Create a team owned by the caller. Requires the Teams personal plan. */
 export async function createTeam(userId: string, name: string): Promise<TeamOpResult> {
-  const clean = name.trim();
-  if (clean.length < 2) return { ok: false, error: "Give your team a name (2+ characters)." };
+  const valid = validateTeamName(name);
+  if (!valid.ok) return { ok: false, error: valid.error };
   const personal = await getPlanId(userId);
   if (!canOwnTeam(personal)) {
     return { ok: false, error: "Creating a team needs the Teams plan. Subscribe to Teams first." };
@@ -141,12 +144,50 @@ export async function createTeam(userId: string, name: string): Promise<TeamOpRe
   }
   await prisma.team.create({
     data: {
-      name: clean,
+      name: valid.name,
       ownerId: userId,
       plan: "teams",
       members: { create: { userId, role: "owner" } },
     },
   });
+  return { ok: true };
+}
+
+/** Rename the caller's team. Owner/admin only. */
+export async function renameTeam(userId: string, name: string): Promise<TeamOpResult> {
+  const valid = validateTeamName(name);
+  if (!valid.ok) return { ok: false, error: valid.error };
+  const membership = await findMembership(userId);
+  if (!membership || !canRenameTeam(membership.role as TeamRole)) {
+    return { ok: false, error: "Only owners and admins can rename the team." };
+  }
+  await prisma.team.update({ where: { id: membership.teamId }, data: { name: valid.name } });
+  return { ok: true };
+}
+
+/**
+ * Hand the team to another seated member. Owner only. The new owner is promoted
+ * to `owner`, the previous owner steps down to `admin`, and `team.ownerId` is
+ * repointed — all in one transaction so the team always has exactly one owner.
+ */
+export async function transferOwnership(userId: string, targetUserId: string): Promise<TeamOpResult> {
+  if (userId === targetUserId) return { ok: false, error: "You already own the team." };
+  const membership = await findMembership(userId);
+  if (!membership || (membership.role as TeamRole) !== "owner") {
+    return { ok: false, error: "Only the owner can transfer ownership." };
+  }
+  const target = await prisma.teamMember.findUnique({ where: { userId: targetUserId } });
+  if (!target || target.teamId !== membership.teamId) {
+    return { ok: false, error: "That person isn't on your team." };
+  }
+  if (!canTransferOwnership(membership.role as TeamRole, target.role as TeamRole)) {
+    return { ok: false, error: "That member can't be made owner." };
+  }
+  await prisma.$transaction([
+    prisma.teamMember.update({ where: { userId: targetUserId }, data: { role: "owner" } }),
+    prisma.teamMember.update({ where: { userId }, data: { role: "admin" } }),
+    prisma.team.update({ where: { id: membership.teamId }, data: { ownerId: targetUserId } }),
+  ]);
   return { ok: true };
 }
 
@@ -244,8 +285,8 @@ export async function removeMember(userId: string, targetUserId: string): Promis
 
 /**
  * Promote/demote a member between `admin` and `member`. Owner only; the owner
- * seat can't be re-roled and nobody can be made owner (transfer is a separate,
- * deliberate action we don't expose yet).
+ * seat can't be re-roled here — making someone owner goes through
+ * `transferOwnership`, which also steps the previous owner down.
  */
 export async function setMemberRole(
   userId: string,

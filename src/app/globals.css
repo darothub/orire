@@ -1620,6 +1620,9 @@ body {
 }
 .team-role-btn:hover { color: var(--accent); border-color: rgba(120, 160, 255, 0.4); }
 .team-role-btn:disabled { opacity: 0.5; cursor: default; }
+.team-owner-btn:hover { color: #ffd27a; border-color: rgba(255, 200, 110, 0.45); }
+.team-rename { flex: 1; min-width: 0; }
+.team-rename-link { margin-left: auto; }
 .team-invite { margin-top: 12px; }
 .team-seatsleft { display: block; margin-top: 6px; font-size: 11px; color: var(--muted); }
 .team-pending { margin-top: 14px; }
