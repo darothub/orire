@@ -19,10 +19,24 @@ import type { CVData } from "@/lib/cv/schema";
  * 3D parallax tilt + a gradient sheen that tracks the cursor. The active card
  * keeps the shared `pick-ring` so selection stays legible.
  */
-export function TemplatePicker() {
-  const cv = useCVStore((s) => s.cv);
-  const active = useCVStore((s) => s.activeTemplate);
-  const setTemplate = useCVStore((s) => s.setTemplate);
+export function TemplatePicker({
+  cv: cvOverride,
+  active: activeOverride,
+  onSelect,
+}: {
+  /** Preview this CV in every card instead of the working document (re-brand). */
+  cv?: CVData;
+  /** Highlight this template id instead of the working template. */
+  active?: string;
+  /** Called with the chosen template id instead of mutating the working CV. */
+  onSelect?: (id: string) => void;
+} = {}) {
+  const storeCV = useCVStore((s) => s.cv);
+  const storeActive = useCVStore((s) => s.activeTemplate);
+  const storeSetTemplate = useCVStore((s) => s.setTemplate);
+  const cv = cvOverride ?? storeCV;
+  const active = activeOverride ?? storeActive;
+  const setTemplate = onSelect ?? storeSetTemplate;
 
   return (
     <div className="picker">

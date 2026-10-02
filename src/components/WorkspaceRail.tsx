@@ -17,6 +17,7 @@ interface RailItem {
 
 const PRIMARY: RailItem[] = [
   { view: "edit", label: "Edit", hint: "Two-pane live editor", icon: "✎" },
+  { view: "rebrand", label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
   { view: "refine", label: "Refine", hint: "Connect AI · import · tailor to a job", icon: "✦" },
   { view: "simulate", label: "Simulate", hint: "Ideal 100%-match benchmark", icon: "◎" },
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },

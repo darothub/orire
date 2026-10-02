@@ -7,6 +7,7 @@ import { SectionOrder } from "@/components/editor/SectionOrder";
 import { TemplatePicker } from "@/components/templates/TemplatePicker";
 import { WorkspaceRail } from "@/components/WorkspaceRail";
 import { RefineFlow } from "@/components/ai/RefineFlow";
+import { RebrandFlow } from "@/components/ai/RebrandFlow";
 import { ProviderSetup } from "@/components/ai/ProviderSetup";
 import { PlanPanel } from "@/components/PlanPanel";
 import { TeamPanel } from "@/components/TeamPanel";
@@ -23,6 +24,7 @@ import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { useRebrandStore } from "@/lib/store/rebrandStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useStyleStore, paperStyleVars } from "@/lib/store/styleStore";
 import { usePreviewStore } from "@/lib/store/previewStore";
@@ -88,6 +90,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
       <AnimatePresence mode="wait" custom={dir} initial={false}>
         <motion.div key={view} className="ws-swap" custom={dir}>
           {view === "edit" && <EditView mounted={mounted} />}
+          {view === "rebrand" && <RebrandFlow />}
           {view === "refine" && <RefineFlow />}
           {view === "simulate" && <SimulateView />}
           {view === "rate" && <RateView />}
@@ -124,6 +127,16 @@ export default function Home() {
   const refCompare = useRefineStore((s) => s.runProviders.length === 2);
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
 
+  // Re-brand (req 3): while in the re-brand workspace with a draft, the right
+  // pane previews the restructured draft in the auditioned template so the user
+  // sees the exact output before applying. Otherwise it shows the working CV.
+  const rebrandDraft = useRebrandStore((s) => s.draft);
+  const rebrandTpl = useRebrandStore((s) => s.templateId);
+  const setRebrandTpl = useRebrandStore((s) => s.setTemplate);
+  const showRebrand = view === "rebrand" && !!rebrandDraft;
+  const previewCV = showRebrand && rebrandDraft ? rebrandDraft : cv;
+  const previewTplId = showRebrand ? rebrandTpl : active;
+
   // Live typography (font / size / alignment) applied to the CV paper so the
   // preview — and the exported PDF captured from it — reflect the choices.
   const fontId = useStyleStore((s) => s.fontId);
@@ -155,12 +168,12 @@ export default function Home() {
     ro.observe(paper);
     ro.observe(stage);
     return () => ro.disconnect();
-  }, [mounted, active, cv, setFitZoom]);
+  }, [mounted, previewTplId, previewCV, setFitZoom]);
 
   const A4_PX = 1123;
   const pageCount = Math.max(1, Math.ceil((paperH - 2) / A4_PX));
 
-  const tpl = getTemplate(active);
+  const tpl = getTemplate(previewTplId);
   const ActiveTemplate = tpl.Component;
 
   return (
@@ -217,7 +230,9 @@ export default function Home() {
                 className="pane pane-preview"
                 aria-label="Live preview"
               >
-                {mounted && <TemplatePicker />}
+                {mounted && (showRebrand
+                  ? <TemplatePicker cv={previewCV} active={previewTplId} onSelect={setRebrandTpl} />
+                  : <TemplatePicker />)}
                 {mounted && <PreviewToolbar />}
                 <div className="preview-stage" ref={stageRef}>
                   <div
@@ -231,17 +246,17 @@ export default function Home() {
                       <MotionConfig reducedMotion="user">
                         <AnimatePresence mode="popLayout" initial={false}>
                           <motion.div
-                            key={active}
+                            key={previewTplId}
                             initial={{ opacity: 0, y: 26, scale: 0.965, filter: "blur(6px)" }}
                             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
                             exit={{ opacity: 0, y: -18, scale: 0.975, filter: "blur(5px)" }}
                             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                            className={`paper${mounted && previewEdit ? " is-editing" : ""}`}
+                            className={`paper${mounted && previewEdit && !showRebrand ? " is-editing" : ""}`}
                             id="cv-paper"
                             style={paperVars}
                           >
-                            {mounted && <ActiveTemplate cv={cv} />}
-                            <span key={`sweep-${active}`} className="tpl-sweep" aria-hidden />
+                            {mounted && <ActiveTemplate cv={previewCV} />}
+                            <span key={`sweep-${previewTplId}`} className="tpl-sweep" aria-hidden />
                           </motion.div>
                         </AnimatePresence>
                       </MotionConfig>
