@@ -9,6 +9,7 @@ import { useRebrandStore } from "@/lib/store/rebrandStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
+import { mergeParsedCVs } from "@/lib/ingest/merge";
 import { countFacts } from "./refine/shared";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
@@ -117,6 +118,15 @@ function UploadStep() {
     setDraft(JSON.parse(JSON.stringify(cv)), "current working CV", "your current CV");
   };
 
+  const parseable = (results ?? []).filter(
+    (r): r is FileResult & { parsed: ParsedCV } => !!r.parsed,
+  );
+  const mergeAndRebrand = () => {
+    if (parseable.length < 2) return;
+    const { merged, stats } = mergeParsedCVs(parseable.map((r) => r.parsed));
+    setDraft(cvDataFromParsed(merged), `${stats.files} merged CVs`, "merged · built-in parser");
+  };
+
   return (
     <div className="ws-view rebrand-flow">
       <div className="ws-head">
@@ -167,6 +177,15 @@ function UploadStep() {
 
         {results && (
           <div className="imp-results">
+            {parseable.length >= 2 && (
+              <div className="imp-merge-bar">
+                <div className="imp-merge-text">
+                  <strong>{parseable.length} CVs parsed.</strong>
+                  <span>Merge them into one de-duplicated CV, then re-brand the combined result.</span>
+                </div>
+                <button className="imp-btn primary" onClick={mergeAndRebrand}>Merge all &amp; re-brand →</button>
+              </div>
+            )}
             {results.map((r, i) => (
               <motion.div key={`${r.name}-${i}`} className="imp-card" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
                 <div className="imp-card-top">

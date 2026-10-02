@@ -7,6 +7,7 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePooledStore } from "@/lib/store/pooledStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import type { ParsedCV } from "@/lib/ingest/parse";
+import { mergeParsedCVs, type MergeResult, type BasicsField } from "@/lib/ingest/merge";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
 import { countFacts } from "./shared";
 
@@ -37,6 +38,8 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const [applied, setApplied] = useState<string | null>(null);
   const [aiBusy, setAiBusy] = useState<number | null>(null);
   const [aiError, setAiError] = useState<{ i: number; message: string } | null>(null);
+  const [mergePreview, setMergePreview] = useState<MergeResult | null>(null);
+  const [choices, setChoices] = useState<Partial<Record<BasicsField, number>>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const facts = countFacts(cv);
   const hasContent = facts.experience + facts.education + facts.skills + facts.projects > 0;
@@ -48,7 +51,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const upload = useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files);
     if (list.length === 0) return;
-    setBusy(true); setFatal(null); setResults(null); setApplied(null);
+    setBusy(true); setFatal(null); setResults(null); setApplied(null); setMergePreview(null); setChoices({});
     try {
       const fd = new FormData();
       for (const f of list) fd.append("files", f);
@@ -105,6 +108,30 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
     }
   };
 
+  const parseable = (results ?? []).filter(
+    (r): r is FileResult & { parsed: ParsedCV } => !!r.parsed,
+  );
+
+  const buildMerge = () => {
+    if (parseable.length < 2) return;
+    setAiError(null);
+    setApplied(null);
+    setMergePreview(mergeParsedCVs(parseable.map((r) => r.parsed)));
+    setChoices({});
+  };
+
+  const applyMerged = () => {
+    if (!mergePreview) return;
+    const basics = { ...mergePreview.merged.basics };
+    for (const c of mergePreview.conflicts) {
+      basics[c.field] = c.values[choices[c.field] ?? 0];
+    }
+    applyImport({ ...mergePreview.merged, basics }, "replace");
+    setApplied(`merged ${mergePreview.stats.files} CVs into one — replaced editor`);
+    setMergePreview(null);
+    setChoices({});
+  };
+
   return (
     <div className="step-body">
       <p className="step-hint">
@@ -145,6 +172,65 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
         {applied && (
           <motion.div className="imp-applied" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             Applied: {applied}.
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {parseable.length >= 2 && !mergePreview && (
+          <motion.div className="imp-merge-bar" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <div className="imp-merge-text">
+              <strong>{parseable.length} CVs parsed.</strong>
+              <span>Combine them into one de-duplicated CV — union skills, concatenate roles, keep one copy of repeats.</span>
+            </div>
+            <button className="imp-btn primary" onClick={buildMerge}>Merge all into one →</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {mergePreview && (
+          <motion.div className="imp-card imp-merge" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <div className="imp-card-top">
+              <span className="imp-badge merged">MERGED</span>
+              <span className="imp-name">Combined CV from {mergePreview.stats.files} files</span>
+            </div>
+            <div className="imp-summary">
+              <Stat label="Experience" n={mergePreview.stats.experience} />
+              <Stat label="Education" n={mergePreview.stats.education} />
+              <Stat label="Skills" n={mergePreview.stats.skills} />
+              <Stat label="Projects" n={mergePreview.stats.projects} />
+              <Stat label="Certifications" n={mergePreview.stats.certifications} />
+              {mergePreview.stats.duplicatesRemoved > 0 && (
+                <span className="imp-kv"><em>Deduped</em>{mergePreview.stats.duplicatesRemoved}</span>
+              )}
+            </div>
+            {mergePreview.conflicts.length > 0 && (
+              <div className="imp-conflicts">
+                <span className="ed-label">Sources disagree — pick which to keep</span>
+                {mergePreview.conflicts.map((c) => (
+                  <div key={c.field} className="imp-conflict">
+                    <span className="imp-conflict-field">{c.label}</span>
+                    <div className="imp-conflict-opts">
+                      {c.values.map((v, idx) => (
+                        <button
+                          key={idx}
+                          className={`imp-opt ${(choices[c.field] ?? 0) === idx ? "on" : ""}`}
+                          onClick={() => setChoices((p) => ({ ...p, [c.field]: idx }))}
+                          title={v}
+                        >
+                          {v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="imp-actions">
+              <button className="imp-btn primary" onClick={applyMerged}>Replace editor with merged CV</button>
+              <button className="imp-btn" onClick={() => setMergePreview(null)}>Cancel</button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
