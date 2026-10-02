@@ -24,6 +24,7 @@ export interface PooledKeyDTO {
   provider: ProviderId;
   label: string; // masked hint, never the secret
   updatedAt: string;
+  setByName: string | null; // who last set it (audit); null if unknown
 }
 
 function isPoolable(p: string): p is ProviderId {
@@ -42,13 +43,24 @@ export async function listTeamKeys(userId: string): Promise<PooledKeyDTO[]> {
     where: { teamId: membership.teamId },
     orderBy: { provider: "asc" },
   });
-  return keys
-    .filter((k) => isPoolable(k.provider))
-    .map((k) => ({
-      provider: k.provider as ProviderId,
-      label: k.label ?? "•••",
-      updatedAt: k.updatedAt.toISOString(),
-    }));
+  const poolable = keys.filter((k) => isPoolable(k.provider));
+
+  // Resolve who set each key for an audit line (createdById has no relation).
+  const setterIds = [...new Set(poolable.map((k) => k.createdById))];
+  const setters = setterIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: setterIds } },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+  const nameById = new Map(setters.map((u) => [u.id, u.name || u.email || null]));
+
+  return poolable.map((k) => ({
+    provider: k.provider as ProviderId,
+    label: k.label ?? "•••",
+    updatedAt: k.updatedAt.toISOString(),
+    setByName: nameById.get(k.createdById) ?? null,
+  }));
 }
 
 /** ProviderIds the caller's team has a pooled key for (client run-gating). */

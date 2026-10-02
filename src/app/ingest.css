@@ -1379,6 +1379,12 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.conn-team {
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  cursor: help;
+  white-space: nowrap;
+}
 .conn-select {
   padding: 6px 14px;
   border-radius: 999px;

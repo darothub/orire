@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { usePlanStore } from "@/lib/store/planStore";
+import { usePooledStore } from "@/lib/store/pooledStore";
 import { PROVIDERS, isCLI, type ProviderId } from "@/lib/ai/types";
 import { PLANS, providerCountAllowed } from "@/lib/plan/plan";
 import type { ModelsResponse } from "@/app/api/ai/models/route";
@@ -46,6 +47,12 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
   const toggleRunProvider = useRefineStore((s) => s.toggleRunProvider);
   const plan = usePlanStore((s) => s.plan);
   const planMeta = PLANS[plan];
+  const pooledProviders = usePooledStore((s) => s.providers);
+  const refreshPooled = usePooledStore((s) => s.refresh);
+
+  useEffect(() => {
+    void refreshPooled();
+  }, [refreshPooled]);
 
   const [reveal, setReveal] = useState<Record<ProviderId, boolean>>(() => emptyRecord(() => false));
   const [fetched, setFetched] = useState<Record<ProviderId, FetchState>>(() =>
@@ -169,6 +176,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
         const cliState = cli[p];
         const cliReady = cliProvider && cliState.phase === "done" && !!cliState.status?.installed;
         const connected = cliProvider ? cliReady : Boolean(keys[p]?.trim());
+        const teamCovered = !cliProvider && !keys[p]?.trim() && pooledProviders.includes(p);
         const selected = runProviders.includes(p);
         const isDefault = !selectable && p === defaultProvider;
         return (
@@ -208,6 +216,10 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                     Set default
                   </button>
                 )
+              ) : teamCovered ? (
+                <span className="conn-ok conn-team" title="Your team pools a key for this provider — premium runs use it, no personal key needed.">
+                  Covered by your team
+                </span>
               ) : (
                 <span className="conn-warn">{cliProvider ? "Not found" : "No key"}</span>
               )}

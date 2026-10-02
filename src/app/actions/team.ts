@@ -20,6 +20,7 @@ import {
   leaveTeam,
   removeMember,
   revokeInvite,
+  setMemberRole,
   type TeamContext,
   type TeamOpResult,
 } from "@/lib/team/team";
@@ -78,6 +79,16 @@ export async function removeMemberAction(targetUserId: string): Promise<TeamOpRe
   const userId = session?.user?.id ?? null;
   if (!userId) return NOT_SIGNED_IN;
   return removeMember(userId, targetUserId);
+}
+
+export async function setMemberRoleAction(
+  targetUserId: string,
+  role: string,
+): Promise<TeamOpResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return NOT_SIGNED_IN;
+  return setMemberRole(userId, targetUserId, role);
 }
 
 export async function leaveTeamAction(): Promise<TeamOpResult> {

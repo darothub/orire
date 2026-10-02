@@ -21,6 +21,33 @@ export function canManageTeam(role: TeamRole): boolean {
   return role === "owner" || role === "admin";
 }
 
+/** Roles a member can be assigned to via promote/demote (never "owner"). */
+export const ASSIGNABLE_ROLES: TeamRole[] = ["admin", "member"];
+
+export function isAssignableRole(role: string): role is "admin" | "member" {
+  return role === "admin" || role === "member";
+}
+
+/**
+ * Only the owner may change roles. Validates a single promote/demote:
+ *  - the actor must be the team owner;
+ *  - the owner's own seat can't be re-roled (there is exactly one owner);
+ *  - the target must not currently be the owner;
+ *  - the new role must be an assignable role (admin|member);
+ *  - a no-op (target already has `newRole`) is rejected so the UI only offers
+ *    real changes.
+ */
+export function canSetMemberRole(
+  actorRole: TeamRole,
+  targetRole: TeamRole,
+  newRole: string,
+): boolean {
+  if (actorRole !== "owner") return false;
+  if (targetRole === "owner") return false;
+  if (!isAssignableRole(newRole)) return false;
+  return newRole !== targetRole;
+}
+
 /**
  * Seats left on a team. Pending (unaccepted, unexpired) invites are reserved so
  * a team can't over-commit past its seat limit before invitees accept.

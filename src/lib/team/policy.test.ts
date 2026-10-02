@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   canOwnTeam,
   canManageTeam,
+  canSetMemberRole,
+  isAssignableRole,
   seatsAvailable,
   hasSeatFor,
   planRank,
@@ -22,6 +24,30 @@ describe("team policy", () => {
     expect(canManageTeam("owner")).toBe(true);
     expect(canManageTeam("admin")).toBe(true);
     expect(canManageTeam("member")).toBe(false);
+  });
+
+  it("only the owner may change roles, and only to admin/member", () => {
+    // owner can promote/demote non-owners between admin and member
+    expect(canSetMemberRole("owner", "member", "admin")).toBe(true);
+    expect(canSetMemberRole("owner", "admin", "member")).toBe(true);
+    // admins and members can't change roles at all
+    expect(canSetMemberRole("admin", "member", "admin")).toBe(false);
+    expect(canSetMemberRole("member", "member", "admin")).toBe(false);
+    // the owner seat is never re-roled, and nobody is promoted to owner
+    expect(canSetMemberRole("owner", "owner", "admin")).toBe(false);
+    expect(canSetMemberRole("owner", "member", "owner")).toBe(false);
+    // no-ops are rejected
+    expect(canSetMemberRole("owner", "admin", "admin")).toBe(false);
+    expect(canSetMemberRole("owner", "member", "member")).toBe(false);
+    // unknown target roles are rejected
+    expect(canSetMemberRole("owner", "member", "superadmin")).toBe(false);
+  });
+
+  it("recognises assignable roles", () => {
+    expect(isAssignableRole("admin")).toBe(true);
+    expect(isAssignableRole("member")).toBe(true);
+    expect(isAssignableRole("owner")).toBe(false);
+    expect(isAssignableRole("nope")).toBe(false);
   });
 
   it("counts seats with pending invites reserved", () => {

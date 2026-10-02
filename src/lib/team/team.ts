@@ -19,6 +19,7 @@ import { getPlanId } from "@/lib/entitlement/entitlement";
 import {
   canOwnTeam,
   canManageTeam,
+  canSetMemberRole,
   effectivePlan,
   hasSeatFor,
   normalizeEmail,
@@ -238,6 +239,29 @@ export async function removeMember(userId: string, targetUserId: string): Promis
   if (!target || target.teamId !== membership.teamId) return { ok: false, error: "That person isn't on your team." };
   if (target.role === "owner") return { ok: false, error: "The owner can't be removed." };
   await prisma.teamMember.delete({ where: { userId: targetUserId } });
+  return { ok: true };
+}
+
+/**
+ * Promote/demote a member between `admin` and `member`. Owner only; the owner
+ * seat can't be re-roled and nobody can be made owner (transfer is a separate,
+ * deliberate action we don't expose yet).
+ */
+export async function setMemberRole(
+  userId: string,
+  targetUserId: string,
+  role: string,
+): Promise<TeamOpResult> {
+  const membership = await findMembership(userId);
+  if (!membership) return { ok: false, error: "You're not on a team." };
+  const target = await prisma.teamMember.findUnique({ where: { userId: targetUserId } });
+  if (!target || target.teamId !== membership.teamId) {
+    return { ok: false, error: "That person isn't on your team." };
+  }
+  if (!canSetMemberRole(membership.role as TeamRole, target.role as TeamRole, role)) {
+    return { ok: false, error: "Only the owner can change roles (to admin or member)." };
+  }
+  await prisma.teamMember.update({ where: { userId: targetUserId }, data: { role } });
   return { ok: true };
 }
 

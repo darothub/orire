@@ -13,6 +13,7 @@ import {
   leaveTeamAction,
   removeMemberAction,
   revokeInviteAction,
+  setMemberRoleAction,
   teamOverview,
   type TeamOverview,
 } from "@/app/actions/team";
@@ -235,7 +236,38 @@ export function TeamPanel() {
                   <span className="team-member-name">{m.name || m.email || "Member"}</span>
                   <span className="team-member-role">{m.role}</span>
                 </span>
-                {team.canManage && m.role !== "owner" && (
+                {team.role === "owner" && m.role !== "owner" && (
+                  <div className="team-member-actions">
+                    {m.role === "member" ? (
+                      <button
+                        className="team-role-btn"
+                        title="Promote to admin"
+                        disabled={busy}
+                        onClick={() => void run(() => setMemberRoleAction(m.userId, "admin"), "Promoted to admin.")}
+                      >
+                        Make admin
+                      </button>
+                    ) : (
+                      <button
+                        className="team-role-btn"
+                        title="Demote to member"
+                        disabled={busy}
+                        onClick={() => void run(() => setMemberRoleAction(m.userId, "member"), "Changed to member.")}
+                      >
+                        Make member
+                      </button>
+                    )}
+                    <button
+                      className="team-x"
+                      title="Remove member"
+                      disabled={busy}
+                      onClick={() => void run(() => removeMemberAction(m.userId), "Member removed.")}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+                {team.canManage && team.role !== "owner" && m.role !== "owner" && (
                   <button
                     className="team-x"
                     title="Remove member"
@@ -294,6 +326,13 @@ export function TeamPanel() {
                         <span className="team-key-label team-key-empty">Not set</span>
                       )}
                     </div>
+                    {existing && (
+                      <span className="team-key-audit">
+                        {existing.setByName ? `Set by ${existing.setByName}` : "Set by a teammate"}
+                        {" · updated "}
+                        {new Date(existing.updatedAt).toLocaleDateString()}
+                      </span>
+                    )}
                     <div className="team-row team-key-controls">
                       <input
                         className="team-input"
