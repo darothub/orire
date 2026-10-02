@@ -13,6 +13,15 @@ import { currentMonth } from "@/lib/entitlement/entitlement";
 /** How many trailing months the dashboard summarises (inclusive of current). */
 export const USAGE_WINDOW = 3;
 
+/** Selectable trailing-window lengths (months) offered by the dashboard picker. */
+export const USAGE_WINDOWS = [3, 6, 12] as const;
+export type UsageWindow = (typeof USAGE_WINDOWS)[number];
+
+/** Clamp an arbitrary number to an allowed window length (defaults to USAGE_WINDOW). */
+export function clampUsageWindow(n: number): UsageWindow {
+  return (USAGE_WINDOWS as readonly number[]).includes(n) ? (n as UsageWindow) : USAGE_WINDOW;
+}
+
 export interface UsageMemberInput {
   userId: string;
   name: string | null;
@@ -164,7 +173,11 @@ export function buildTeamUsage(
 }
 
 /** DB wrapper: aggregate the window's usage for every member of a team. */
-export async function getTeamUsage(teamId: string, now: Date = new Date()): Promise<TeamUsage> {
+export async function getTeamUsage(
+  teamId: string,
+  window: number = USAGE_WINDOW,
+  now: Date = new Date(),
+): Promise<TeamUsage> {
   const members = await prisma.teamMember.findMany({
     where: { teamId },
     include: { user: true },
@@ -175,7 +188,7 @@ export async function getTeamUsage(teamId: string, now: Date = new Date()): Prom
     name: m.user.name,
     email: m.user.email,
   }));
-  const months = monthWindow(USAGE_WINDOW, now);
+  const months = monthWindow(clampUsageWindow(window), now);
   const counters = inputs.length
     ? await prisma.usageCounter.findMany({
         where: { userId: { in: inputs.map((i) => i.userId) }, month: { in: months } },

@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   buildTeamUsage,
+  clampUsageWindow,
   formatMonthLabel,
   monthWindow,
   usageDelta,
   usageToCsv,
+  USAGE_WINDOW,
   type UsageCounterRow,
   type UsageMemberInput,
 } from "./usage";
@@ -17,6 +19,26 @@ describe("monthWindow", () => {
   it("rolls across a year boundary", () => {
     const now = new Date(Date.UTC(2025, 0, 10)); // Jan 2025
     expect(monthWindow(3, now)).toEqual(["2024-11", "2024-12", "2025-01"]);
+  });
+  it("supports longer windows", () => {
+    const now = new Date(Date.UTC(2025, 9, 15)); // Oct 2025
+    expect(monthWindow(6, now)).toHaveLength(6);
+    expect(monthWindow(12, now)[0]).toBe("2024-11");
+    expect(monthWindow(12, now).at(-1)).toBe("2025-10");
+  });
+});
+
+describe("clampUsageWindow", () => {
+  it("passes through allowed window lengths", () => {
+    expect(clampUsageWindow(3)).toBe(3);
+    expect(clampUsageWindow(6)).toBe(6);
+    expect(clampUsageWindow(12)).toBe(12);
+  });
+  it("falls back to the default for disallowed values", () => {
+    expect(clampUsageWindow(4)).toBe(USAGE_WINDOW);
+    expect(clampUsageWindow(0)).toBe(USAGE_WINDOW);
+    expect(clampUsageWindow(-1)).toBe(USAGE_WINDOW);
+    expect(clampUsageWindow(100)).toBe(USAGE_WINDOW);
   });
 });
 

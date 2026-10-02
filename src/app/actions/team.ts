@@ -61,13 +61,13 @@ export async function teamAuditAction(): Promise<TeamAuditDTO[]> {
 }
 
 /** Per-member refine usage for the caller's team (owners/admins only). */
-export async function teamUsageAction(): Promise<TeamUsage | null> {
+export async function teamUsageAction(window?: number): Promise<TeamUsage | null> {
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (!userId) return null;
   const team = await getTeamContext(userId);
   if (!team || !team.canManage) return null;
-  return getTeamUsage(team.team.id);
+  return getTeamUsage(team.team.id, window);
 }
 
 export async function createTeamAction(name: string): Promise<TeamOpResult> {

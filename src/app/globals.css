@@ -1695,6 +1695,10 @@ body {
 .team-usage-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--text); }
 .team-usage-summary strong { font-variant-numeric: tabular-nums; }
 .team-usage-delta { color: var(--muted); font-size: 11.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.team-usage-range { display: inline-flex; gap: 4px; margin-top: 10px; padding: 2px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line-2); border-radius: 9px; }
+.team-usage-range-btn { padding: 3px 10px; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); background: transparent; border: 0; border-radius: 7px; cursor: pointer; transition: color 0.18s, background 0.18s; }
+.team-usage-range-btn:hover { color: var(--text); }
+.team-usage-range-btn.is-active { color: var(--bg); background: var(--text); }
 .team-usage-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; }
 .team-usage-li { display: flex; flex-direction: column; }
 .team-usage-item {

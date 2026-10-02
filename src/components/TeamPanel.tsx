@@ -22,7 +22,7 @@ import {
   type TeamOverview,
 } from "@/app/actions/team";
 import type { TeamAuditDTO } from "@/lib/team/audit";
-import { formatMonthLabel, usageDelta, usageToCsv, type TeamUsage } from "@/lib/team/usage";
+import { formatMonthLabel, usageDelta, usageToCsv, USAGE_WINDOW, USAGE_WINDOWS, type TeamUsage } from "@/lib/team/usage";
 import { seatStatus } from "@/lib/team/seats";
 import {
   listTeamKeysAction,
@@ -78,15 +78,25 @@ export function TeamPanel() {
   const [usage, setUsage] = useState<TeamUsage | null>(null);
   const [showUsage, setShowUsage] = useState(false);
   const [openMember, setOpenMember] = useState<string | null>(null);
+  const [usageWindow, setUsageWindow] = useState<number>(USAGE_WINDOW);
   const refreshPooled = usePooledStore((s) => s.refresh);
 
   const loadAudit = useCallback(async () => {
     setAudit(await teamAuditAction());
   }, []);
 
-  const loadUsage = useCallback(async () => {
-    setUsage(await teamUsageAction());
+  const loadUsage = useCallback(async (window: number = USAGE_WINDOW) => {
+    setUsage(await teamUsageAction(window));
   }, []);
+
+  const pickWindow = useCallback(
+    (w: number) => {
+      setUsageWindow(w);
+      setOpenMember(null);
+      void loadUsage(w);
+    },
+    [loadUsage],
+  );
 
   const exportUsageCsv = useCallback(() => {
     if (!usage) return;
@@ -557,6 +567,24 @@ export function TeamPanel() {
                     </span>
                   </div>
 
+                  <div
+                    className="team-usage-range"
+                    role="group"
+                    aria-label="Usage window length"
+                  >
+                    {USAGE_WINDOWS.map((w) => (
+                      <button
+                        key={w}
+                        type="button"
+                        className={`team-usage-range-btn${usageWindow === w ? " is-active" : ""}`}
+                        aria-pressed={usageWindow === w}
+                        onClick={() => pickWindow(w)}
+                      >
+                        {w} mo
+                      </button>
+                    ))}
+                  </div>
+
                   {(() => {
                     const trendMax = Math.max(1, ...usage.monthlyTotals.map((t) => t.total));
                     return (
@@ -625,7 +653,7 @@ export function TeamPanel() {
                                   <span
                                     className="team-usage-spark"
                                     aria-hidden
-                                    title={`3-month total: ${m.windowTotal}`}
+                                    title={`${usage.months.length}-month total: ${m.windowTotal}`}
                                   >
                                     {m.monthly.map((n, i) => (
                                       <span key={i} className="team-usage-spark-col">
@@ -670,7 +698,8 @@ export function TeamPanel() {
                                     </ul>
                                     <div className="team-usage-detail-foot">
                                       {usageDelta(m.thisMonth, m.prevMonth)} vs{" "}
-                                      {formatMonthLabel(usage.prevMonth)} · {m.windowTotal} in 3 mo
+                                      {formatMonthLabel(usage.prevMonth)} · {m.windowTotal} in{" "}
+                                      {usage.months.length} mo
                                     </div>
                                   </div>
                                 )}
