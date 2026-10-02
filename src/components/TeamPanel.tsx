@@ -23,6 +23,7 @@ import {
 } from "@/app/actions/team";
 import type { TeamAuditDTO } from "@/lib/team/audit";
 import { formatMonthLabel, usageDelta, usageToCsv, type TeamUsage } from "@/lib/team/usage";
+import { seatStatus } from "@/lib/team/seats";
 import {
   listTeamKeysAction,
   removeTeamKeyAction,
@@ -76,6 +77,7 @@ export function TeamPanel() {
   const [showAudit, setShowAudit] = useState(false);
   const [usage, setUsage] = useState<TeamUsage | null>(null);
   const [showUsage, setShowUsage] = useState(false);
+  const [openMember, setOpenMember] = useState<string | null>(null);
   const refreshPooled = usePooledStore((s) => s.refresh);
 
   const loadAudit = useCallback(async () => {
@@ -216,11 +218,17 @@ export function TeamPanel() {
     >
       <div className="team-head">
         <span className="ed-label">Team</span>
-        {team && (
-          <span className="team-seats">
-            {team.members.length}/{team.team.seatLimit} seats
-          </span>
-        )}
+        {team && (() => {
+          const seats = seatStatus(team.team.seatLimit - team.seatsLeft, team.team.seatLimit);
+          return (
+            <span
+              className={`team-seats${seats.level !== "ok" ? ` is-${seats.level}` : ""}`}
+              title={seats.message ?? undefined}
+            >
+              {team.members.length}/{team.team.seatLimit} seats
+            </span>
+          );
+        })()}
       </div>
 
       <AnimatePresence>
@@ -413,9 +421,25 @@ export function TeamPanel() {
                   {busy ? "…" : "Invite"}
                 </button>
               </div>
-              <span className="team-seatsleft">
-                {team.seatsLeft > 0 ? `${team.seatsLeft} seat${team.seatsLeft === 1 ? "" : "s"} left` : "All seats filled"}
-              </span>
+              <div className="team-seatmeter">
+                {(() => {
+                  const seats = seatStatus(team.team.seatLimit - team.seatsLeft, team.team.seatLimit);
+                  return (
+                    <>
+                      <span className={`team-seatmeter-bar is-${seats.level}`} aria-hidden>
+                        <span
+                          className="team-seatmeter-fill"
+                          style={{ width: `${Math.round(seats.ratio * 100)}%` }}
+                        />
+                      </span>
+                      <span className={`team-seatsleft is-${seats.level}`}>
+                        {seats.message ??
+                          `${team.seatsLeft} seat${team.seatsLeft === 1 ? "" : "s"} left`}
+                      </span>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
           )}
 
@@ -566,35 +590,93 @@ export function TeamPanel() {
                       );
                       return (
                         <ul className="team-usage-list">
-                          {usage.members.map((m) => (
-                            <li key={m.userId} className="team-usage-item">
-                              <span className="team-usage-name" title={m.email ?? undefined}>
-                                {m.name || m.email || "Member"}
-                              </span>
-                              <span className="team-usage-count">{m.thisMonth}</span>
-                              <span className="team-usage-bar" aria-hidden>
-                                <span
-                                  className="team-usage-bar-fill"
-                                  style={{ width: `${Math.round((m.thisMonth / barMax) * 100)}%` }}
-                                />
-                              </span>
-                              <span
-                                className="team-usage-spark"
-                                aria-hidden
-                                title={`3-month total: ${m.windowTotal}`}
+                          {usage.members.map((m) => {
+                            const open = openMember === m.userId;
+                            const share =
+                              usage.totalThisMonth > 0
+                                ? Math.round((m.thisMonth / usage.totalThisMonth) * 100)
+                                : 0;
+                            const mMax = Math.max(1, ...m.monthly);
+                            return (
+                              <li
+                                key={m.userId}
+                                className={`team-usage-li${open ? " is-open" : ""}`}
                               >
-                                {m.monthly.map((n, i) => (
-                                  <span key={i} className="team-usage-spark-col">
+                                <button
+                                  type="button"
+                                  className="team-usage-item"
+                                  aria-expanded={open}
+                                  onClick={() =>
+                                    setOpenMember((cur) => (cur === m.userId ? null : m.userId))
+                                  }
+                                >
+                                  <span className="team-usage-name" title={m.email ?? undefined}>
+                                    {m.name || m.email || "Member"}
+                                  </span>
+                                  <span className="team-usage-count">{m.thisMonth}</span>
+                                  <span className="team-usage-bar" aria-hidden>
                                     <span
-                                      className="team-usage-spark-fill"
-                                      style={{ height: `${Math.round((n / sparkMax) * 100)}%` }}
+                                      className="team-usage-bar-fill"
+                                      style={{
+                                        width: `${Math.round((m.thisMonth / barMax) * 100)}%`,
+                                      }}
                                     />
                                   </span>
-                                ))}
-                              </span>
-                              <span className="team-usage-window">{m.windowTotal}</span>
-                            </li>
-                          ))}
+                                  <span
+                                    className="team-usage-spark"
+                                    aria-hidden
+                                    title={`3-month total: ${m.windowTotal}`}
+                                  >
+                                    {m.monthly.map((n, i) => (
+                                      <span key={i} className="team-usage-spark-col">
+                                        <span
+                                          className="team-usage-spark-fill"
+                                          style={{ height: `${Math.round((n / sparkMax) * 100)}%` }}
+                                        />
+                                      </span>
+                                    ))}
+                                  </span>
+                                  <span className="team-usage-window">{m.windowTotal}</span>
+                                </button>
+                                {open && (
+                                  <div className="team-usage-detail">
+                                    <div className="team-usage-detail-head">
+                                      <span className="team-usage-detail-email">
+                                        {m.email || "No email on file"}
+                                      </span>
+                                      <span className="team-usage-detail-share">
+                                        {share}% of team this month
+                                      </span>
+                                    </div>
+                                    <ul className="team-usage-months">
+                                      {usage.months.map((mo, i) => (
+                                        <li key={mo} className="team-usage-month">
+                                          <span className="team-usage-month-label">
+                                            {formatMonthLabel(mo)}
+                                          </span>
+                                          <span className="team-usage-month-bar" aria-hidden>
+                                            <span
+                                              className="team-usage-month-fill"
+                                              style={{
+                                                width: `${Math.round((m.monthly[i] / mMax) * 100)}%`,
+                                              }}
+                                            />
+                                          </span>
+                                          <span className="team-usage-month-val">
+                                            {m.monthly[i]}
+                                          </span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                    <div className="team-usage-detail-foot">
+                                      {usageDelta(m.thisMonth, m.prevMonth)} vs{" "}
+                                      {formatMonthLabel(usage.prevMonth)} · {m.windowTotal} in 3 mo
+                                    </div>
+                                  </div>
+                                )}
+                              </li>
+                            );
+                          })}
                         </ul>
                       );
                     })()
