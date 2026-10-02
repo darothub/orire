@@ -17,6 +17,8 @@ export function RunStep({ onBack }: { onBack: () => void }) {
   const planBlock = useRefineStore((s) => s.planBlock);
   const cv = useCVStore((s) => s.cv);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
+  const markApplied = useRefineStore((s) => s.markApplied);
+  const appliedProvider = useRefineStore((s) => s.appliedProvider);
   const setView = useViewStore((s) => s.setView);
 
   const before = countFacts(cv);
@@ -27,7 +29,7 @@ export function RunStep({ onBack }: { onBack: () => void }) {
     const r = cols[p].result;
     if (!r) return;
     applyRefinedCV(r.cv);
-    setView("edit");
+    markApplied(p);
   };
 
   if (!started) {
@@ -57,9 +59,26 @@ export function RunStep({ onBack }: { onBack: () => void }) {
     <div className="step-body">
       <div className={`cmp-grid ${single ? "single" : ""}`}>
         {runProviders.map((p) => (
-          <Column key={p} provider={p} state={cols[p]} before={before} onApply={() => apply(p)} />
+          <Column
+            key={p}
+            provider={p}
+            state={cols[p]}
+            before={before}
+            applied={appliedProvider === p}
+            onApply={() => apply(p)}
+          />
         ))}
       </div>
+
+      {appliedProvider && (
+        <div className="cmp-applied-bar" role="status">
+          <span className="cmp-applied-check">✓</span>
+          <span>
+            <strong>{PROVIDERS[appliedProvider].label}&apos;s version is now your CV.</strong> Open the editor to review or fine-tune it.
+          </span>
+          <button className="flow-btn primary sm" onClick={() => setView("edit")}>Open editor →</button>
+        </div>
+      )}
 
       <IdealBar />
 

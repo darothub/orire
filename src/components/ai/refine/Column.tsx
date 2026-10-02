@@ -10,7 +10,7 @@ import type { JDMatch } from "@/lib/ai/jdmatch";
 import { gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
 import { countFacts, type FactCounts } from "./shared";
 
-export function Column({ provider, state, before, onApply }: { provider: ProviderId; state: ColState; before: FactCounts; onApply: () => void }) {
+export function Column({ provider, state, before, applied, onApply }: { provider: ProviderId; state: ColState; before: FactCounts; applied: boolean; onApply: () => void }) {
   const setView = useViewStore((s) => s.setView);
   const ideal = useRefineStore((s) => s.ideal);
   const baseMatch = useRefineStore((s) => s.baseMatch);
@@ -57,7 +57,15 @@ export function Column({ provider, state, before, onApply }: { provider: Provide
           ) : (
             <div className="ai-clean cmp-clean">✓ Fully grounded in your CV.</div>
           )}
-          <div className="imp-actions cmp-actions"><button className="flow-btn primary" onClick={onApply}>Apply this</button></div>
+          <div className="imp-actions cmp-actions">
+            {applied ? (
+              <button className="flow-btn applied" onClick={onApply} title="Re-apply this version to your CV">
+                ✓ Applied to your CV
+              </button>
+            ) : (
+              <button className="flow-btn primary" onClick={onApply}>Apply this</button>
+            )}
+          </div>
         </>
       )}
     </motion.div>

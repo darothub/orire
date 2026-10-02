@@ -23,6 +23,23 @@ import type { ParsedCV } from "@/lib/ingest/parse";
 type BasicsPatch = Partial<CVData["basics"]>;
 export type ImportMode = "replace" | "merge";
 
+/**
+ * Choose which skill group a suggested skill should be added to.
+ * Suggested skills come from a target role, so they belong in a general
+ * skills group — never a specialised one like "Languages" or "Interests".
+ * Returns the index of the best-fitting group (defaults to the first).
+ */
+export function pickSkillGroupIndex(groups: { category: string }[]): number {
+  const GENERAL = ["skill", "technical", "technolog", "tool", "core", "competenc", "stack", "expertise", "proficienc"];
+  const EXCLUDE = ["language", "interest", "hobby", "hobbies", "reference", "award", "publication", "volunteer"];
+  const cat = (g: { category: string }) => g.category.trim().toLowerCase();
+  const general = groups.findIndex((g) => !cat(g) || GENERAL.some((k) => cat(g).includes(k)));
+  if (general !== -1) return general;
+  const notExcluded = groups.findIndex((g) => !EXCLUDE.some((k) => cat(g).includes(k)));
+  return notExcluded !== -1 ? notExcluded : 0;
+}
+
+
 interface CVState {
   cv: CVData;
   activeTemplate: string;
@@ -261,10 +278,11 @@ export const useCVStore = create<CVState>()(
           const value = skill.trim();
           if (!value) return {};
           const exists = s.cv.skills.some((g) => g.items.some((i) => i.toLowerCase() === value.toLowerCase()));
-          const groups = s.cv.skills.length ? s.cv.skills : [emptySkillGroup()];
+          const groups = s.cv.skills.length ? s.cv.skills : [{ ...emptySkillGroup(), category: "Skills" }];
+          const targetIdx = pickSkillGroupIndex(groups);
           const nextSkills = exists
             ? groups
-            : groups.map((g, idx) => (idx === groups.length - 1 ? { ...g, items: [...g.items, value] } : g));
+            : groups.map((g, idx) => (idx === targetIdx ? { ...g, items: [...g.items, value] } : g));
           const order = s.cv.order.includes("skills") ? s.cv.order : [...s.cv.order, "skills" as SectionKey];
           return {
             cv: { ...s.cv, skills: nextSkills, order },

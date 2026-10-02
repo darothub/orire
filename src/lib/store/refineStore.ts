@@ -66,6 +66,9 @@ interface RefineState {
   /** Plan-level block (cap reached / compare not allowed) shown as a banner. */
   planBlock: ColError | null;
 
+  /** Which provider's result was last applied to the CV, for an "Applied" confirmation. */
+  appliedProvider: ProviderId | null;
+
   setStep: (s: RefineStep) => void;
   toggleRunProvider: (p: ProviderId) => void;
   setJd: (jd: string) => void;
@@ -74,6 +77,8 @@ interface RefineState {
   runAll: () => Promise<void>;
   runJudge: () => Promise<void>;
   runSimulate: () => Promise<void>;
+  /** Record that a provider's refined CV was applied to the editor. */
+  markApplied: (p: ProviderId) => void;
   resetRun: () => void;
   /** Reset only the judge verdict so a different judge can be picked while the
    *  comparison results (cols) stay on screen. */
@@ -111,6 +116,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   idealErr: null,
 
   planBlock: null,
+
+  appliedProvider: null,
 
   setStep: (step) => set({ step }),
   toggleRunProvider: (p) =>
@@ -292,8 +299,10 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     }
   },
 
+  markApplied: (p) => set({ appliedProvider: p }),
+
   resetRun: () =>
-    set({ started: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null }),
+    set({ started: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null, appliedProvider: null }),
 
   resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null }),
 
@@ -313,5 +322,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       idealPhase: "idle",
       ideal: null,
       idealErr: null,
+      appliedProvider: null,
     }),
 }));
