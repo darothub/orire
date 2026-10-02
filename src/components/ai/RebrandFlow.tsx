@@ -10,6 +10,7 @@ import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { mergeParsedCVs } from "@/lib/ingest/merge";
+import { diffScores, grade } from "@/lib/cv/rating";
 import { countFacts } from "./refine/shared";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
@@ -230,6 +231,7 @@ function BrandStep() {
   const via = useRebrandStore((s) => s.via);
   const templateId = useRebrandStore((s) => s.templateId);
   const resetRebrand = useRebrandStore((s) => s.reset);
+  const workingCv = useCVStore((s) => s.cv);
   const loadCV = useCVStore((s) => s.loadCV);
   const setTemplate = useCVStore((s) => s.setTemplate);
   const captureBaseline = useCVStore((s) => s.captureBaseline);
@@ -238,6 +240,7 @@ function BrandStep() {
 
   if (!draft) return null;
   const facts = countFacts(draft);
+  const projected = diffScores(workingCv, draft);
 
   const apply = () => {
     // Snapshot where we started so the re-branded result can be rated (req 16).
@@ -275,6 +278,24 @@ function BrandStep() {
             <span className={facts.skills ? "" : "zero"}>{facts.skills} skills</span>
             <span className={facts.projects ? "" : "zero"}>{facts.projects} projects</span>
           </div>
+        </div>
+
+        <div className="rb-score" role="group" aria-label="Projected rating">
+          <span className="ed-label">Projected rating</span>
+          <div className="rb-score-row">
+            <span className="rb-score-num before">{projected.before}</span>
+            <span className="rb-score-arrow" aria-hidden>→</span>
+            <span className="rb-score-num after">{projected.after}</span>
+            <span className="rb-score-grade">{grade(projected.after)}</span>
+            {projected.diff !== 0 && (
+              <span className={`rate-delta ${projected.diff > 0 ? "up" : "down"}`}>
+                {projected.diff > 0 ? `+${projected.diff}` : projected.diff}
+              </span>
+            )}
+          </div>
+          <span className="rb-score-hint">
+            vs your current CV · open <strong>Rate</strong> after applying for the full six-metric breakdown.
+          </span>
         </div>
 
         <p className="step-hint">
