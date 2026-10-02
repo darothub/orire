@@ -17,10 +17,12 @@ import {
   setMemberRoleAction,
   teamAuditAction,
   teamOverview,
+  teamUsageAction,
   transferOwnershipAction,
   type TeamOverview,
 } from "@/app/actions/team";
 import type { TeamAuditDTO } from "@/lib/team/audit";
+import { formatMonthLabel, usageDelta, type TeamUsage } from "@/lib/team/usage";
 import {
   listTeamKeysAction,
   removeTeamKeyAction,
@@ -72,10 +74,16 @@ export function TeamPanel() {
   const [renameDraft, setRenameDraft] = useState("");
   const [audit, setAudit] = useState<TeamAuditDTO[]>([]);
   const [showAudit, setShowAudit] = useState(false);
+  const [usage, setUsage] = useState<TeamUsage | null>(null);
+  const [showUsage, setShowUsage] = useState(false);
   const refreshPooled = usePooledStore((s) => s.refresh);
 
   const loadAudit = useCallback(async () => {
     setAudit(await teamAuditAction());
+  }, []);
+
+  const loadUsage = useCallback(async () => {
+    setUsage(await teamUsageAction());
   }, []);
 
   const loadKeys = useCallback(async () => {
@@ -116,13 +124,14 @@ export function TeamPanel() {
         await load();
         await loadKeys();
         await loadAudit();
+        await loadUsage();
         await refreshPooled();
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [signedIn, load, loadKeys, loadAudit, refreshPooled]);
+  }, [signedIn, load, loadKeys, loadAudit, loadUsage, refreshPooled]);
 
   const run = async (fn: () => Promise<{ ok: boolean; error?: string }>, ok?: string) => {
     setBusy(true);
@@ -484,6 +493,58 @@ export function TeamPanel() {
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {team.canManage && usage && (
+            <div className="team-usage">
+              <button
+                type="button"
+                className="team-activity-toggle"
+                onClick={() => setShowUsage((v) => !v)}
+                aria-expanded={showUsage}
+              >
+                {showUsage ? "▾" : "▸"} Usage · {usage.totalThisMonth} refine
+                {usage.totalThisMonth === 1 ? "" : "s"} this month
+              </button>
+              {showUsage && (
+                <div className="team-usage-body">
+                  <div className="team-usage-summary">
+                    <span>
+                      {formatMonthLabel(usage.month)}:{" "}
+                      <strong>{usage.totalThisMonth}</strong>
+                    </span>
+                    <span className="team-usage-delta">
+                      {usageDelta(usage.totalThisMonth, usage.totalPrevMonth)} vs{" "}
+                      {formatMonthLabel(usage.prevMonth)}
+                    </span>
+                  </div>
+                  {usage.members.length === 0 ? (
+                    <p className="team-activity-empty">No members yet.</p>
+                  ) : (
+                    <ul className="team-usage-list">
+                      {usage.members.map((m) => {
+                        const max = usage.members[0]?.thisMonth || 1;
+                        const pct = Math.round((m.thisMonth / max) * 100);
+                        return (
+                          <li key={m.userId} className="team-usage-item">
+                            <span className="team-usage-name" title={m.email ?? undefined}>
+                              {m.name || m.email || "Member"}
+                            </span>
+                            <span className="team-usage-bar" aria-hidden>
+                              <span
+                                className="team-usage-bar-fill"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </span>
+                            <span className="team-usage-count">{m.thisMonth}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

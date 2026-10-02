@@ -12,6 +12,7 @@ import { auth } from "@/lib/auth/auth";
 import { getPlanId } from "@/lib/entitlement/entitlement";
 import { canOwnTeam } from "@/lib/team/policy";
 import { listTeamAudit, type TeamAuditDTO } from "@/lib/team/audit";
+import { getTeamUsage, type TeamUsage } from "@/lib/team/usage";
 import {
   acceptInvite,
   createTeam,
@@ -57,6 +58,16 @@ export async function teamAuditAction(): Promise<TeamAuditDTO[]> {
   const team = await getTeamContext(userId);
   if (!team || !team.canManage) return [];
   return listTeamAudit(team.team.id);
+}
+
+/** Per-member refine usage for the caller's team (owners/admins only). */
+export async function teamUsageAction(): Promise<TeamUsage | null> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return null;
+  const team = await getTeamContext(userId);
+  if (!team || !team.canManage) return null;
+  return getTeamUsage(team.team.id);
 }
 
 export async function createTeamAction(name: string): Promise<TeamOpResult> {

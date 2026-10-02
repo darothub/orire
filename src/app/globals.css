@@ -1681,6 +1681,18 @@ body {
 .team-activity-text { color: var(--text); }
 .team-activity-time { color: var(--muted); font-size: 11px; white-space: nowrap; flex: 0 0 auto; }
 
+.team-usage { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line-2); }
+.team-usage-body { margin-top: 8px; }
+.team-usage-summary { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--text); }
+.team-usage-summary strong { font-variant-numeric: tabular-nums; }
+.team-usage-delta { color: var(--muted); font-size: 11.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.team-usage-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; max-height: 240px; overflow-y: auto; }
+.team-usage-item { display: grid; grid-template-columns: minmax(0, 1fr) 90px auto; align-items: center; gap: 10px; font-size: 12.5px; }
+.team-usage-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team-usage-bar { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.06); overflow: hidden; }
+.team-usage-bar-fill { display: block; height: 100%; border-radius: 999px; background: var(--grad); transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+.team-usage-count { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 1.5ch; text-align: right; }
+
 .team-keys { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line-2); }
 .team-keys-hint { margin: 4px 0 10px; }
 .team-key-row {
