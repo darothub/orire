@@ -1685,7 +1685,16 @@ body {
 .flow-btn.sm { padding: 5px 12px; font-size: 12px; margin-top: 4px; }
 
 /* ---------- Account / auth ---------- */
-.acct-wrap { position: relative; }
+.acct-wrap { position: relative; display: inline-flex; align-items: center; gap: 8px; }
+.acct-devlogin {
+  border-color: rgba(251, 191, 36, 0.4);
+  color: #fcd34d;
+}
+.acct-devlogin:hover {
+  border-color: rgba(251, 191, 36, 0.7);
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.08);
+}
 .acct-chip {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 5px 10px 5px 5px; border-radius: 999px;

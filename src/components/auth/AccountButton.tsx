@@ -78,6 +78,15 @@ export function AccountButton() {
 
   return (
     <div className="acct-wrap">
+      {process.env.NODE_ENV !== "production" && (
+        <a
+          className="btn-ghost acct-devlogin"
+          title="Dev only — sign in as a full-access (teams) account"
+          href="/api/dev/login"
+        >
+          ⚡ Dev login
+        </a>
+      )}
       <button className="btn-ghost" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         Sign in
       </button>
