@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "postinstall": "prisma generate",
-    "db:up": "docker start orire-pg || docker run -d --name orire-pg -e POSTGRES_USER=orire -e POSTGRES_PASSWORD=orire -e POSTGRES_DB=orire -p 5433:5432 postgres:16-alpine",
+    "db:up": "sh scripts/db-up.sh",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "dev:login": "open http://localhost:3001/api/dev/login"
