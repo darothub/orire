@@ -15,7 +15,7 @@ import { STRUCTURE_SYSTEM, buildStructurePrompt } from "@/lib/ai/prompt";
 import { parseModelJSON } from "@/lib/ai/guardrails";
 import { parsedCVFromModelJSON, type ParsedCV } from "@/lib/ingest/parse";
 import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
-import { runProvider } from "@/lib/ai/server/providerCall";
+import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { effectiveProviderKey } from "@/lib/ai/server/pooledKey";
 
 export const runtime = "nodejs";
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       model,
       system: STRUCTURE_SYSTEM,
       user,
-      opts: { temperature: 0 },
+      opts: DETERMINISTIC,
     });
 
     if (!out.ok) {

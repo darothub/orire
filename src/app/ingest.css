@@ -569,6 +569,18 @@
 .cmp-clean {
   margin-top: 12px;
 }
+.cmp-fidelity {
+  font-variant-numeric: tabular-nums;
+}
+/* Fidelity tone: minor leaves the default amber; review escalates to red. */
+.cmp-flags.review {
+  border-color: #dc8282;
+  background: #fbeaea;
+}
+.cmp-flags.review strong,
+.cmp-flags.review li {
+  color: #8a1f1f;
+}
 .cmp-actions {
   margin-top: auto;
   padding-top: 12px;

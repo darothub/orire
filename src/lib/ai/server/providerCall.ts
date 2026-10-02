@@ -26,7 +26,17 @@ export type ProviderCall =
 export interface CallOpts {
   temperature?: number;
   maxTokens?: number;
+  /** OpenAI reproducibility hint. Ignored by providers that don't support it. */
+  seed?: number;
 }
+
+/**
+ * Shared deterministic settings for grounded, reproducible calls (structure /
+ * refine / judge / simulate). Temperature 0 removes sampling noise; the fixed
+ * seed makes OpenAI best-effort reproducible. Anthropic has no seed param, so
+ * temperature 0 is as deterministic as its API allows.
+ */
+export const DETERMINISTIC: CallOpts = { temperature: 0, seed: 1217 };
 
 async function callOpenAI(
   key: string,
@@ -41,6 +51,7 @@ async function callOpenAI(
     body: JSON.stringify({
       model,
       temperature: opts.temperature ?? 0.2,
+      ...(opts.seed != null ? { seed: opts.seed } : {}),
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: system },

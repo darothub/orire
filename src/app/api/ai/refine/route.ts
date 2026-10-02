@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 import type { CVData } from "@/lib/cv/schema";
 import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
 import { PROVIDERS, needsKey, isCLI, type ProviderId, type RefineResponse } from "@/lib/ai/types";
-import { runProvider } from "@/lib/ai/server/providerCall";
+import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { effectiveProviderKey } from "@/lib/ai/server/pooledKey";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan } from "@/lib/plan/plan";
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
   const user = buildPatchPrompt(body.cv, body.jobDescription!);
 
   try {
-    const out = await runProvider({ provider, apiKey, model, system: PATCH_SYSTEM, user });
+    const out = await runProvider({ provider, apiKey, model, system: PATCH_SYSTEM, user, opts: DETERMINISTIC });
     if (!out.ok) {
       return NextResponse.json(
         { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,

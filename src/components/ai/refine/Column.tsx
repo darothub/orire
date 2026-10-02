@@ -6,6 +6,7 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { SECTION_LABELS, type SectionKey } from "@/lib/cv/schema";
+import { scoreGrounding } from "@/lib/ai/guardrails";
 import type { JDMatch } from "@/lib/ai/jdmatch";
 import { gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
 import { countFacts, type FactCounts } from "./shared";
@@ -50,12 +51,15 @@ export function Column({ provider, state, before, applied, onApply }: { provider
             <div className="ai-summary cmp-summary"><span className="ed-label">Tailored summary</span><p>{state.result.cv.basics.summary}</p></div>
           )}
           {state.result.warnings.length > 0 ? (
-            <div className="ai-flags cmp-flags">
-              <strong>{state.result.warnings.length} guardrail note{state.result.warnings.length > 1 ? "s" : ""}</strong>
+            <div className={`ai-flags cmp-flags ${scoreGrounding(state.result).label}`}>
+              <strong>
+                <span className="cmp-fidelity">Fidelity {scoreGrounding(state.result).score}%</span>
+                {" · "}{state.result.warnings.length} guardrail note{state.result.warnings.length > 1 ? "s" : ""}
+              </strong>
               <ul>{state.result.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
             </div>
           ) : (
-            <div className="ai-clean cmp-clean">✓ Fully grounded in your CV.</div>
+            <div className="ai-clean cmp-clean">✓ Fully grounded in your CV · fidelity 100%</div>
           )}
           <div className="imp-actions cmp-actions">
             {applied ? (

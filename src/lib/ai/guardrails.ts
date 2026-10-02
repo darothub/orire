@@ -27,6 +27,19 @@ export interface GroundingResult {
   warnings: string[];
 }
 
+/** Category of a guardrail warning — drives the deterministic fidelity score. */
+export type WarningKind = "entity" | "number" | "skill";
+
+export interface GroundingScore {
+  /** 0–100 fidelity: how faithfully the output stayed grounded in the source. */
+  score: number;
+  label: "clean" | "minor" | "review";
+  counts: { total: number; entity: number; number: number; skill: number };
+}
+
+/** Stable prefix so an invented-figure warning can be categorised deterministically. */
+const FIGURE_PREFIX = "Unverified figure";
+
 export class RefineParseError extends Error {}
 
 function norm(v: unknown): string {
@@ -267,5 +280,95 @@ export function factGround(source: CVData, candidate: Record<string, unknown>): 
     order: source.order,
   };
 
+  // (D) Invented-figure guard: metrics/percentages/currency in the tailored
+  // bullets or summary that appear nowhere in the source are flagged. The model
+  // may rephrase, but it must not fabricate quantified claims.
+  warnings.push(...findInventedNumbers(source, cv));
+
   return { cv, warnings };
+}
+
+/** Normalise a numeric token for comparison: drop $, %, commas, spaces, trailing dot. */
+function numKey(tok: string): string {
+  return tok.replace(/[$,%\s]/g, "").replace(/\.$/, "");
+}
+
+/** Every numeric token (digits, decimals, %, currency) found in a blob of text. */
+function extractNumbers(text: string): string[] {
+  const out: string[] = [];
+  for (const m of text.matchAll(/\$?\d[\d.,]*%?[kKmMbB]?/g)) out.push(m[0]);
+  return out;
+}
+
+/** All numeric tokens present anywhere in the source CV (the grounding truth). */
+function collectSourceNumbers(src: CVData): Set<string> {
+  const set = new Set<string>();
+  const add = (t: unknown) => {
+    for (const tok of extractNumbers(asStr(t))) set.add(numKey(tok));
+  };
+  const b = src.basics;
+  [b.summary, b.title, b.location].forEach(add);
+  for (const e of src.experience) {
+    [e.company, e.role, e.location, e.startDate, e.endDate].forEach(add);
+    (e.highlights ?? []).forEach(add);
+  }
+  for (const ed of src.education) [ed.institution, ed.degree, ed.field, ed.startDate, ed.endDate, ed.details].forEach(add);
+  for (const s of src.skills) (s.items ?? []).forEach(add);
+  for (const p of src.projects) {
+    [p.name, p.role, p.startDate, p.endDate].forEach(add);
+    (p.highlights ?? []).forEach(add);
+  }
+  for (const c of src.certifications) [c.name, c.issuer, c.date].forEach(add);
+  return set;
+}
+
+/**
+ * Deterministic guard for fabricated metrics. Scans the produced CV's bullets
+ * and summary for numeric claims that do not appear anywhere in the source,
+ * returning one warning per distinct (context, figure) pair.
+ */
+export function findInventedNumbers(source: CVData, cv: CVData): string[] {
+  const src = collectSourceNumbers(source);
+  const warnings: string[] = [];
+  const seen = new Set<string>();
+  const check = (text: string, where: string) => {
+    for (const tok of extractNumbers(text)) {
+      const key = numKey(tok);
+      if (!key || src.has(key)) continue;
+      const dedupe = `${where}|${key}`;
+      if (seen.has(dedupe)) continue;
+      seen.add(dedupe);
+      warnings.push(`${FIGURE_PREFIX} “${tok}” in ${where} does not appear in your source CV — verify before sending.`);
+    }
+  };
+  if (cv.basics.summary) check(cv.basics.summary, "your summary");
+  for (const e of cv.experience) for (const h of e.highlights ?? []) check(h, `a ${e.company || "experience"} highlight`);
+  for (const p of cv.projects) for (const h of p.highlights ?? []) check(h, `a ${p.name || "project"} highlight`);
+  return warnings;
+}
+
+/** Classify a guardrail warning so penalties can be weighted deterministically. */
+function classifyWarning(w: string): WarningKind {
+  if (w.startsWith(FIGURE_PREFIX)) return "number";
+  if (w.includes("was removed")) return "skill";
+  return "entity";
+}
+
+/**
+ * Deterministic fidelity score (0–100) from guardrail warnings. Invented
+ * entities (employers, schools, projects…) weigh most, fabricated figures
+ * next, stripped skills least. Pure and fully reproducible.
+ */
+export function scoreGrounding(result: GroundingResult): GroundingScore {
+  const counts = { total: 0, entity: 0, number: 0, skill: 0 };
+  let penalty = 0;
+  for (const w of result.warnings) {
+    const kind = classifyWarning(w);
+    counts[kind] += 1;
+    counts.total += 1;
+    penalty += kind === "entity" ? 8 : kind === "number" ? 6 : 3;
+  }
+  const score = Math.max(0, 100 - penalty);
+  const label = score >= 90 ? "clean" : score >= 70 ? "minor" : "review";
+  return { score, label, counts };
 }

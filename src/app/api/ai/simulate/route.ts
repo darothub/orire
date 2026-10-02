@@ -9,7 +9,7 @@
 import { NextResponse } from "next/server";
 import { SIMULATE_SYSTEM, buildSimulatePrompt } from "@/lib/ai/simulate";
 import { PROVIDERS, needsKey, type ProviderId, type RefineResponse } from "@/lib/ai/types";
-import { runProvider } from "@/lib/ai/server/providerCall";
+import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { effectiveProviderKey } from "@/lib/ai/server/pooledKey";
 
 export const runtime = "nodejs";
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       model,
       system: SIMULATE_SYSTEM,
       user,
-      opts: { temperature: 0.3 },
+      opts: DETERMINISTIC,
     });
     if (!out.ok) {
       return NextResponse.json(

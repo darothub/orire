@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { factGround, parseModelJSON, RefineParseError } from "@/lib/ai/guardrails";
+import { factGround, parseModelJSON, RefineParseError, findInventedNumbers, scoreGrounding } from "@/lib/ai/guardrails";
 import type { CVData } from "@/lib/cv/schema";
 
 /** A minimal but realistic source CV used as the grounding truth. */
@@ -184,5 +184,65 @@ describe("factGround — structure", () => {
   it("coerces missing arrays to empty without throwing", () => {
     const { cv } = factGround(source(), { experience: "not-an-array" });
     expect(cv.experience).toEqual([]);
+  });
+});
+
+describe("findInventedNumbers — fabricated metric guard", () => {
+  it("flags a percentage and a currency figure not present in the source", () => {
+    const { warnings } = factGround(source(), {
+      experience: [
+        { company: "Analytical Engines Ltd", role: "Lead", highlights: ["Grew signups 400% and cut costs $1.2M"] },
+      ],
+    });
+    expect(warnings.some((w) => w.includes("400%"))).toBe(true);
+    expect(warnings.some((w) => w.includes("$1.2M"))).toBe(true);
+  });
+
+  it("does not flag figures that are grounded in the source (e.g. dates)", () => {
+    const cv = factGround(source(), {
+      experience: [{ company: "Analytical Engines Ltd", role: "Lead", highlights: ["Active from 2019 to 2022"] }],
+    }).cv;
+    expect(findInventedNumbers(source(), cv)).toEqual([]);
+  });
+
+  it("flags an invented figure in the tailored summary", () => {
+    const { warnings } = factGround(source(), { basics: { summary: "Engineer with 15 years of impact." } });
+    expect(warnings.some((w) => w.startsWith("Unverified figure") && w.includes("15"))).toBe(true);
+  });
+
+  it("deduplicates repeated figures within the same context", () => {
+    const cv = factGround(source(), {
+      experience: [{ company: "Analytical Engines Ltd", role: "Lead", highlights: ["Hit 99% and 99% again"] }],
+    }).cv;
+    const notes = findInventedNumbers(source(), cv).filter((w) => w.includes("99%"));
+    expect(notes).toHaveLength(1);
+  });
+});
+
+describe("scoreGrounding — deterministic fidelity", () => {
+  it("returns a perfect clean score with no warnings", () => {
+    const s = scoreGrounding({ cv: source(), warnings: [] });
+    expect(s).toEqual({ score: 100, label: "clean", counts: { total: 0, entity: 0, number: 0, skill: 0 } });
+  });
+
+  it("weighs entities heaviest, then figures, then removed skills", () => {
+    const s = scoreGrounding({
+      cv: source(),
+      warnings: [
+        'Employer “Google” is not in your source CV.',
+        'Unverified figure “40%” in your summary does not appear in your source CV — verify before sending.',
+        'Skill “Rust” is not in your source CV and was removed.',
+      ],
+    });
+    expect(s.counts).toEqual({ total: 3, entity: 1, number: 1, skill: 1 });
+    expect(s.score).toBe(100 - 8 - 6 - 3);
+    expect(s.label).toBe("minor");
+  });
+
+  it("drops to the review band and floors at zero under heavy fabrication", () => {
+    const warnings = Array.from({ length: 20 }, (_, i) => `Employer “X${i}” is not in your source CV.`);
+    const s = scoreGrounding({ cv: source(), warnings });
+    expect(s.score).toBe(0);
+    expect(s.label).toBe("review");
   });
 });
