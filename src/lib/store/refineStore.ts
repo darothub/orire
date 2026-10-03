@@ -5,13 +5,14 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { usePooledStore } from "@/lib/store/pooledStore";
 import { useCVStore } from "@/lib/store/cvStore";
+import { useTargetStore } from "@/lib/store/targetStore";
 import { PROVIDERS, needsKey, isCLI, type ProviderId } from "@/lib/ai/types";
 import { authorizeRefineRun } from "@/app/actions/refine";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
-import { coerceSimulatedCV } from "@/lib/ai/simulate";
+import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
 import { parseVerdict, type JudgeVerdict } from "@/lib/ai/judge";
 import type { CVData } from "@/lib/cv/schema";
 
@@ -44,7 +45,6 @@ interface RefineState {
   step: RefineStep;
   /** Providers the user chose to run (1 = single, 2 = parallel compare). */
   runProviders: ProviderId[];
-  jd: string;
   started: boolean;
   cols: Record<ProviderId, ColState>;
 
@@ -58,9 +58,9 @@ interface RefineState {
   verdict: JudgeVerdict | null;
   judgeErr: ColError | null;
 
-  /** Simulated "ideal candidate" gap analysis (req 20), surfaced inside Refine. */
+  /** Simulated "ideal candidate" generation status (req 20), surfaced inside Refine.
+   *  The generated ideal is stored in the shared targetStore, not here. */
   idealPhase: IdealPhase;
-  ideal: CVData | null;
   idealErr: ColError | null;
 
   /** Plan-level block (cap reached / compare not allowed) shown as a banner. */
@@ -71,7 +71,6 @@ interface RefineState {
 
   setStep: (s: RefineStep) => void;
   toggleRunProvider: (p: ProviderId) => void;
-  setJd: (jd: string) => void;
   setJudgeProvider: (p: ProviderId) => void;
 
   runAll: () => Promise<void>;
@@ -99,7 +98,6 @@ const idleCols = (): Record<ProviderId, ColState> =>
 export const useRefineStore = create<RefineState>((set, get) => ({
   step: "connect",
   runProviders: [],
-  jd: "",
   started: false,
   cols: idleCols(),
 
@@ -112,7 +110,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   judgeErr: null,
 
   idealPhase: "idle",
-  ideal: null,
   idealErr: null,
 
   planBlock: null,
@@ -126,11 +123,11 @@ export const useRefineStore = create<RefineState>((set, get) => ({
         ? s.runProviders.filter((x) => x !== p)
         : [...s.runProviders, p],
     })),
-  setJd: (jd) => set({ jd }),
   setJudgeProvider: (judgeProvider) => set({ judgeProvider }),
 
   runAll: async () => {
-    const { jd, runProviders } = get();
+    const { runProviders } = get();
+    const jd = useTargetStore.getState().jd;
     if (!jd.trim() || runProviders.length === 0) return;
     const { keys, models } = useSettingsStore.getState();
     const cv = useCVStore.getState().cv;
@@ -146,7 +143,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
         verdict: null,
         judgeErr: null,
         idealPhase: "idle",
-        ideal: null,
         idealErr: null,
       });
 
@@ -234,7 +230,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   },
 
   runJudge: async () => {
-    const { cols, jd, judgeProvider } = get();
+    const { cols, judgeProvider } = get();
+    const jd = useTargetStore.getState().jd;
     const done = PROVIDER_IDS.filter((p) => cols[p].phase === "done" && cols[p].result);
     if (done.length < 2) return;
     const { keys, models } = useSettingsStore.getState();
@@ -266,7 +263,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   },
 
   runSimulate: async () => {
-    const { jd, runProviders, judgeProvider } = get();
+    const { runProviders, judgeProvider } = get();
+    const jd = useTargetStore.getState().jd;
     if (!jd.trim()) return;
     const { keys, models } = useSettingsStore.getState();
     // Prefer a provider already used in the run; fall back to the judge provider.
@@ -277,7 +275,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       set({ idealPhase: "error", idealErr: { title: "Not connected", body: "Connect an assistant to simulate the ideal candidate." } });
       return;
     }
-    set({ idealPhase: "running", idealErr: null, ideal: null });
+    set({ idealPhase: "running", idealErr: null });
     try {
       const res = await fetch("/api/ai/simulate", {
         method: "POST",
@@ -292,7 +290,10 @@ export const useRefineStore = create<RefineState>((set, get) => ({
         });
         return;
       }
-      set({ ideal: coerceSimulatedCV(data.raw), idealPhase: "done" });
+      const ideal = coerceSimulatedCV(data.raw);
+      const userCV = useCVStore.getState().cv;
+      useTargetStore.getState().setTarget(ideal, jd, targetMatch(userCV, ideal, jd).score);
+      set({ idealPhase: "done" });
     } catch (e) {
       const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
       set({ idealPhase: "error", idealErr: { title: "Could not build the simulation", body: msg } });
@@ -302,7 +303,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   markApplied: (p) => set({ appliedProvider: p }),
 
   resetRun: () =>
-    set({ started: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", ideal: null, idealErr: null, appliedProvider: null }),
+    set({ started: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", idealErr: null, appliedProvider: null }),
 
   resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null }),
 
@@ -310,7 +311,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     set({
       step: "connect",
       runProviders: [],
-      jd: "",
       started: false,
       planBlock: null,
       cols: idleCols(),
@@ -320,7 +320,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       verdict: null,
       judgeErr: null,
       idealPhase: "idle",
-      ideal: null,
       idealErr: null,
       appliedProvider: null,
     }),

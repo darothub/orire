@@ -3,6 +3,7 @@
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { useTargetStore } from "@/lib/store/targetStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { countFacts } from "./shared";
 import { Column } from "./Column";
@@ -98,10 +99,31 @@ function IdealBar() {
   const runSimulate = useRefineStore((s) => s.runSimulate);
   const cols = useRefineStore((s) => s.cols);
   const runProviders = useRefineStore((s) => s.runProviders);
+  const target = useTargetStore((s) => s.ideal);
+  const targetLabel = useTargetStore((s) => s.label);
+  const setView = useViewStore((s) => s.setView);
 
   // Only meaningful once at least one refined result exists to compare against.
   const anyDone = runProviders.some((p) => cols[p].phase === "done" && cols[p].result);
   if (!anyDone) return null;
+
+  // A shared target already exists (locked here or in Simulate) — reuse it, don't regenerate.
+  if (target && idealPhase !== "running") {
+    return (
+      <div className="ideal-bar">
+        <div className="ideal-bar-row">
+          <div>
+            <strong>Comparing against your target{targetLabel ? ` · ${targetLabel}` : ""}</strong>
+            <span className="ideal-bar-sub">Gap vs this ideal is shown in each column below. Shared with Simulate &amp; Target.</span>
+          </div>
+          <div className="ideal-bar-cta">
+            <button className="flow-btn ghost sm" onClick={() => setView("target")}>Open Target →</button>
+            <button className="flow-btn sm" onClick={() => void runSimulate()}>Re-simulate</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ideal-bar">
@@ -121,9 +143,6 @@ function IdealBar() {
           <pre>{idealErr.body}</pre>
           <div className="imp-actions"><button className="flow-btn ghost" onClick={() => void runSimulate()}>Retry</button></div>
         </div>
-      )}
-      {idealPhase === "done" && (
-        <div className="ideal-bar-done">✓ Ideal profile ready — gap shown in each column below the JD match.</div>
       )}
     </div>
   );

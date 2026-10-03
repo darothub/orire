@@ -98,6 +98,34 @@ describe("gapAnalysis", () => {
     const ideal = coerceSimulatedCV(JSON.stringify({ basics: { summary: "s" } }));
     expect(gapAnalysis(userCV(), ideal).coverage).toBe(0);
   });
+
+  it("credits plain user skills against the ideal's richly-described skills", () => {
+    const ideal = coerceSimulatedCV(JSON.stringify({
+      skills: [{ category: "Design", items: [
+        "Figma (expert: components, variables, auto-layout, prototyping, design tokens)",
+        "WCAG 2.2 AA compliance (ARIA attributes, semantic HTML, keyboard navigation)",
+        "Design tokens (Figma Variables, Tokens Studio, token pipelines)",
+      ] }],
+    }));
+    const cv: CVData = {
+      ...userCV(),
+      skills: [{ id: "s1", category: "Core", items: ["Figma", "WCAG 2.2 AA accessibility", "Design tokens"] }],
+    };
+    const gap = gapAnalysis(cv, ideal);
+    expect(gap.coverage).toBe(100);
+    expect(gap.missingSkills).toEqual([]);
+  });
+
+  it("does not credit a match on a shared generic token alone", () => {
+    const ideal = coerceSimulatedCV(JSON.stringify({
+      skills: [{ category: "c", items: ["Design system governance and versioning"] }],
+    }));
+    const cv: CVData = {
+      ...userCV(),
+      skills: [{ id: "s1", category: "Core", items: ["Interaction design"] }],
+    };
+    expect(gapAnalysis(cv, ideal).coverage).toBe(0);
+  });
 });
 
 describe("jdKeywords", () => {

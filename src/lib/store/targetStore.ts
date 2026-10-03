@@ -27,6 +27,7 @@ interface TargetState {
   /** Match score of the user's CV at the moment the target was locked. */
   baseScore: number;
 
+  setJd: (jd: string) => void;
   setTarget: (ideal: CVData, jd: string, baseScore: number, label?: string) => void;
   clearTarget: () => void;
 }
@@ -48,6 +49,8 @@ export const useTargetStore = create<TargetState>()(
       label: "",
       createdAt: null,
       baseScore: 0,
+
+      setJd: (jd) => set({ jd }),
 
       setTarget: (ideal, jd, baseScore, label) =>
         set({

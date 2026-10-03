@@ -43,8 +43,8 @@ export function TargetView() {
         <div className="tgt-empty">
           <div className="tgt-empty-glyph" aria-hidden>🎯</div>
           <p>
-            No target locked yet. Run <strong>Simulate a 100% match</strong>, then choose
-            <strong> Lock as target</strong> to measure your CV against it here.
+            No target yet. Run <strong>Simulate a 100% match</strong> for a job description — the
+            ideal CV it builds is saved here automatically, and reused by Refine.
           </p>
           <button className="imp-btn primary" onClick={() => setView("simulate")}>Simulate a match</button>
         </div>

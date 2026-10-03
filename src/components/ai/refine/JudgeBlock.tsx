@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
@@ -25,6 +26,17 @@ export function JudgeBlock() {
   const setView = useViewStore((s) => s.setView);
 
   const done = runProviders.filter((p) => cols[p].phase === "done" && cols[p].result);
+
+  const eligible = runProviders.filter((p) => !needsKey(p) || keys[p]?.trim() || pooled.includes(p));
+  // Keep the stored judge provider in sync with what the dropdown can show:
+  // the default ("openai") may not be connected, which would make the first
+  // "Judge results" click fail even though a valid provider appears selected.
+  useEffect(() => {
+    if (eligible.length > 0 && !eligible.includes(judgeProvider)) {
+      setJudgeProvider(eligible[0]);
+    }
+  }, [eligible, judgeProvider, setJudgeProvider]);
+
   if (done.length < 2) return null;
 
   const applyWinner = () => {
@@ -41,7 +53,7 @@ export function JudgeBlock() {
           <span className="cmp-judge-label">Let an LLM judge pick the best</span>
           <div className="cmp-judge-controls">
             <select className="ed-input cmp-judge-sel" value={judgeProvider} onChange={(e) => setJudgeProvider(e.target.value as ProviderId)}>
-              {runProviders.filter((p) => !needsKey(p) || keys[p]?.trim() || pooled.includes(p)).map((p) => (
+              {eligible.map((p) => (
                 <option key={p} value={p}>Judge: {PROVIDERS[p].label}</option>
               ))}
             </select>

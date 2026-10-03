@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useRefineStore, type ColState } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { useTargetStore } from "@/lib/store/targetStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { SECTION_LABELS, type SectionKey } from "@/lib/cv/schema";
 import { scoreGrounding } from "@/lib/ai/guardrails";
@@ -13,7 +14,7 @@ import { countFacts, type FactCounts } from "./shared";
 
 export function Column({ provider, state, before, applied, onApply }: { provider: ProviderId; state: ColState; before: FactCounts; applied: boolean; onApply: () => void }) {
   const setView = useViewStore((s) => s.setView);
-  const ideal = useRefineStore((s) => s.ideal);
+  const ideal = useTargetStore((s) => s.ideal);
   const baseMatch = useRefineStore((s) => s.baseMatch);
   const meta = PROVIDERS[provider];
   const after = state.result ? countFacts(state.result.cv) : null;
@@ -83,7 +84,7 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
   const addSuggestedSection = useCVStore((s) => s.addSuggestedSection);
   const setView = useViewStore((s) => s.setView);
   const baseCV = useRefineStore((s) => s.baseCV);
-  const ideal = useRefineStore((s) => s.ideal);
+  const ideal = useTargetStore((s) => s.ideal);
   const baseGap = baseCV && ideal ? gapAnalysis(baseCV, ideal) : null;
   const delta = baseGap ? gap.coverage - baseGap.coverage : null;
   const deltaTone = delta == null ? "" : delta > 0 ? "up" : delta < 0 ? "down" : "flat";

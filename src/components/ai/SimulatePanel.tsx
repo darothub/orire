@@ -29,13 +29,16 @@ export function SimulateView() {
   const models = useSettingsStore((s) => s.models);
   const setView = useViewStore((s) => s.setView);
   const setTarget = useTargetStore((s) => s.setTarget);
+  const jd = useTargetStore((s) => s.jd);
+  const setJd = useTargetStore((s) => s.setJd);
+  const existingTarget = useTargetStore((s) => s.ideal);
+  const existingLabel = useTargetStore((s) => s.label);
 
   const meta = PROVIDERS[provider];
   const pooled = usePooledStore((s) => s.providers);
   const hasKey = needsKey(provider) ? Boolean(keys[provider]?.trim()) || pooled.includes(provider) : true;
   const Tpl = getTemplate(activeTemplate).Component;
 
-  const [jd, setJd] = useState("");
   const [phase, setPhase] = useState<Phase>("input");
   const [err, setErr] = useState<{ title: string; body: string; status?: number } | null>(null);
   const [ideal, setIdeal] = useState<CVData | null>(null);
@@ -72,6 +75,7 @@ export function SimulateView() {
       const cv = coerceSimulatedCV(data.raw);
       setIdeal(cv);
       setGap(gapAnalysis(userCV, cv));
+      setTarget(cv, jd, targetMatch(userCV, cv, jd).score);
       setPhase("result");
     } catch (e) {
       const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
@@ -112,6 +116,12 @@ export function SimulateView() {
         <AnimatePresence mode="wait">
           {(phase === "input" || phase === "running") && (
             <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {existingTarget && (
+                <div className="sim-existing" role="status">
+                  <span>You already have a target{existingLabel ? ` · ${existingLabel}` : ""}.</span>
+                  <button className="ai-link" onClick={() => setView("target")}>Open it →</button>
+                </div>
+              )}
               <label className="ed-label" htmlFor="sim-jd">Job description</label>
               <textarea
                 id="sim-jd"
@@ -206,8 +216,9 @@ export function SimulateView() {
               </div>
 
               <p className="sim-note">
-                This is a target benchmark generated from the job description — not real experience.
-                To tailor <em>your own</em> facts to this role, use <strong>Refine to JD</strong>.
+                Saved as your <strong>target</strong> — reused by Refine and the Target page. This is a
+                benchmark generated from the job description, not real experience. To tailor <em>your own</em>
+                facts to this role, use <strong>Refine to JD</strong>.
               </p>
 
               <div className="sim-preview-wrap">
@@ -222,12 +233,9 @@ export function SimulateView() {
                 <button className="imp-btn" onClick={() => setPhase("input")}>New simulation</button>
                 <button
                   className="imp-btn primary"
-                  onClick={() => {
-                    setTarget(ideal, jd, targetMatch(userCV, ideal, jd).score);
-                    setView("target");
-                  }}
+                  onClick={() => setView("target")}
                 >
-                  🎯 Lock as target
+                  🎯 Open in Target →
                 </button>
               </div>
             </motion.div>

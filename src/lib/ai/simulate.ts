@@ -175,26 +175,85 @@ export interface GapAnalysis {
   missingSections: string[];
 }
 
-function skillSet(cv: CVData): Map<string, string> {
-  const m = new Map<string, string>();
+/**
+ * Ultra-common CV words that, on their own, must not credit a skill match.
+ * A shared "design"/"system" token between two skills says almost nothing.
+ */
+const GENERIC_SKILL_TOKENS = new Set([
+  "design", "system", "systems", "product", "management", "testing",
+  "team", "teams", "based", "driven", "end", "cross", "platform",
+  "advanced", "expert", "legacy", "modern", "tools", "tooling",
+  "development", "engineering", "skills", "stack", "full", "senior",
+]);
+
+interface SkillTokens {
+  /** Original display label. */
+  label: string;
+  /** All lowercase content tokens (stopwords removed). */
+  tokens: Set<string>;
+  /** Distinctive tokens (len ≥ 4, not ultra-generic) used to anchor a match. */
+  distinctive: Set<string>;
+}
+
+/** Content tokens of a free-text skill phrase, minus generic stopwords. */
+function skillContentTokens(s: string): string[] {
+  return tokens(s).filter((t) => !STOPWORDS.has(t));
+}
+
+function toSkillTokens(label: string): SkillTokens {
+  const toks = skillContentTokens(label);
+  return {
+    label,
+    tokens: new Set(toks),
+    distinctive: new Set(toks.filter((t) => t.length >= 4 && !GENERIC_SKILL_TOKENS.has(t))),
+  };
+}
+
+function skillList(cv: CVData): SkillTokens[] {
+  const out: SkillTokens[] = [];
   for (const g of cv.skills) for (const it of g.items) {
     const t = it.trim();
-    if (t) m.set(t.toLowerCase(), t);
+    if (t) out.push(toSkillTokens(t));
   }
-  return m;
+  return out;
+}
+
+/** |A ∩ B| / |smaller set| — tolerant of the ideal's long descriptive phrases. */
+function overlapCoefficient(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  const [small, big] = a.size <= b.size ? [a, b] : [b, a];
+  let shared = 0;
+  for (const t of small) if (big.has(t)) shared++;
+  return shared / small.size;
+}
+
+/**
+ * Does a user skill cover an ideal skill? True when they are the same phrase,
+ * or they share a distinctive token AND their content tokens overlap enough.
+ * This lets plain entries ("Figma", "Design tokens", "WCAG 2.2 AA") credit the
+ * ideal's richly-described skills ("Figma (expert: components, variables…)").
+ */
+function skillCovers(user: SkillTokens, ideal: SkillTokens): boolean {
+  if (user.label.toLowerCase() === ideal.label.toLowerCase()) return true;
+  let anchored = false;
+  for (const t of user.distinctive) {
+    if (ideal.tokens.has(t)) { anchored = true; break; }
+  }
+  if (!anchored) return false;
+  return overlapCoefficient(user.tokens, ideal.tokens) >= 0.5;
 }
 
 /** Deterministically compare the user's CV to the simulated ideal. */
 export function gapAnalysis(userCV: CVData, ideal: CVData): GapAnalysis {
-  const idealSkills = skillSet(ideal);
-  const userSkills = skillSet(userCV);
+  const idealSkills = skillList(ideal);
+  const userSkills = skillList(userCV);
   const matched: string[] = [];
   const missing: string[] = [];
-  for (const [key, label] of idealSkills) {
-    if (userSkills.has(key)) matched.push(label);
-    else missing.push(label);
+  for (const idealSkill of idealSkills) {
+    if (userSkills.some((u) => skillCovers(u, idealSkill))) matched.push(idealSkill.label);
+    else missing.push(idealSkill.label);
   }
-  const total = idealSkills.size;
+  const total = idealSkills.length;
   const coverage = total === 0 ? 0 : Math.round((matched.length / total) * 100);
 
   const userHas: Record<SectionKey, boolean> = {
