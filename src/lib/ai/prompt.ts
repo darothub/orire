@@ -109,7 +109,7 @@ ABSOLUTE RULES (fact-grounding):
 - Reference each experience/project by its source index ("ref"). Do not emit company names, dates, emails, phone, or URLs — those are carried from the source automatically.
 - Output MUST be valid JSON only (no markdown, no prose), matching the patch schema.`;
 
-const PATCH_SCHEMA_HINT = `Return ONLY this JSON shape (omit any field you don't want to change):
+export const PATCH_SCHEMA_HINT = `Return ONLY this JSON shape (omit any field you don't want to change):
 {
   "title": string,                 // tailored headline (optional)
   "summary": string,               // tailored professional summary (optional)
@@ -125,7 +125,7 @@ const PATCH_SCHEMA_HINT = `Return ONLY this JSON shape (omit any field you don't
   ]
 }`;
 
-function indexedSource(cv: CVData): string {
+export function indexedSource(cv: CVData): string {
   const exp = cv.experience
     .map((e, i) => {
       const when = [e.startDate, e.endDate].filter(Boolean).join("–");

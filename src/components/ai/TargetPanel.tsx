@@ -1,21 +1,33 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useMemo, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
+import { useSettingsStore } from "@/lib/store/settingsStore";
+import { usePooledStore } from "@/lib/store/pooledStore";
 import { getTemplate } from "@/components/templates/registry";
 import { targetMatch } from "@/lib/ai/simulate";
-import { SECTION_LABELS, type SectionKey } from "@/lib/cv/schema";
+import { analyzeTone, type ToneLabel, type ToneProfile } from "@/lib/ai/retone";
+import { applyRefinePatch } from "@/lib/ai/refinePatch";
+import { factGround, parseModelJSON, scoreGrounding, RefineParseError } from "@/lib/ai/guardrails";
+import { PROVIDERS, needsKey, type RefineResponse } from "@/lib/ai/types";
+import { SECTION_LABELS, type CVData, type SectionKey } from "@/lib/cv/schema";
 
 function coverageColor(v: number): string {
   const hue = Math.round((v / 100) * 130);
   return `hsl(${hue} 70% 45%)`;
 }
 
+const TONE_OPTIONS: ToneLabel[] = ["Executive", "Technical", "Balanced"];
+
+type RetonePhase = "idle" | "running" | "error" | "preview";
+
 export function TargetView() {
   const cv = useCVStore((s) => s.cv);
   const activeTemplate = useCVStore((s) => s.activeTemplate);
+  const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const setView = useViewStore((s) => s.setView);
   const ideal = useTargetStore((s) => s.ideal);
   const jd = useTargetStore((s) => s.jd);
@@ -23,6 +35,19 @@ export function TargetView() {
   const createdAt = useTargetStore((s) => s.createdAt);
   const baseScore = useTargetStore((s) => s.baseScore);
   const clearTarget = useTargetStore((s) => s.clearTarget);
+
+  const provider = useSettingsStore((s) => s.provider);
+  const keys = useSettingsStore((s) => s.keys);
+  const models = useSettingsStore((s) => s.models);
+  const pooled = usePooledStore((s) => s.providers);
+
+  // Deterministic read of the target's writing voice (recomputed per target).
+  const detected = useMemo<ToneProfile | null>(() => (ideal ? analyzeTone(ideal) : null), [ideal]);
+  const [toneLabel, setToneLabel] = useState<ToneLabel | null>(null);
+  const [phase, setPhase] = useState<RetonePhase>("idle");
+  const [err, setErr] = useState<{ title: string; body: string; status?: number } | null>(null);
+  const [preview, setPreview] = useState<{ cv: CVData; warnings: string[] } | null>(null);
+  const [showBefore, setShowBefore] = useState(false);
 
   const MineTpl = getTemplate(activeTemplate).Component;
 
@@ -59,6 +84,83 @@ export function TargetView() {
   const dateLabel = createdAt
     ? new Date(createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
     : "";
+
+  const activeTone: ToneLabel = toneLabel ?? detected?.label ?? "Balanced";
+  const meta = PROVIDERS[provider];
+  const hasKey = needsKey(provider)
+    ? Boolean(keys[provider]?.trim()) || pooled.includes(provider)
+    : true;
+
+  // What the left column shows: the retoned preview when one exists (and the
+  // user isn't peeking at the original), otherwise the live CV.
+  const leftCV = preview && !showBefore ? preview.cv : cv;
+  const previewMatch = preview ? targetMatch(preview.cv, ideal, jd) : null;
+  const fidelity = preview ? scoreGrounding({ cv: preview.cv, warnings: preview.warnings }) : null;
+
+  async function runRetone() {
+    if (!detected) return;
+    if (!hasKey) {
+      setErr({ title: "Not connected", body: `Connect ${meta.label} first.` });
+      setPhase("error");
+      return;
+    }
+    setPhase("running");
+    setErr(null);
+    setPreview(null);
+    setShowBefore(false);
+    const tone: ToneProfile = { ...detected, label: activeTone };
+    try {
+      const res = await fetch("/api/ai/retone", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], cv, tone }),
+      });
+      const data = (await res.json()) as RefineResponse;
+      if (!data.ok || !data.raw) {
+        setErr({
+          title: `${meta.label} error`,
+          body: data.error?.message ?? "Unknown error.",
+          status: data.error?.status,
+        });
+        setPhase("error");
+        return;
+      }
+      // Tone transfer changes VOICE only: drop any title/role the model emitted
+      // so the person's headline and every role title stay exactly as the source.
+      const patch = parseModelJSON(data.raw) as Record<string, unknown>;
+      delete patch.title;
+      for (const key of ["experience", "projects"] as const) {
+        const arr = patch[key];
+        if (Array.isArray(arr)) {
+          for (const item of arr) {
+            if (item && typeof item === "object") delete (item as { role?: unknown }).role;
+          }
+        }
+      }
+      const grounded = factGround(cv, applyRefinePatch(cv, patch));
+      setPreview({ cv: grounded.cv, warnings: grounded.warnings });
+      setPhase("preview");
+    } catch (e) {
+      const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
+      setErr({ title: "Could not rewrite the CV", body: msg });
+      setPhase("error");
+    }
+  }
+
+  function applyRetone() {
+    if (!preview) return;
+    applyRefinedCV(preview.cv);
+    setPreview(null);
+    setPhase("idle");
+    setShowBefore(false);
+  }
+
+  function discardRetone() {
+    setPreview(null);
+    setPhase("idle");
+    setShowBefore(false);
+    setErr(null);
+  }
 
   return (
     <motion.div
@@ -151,21 +253,114 @@ export function TargetView() {
           )}
           <div className="tgt-actions">
             <button className="imp-btn primary" onClick={() => setView("edit")}>Edit my CV</button>
+            <button
+              className="imp-btn accent"
+              onClick={runRetone}
+              disabled={phase === "running"}
+              title={`Rewrite your CV in the target's ${activeTone.toLowerCase()} voice — facts stay yours`}
+            >
+              {phase === "running" ? (
+                <><span className="cmp-spinner" /> Rewriting…</>
+              ) : (
+                <>✍️ Rewrite in target&apos;s tone</>
+              )}
+            </button>
             <button className="imp-btn" onClick={() => setView("refine")}>Refine to JD</button>
             <button className="imp-btn" onClick={() => setView("simulate")}>New simulation</button>
             <button className="imp-btn danger" onClick={clearTarget}>Clear target</button>
           </div>
+
+          {detected && (
+            <div className="tone-studio">
+              <div className="tone-studio-head">
+                <span className="tone-badge" data-tone={activeTone}>Target voice · {detected.label}</span>
+                <span className="tone-blurb">{detected.blurb}</span>
+              </div>
+              <div className="tone-toggle" role="group" aria-label="Rewrite voice">
+                {TONE_OPTIONS.map((t) => (
+                  <button
+                    key={t}
+                    className={`tone-opt ${activeTone === t ? "on" : ""}`}
+                    onClick={() => setToneLabel(t)}
+                    disabled={phase === "running"}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <p className="tone-hint">
+                Voice only — your employers, dates, numbers, and skills stay exactly as they are. The
+                target&apos;s metrics are never borrowed.
+              </p>
+            </div>
+          )}
+
+          <AnimatePresence>
+            {phase === "error" && err && (
+              <motion.div
+                key="tone-err"
+                className="imp-error tone-error"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <strong>{err.title}{err.status ? ` (HTTP ${err.status})` : ""}</strong>
+                <pre>{err.body}</pre>
+                <button className="imp-btn" onClick={discardRetone}>Dismiss</button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {phase === "preview" && preview && previewMatch && fidelity && (
+              <motion.div
+                key="tone-apply"
+                className="tone-applybar"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+              >
+                <div className="tone-applybar-stats">
+                  <span className="tone-badge" data-tone={activeTone}>Rewritten · {activeTone}</span>
+                  {previewMatch.score !== match.score && (
+                    <span className={`tgt-stat ${previewMatch.score >= match.score ? "match" : "miss"}`}>
+                      {previewMatch.score >= match.score ? "▲" : "▼"} {Math.abs(previewMatch.score - match.score)}% match
+                    </span>
+                  )}
+                  <span className={`tone-fidelity ${fidelity.label}`} title="How faithfully the rewrite stayed grounded in your real facts">
+                    {fidelity.score}% grounded
+                  </span>
+                  {preview.warnings.length > 0 && (
+                    <span className="tgt-stat miss">{preview.warnings.length} note{preview.warnings.length > 1 ? "s" : ""}</span>
+                  )}
+                </div>
+                <div className="tone-applybar-actions">
+                  <button
+                    className="imp-btn"
+                    onMouseDown={() => setShowBefore(true)}
+                    onMouseUp={() => setShowBefore(false)}
+                    onMouseLeave={() => setShowBefore(false)}
+                  >
+                    {showBefore ? "Showing original" : "Hold to compare"}
+                  </button>
+                  <button className="imp-btn" onClick={discardRetone}>Discard</button>
+                  <button className="imp-btn primary" onClick={applyRetone}>Apply to my CV</button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
       <div className="tgt-split">
         <div className="tgt-col">
           <div className="tgt-col-head mine">
-            <span className="tgt-col-tag">Yours</span>
+            <span className="tgt-col-tag">{preview && !showBefore ? `Rewritten · ${activeTone}` : "Yours"}</span>
             <span className="tgt-col-sub">{getTemplate(activeTemplate).name}</span>
           </div>
           <div className="tgt-paper-wrap">
-            <div className="tgt-paper"><MineTpl cv={cv} /></div>
+            {preview && !showBefore && <span className="sim-ribbon after">AFTER</span>}
+            <div className="tgt-paper"><MineTpl cv={leftCV} /></div>
           </div>
         </div>
 
