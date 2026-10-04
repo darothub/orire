@@ -449,6 +449,127 @@
 .t-graphite .r-title { color: #ea580c; }
 .t-graphite .r-role-title { border-left: 3px solid #ea580c; padding-left: 10px; }
 
+/* ===================== Executive line ===================== */
+
+/* 21 Oxford — navy + bronze, centered serif, double-rule crest header */
+.t-oxford {
+  --bg: #ffffff;
+  --ink: #16233b;
+  --a: #a9803f;
+  --h2-color: #16233b;
+  --rule: #d7c8ab;
+  --chip-bg: #f6f1e7;
+  --chip-bd: #e4d7bd;
+  --chip-ink: #7a5a26;
+  --soft: #2f3b53;
+  --muted: #697488;
+  --disp: var(--font-serif);
+  --name-size: 42px;
+  --header-align: center;
+  --h2-space: 3px;
+}
+.t-oxford .r-header {
+  border-top: 3px double #a9803f;
+  border-bottom: 3px double #a9803f;
+  padding: 20px 0 18px;
+}
+.t-oxford .r-name { letter-spacing: 1px; }
+.t-oxford .r-title { color: #a9803f; font-style: italic; letter-spacing: 0.5px; }
+.t-oxford .r-h2 { font-family: var(--font-serif); font-weight: 700; }
+
+/* 22 Bordeaux — oxblood wine + ivory paper, classic serif (aside-right) */
+.t-bordeaux {
+  --bg: #fbf7f4;
+  --ink: #2a1b1e;
+  --a: #7a2230;
+  --h2-color: #7a2230;
+  --rule: #e6d6d1;
+  --chip-bg: #f3e6e3;
+  --chip-bd: #e2cbc6;
+  --chip-ink: #7a2230;
+  --soft: #44322f;
+  --muted: #8a6f6b;
+  --disp: var(--font-serif);
+  --name-size: 44px;
+}
+.t-bordeaux .r-title { color: #7a2230; font-style: italic; }
+.t-bordeaux .r-h2 { font-family: var(--font-serif); font-weight: 700; border-bottom: 1px solid #e0cdc8; padding-bottom: 4px; }
+.t-bordeaux .r-aside { border-left: 2px solid #e0cdc8; padding-left: 22px; }
+
+/* 23 Sterling — charcoal + steel, refined sans, tracked uppercase name */
+.t-sterling {
+  --bg: #fafafb;
+  --ink: #22262c;
+  --a: #51607a;
+  --h2-color: #8792a4;
+  --rule: #e2e5ea;
+  --chip-bg: #eef0f4;
+  --chip-bd: #dde1e8;
+  --chip-ink: #4a5565;
+  --soft: #3a414b;
+  --muted: #727a87;
+  --disp: var(--font-sans);
+  --name-size: 30px;
+  --h2-space: 3px;
+}
+.t-sterling .r-name {
+  text-transform: uppercase;
+  letter-spacing: 7px;
+  font-weight: 600;
+}
+.t-sterling .r-header { border-bottom: 2px solid #22262c; }
+.t-sterling .r-title { color: #51607a; text-transform: uppercase; letter-spacing: 3px; font-size: 12px; font-weight: 600; }
+.t-sterling .r-h2 { font-weight: 700; }
+
+/* 24 Imperial — black + champagne gold banner header */
+.t-imperial {
+  --a: #0f1115;
+  --h2-color: #9a7b32;
+  --ink: #16181d;
+  --rule: #e6ddc7;
+  --chip-bg: #f6f1e2;
+  --chip-bd: #e7dcbf;
+  --chip-ink: #7c611f;
+  --soft: #30343c;
+  --muted: #6b7280;
+  --disp: var(--font-serif);
+  --pad: 0 0 52px;
+}
+.t-imperial .r-header {
+  background: linear-gradient(120deg, #0b0c10, #22242b 70%);
+  color: #f3ead2;
+  padding: 44px 60px;
+  border-bottom: 3px solid #b08d4c;
+  margin-bottom: 28px;
+  text-align: left;
+}
+.t-imperial .r-name { color: #f3ead2; letter-spacing: 1px; }
+.t-imperial .r-title { color: #cdaf6a; font-style: italic; }
+.t-imperial .r-contact { color: #d8cba9; }
+.t-imperial .r-link { color: #e8d9b0; text-decoration: underline; }
+.t-imperial .r-main { padding: 0 60px; }
+.t-imperial .r-h2 { font-family: var(--font-serif); font-weight: 700; }
+
+/* 25 Consul — graphite + deep teal, serif headings (aside-left) */
+.t-consul {
+  --bg: #ffffff;
+  --ink: #1c2126;
+  --a: #0f6b6b;
+  --h2-color: #0f6b6b;
+  --rule: #dbe4e4;
+  --chip-bg: #e9f2f1;
+  --chip-bd: #cfe2e0;
+  --chip-ink: #0b5151;
+  --soft: #363d44;
+  --muted: #6a747c;
+  --disp: var(--font-serif);
+  --name-size: 40px;
+}
+.t-consul .r-title { color: #0f6b6b; }
+.t-consul .r-h2 { font-family: var(--font-serif); font-weight: 700; }
+.t-consul .r-aside { border-right: 2px solid #cfe2e0; padding-right: 22px; }
+.t-consul .r-role-title { font-weight: 700; }
+
 /* Print: keep dark themes readable, avoid clipping */
 @media print {
   .resume { min-height: auto; }

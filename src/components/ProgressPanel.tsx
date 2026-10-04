@@ -21,7 +21,7 @@ const REQS: Req[] = [
   { n: 6, title: "Compare outputs of different assistants", status: "done", note: "Side-by-side compare with per-column apply." },
   { n: 7, title: "LLM-as-judge picks the best output", status: "done", note: "Impartial model ranks both, animated verdict + winner." },
   { n: 8, title: "Two assistants working in parallel", status: "done", note: "Both providers run concurrently in Compare." },
-  { n: 9, title: "20 templates, animated transitions", status: "done", note: "20 designs; blur-in + light-sweep switch, cascading sections." },
+  { n: 9, title: "25 templates, animated transitions", status: "done", note: "25 designs; blur-in + light-sweep switch, cascading sections." },
   { n: 10, title: "Live edit — left edits, right live preview", status: "done", note: "Two-pane editor + click-to-edit directly on the preview." },
   { n: 11, title: "Editing allowed on the final result", status: "done", note: "AI-applied CVs flow into the same editable store." },
   { n: 12, title: "Capture AI errors verbatim", status: "done", note: "Provider proxy returns raw error bodies unchanged." },

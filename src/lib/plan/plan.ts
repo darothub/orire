@@ -62,7 +62,7 @@ export const PLANS: Record<PlanId, Plan> = {
     monthlyRefines: 30,
     includedTiers: ["budget", "mid"],
     premiumRequiresKey: true,
-    perks: ["All 20 templates", "30 refines / mo", "Compare 2 + judge", "Clean PDF, all page modes", "BYO key unlocks premium"],
+    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + judge", "Clean PDF, all page modes", "BYO key unlocks premium"],
   },
   career: {
     id: "career",

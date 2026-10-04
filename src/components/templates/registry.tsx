@@ -46,6 +46,13 @@ export const TEMPLATES: TemplateMeta[] = [
   { id: "sand", name: "Sand", blurb: "Desert neutral · warm", swatch: "linear-gradient(120deg,#faf7f2,#9a7b4f)", Component: themed("t-sand", "aside-left") },
   { id: "aqua", name: "Aqua", blurb: "Teal · rounded chips", swatch: "linear-gradient(120deg,#0d9488,#14b8a6)", Component: themed("t-aqua", "single") },
   { id: "graphite", name: "Graphite", blurb: "Grayscale · orange accent", swatch: "linear-gradient(120deg,#1b1d21,#ea580c)", Component: themed("t-graphite", "aside-right") },
+
+  // Executive line
+  { id: "oxford", name: "Oxford", blurb: "Navy + bronze · double-rule crest", swatch: "linear-gradient(120deg,#16233b,#a9803f)", Component: themed("t-oxford", "single") },
+  { id: "bordeaux", name: "Bordeaux", blurb: "Oxblood wine · classic serif", swatch: "linear-gradient(120deg,#7a2230,#2a1b1e)", Component: themed("t-bordeaux", "aside-right") },
+  { id: "sterling", name: "Sterling", blurb: "Charcoal + steel · tracked caps", swatch: "linear-gradient(120deg,#22262c,#51607a)", Component: themed("t-sterling", "single") },
+  { id: "imperial", name: "Imperial", blurb: "Black + champagne gold banner", swatch: "linear-gradient(120deg,#0b0c10,#b08d4c)", Component: themed("t-imperial", "single") },
+  { id: "consul", name: "Consul", blurb: "Graphite + deep teal · serif", swatch: "linear-gradient(120deg,#1c2126,#0f6b6b)", Component: themed("t-consul", "aside-left") },
 ];
 
 export function getTemplate(id: string): TemplateMeta {
