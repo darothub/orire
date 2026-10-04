@@ -47,7 +47,7 @@ export function ExportView() {
     setBusy(true);
     setMsg(null);
     try {
-      const ok = await exportCVtoPDF(mode, fileName || defaultName);
+      const ok = await exportCVtoPDF(mode, fileName || defaultName, cv);
       if (!ok) {
         setMsg({ kind: "err", text: "Couldn’t find the live CV to export. Try again." });
         return;

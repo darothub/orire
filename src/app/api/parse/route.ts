@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import { extractText, getDocumentProxy } from "unpdf";
 import { parseCVText, type ParsedCV } from "@/lib/ingest/parse";
+import { decodeOrireKeywords, parsedFromCVData } from "@/lib/export/orireEmbed";
+import type { CVData } from "@/lib/cv/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,10 +33,18 @@ function detectKind(name: string, type: string): ParsedFileResult["kind"] {
   return "unsupported";
 }
 
-async function extractPdf(buf: ArrayBuffer): Promise<string> {
+async function extractPdf(buf: ArrayBuffer): Promise<{ text: string; embedded: CVData | null }> {
   const pdf = await getDocumentProxy(new Uint8Array(buf));
   const { text } = await extractText(pdf, { mergePages: true });
-  return Array.isArray(text) ? text.join("\n") : text;
+  let embedded: CVData | null = null;
+  try {
+    const meta = await pdf.getMetadata();
+    const keywords = (meta?.info as { Keywords?: string } | undefined)?.Keywords;
+    embedded = decodeOrireKeywords(keywords);
+  } catch {
+    /* metadata is optional — fall back to text */
+  }
+  return { text: Array.isArray(text) ? text.join("\n") : text, embedded };
 }
 
 async function extractDocx(buf: ArrayBuffer): Promise<string> {
@@ -83,9 +93,22 @@ export async function POST(req: Request) {
 
     try {
       const buf = await file.arrayBuffer();
-      const text = (kind === "pdf" ? await extractPdf(buf) : await extractDocx(buf)).trim();
+      // orire-exported PDFs carry an exact, lossless copy of the CV in their
+      // metadata — prefer it for a perfect round-trip; otherwise parse the text.
+      let embedded: CVData | null = null;
+      let raw: string;
+      if (kind === "pdf") {
+        const out = await extractPdf(buf);
+        raw = out.text;
+        embedded = out.embedded;
+      } else {
+        raw = await extractDocx(buf);
+      }
+      const text = raw.trim();
       base.text = text;
-      if (!text) {
+      if (embedded) {
+        base.parsed = parsedFromCVData(embedded);
+      } else if (!text) {
         base.error =
           "No text could be extracted. The file may be a scanned image or contain no selectable text.";
       } else {

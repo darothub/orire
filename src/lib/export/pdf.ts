@@ -3,6 +3,8 @@
 import { toCanvas } from "html-to-image";
 import { jsPDF } from "jspdf";
 import type { PageMode } from "@/lib/store/historyStore";
+import type { CVData } from "@/lib/cv/schema";
+import { cvToReadableText, encodeOrireKeywords } from "@/lib/export/orireEmbed";
 
 /** A4 in PostScript points (72 pt / inch). */
 const A4_W = 595.28;
@@ -62,14 +64,46 @@ async function paperCanvas(el: HTMLElement): Promise<HTMLCanvasElement> {
 }
 
 /**
+ * Write an invisible (render-mode 3) text layer holding a readable
+ * serialisation of the CV, so the exported PDF has extractable text (fixing
+ * re-import, ATS, Ctrl-F). The bitmap drawn on top stays the visible artefact.
+ *
+ * The exact CVData for a lossless orire round-trip is NOT stored here — a text
+ * layer only holds what fits on the page, and extractors drop anything past the
+ * page edge. It lives in the PDF metadata instead (see embedCVData).
+ */
+function embedTextLayer(pdf: jsPDF, cv: CVData): void {
+  const prevSize = pdf.getFontSize();
+  const opts = { renderingMode: "invisible" as const, baseline: "top" as const };
+  pdf.setFontSize(6);
+  const lines = pdf.splitTextToSize(cvToReadableText(cv), A4_W - 8) as string[];
+  pdf.text(lines, 4, 4, opts);
+  pdf.setFontSize(prevSize);
+}
+
+/**
+ * Store the exact CVData (base64) in the PDF's Keywords metadata so an exported
+ * orire PDF re-imports losslessly regardless of length. Metadata is free of
+ * page-geometry limits, unlike the on-page text layer.
+ */
+function embedCVData(pdf: jsPDF, cv: CVData): void {
+  pdf.setProperties({ keywords: encodeOrireKeywords(cv) });
+}
+
+/**
  * Export the live CV (#cv-paper) straight to a downloaded PDF — no browser
  * print dialog. The page mode controls pagination:
  *  - continuous: a single page exactly as tall as the CV (never breaks);
  *  - paged: the CV flows across A4 pages;
  *  - fit: the CV is scaled to sit on one A4 page.
- * Returns false when the paper isn't mounted (e.g. mid-compare).
+ * The CV data is embedded as an invisible text layer so the PDF stays
+ * extractable and re-importable. Returns false when the paper isn't mounted.
  */
-export async function exportCVtoPDF(mode: PageMode, fileName: string): Promise<boolean> {
+export async function exportCVtoPDF(
+  mode: PageMode,
+  fileName: string,
+  cv: CVData,
+): Promise<boolean> {
   const el = document.getElementById("cv-paper");
   if (!el) return false;
 
@@ -91,6 +125,8 @@ export async function exportCVtoPDF(mode: PageMode, fileName: string): Promise<b
       format: [pageW, pageH],
       orientation: pageH >= pageW ? "portrait" : "landscape",
     });
+    embedTextLayer(pdf, cv);
+    embedCVData(pdf, cv);
     pdf.addImage(img, "PNG", 0, 0, pageW, pageH, undefined, "FAST");
     pdf.save(file);
     return true;
@@ -98,6 +134,8 @@ export async function exportCVtoPDF(mode: PageMode, fileName: string): Promise<b
 
   if (mode === "fit") {
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
+    embedTextLayer(pdf, cv);
+    embedCVData(pdf, cv);
     const margin = 22;
     const availW = A4_W - margin * 2;
     const availH = A4_H - margin * 2;
@@ -111,6 +149,8 @@ export async function exportCVtoPDF(mode: PageMode, fileName: string): Promise<b
 
   // paged — slice the full-width image across as many A4 pages as needed.
   const pdf = new jsPDF({ unit: "pt", format: "a4" });
+  embedTextLayer(pdf, cv);
+  embedCVData(pdf, cv);
   const renderW = A4_W;
   const renderH = A4_W * ratio; // full CV height, scaled to A4 width
   let y = 0;
