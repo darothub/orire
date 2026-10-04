@@ -7,7 +7,7 @@ export function JobStep({ onBack, onNext }: { onBack: () => void; onNext: () => 
   const setJd = useTargetStore((s) => s.setJd);
   return (
     <div className="step-body">
-      <p className="step-hint">Paste the full job description — shared across Refine, Simulate and Target. The assistant tailors your existing facts to match it — no invention.</p>
+      <p className="step-hint">Paste the full job description — shared across Refine and Target. The assistant tailors your existing facts to match it — no invention.</p>
       <div className="ai-field">
         <span className="ed-label">Job description</span>
         <textarea

@@ -107,14 +107,14 @@ function IdealBar() {
   const anyDone = runProviders.some((p) => cols[p].phase === "done" && cols[p].result);
   if (!anyDone) return null;
 
-  // A shared target already exists (locked here or in Simulate) — reuse it, don't regenerate.
+  // A shared target already exists (locked here or in Target) — reuse it, don't regenerate.
   if (target && idealPhase !== "running") {
     return (
       <div className="ideal-bar">
         <div className="ideal-bar-row">
           <div>
             <strong>Comparing against your target{targetLabel ? ` · ${targetLabel}` : ""}</strong>
-            <span className="ideal-bar-sub">Gap vs this ideal is shown in each column below. Shared with Simulate &amp; Target.</span>
+            <span className="ideal-bar-sub">Gap vs this ideal is shown in each column below. Shared with Target.</span>
           </div>
           <div className="ideal-bar-cta">
             <button className="flow-btn ghost sm" onClick={() => setView("target")}>Open Target →</button>

@@ -20,8 +20,7 @@ const PRIMARY: RailItem[] = [
   { view: "edit", label: "Edit", hint: "Two-pane live editor", icon: "✎" },
   { view: "rebrand", label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
   { view: "refine", label: "Refine", hint: "Connect AI · import · tailor to a job", icon: "✦" },
-  { view: "simulate", label: "Simulate", hint: "Ideal 100%-match benchmark", icon: "◎" },
-  { view: "target", label: "Target", hint: "Edit against the locked ideal CV", icon: "🎯" },
+  { view: "target", label: "Target", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
   { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
   { view: "rate", label: "Rate", hint: "Score initial → final", icon: "★" },
@@ -76,8 +75,7 @@ export function WorkspaceRail() {
   const badgeFor = (v: WorkspaceView): Badge => {
     if (v === "connect") return noKeys ? "warn" : null;
     if (v === "refine") return refineBusy ? "busy" : null;
-    if (v === "simulate") return simBusy ? "busy" : null;
-    if (v === "target") return active["retone"] ? "busy" : null;
+    if (v === "target") return simBusy || active["retone"] ? "busy" : null;
     return null;
   };
 

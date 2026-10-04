@@ -12,7 +12,6 @@ import { ProviderSetup } from "@/components/ai/ProviderSetup";
 import { PlanPanel } from "@/components/PlanPanel";
 import { TeamPanel } from "@/components/TeamPanel";
 import { RateView } from "@/components/ai/RatingPanel";
-import { SimulateView } from "@/components/ai/SimulatePanel";
 import { TargetView } from "@/components/ai/TargetPanel";
 import { ProgressView } from "@/components/ProgressPanel";
 import { HistoryView } from "@/components/HistoryView";
@@ -95,7 +94,6 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "edit" && <EditView mounted={mounted} />}
           {view === "rebrand" && <RebrandFlow />}
           {view === "refine" && <RefineFlow />}
-          {view === "simulate" && <SimulateView />}
           {view === "target" && <TargetView />}
           {view === "rate" && <RateView />}
           {view === "progress" && <ProgressView />}

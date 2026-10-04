@@ -7,9 +7,9 @@ import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePooledStore } from "@/lib/store/pooledStore";
-import { sharedRun } from "@/lib/store/runStore";
+import { sharedRun, useIsRunning, useRunOrigin } from "@/lib/store/runStore";
 import { getTemplate } from "@/components/templates/registry";
-import { targetMatch } from "@/lib/ai/simulate";
+import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
 import { analyzeTone, type ToneLabel, type ToneProfile } from "@/lib/ai/retone";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { factGround, parseModelJSON, scoreGrounding, RefineParseError } from "@/lib/ai/guardrails";
@@ -32,6 +32,8 @@ export function TargetView() {
   const setView = useViewStore((s) => s.setView);
   const ideal = useTargetStore((s) => s.ideal);
   const jd = useTargetStore((s) => s.jd);
+  const setJd = useTargetStore((s) => s.setJd);
+  const setTarget = useTargetStore((s) => s.setTarget);
   const label = useTargetStore((s) => s.label);
   const createdAt = useTargetStore((s) => s.createdAt);
   const baseScore = useTargetStore((s) => s.baseScore);
@@ -50,9 +52,58 @@ export function TargetView() {
   const [preview, setPreview] = useState<{ cv: CVData; warnings: string[] } | null>(null);
   const [showBefore, setShowBefore] = useState(false);
 
+  // Generator (formerly the standalone Simulate view): building the ideal CV
+  // happens inline here, so Target is a single destination with no bounce.
+  const [recompose, setRecompose] = useState(false);
+  const [genPhase, setGenPhase] = useState<"input" | "running" | "error">("input");
+  const [genErr, setGenErr] = useState<{ title: string; body: string; status?: number } | null>(null);
+  const simRunning = useIsRunning("simulate");
+  const simOrigin = useRunOrigin("simulate");
+
+  const meta = PROVIDERS[provider];
+  const hasKey = needsKey(provider)
+    ? Boolean(keys[provider]?.trim()) || pooled.includes(provider)
+    : true;
+
   const MineTpl = getTemplate(activeTemplate).Component;
 
-  if (!ideal) {
+  async function generate() {
+    if (!hasKey) {
+      setGenErr({ title: "Not connected", body: `Connect ${meta.label} first.` });
+      setGenPhase("error");
+      return;
+    }
+    if (!jd.trim()) return;
+    setGenPhase("running");
+    setGenErr(null);
+    try {
+      const data = await sharedRun<RefineResponse>("simulate", "Target", () =>
+        fetch("/api/ai/simulate", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
+        }).then((r) => r.json() as Promise<RefineResponse>),
+      );
+      if (!data.ok || !data.raw) {
+        setGenErr({ title: `${meta.label} error`, body: data.error?.message ?? "Unknown error.", status: data.error?.status });
+        setGenPhase("error");
+        return;
+      }
+      const built = coerceSimulatedCV(data.raw);
+      setTarget(built, jd, targetMatch(cv, built, jd).score);
+      setRecompose(false);
+      setGenPhase("input");
+    } catch (e) {
+      const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
+      setGenErr({ title: "Could not build the simulation", body: msg });
+      setGenPhase("error");
+    }
+  }
+
+  const showGenerator = !ideal || recompose;
+  if (showGenerator) {
+    const busyElsewhere = simRunning && genPhase !== "running";
+    const running = genPhase === "running" || busyElsewhere;
     return (
       <motion.div
         className="ws-view tgt-view"
@@ -63,17 +114,59 @@ export function TargetView() {
         <div className="ws-head">
           <div>
             <h2>Target</h2>
-            <p>Lock an ideal CV from a job description, then edit your CV until it matches.</p>
+            <p>
+              {recompose
+                ? "Rebuild the ideal CV from a new job description. Your current target stays until the new one is ready."
+                : "Simulate the ideal 100%-match CV for a role, then edit your CV beside it until it matches. The ideal is simulated — a benchmark, not your facts — and is reused by Refine."}
+            </p>
           </div>
         </div>
-        <div className="tgt-empty">
-          <div className="tgt-empty-glyph" aria-hidden>🎯</div>
-          <p>
-            No target yet. Run <strong>Simulate a 100% match</strong> for a job description — the
-            ideal CV it builds is saved here automatically, and reused by Refine.
-          </p>
-          <button className="imp-btn primary" onClick={() => setView("simulate")}>Simulate a match</button>
+
+        <div className="ai-runbar">
+          <span className={`ai-pill ${hasKey ? "" : "muted"}`}>{meta.label} · {models[provider]}</span>
+          <button className="ai-link" onClick={() => setView("connect")}>Connect AI</button>
         </div>
+
+        {genPhase === "error" && genErr ? (
+          <>
+            <div className="imp-error">
+              <strong>{genErr.title}{genErr.status ? ` (HTTP ${genErr.status})` : ""}</strong>
+              <pre>{genErr.body}</pre>
+            </div>
+            <div className="imp-actions">
+              <button className="imp-btn" onClick={() => setGenPhase("input")}>Back</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <label className="ed-label" htmlFor="tgt-jd">Job description</label>
+            <textarea
+              id="tgt-jd"
+              className="ed-input sim-jd"
+              placeholder="Paste the full job description…"
+              value={jd}
+              onChange={(e) => setJd(e.target.value)}
+              disabled={genPhase === "running"}
+            />
+            <div className="imp-actions">
+              <button
+                className="imp-btn"
+                onClick={() => (recompose ? setRecompose(false) : setView("edit"))}
+              >
+                {recompose ? "Keep current target" : "Cancel"}
+              </button>
+              <button className="imp-btn primary" onClick={generate} disabled={running || !jd.trim()}>
+                {genPhase === "running" ? (
+                  <><span className="cmp-spinner" /> Building ideal candidate…</>
+                ) : busyElsewhere ? (
+                  <><span className="cmp-spinner" /> Simulating{simOrigin ? ` · from ${simOrigin}` : ""}…</>
+                ) : (
+                  "Simulate a 100% match"
+                )}
+              </button>
+            </div>
+          </>
+        )}
       </motion.div>
     );
   }
@@ -87,10 +180,6 @@ export function TargetView() {
     : "";
 
   const activeTone: ToneLabel = toneLabel ?? detected?.label ?? "Balanced";
-  const meta = PROVIDERS[provider];
-  const hasKey = needsKey(provider)
-    ? Boolean(keys[provider]?.trim()) || pooled.includes(provider)
-    : true;
 
   // What the left column shows: the retoned preview when one exists (and the
   // user isn't peeking at the original), otherwise the live CV.
@@ -268,7 +357,7 @@ export function TargetView() {
               )}
             </button>
             <button className="imp-btn" onClick={() => setView("refine")}>Refine to JD</button>
-            <button className="imp-btn" onClick={() => setView("simulate")}>New simulation</button>
+            <button className="imp-btn" onClick={() => { setRecompose(true); setGenPhase("input"); setGenErr(null); }}>New simulation</button>
             <button className="imp-btn danger" onClick={clearTarget}>Clear target</button>
           </div>
 
