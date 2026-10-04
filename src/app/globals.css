@@ -1876,3 +1876,115 @@ body {
 }
 .acct-input:focus { outline: none; border-color: var(--accent-2); }
 .acct-form-note { font-size: 11px; color: var(--faint); line-height: 1.45; }
+
+/* ======================================================================
+   Mobile / narrow-viewport layout
+   The desktop shell is a fixed 3-column grid (rail · editor · live preview).
+   On phones and portrait tablets that can't fit, so we stack everything into
+   a single column: the rail becomes a horizontal scrolling strip under the
+   header, and the editor / preview panes are toggled with a segmented control
+   (only one is visible at a time). Placed after the max-width:1024px rules so
+   its tie-breaking rail/grid overrides win.
+   ====================================================================== */
+
+/* Segmented Edit/Preview switch — hidden on desktop, shown when stacked. */
+.mpane-switch { display: none; }
+
+@media (max-width: 820px) {
+  /* ---- Header condenses and may wrap to two rows ---- */
+  .app-bar { padding: 10px 14px; flex-wrap: wrap; gap: 8px 10px; }
+  .brand-tag { display: none; }
+  .app-actions { gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .template-pill { display: none; }
+  .btn-ghost, .btn-primary { padding: 7px 12px; font-size: 12.5px; }
+
+  /* ---- Workspace: single column, rail on top ---- */
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    overflow-x: clip;
+    transition: none;
+  }
+  /* Wide views (compare / target) drop the pane switch and preview, leaving
+     just the rail + the full-width work pane. */
+  .workspace.is-compare {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    overflow-x: clip;
+    transition: none;
+  }
+
+  /* ---- Rail → horizontal scrollable strip ---- */
+  .rail {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 10px;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail-brand { display: none; }
+  .rail-group { flex-direction: row; width: auto; gap: 4px; }
+  .rail-foot {
+    margin-top: 0;
+    margin-left: auto;
+    padding-top: 0;
+    padding-left: 8px;
+    border-top: none;
+    border-left: 1px solid var(--line);
+  }
+  .rail-item { width: 62px; height: 50px; flex: 0 0 auto; }
+  .rail-label { display: block; font-size: 9px; }
+
+  /* ---- Pane toggle visible + enforce single pane ---- */
+  .mpane-switch {
+    display: flex;
+    gap: 4px;
+    padding: 8px 14px 0;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .mpane-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 12px;
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  }
+  .mpane-btn.is-on {
+    color: var(--text);
+    border-color: transparent;
+    background: linear-gradient(160deg, rgba(110, 231, 208, 0.16), rgba(139, 124, 255, 0.16));
+  }
+
+  .workspace[data-mpane="work"] .pane-preview { display: none; }
+  .workspace[data-mpane="preview"] .pane-work { display: none; }
+
+  .pane-work, .pane-edit { padding: 16px 14px 90px; }
+  .preview-stage { padding: 18px 12px 90px; }
+
+  .ws-head h2 { font-size: 20px; }
+}
+
+/* Extra-small phones: tighten spacing further. */
+@media (max-width: 480px) {
+  .app-bar { padding: 9px 12px; }
+  .brand-name { font-size: 18px; }
+  .rail-item { width: 56px; height: 48px; }
+  .pane-work, .pane-edit { padding: 14px 11px 88px; }
+}

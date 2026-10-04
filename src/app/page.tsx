@@ -151,6 +151,8 @@ export default function Home() {
   const reset = useCVStore((s) => s.reset);
   const previewEdit = useUIStore((s) => s.previewEdit);
   const togglePreviewEdit = useUIStore((s) => s.togglePreviewEdit);
+  const mobilePane = useUIStore((s) => s.mobilePane);
+  const setMobilePane = useUIStore((s) => s.setMobilePane);
 
   // During a 2-provider Refine comparison, widen the workspace pane so the
   // side-by-side columns breathe and de-emphasise the live preview.
@@ -187,6 +189,8 @@ export default function Home() {
   const zoom = usePreviewStore((s) => s.zoom);
   const showGuides = usePreviewStore((s) => s.showGuides);
   const setFitZoom = usePreviewStore((s) => s.setFitZoom);
+  const setZoom = usePreviewStore((s) => s.setZoom);
+  const fitZoom = usePreviewStore((s) => s.fitZoom);
   const stageRef = useRef<HTMLDivElement>(null);
   const [paperH, setPaperH] = useState(1123);
 
@@ -206,6 +210,14 @@ export default function Home() {
     ro.observe(stage);
     return () => ro.disconnect();
   }, [mounted, previewTplId, previewCV, setFitZoom]);
+
+  // On narrow viewports the A4 paper (794px) is wider than the stage, so snap
+  // the preview to its fit-zoom automatically (desktop keeps the user's zoom).
+  // Re-runs when the fit value changes or the mobile pane becomes the preview.
+  useEffect(() => {
+    if (!mounted) return;
+    if (window.matchMedia("(max-width: 820px)").matches) setZoom(fitZoom);
+  }, [mounted, fitZoom, mobilePane, view, setZoom]);
 
   const A4_PX = 1123;
   const pageCount = Math.max(1, Math.ceil((paperH - 2) / A4_PX));
@@ -249,8 +261,29 @@ export default function Home() {
       </header>
       <CloudSync />
 
-      <main className={`workspace${wide ? " is-compare" : ""}`}>
+      <main className={`workspace${wide ? " is-compare" : ""}`} data-mpane={mobilePane}>
         <WorkspaceRail />
+
+        {!wide && (
+          <div className="mpane-switch" role="tablist" aria-label="Switch pane">
+            <button
+              role="tab"
+              aria-selected={mobilePane === "work"}
+              className={`mpane-btn${mobilePane === "work" ? " is-on" : ""}`}
+              onClick={() => setMobilePane("work")}
+            >
+              <span aria-hidden>✎</span> Edit
+            </button>
+            <button
+              role="tab"
+              aria-selected={mobilePane === "preview"}
+              className={`mpane-btn${mobilePane === "preview" ? " is-on" : ""}`}
+              onClick={() => setMobilePane("preview")}
+            >
+              <span aria-hidden>▦</span> Preview
+            </button>
+          </div>
+        )}
 
         <section className="pane pane-work" aria-label="Workspace">
           <Workspace mounted={mounted} />
