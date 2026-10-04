@@ -4,6 +4,9 @@ import { useRefineStore, refineRunSignature } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
+import { usePlanStore } from "@/lib/store/planStore";
+import { useCoverLetterStore } from "@/lib/store/coverLetterStore";
+import { allowCoverLetter, nextPlan } from "@/lib/plan/plan";
 import { targetMatch } from "@/lib/ai/simulate";
 import { analyzeTone } from "@/lib/ai/retone";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
@@ -206,6 +209,117 @@ function PostCompare() {
           </button>
         </div>
       )}
+
+      {/* 3 · Optional cover letter companion (Pro+). Fact-grounded on the CV. */}
+      <CoverLetterCard />
+    </div>
+  );
+}
+
+function CoverLetterCard() {
+  const plan = usePlanStore((s) => s.plan);
+  const setView = useViewStore((s) => s.setView);
+  const cv = useCVStore((s) => s.cv);
+  const phase = useCoverLetterStore((s) => s.phase);
+  const error = useCoverLetterStore((s) => s.error);
+  const letter = useCoverLetterStore((s) => s.letter);
+  const provider = useCoverLetterStore((s) => s.provider);
+  const run = useCoverLetterStore((s) => s.runCoverLetter);
+
+  const allowed = allowCoverLetter(plan);
+  const running = phase === "running";
+
+  if (!allowed) {
+    const up = nextPlan("free");
+    return (
+      <div className="pc-card pc-upsell">
+        <div className="pc-card-main">
+          <strong>Add a tailored cover letter <span className="pc-pill">Pro</span></strong>
+          <span className="pc-card-sub">
+            Generate a cover letter written from your real CV and matched to this job — grounded in your facts, never invented. Available on {up?.label ?? "Pro"} and up.
+          </span>
+        </div>
+        <button className="flow-btn ghost" onClick={() => setView("connect")}>See plans</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`pc-card cl-card${phase === "done" && letter ? " cl-open" : ""}`}>
+      <div className="pc-card-main">
+        <strong>Generate a cover letter{provider && phase === "done" ? ` · ${PROVIDERS[provider].label}` : ""}</strong>
+        <span className="pc-card-sub">
+          A concise letter tailored to this job, drawn only from your CV facts. {provider && phase === "running" ? `Using ${PROVIDERS[provider].label}…` : ""}
+        </span>
+      </div>
+
+      {phase !== "done" && !running && (
+        <button className="flow-btn primary" onClick={() => void run()}>
+          {phase === "error" ? "Try again" : "Generate cover letter"}
+        </button>
+      )}
+      {running && <div className="cmp-loading"><span className="cmp-spinner" /> Writing your cover letter…</div>}
+      {phase === "error" && error && (
+        <div className="imp-error">
+          <strong>{error.title}{error.status ? ` (HTTP ${error.status})` : ""}</strong>
+          <pre>{error.body}</pre>
+        </div>
+      )}
+
+      {phase === "done" && letter && (
+        <>
+          <CoverLetterPreview letter={letter} name={cv.basics.fullName} title={cv.basics.title} contact={contactLine(cv)} />
+          <div className="pc-gap-cta">
+            <button className="flow-btn ghost sm" onClick={() => void run()}>Regenerate</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function contactLine(cv: { basics: { email?: string; phone?: string; location?: string } }): string {
+  return [cv.basics.email, cv.basics.phone, cv.basics.location].map((s) => (s ?? "").trim()).filter(Boolean).join("  ·  ");
+}
+
+function CoverLetterPreview({
+  letter,
+  name,
+  title,
+  contact,
+}: {
+  letter: import("@/lib/cv/coverLetter").CoverLetter;
+  name: string;
+  title: string;
+  contact: string;
+}) {
+  const greeting = letter.meta.hiringManager?.trim()
+    ? `Dear ${letter.meta.hiringManager.trim()},`
+    : "Dear Hiring Team,";
+  return (
+    <div className="cl-sheet">
+      <header className="cl-head">
+        <strong>{name || "Your Name"}</strong>
+        {title ? <span className="cl-title">{title}</span> : null}
+        {contact ? <span className="cl-contact">{contact}</span> : null}
+      </header>
+      {(letter.meta.company || letter.meta.role) && (
+        <div className="cl-to">
+          {letter.meta.company ? <span>{letter.meta.company}</span> : null}
+          {letter.meta.role ? <span>Re: {letter.meta.role}</span> : null}
+        </div>
+      )}
+      <p className="cl-greeting">{greeting}</p>
+      {letter.opening ? <p>{letter.opening}</p> : null}
+      {letter.body.map((para, i) => (
+        <p key={i}>{para}</p>
+      ))}
+      {letter.closing ? <p>{letter.closing}</p> : null}
+      <p className="cl-signoff">
+        {letter.signoff || "Sincerely,"}
+        <br />
+        {name || "Your Name"}
+      </p>
     </div>
   );
 }

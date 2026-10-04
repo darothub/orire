@@ -62,7 +62,7 @@ export const PLANS: Record<PlanId, Plan> = {
     monthlyRefines: 30,
     includedTiers: ["budget", "mid"],
     premiumRequiresKey: true,
-    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + judge", "Clean PDF, all page modes", "BYO key unlocks premium"],
+    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + judge", "Cover letters", "Clean PDF, all page modes", "BYO key unlocks premium"],
   },
   career: {
     id: "career",
@@ -172,4 +172,12 @@ export function withinMonthlyCap(planId: PlanId, usedThisMonth: number): RunAllo
 export function nextPlan(planId: PlanId): Plan | null {
   const i = PLAN_ORDER.indexOf(planId);
   return i >= 0 && i < PLAN_ORDER.length - 1 ? PLANS[PLAN_ORDER[i + 1]] : null;
+}
+
+/**
+ * Whether the (optional) cover-letter companion is available on a plan.
+ * Cover letters are a paid add-on: every plan except Free includes them.
+ */
+export function allowCoverLetter(planId: PlanId): boolean {
+  return planId !== "free";
 }
