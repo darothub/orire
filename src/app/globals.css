@@ -1994,59 +1994,102 @@ body {
   position: fixed;
   inset: 0;
   z-index: 120;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px;
-  /* Dimmed, blurred backdrop (~80%) so the app is clearly behind the gate. */
-  background: rgba(7, 9, 14, 0.8);
-  backdrop-filter: blur(14px) saturate(120%);
-  -webkit-backdrop-filter: blur(14px) saturate(120%);
+  /* Near-opaque base so the app is fully hidden behind the gate. */
+  background:
+    radial-gradient(120% 120% at 16% 22%, rgba(32, 27, 60, 0.55), transparent 60%),
+    #070a0f;
   overflow: hidden;
+}
+@media (min-width: 900px) {
+  .auth-overlay {
+    justify-content: flex-start;
+    padding-left: clamp(48px, 8vw, 150px);
+  }
+}
+.auth-overlay > .auth-card {
+  z-index: 2;
 }
 
-/* Drifting aurora orbs behind the card. */
-.auth-aurora {
+/* ============ Living template showcase (parallax wall of CVs) ============ */
+.auth-showcase {
   position: absolute;
-  inset: 0;
+  inset: -8% -2%;
+  z-index: 0;
+  display: flex;
+  justify-content: center;
+  gap: clamp(16px, 2.4vw, 30px);
+  transform: rotate(-6deg) scale(1.08);
+  transform-origin: center;
   pointer-events: none;
-  overflow: hidden;
+  mask-image: radial-gradient(135% 100% at 72% 50%, #000 52%, transparent 100%);
+  -webkit-mask-image: radial-gradient(135% 100% at 72% 50%, #000 52%, transparent 100%);
 }
-.auth-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.55;
+.sc-col {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2.4vw, 30px);
   will-change: transform;
 }
-.auth-orb.o1 {
-  width: 46vmax; height: 46vmax;
-  left: -12vmax; top: -14vmax;
-  background: radial-gradient(circle at 30% 30%, var(--accent-2), transparent 68%);
-  animation: auth-drift-1 18s ease-in-out infinite;
+.sc-up { animation: sc-scroll-up var(--dur, 56s) linear infinite; }
+.sc-down { animation: sc-scroll-down var(--dur, 56s) linear infinite; }
+@keyframes sc-scroll-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
 }
-.auth-orb.o2 {
-  width: 40vmax; height: 40vmax;
-  right: -14vmax; top: -8vmax;
-  background: radial-gradient(circle at 60% 40%, var(--accent), transparent 66%);
-  animation: auth-drift-2 22s ease-in-out infinite;
+@keyframes sc-scroll-down {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
 }
-.auth-orb.o3 {
-  width: 42vmax; height: 42vmax;
-  left: 20vmax; bottom: -22vmax;
-  background: radial-gradient(circle at 50% 50%, var(--accent-3), transparent 66%);
-  animation: auth-drift-3 26s ease-in-out infinite;
+.sc-card {
+  position: relative;
+  width: 210px;
+  height: 297px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 30px 60px -28px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  opacity: 0.92;
 }
-@keyframes auth-drift-1 {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(8vmax, 6vmax, 0) scale(1.12); }
+.sc-scale {
+  width: 794px;
+  transform: scale(0.2645);
+  transform-origin: top left;
+  pointer-events: none;
 }
-@keyframes auth-drift-2 {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
-  50% { transform: translate3d(-7vmax, 9vmax, 0) scale(0.92); }
+.sc-paper {
+  box-shadow: none !important;
+  border-radius: 0;
+  min-height: 1123px;
 }
-@keyframes auth-drift-3 {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(-6vmax, -8vmax, 0) scale(1.1); }
+
+/* Scrim for card legibility over the living wall (strongest on the left). */
+.auth-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(100deg, rgba(5, 7, 11, 0.93) 0%, rgba(5, 7, 11, 0.8) 32%, rgba(5, 7, 11, 0.32) 58%, rgba(5, 7, 11, 0.6) 100%),
+    radial-gradient(90% 90% at 22% 50%, rgba(5, 7, 11, 0.5), transparent 70%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+@media (max-width: 640px) {
+  .auth-showcase { display: none; }
+  .auth-scrim {
+    background: radial-gradient(120% 90% at 50% 8%, rgba(42, 35, 74, 0.5), transparent 62%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sc-up, .sc-down { animation: none !important; }
 }
 
 .auth-card {

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { useSession, signIn } from "next-auth/react";
 import { useUIStore } from "@/lib/store/uiStore";
+import { getTemplate } from "@/components/templates/registry";
+import { sampleCV } from "@/lib/cv/sample";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -134,12 +136,9 @@ export function AuthOverlay() {
           aria-modal="true"
           aria-label={signup ? "Create your orire account" : "Sign in to orire"}
         >
-          {/* Drifting aurora orbs — the animated, transparent backdrop. */}
-          <div className="auth-aurora" aria-hidden>
-            <span className="auth-orb o1" />
-            <span className="auth-orb o2" />
-            <span className="auth-orb o3" />
-          </div>
+          {/* Living template showcase — orire's own CVs drift behind the card. */}
+          <Showcase />
+          <div className="auth-scrim" aria-hidden />
 
           <motion.div
             className="auth-card"
@@ -277,6 +276,54 @@ export function AuthOverlay() {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/* Curated, visually distinct templates distributed across parallax columns. */
+const SHOWCASE_COLUMNS: { ids: string[]; dur: number; dir: 1 | -1 }[] = [
+  { ids: ["aurora", "imperial", "carbon", "sapphire"], dur: 52, dir: 1 },
+  { ids: ["noir", "oxford", "marigold", "plum"], dur: 66, dir: -1 },
+  { ids: ["vertex", "bordeaux", "crimson", "consul"], dur: 58, dir: 1 },
+];
+
+function Showcase() {
+  return (
+    <motion.div
+      className="auth-showcase"
+      aria-hidden
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.9, ease: EASE }}
+    >
+      <MotionConfig reducedMotion="always">
+        {SHOWCASE_COLUMNS.map((col, i) => (
+          <div
+            key={i}
+            className={`sc-col ${col.dir > 0 ? "sc-up" : "sc-down"}`}
+            style={{ ["--dur" as string]: `${col.dur}s` }}
+          >
+            {[...col.ids, ...col.ids].map((id, j) => (
+              <ShowcaseCard key={`${id}-${j}`} id={id} />
+            ))}
+          </div>
+        ))}
+      </MotionConfig>
+    </motion.div>
+  );
+}
+
+function ShowcaseCard({ id }: { id: string }) {
+  const t = getTemplate(id);
+  const Component = t.Component;
+  return (
+    <div className="sc-card">
+      <div className="sc-scale">
+        <div className="paper sc-paper">
+          <Component cv={sampleCV} />
+        </div>
+      </div>
+    </div>
   );
 }
 
