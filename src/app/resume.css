@@ -574,3 +574,63 @@
 @media print {
   .resume { min-height: auto; }
 }
+
+/* ===================== Cover letter sheet ===================== */
+/* Inherits the active template's theme tokens via `resume t-<id>` so the
+   letter visually belongs with the CV. Overrides CV-specific layout. */
+.resume.cl-paper {
+  --pad: 64px 68px;
+  min-height: 1123px;
+  display: block;
+  font-size: 13.5px;
+  line-height: 1.68;
+  color: var(--ink);
+}
+.resume.cl-paper p { margin: 0 0 13px; }
+.cl-letterhead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 14px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--a);
+}
+.cl-letterhead .cl-name {
+  font-family: var(--disp);
+  font-size: 26px;
+  line-height: 1.1;
+  color: var(--name-color, var(--ink));
+  letter-spacing: 0.01em;
+}
+.cl-letterhead .cl-role {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--a);
+  font-weight: 600;
+}
+.cl-letterhead .cl-contact { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
+.cl-paper .cl-date { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+.cl-paper .cl-recipient {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 18px;
+  font-size: 12.5px;
+  color: var(--soft, var(--ink));
+}
+.cl-paper .cl-recipient span:first-child { font-weight: 600; }
+.cl-paper .cl-greeting { font-weight: 600; margin-bottom: 14px; }
+.cl-paper .cl-sign { margin-top: 22px; }
+.cl-paper .cl-sign-name {
+  font-family: var(--disp);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+/* Bespoke templates have no `.t-*` theme class; give their letters a matching
+   accent so the sheet still feels on-brand. */
+.resume.cl-paper.t-aurora { --a: #6d5efc; --disp: var(--font-serif); }
+.resume.cl-paper.t-noir { --a: #111111; --ink: #141414; --disp: var(--font-serif); }
+.resume.cl-paper.t-meridian { --a: #0f7b6c; --disp: var(--font-serif); }
+.resume.cl-paper.t-vertex { --a: #e0483d; --disp: var(--font-sans); }

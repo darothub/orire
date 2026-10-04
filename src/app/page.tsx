@@ -13,6 +13,7 @@ import { PlanPanel } from "@/components/PlanPanel";
 import { TeamPanel } from "@/components/TeamPanel";
 import { RateView } from "@/components/ai/RatingPanel";
 import { TargetView } from "@/components/ai/TargetPanel";
+import { CoverLetterView } from "@/components/ai/CoverLetterView";
 import { ProgressView } from "@/components/ProgressPanel";
 import { HistoryView } from "@/components/HistoryView";
 import { ExportView } from "@/components/export/ExportView";
@@ -96,6 +97,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "rebrand" && <RebrandFlow />}
           {view === "refine" && <RefineFlow />}
           {view === "target" && <TargetView />}
+          {view === "cover" && <CoverLetterView />}
           {view === "rate" && <RateView />}
           {view === "progress" && <ProgressView />}
           {view === "history" && <HistoryView />}
@@ -165,7 +167,7 @@ export default function Home() {
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
   // The Target page renders its own side-by-side split, so it also takes the
   // full workspace width and hides the single live-preview pane.
-  const wide = compareWide || view === "target";
+  const wide = compareWide || view === "target" || view === "cover";
 
   // Re-brand (req 3): while in the re-brand workspace with a draft, the right
   // pane previews the restructured draft in the auditioned template so the user

@@ -41,3 +41,32 @@ export function emptyCoverLetter(): CoverLetter {
     signoff: "Sincerely,",
   };
 }
+
+/**
+ * Flatten a cover letter to readable plain text. Used both for the invisible,
+ * extractable text layer in the exported PDF and anywhere a copy-paste version
+ * is handy. `sender` is the candidate's name (from the CV) for the signature.
+ */
+export function coverLetterToText(letter: CoverLetter, sender: string, title = "", contact = ""): string {
+  const lines: string[] = [];
+  if (sender.trim()) lines.push(sender.trim());
+  if (title.trim()) lines.push(title.trim());
+  if (contact.trim()) lines.push(contact.trim());
+  if (lines.length) lines.push("");
+
+  const to = [letter.meta.company, letter.meta.role ? `Re: ${letter.meta.role}` : ""]
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (to.length) {
+    lines.push(...to, "");
+  }
+
+  lines.push(letter.meta.hiringManager?.trim() ? `Dear ${letter.meta.hiringManager.trim()},` : "Dear Hiring Team,", "");
+  if (letter.opening.trim()) lines.push(letter.opening.trim(), "");
+  for (const p of letter.body) {
+    if (p.trim()) lines.push(p.trim(), "");
+  }
+  if (letter.closing.trim()) lines.push(letter.closing.trim(), "");
+  lines.push(letter.signoff.trim() || "Sincerely,", sender.trim() || "");
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}

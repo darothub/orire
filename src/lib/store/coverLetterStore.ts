@@ -32,7 +32,25 @@ interface CoverLetterState {
   tone: CoverLetterTone;
   setTone: (t: CoverLetterTone) => void;
   runCoverLetter: () => Promise<void>;
+  /** Edit the loaded letter in place (CL-2). No-ops when no letter exists. */
+  updateMeta: (patch: Partial<CoverLetter["meta"]>) => void;
+  setOpening: (v: string) => void;
+  setClosing: (v: string) => void;
+  setSignoff: (v: string) => void;
+  setParagraph: (i: number, v: string) => void;
+  addParagraph: () => void;
+  removeParagraph: (i: number) => void;
+  moveParagraph: (i: number, dir: -1 | 1) => void;
   reset: () => void;
+}
+
+/** Immutable update helper that only touches state when a letter is present. */
+function editLetter(
+  state: CoverLetterState,
+  fn: (l: CoverLetter) => CoverLetter
+): Partial<CoverLetterState> {
+  if (!state.letter) return {};
+  return { letter: fn(state.letter) };
 }
 
 export const useCoverLetterStore = create<CoverLetterState>((set) => ({
@@ -43,6 +61,27 @@ export const useCoverLetterStore = create<CoverLetterState>((set) => ({
   tone: "professional",
 
   setTone: (tone) => set({ tone }),
+
+  updateMeta: (patch) =>
+    set((s) => editLetter(s, (l) => ({ ...l, meta: { ...l.meta, ...patch } }))),
+  setOpening: (v) => set((s) => editLetter(s, (l) => ({ ...l, opening: v }))),
+  setClosing: (v) => set((s) => editLetter(s, (l) => ({ ...l, closing: v }))),
+  setSignoff: (v) => set((s) => editLetter(s, (l) => ({ ...l, signoff: v }))),
+  setParagraph: (i, v) =>
+    set((s) => editLetter(s, (l) => ({ ...l, body: l.body.map((p, j) => (j === i ? v : p)) }))),
+  addParagraph: () => set((s) => editLetter(s, (l) => ({ ...l, body: [...l.body, ""] }))),
+  removeParagraph: (i) =>
+    set((s) => editLetter(s, (l) => ({ ...l, body: l.body.filter((_, j) => j !== i) }))),
+  moveParagraph: (i, dir) =>
+    set((s) =>
+      editLetter(s, (l) => {
+        const j = i + dir;
+        if (j < 0 || j >= l.body.length) return l;
+        const body = [...l.body];
+        [body[i], body[j]] = [body[j], body[i]];
+        return { ...l, body };
+      })
+    ),
 
   runCoverLetter: async () => {
     const jd = useTargetStore.getState().jd;

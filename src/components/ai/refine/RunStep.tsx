@@ -271,6 +271,7 @@ function CoverLetterCard() {
           <CoverLetterPreview letter={letter} name={cv.basics.fullName} title={cv.basics.title} contact={contactLine(cv)} />
           <div className="pc-gap-cta">
             <button className="flow-btn ghost sm" onClick={() => void run()}>Regenerate</button>
+            <button className="flow-btn primary sm" onClick={() => setView("cover")}>Edit &amp; export →</button>
           </div>
         </>
       )}

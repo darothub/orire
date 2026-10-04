@@ -21,6 +21,7 @@ const PRIMARY: RailItem[] = [
   { view: "rebrand", label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
   { view: "refine", label: "Refine", hint: "Connect AI · import · tailor to a job", icon: "✦" },
   { view: "target", label: "Target", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
+  { view: "cover", label: "Cover", hint: "Write, edit & export a cover letter", icon: "✉" },
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
   { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
   { view: "rate", label: "Rate", hint: "Score initial → final", icon: "★" },
