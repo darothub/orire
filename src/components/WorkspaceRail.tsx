@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRefineStore } from "@/lib/store/refineStore";
+import { useRunStore } from "@/lib/store/runStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 
 type Badge = "warn" | "busy" | null;
@@ -62,15 +63,21 @@ export function WorkspaceRail() {
   const cols = useRefineStore((s) => s.cols);
   const judgePhase = useRefineStore((s) => s.judgePhase);
   const runProviders = useRefineStore((s) => s.runProviders);
+  const active = useRunStore((s) => s.active);
 
   const noKeys = !PROVIDER_IDS.some((p) => keys[p]?.trim());
+  const simBusy = Boolean(active["simulate"]);
   const refineBusy =
     judgePhase === "running" ||
+    Boolean(active["judge"]) ||
+    simBusy ||
     runProviders.some((p) => cols[p]?.phase === "running");
 
   const badgeFor = (v: WorkspaceView): Badge => {
     if (v === "connect") return noKeys ? "warn" : null;
     if (v === "refine") return refineBusy ? "busy" : null;
+    if (v === "simulate") return simBusy ? "busy" : null;
+    if (v === "target") return active["retone"] ? "busy" : null;
     return null;
   };
 

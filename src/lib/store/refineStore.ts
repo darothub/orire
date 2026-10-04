@@ -6,6 +6,7 @@ import { usePlanStore } from "@/lib/store/planStore";
 import { usePooledStore } from "@/lib/store/pooledStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
+import { sharedRun } from "@/lib/store/runStore";
 import { PROVIDERS, needsKey, isCLI, type ProviderId } from "@/lib/ai/types";
 import { authorizeRefineRun } from "@/app/actions/refine";
 import type { RefineResponse } from "@/lib/ai/types";
@@ -242,12 +243,13 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     set({ judgePhase: "running", judgeErr: null, verdict: null });
     const candidates = done.map((p) => ({ id: p, label: PROVIDERS[p].label, cv: cols[p].result!.cv }));
     try {
-      const res = await fetch("/api/ai/judge", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider: judgeProvider, apiKey: keys[judgeProvider] ?? "", model: models[judgeProvider], jobDescription: jd, candidates }),
-      });
-      const data = (await res.json()) as RefineResponse;
+      const data = await sharedRun<RefineResponse>("judge", "Refine", () =>
+        fetch("/api/ai/judge", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ provider: judgeProvider, apiKey: keys[judgeProvider] ?? "", model: models[judgeProvider], jobDescription: jd, candidates }),
+        }).then((r) => r.json() as Promise<RefineResponse>),
+      );
       if (!data.ok || !data.raw) {
         set({
           judgePhase: "error",
@@ -277,12 +279,13 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     }
     set({ idealPhase: "running", idealErr: null });
     try {
-      const res = await fetch("/api/ai/simulate", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
-      });
-      const data = (await res.json()) as RefineResponse;
+      const data = await sharedRun<RefineResponse>("simulate", "Refine", () =>
+        fetch("/api/ai/simulate", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
+        }).then((r) => r.json() as Promise<RefineResponse>),
+      );
       if (!data.ok || !data.raw) {
         set({
           idealPhase: "error",

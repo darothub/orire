@@ -7,6 +7,7 @@ import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePooledStore } from "@/lib/store/pooledStore";
+import { sharedRun } from "@/lib/store/runStore";
 import { getTemplate } from "@/components/templates/registry";
 import { targetMatch } from "@/lib/ai/simulate";
 import { analyzeTone, type ToneLabel, type ToneProfile } from "@/lib/ai/retone";
@@ -110,12 +111,13 @@ export function TargetView() {
     setShowBefore(false);
     const tone: ToneProfile = { ...detected, label: activeTone };
     try {
-      const res = await fetch("/api/ai/retone", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], cv, tone }),
-      });
-      const data = (await res.json()) as RefineResponse;
+      const data = await sharedRun<RefineResponse>("retone", "Target", () =>
+        fetch("/api/ai/retone", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], cv, tone }),
+        }).then((r) => r.json() as Promise<RefineResponse>),
+      );
       if (!data.ok || !data.raw) {
         setErr({
           title: `${meta.label} error`,

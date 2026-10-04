@@ -7,6 +7,7 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePooledStore } from "@/lib/store/pooledStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
+import { sharedRun, useIsRunning, useRunOrigin } from "@/lib/store/runStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 import type { RefineResponse } from "@/lib/ai/types";
 import { coerceSimulatedCV, gapAnalysis, targetMatch, type GapAnalysis } from "@/lib/ai/simulate";
@@ -45,6 +46,11 @@ export function SimulateView() {
   const [gap, setGap] = useState<GapAnalysis | null>(null);
   const [copied, setCopied] = useState(false);
 
+  // Shared run coordination: a simulate may already be in flight from Refine.
+  const simRunning = useIsRunning("simulate");
+  const simOrigin = useRunOrigin("simulate");
+  const busyElsewhere = simRunning && phase !== "running";
+
   async function run() {
     if (!hasKey) {
       setErr({ title: "Not connected", body: `Connect ${meta.label} first.` });
@@ -57,12 +63,13 @@ export function SimulateView() {
     setIdeal(null);
     setGap(null);
     try {
-      const res = await fetch("/api/ai/simulate", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
-      });
-      const data = (await res.json()) as RefineResponse;
+      const data = await sharedRun<RefineResponse>("simulate", "Simulate", () =>
+        fetch("/api/ai/simulate", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
+        }).then((r) => r.json() as Promise<RefineResponse>),
+      );
       if (!data.ok || !data.raw) {
         setErr({
           title: `${meta.label} error`,
@@ -133,9 +140,11 @@ export function SimulateView() {
               />
               <div className="imp-actions">
                 <button className="imp-btn" onClick={() => setView("edit")}>Cancel</button>
-                <button className="imp-btn primary" onClick={run} disabled={phase === "running" || !jd.trim()}>
+                <button className="imp-btn primary" onClick={run} disabled={phase === "running" || busyElsewhere || !jd.trim()}>
                   {phase === "running" ? (
                     <><span className="cmp-spinner" /> Building ideal candidate…</>
+                  ) : busyElsewhere ? (
+                    <><span className="cmp-spinner" /> Simulating{simOrigin ? ` · from ${simOrigin}` : ""}…</>
                   ) : (
                     "Simulate match"
                   )}
