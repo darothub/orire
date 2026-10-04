@@ -1541,7 +1541,7 @@
 .refine-flow { display: flex; flex-direction: column; }
 
 /* Stepper */
-.stepper { position: relative; margin: 4px 0 22px; }
+.stepper { position: relative; margin: 4px 0 24px; }
 .stepper-line {
   position: absolute;
   top: 15px;
@@ -1574,9 +1574,11 @@
   cursor: pointer;
   flex: 1;
   color: var(--faint);
+  padding: 0;
 }
 .stepper-dot:disabled { cursor: default; }
 .stepper-bead {
+  position: relative;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -1589,6 +1591,20 @@
   color: var(--muted);
   transition: all 0.25s ease;
 }
+.stepper-bead-num, .stepper-bead-mark {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.stepper-bead-mark { opacity: 0; transform: scale(0.6); }
+/* Completed steps read as interactive "go back / edit" controls. */
+.stepper-dot.done .stepper-bead-num { opacity: 1; }
+.stepper-dot.done .stepper-bead-mark { opacity: 0; }
+.stepper-dot.clickable:hover .stepper-bead-num,
+.stepper-dot.clickable:focus-visible .stepper-bead-num { opacity: 0; transform: scale(0.6); }
+.stepper-dot.clickable:hover .stepper-bead-mark,
+.stepper-dot.clickable:focus-visible .stepper-bead-mark { opacity: 1; transform: scale(1); }
 .stepper-dot.on .stepper-bead {
   border-color: var(--accent);
   color: var(--bg);
@@ -1600,13 +1616,58 @@
   color: #fff;
   background: var(--accent-2);
 }
+.stepper-dot.clickable:hover .stepper-bead,
+.stepper-dot.clickable:focus-visible .stepper-bead {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px -8px rgba(139, 124, 255, 0.7);
+}
+.stepper-dot.todo .stepper-bead { background: var(--panel-2); }
 .stepper-label {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.01em;
+  transition: color 0.18s ease;
 }
 .stepper-dot.on .stepper-label,
 .stepper-dot.done .stepper-label { color: var(--text); }
+.stepper-edit {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+  opacity: 0;
+  transform: translateY(-3px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  margin-top: -3px;
+}
+.stepper-dot.clickable:hover .stepper-edit,
+.stepper-dot.clickable:focus-visible .stepper-edit { opacity: 1; transform: translateY(0); }
+
+/* Stale-results banner — inputs changed, force a re-run. */
+.run-stale {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 196, 102, 0.35);
+  background: rgba(255, 196, 102, 0.1);
+}
+.run-stale-ico {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 800;
+  background: rgba(255, 196, 102, 0.22);
+  color: #ffc466;
+}
+.run-stale strong { display: block; font-size: 13px; color: var(--text); }
+.run-stale span { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 
 /* Step body */
 .refine-stage { position: relative; }

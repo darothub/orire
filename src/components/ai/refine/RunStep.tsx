@@ -1,6 +1,6 @@
 "use client";
 
-import { useRefineStore } from "@/lib/store/refineStore";
+import { useRefineStore, refineRunSignature } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
@@ -14,11 +14,13 @@ import { JudgeBlock } from "./JudgeBlock";
 export function RunStep({ onBack }: { onBack: () => void }) {
   const runProviders = useRefineStore((s) => s.runProviders);
   const started = useRefineStore((s) => s.started);
+  const runSig = useRefineStore((s) => s.runSig);
   const cols = useRefineStore((s) => s.cols);
   const runAll = useRefineStore((s) => s.runAll);
   const resetRun = useRefineStore((s) => s.resetRun);
   const planBlock = useRefineStore((s) => s.planBlock);
   const cv = useCVStore((s) => s.cv);
+  const jd = useTargetStore((s) => s.jd);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const markApplied = useRefineStore((s) => s.markApplied);
   const appliedProvider = useRefineStore((s) => s.appliedProvider);
@@ -27,6 +29,10 @@ export function RunStep({ onBack }: { onBack: () => void }) {
   const before = countFacts(cv);
   const anyRunning = runProviders.some((p) => cols[p].phase === "running");
   const single = runProviders.length === 1;
+  // Results reflect the inputs captured at run time. If the user went back and
+  // changed the assistants, the job description, or the CV, the shown results
+  // are stale — hide them and make the user compare again (fresh, honest data).
+  const stale = started && runSig !== null && runSig !== refineRunSignature(runProviders, jd, cv);
 
   const apply = (p: ProviderId) => {
     const r = cols[p].result;
@@ -35,14 +41,23 @@ export function RunStep({ onBack }: { onBack: () => void }) {
     markApplied(p);
   };
 
-  if (!started) {
+  if (!started || stale) {
     return (
       <div className="step-body">
+        {stale && (
+          <div className="run-stale" role="alert">
+            <span className="run-stale-ico" aria-hidden>↻</span>
+            <div>
+              <strong>Your inputs changed</strong>
+              <span>You edited the assistants, job description, or CV since the last comparison. Run it again so the results match your current inputs.</span>
+            </div>
+          </div>
+        )}
         <div className="run-ready">
           <div className="run-ready-icon">✦</div>
           <strong>{single ? "Ready to tailor with " : "Ready to compare "}{runProviders.map((p) => PROVIDERS[p].label).join(" vs ")}</strong>
           <p>{single ? "One assistant will rewrite your CV for the role." : "Both assistants run in parallel on the same job — then an LLM judge can pick the best."}</p>
-          <button className="flow-btn primary lg" onClick={() => void runAll()}>{single ? "Refine my CV" : "Run comparison"}</button>
+          <button className="flow-btn primary lg" onClick={() => void runAll()}>{stale ? (single ? "Re-refine my CV" : "Re-run comparison") : single ? "Refine my CV" : "Run comparison"}</button>
           {planBlock && (
             <div className="plan-block" role="alert">
               <strong>{planBlock.title}</strong>

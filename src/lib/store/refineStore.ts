@@ -15,7 +15,10 @@ import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
 import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
 import { parseVerdict, judgeCacheKey, type JudgeVerdict } from "@/lib/ai/judge";
+import { refineRunSignature } from "@/lib/ai/refineSignature";
 import type { CVData } from "@/lib/cv/schema";
+
+export { refineRunSignature };
 
 /** The four steps of the Refine module, in order. */
 export type RefineStep = "connect" | "sources" | "job" | "run";
@@ -47,6 +50,9 @@ interface RefineState {
   /** Providers the user chose to run (1 = single, 2 = parallel compare). */
   runProviders: ProviderId[];
   started: boolean;
+  /** Input fingerprint captured when the last comparison started. If the live
+   *  inputs no longer match this, the shown results are stale (req: re-run). */
+  runSig: string | null;
   cols: Record<ProviderId, ColState>;
 
   /** JD match of the ORIGINAL CV (before any refine), computed once per run. */
@@ -106,6 +112,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   step: "connect",
   runProviders: [],
   started: false,
+  runSig: null,
   cols: idleCols(),
 
   baseMatch: null,
@@ -143,6 +150,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const resetStarted = () =>
       set({
         started: true,
+        runSig: refineRunSignature(runProviders, jd, cv),
         planBlock: null,
         cols: idleCols(),
         baseMatch: jdMatch(cv, jd),
@@ -327,7 +335,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   markApplied: (p) => set({ appliedProvider: p }),
 
   resetRun: () =>
-    set({ started: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, idealPhase: "idle", idealErr: null, appliedProvider: null }),
+    set({ started: false, runSig: null, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, idealPhase: "idle", idealErr: null, appliedProvider: null }),
 
   resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false }),
 
@@ -336,6 +344,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       step: "connect",
       runProviders: [],
       started: false,
+      runSig: null,
       planBlock: null,
       cols: idleCols(),
       baseMatch: null,
