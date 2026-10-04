@@ -138,8 +138,27 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
         Upload one or more existing CVs (PDF or DOCX). We extract the text and map it into your working CV — the
         source of facts for refining. {hasAIKey
           ? `With ${providerLabel} connected, “Replace editor (AI)” structures the CV accurately; the built-in parser is used as a fallback.`
-          : "Connect an assistant in step 1 for far more accurate structuring."} Already have a CV in the editor? You can skip this.
+          : "Connect an assistant in step 1 for far more accurate structuring."}
       </p>
+
+      {hasContent && (
+        <motion.div className="rb-existing" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="rb-existing-main">
+            <span className="rb-existing-ico" aria-hidden>📄</span>
+            <div className="rb-existing-text">
+              <strong>
+                You already have a CV in the editor{cv.basics.fullName ? ` — ${cv.basics.fullName}` : ""}
+              </strong>
+              <span>
+                {facts.experience} roles · {facts.education} education · {facts.skills} skills
+                {facts.projects ? ` · ${facts.projects} projects` : ""}. Refine it as-is, or upload a new
+                file below to start fresh.
+              </span>
+            </div>
+          </div>
+          <button className="flow-btn primary" onClick={onNext}>Continue with this CV →</button>
+        </motion.div>
+      )}
 
       <div
         className={`imp-drop ${dragOver ? "over" : ""}`}
