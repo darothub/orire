@@ -19,6 +19,7 @@ import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
+import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { CloudSync } from "@/components/auth/CloudSync";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
@@ -350,6 +351,7 @@ export default function Home() {
       </main>
 
       <CommandPalette />
+      <AuthOverlay />
     </div>
   );
 }
