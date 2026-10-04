@@ -2452,7 +2452,7 @@
   max-height: 620px;
   padding: 18px;
 }
-.cl-paper-wrap .resume.cl-paper {
+.cl-paper-wrap .cl-paper {
   transform: scale(0.82);
   transform-origin: top center;
   width: 122%;
@@ -2462,5 +2462,5 @@
 
 @media (max-width: 900px) {
   .cl-split { grid-template-columns: 1fr; }
-  .cl-paper-wrap .resume.cl-paper { transform: scale(0.9); width: 111%; margin: 0 -5.5% -12%; }
+  .cl-paper-wrap .cl-paper { transform: scale(0.9); width: 111%; margin: 0 -5.5% -12%; }
 }

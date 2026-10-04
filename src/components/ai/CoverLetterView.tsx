@@ -220,23 +220,30 @@ function CoverLetterEditor() {
 }
 
 /**
- * Template-matched letter sheet. It inherits the active template's theme tokens
- * (accent, ink, rule, display font) by carrying the same `resume t-<id>` class
- * the CV templates use, so the letter visually belongs with the CV.
+ * Template-matched letter sheet with a full, per-template letterhead. Themed
+ * templates reuse the real `.r-header` DOM (so banners, rules, centering, caps
+ * replicate exactly); the four bespoke templates each get a letterhead that
+ * mirrors their own identity (Aurora spine, Noir gold kicker, Meridian Swiss
+ * split, Vertex gradient band + avatar).
  */
+
+function contactSpans(cv: CVData) {
+  return [cv.basics.location, cv.basics.email, cv.basics.phone]
+    .map((s) => (s ?? "").trim())
+    .filter(Boolean)
+    .map((c, i) => <span key={i}>{c}</span>);
+}
+
 function CoverLetterSheet({ letter, cv, templateId }: { letter: CoverLetter; cv: CVData; templateId: string }) {
+  const name = cv.basics.fullName || "Your Name";
+  const title = cv.basics.title;
   const greeting = letter.meta.hiringManager?.trim()
     ? `Dear ${letter.meta.hiringManager.trim()},`
     : "Dear Hiring Team,";
-  const contact = contactLine(cv);
   const today = new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-  return (
-    <div id="cl-paper" className={`resume t-${templateId} cl-paper`}>
-      <header className="cl-letterhead">
-        <strong className="cl-name">{cv.basics.fullName || "Your Name"}</strong>
-        {cv.basics.title ? <span className="cl-role">{cv.basics.title}</span> : null}
-        {contact ? <span className="cl-contact">{contact}</span> : null}
-      </header>
+
+  const body = (
+    <>
       <div className="cl-date">{today}</div>
       {(letter.meta.company || letter.meta.role) && (
         <div className="cl-recipient">
@@ -251,8 +258,77 @@ function CoverLetterSheet({ letter, cv, templateId }: { letter: CoverLetter; cv:
       <p className="cl-sign">
         {letter.signoff || "Sincerely,"}
         <br />
-        <span className="cl-sign-name">{cv.basics.fullName || "Your Name"}</span>
+        <span className="cl-sign-name">{name}</span>
       </p>
-    </div>
+    </>
+  );
+
+  // Bespoke letterheads — each mirrors its template's signature header.
+  if (templateId === "aurora") {
+    return (
+      <article id="cl-paper" className="aurora cl-paper cl-aurora">
+        <header className="au-header">
+          <h1 className="au-name">{name}</h1>
+          {title ? <p className="au-title">{title}</p> : null}
+          <div className="au-contact">{contactSpans(cv)}</div>
+        </header>
+        <div className="au-main cl-body">{body}</div>
+      </article>
+    );
+  }
+  if (templateId === "noir") {
+    return (
+      <article id="cl-paper" className="noir cl-paper cl-noir">
+        <header className="nr-header">
+          <span className="nr-kicker">Cover Letter</span>
+          <h1 className="nr-name">{name}</h1>
+          {title ? <p className="nr-title">{title}</p> : null}
+          <div className="nr-contact">{contactSpans(cv)}</div>
+        </header>
+        <div className="nr-body cl-body">{body}</div>
+      </article>
+    );
+  }
+  if (templateId === "meridian") {
+    return (
+      <article id="cl-paper" className="meridian cl-paper cl-meridian">
+        <header className="md-header">
+          <div>
+            <h1 className="md-name">{name}</h1>
+            {title ? <p className="md-role">{title}</p> : null}
+          </div>
+          <div className="md-contact">{contactSpans(cv)}</div>
+        </header>
+        <div className="md-body cl-body">{body}</div>
+      </article>
+    );
+  }
+  if (templateId === "vertex") {
+    const initials = name.split(" ").map((w) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+    return (
+      <article id="cl-paper" className="cl-paper cl-vertex">
+        <header className="vxl-head">
+          <div className="vx-avatar">{initials}</div>
+          <div className="vxl-id">
+            <h1 className="vxl-name">{name}</h1>
+            {title ? <p className="vxl-title">{title}</p> : null}
+          </div>
+          <div className="vxl-contact">{contactSpans(cv)}</div>
+        </header>
+        <div className="cl-body cl-vertex-body">{body}</div>
+      </article>
+    );
+  }
+
+  // Themed templates — reuse the authentic Resume header DOM + theme class.
+  return (
+    <article id="cl-paper" className={`resume t-${templateId} lay-single cl-paper cl-themed`}>
+      <header className="r-header">
+        <h1 className="r-name">{name}</h1>
+        {title ? <p className="r-title">{title}</p> : null}
+        <div className="r-contact">{contactSpans(cv)}</div>
+      </header>
+      <div className="r-main cl-body">{body}</div>
+    </article>
   );
 }

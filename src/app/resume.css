@@ -575,62 +575,75 @@
   .resume { min-height: auto; }
 }
 
-/* ===================== Cover letter sheet ===================== */
-/* Inherits the active template's theme tokens via `resume t-<id>` so the
-   letter visually belongs with the CV. Overrides CV-specific layout. */
-.resume.cl-paper {
-  --pad: 64px 68px;
-  min-height: 1123px;
-  display: block;
-  font-size: 13.5px;
-  line-height: 1.68;
-  color: var(--ink);
-}
-.resume.cl-paper p { margin: 0 0 13px; }
-.cl-letterhead {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-bottom: 14px;
-  margin-bottom: 20px;
-  border-bottom: 2px solid var(--a);
-}
-.cl-letterhead .cl-name {
-  font-family: var(--disp);
-  font-size: 26px;
-  line-height: 1.1;
-  color: var(--name-color, var(--ink));
-  letter-spacing: 0.01em;
-}
-.cl-letterhead .cl-role {
-  font-size: 12.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--a);
-  font-weight: 600;
-}
-.cl-letterhead .cl-contact { font-size: 11.5px; color: var(--muted); margin-top: 3px; }
-.cl-paper .cl-date { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
-.cl-paper .cl-recipient {
+
+/* ============ Cover letter — per-template letterhead replication ============ */
+/* Themed templates reuse the real .r-header DOM, so every letterhead treatment
+   (banners, rules, centering, caps, italics) replicates for free. The four
+   bespoke templates get letterheads that mirror their own identity below. */
+.cl-paper { display: block; min-height: 1123px; }
+
+/* Shared letter-body rhythm — flatten the CV section gap into letter spacing. */
+.cl-body { gap: 0 !important; font-size: 13.5px; line-height: 1.68; }
+.cl-body p { margin: 0 0 13px; }
+.cl-body .cl-date { font-size: 12px; opacity: 0.72; margin-bottom: 18px; }
+.cl-body .cl-recipient {
   display: flex;
   flex-direction: column;
   gap: 1px;
   margin-bottom: 18px;
   font-size: 12.5px;
-  color: var(--soft, var(--ink));
 }
-.cl-paper .cl-recipient span:first-child { font-weight: 600; }
-.cl-paper .cl-greeting { font-weight: 600; margin-bottom: 14px; }
-.cl-paper .cl-sign { margin-top: 22px; }
-.cl-paper .cl-sign-name {
-  font-family: var(--disp);
+.cl-body .cl-recipient span:first-child { font-weight: 600; }
+.cl-body .cl-greeting { font-weight: 600; margin-bottom: 14px; }
+.cl-body .cl-sign { margin-top: 22px; }
+.cl-body .cl-sign-name {
+  font-family: var(--disp, var(--font-serif));
   font-size: 16px;
-  color: var(--ink);
 }
 
-/* Bespoke templates have no `.t-*` theme class; give their letters a matching
-   accent so the sheet still feels on-brand. */
-.resume.cl-paper.t-aurora { --a: #6d5efc; --disp: var(--font-serif); }
-.resume.cl-paper.t-noir { --a: #111111; --ink: #141414; --disp: var(--font-serif); }
-.resume.cl-paper.t-meridian { --a: #0f7b6c; --disp: var(--font-serif); }
-.resume.cl-paper.t-vertex { --a: #e0483d; --disp: var(--font-sans); }
+/* Themed: signature picks up the theme ink/accent naturally. */
+.cl-themed .cl-sign-name { color: var(--name-color, var(--ink)); }
+
+/* Aurora — editorial light, gradient spine under the name (via .au-header::after). */
+.cl-aurora .cl-sign-name { color: var(--ink); }
+
+/* Noir — dark luxe; light body text with gold accents. */
+.cl-noir .cl-body { color: #e9e6dd; }
+.cl-noir .cl-date { color: #b7b0a0; }
+.cl-noir .cl-recipient { color: #cfc8b8; }
+.cl-noir .cl-greeting { color: #f6f2e9; }
+.cl-noir .cl-sign-name { font-family: var(--font-serif); color: #c9a24b; }
+
+/* Meridian — Swiss monochrome. */
+.cl-meridian .cl-sign-name { color: #16181d; }
+
+/* Vertex — bold gradient letterhead band + avatar initials (adapted to a letter). */
+.cl-vertex {
+  display: block;
+  min-height: 1123px;
+  background: #fff;
+  color: #1c2230;
+  font-family: var(--font-sans);
+}
+.cl-vertex .vxl-head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(165deg, #7c3aed, #ec4899);
+  color: #fff;
+  padding: 40px 48px;
+}
+.cl-vertex .vx-avatar { flex: 0 0 auto; margin: 0; }
+.cl-vertex .vxl-id { flex: 1 1 auto; min-width: 0; }
+.cl-vertex .vxl-name { font-family: var(--font-serif); font-size: 29px; line-height: 1.1; }
+.cl-vertex .vxl-title { font-size: 14px; color: rgba(255, 255, 255, 0.88); margin-top: 5px; }
+.cl-vertex .vxl-contact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.9);
+}
+.cl-vertex .cl-vertex-body { padding: 44px 48px; }
+.cl-vertex .cl-vertex-body .cl-sign-name { font-family: var(--font-serif); color: #7c3aed; }
