@@ -1997,8 +1997,8 @@ body {
   display: grid;
   place-items: center;
   padding: 24px;
-  /* Transparent, blurred backdrop so the animated ambient shows through. */
-  background: rgba(7, 9, 14, 0.42);
+  /* Dimmed, blurred backdrop (~80%) so the app is clearly behind the gate. */
+  background: rgba(7, 9, 14, 0.8);
   backdrop-filter: blur(14px) saturate(120%);
   -webkit-backdrop-filter: blur(14px) saturate(120%);
   overflow: hidden;
