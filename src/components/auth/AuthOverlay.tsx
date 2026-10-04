@@ -7,6 +7,23 @@ import { useUIStore } from "@/lib/store/uiStore";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
+/** Remembers that the user passed the gate by choosing to explore (not nag on reload). */
+const EXPLORED_KEY = "orire.auth.explored";
+function hasExplored() {
+  try {
+    return typeof window !== "undefined" && window.localStorage.getItem(EXPLORED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function markExplored() {
+  try {
+    window.localStorage.setItem(EXPLORED_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
 /** OAuth providers we surface as one-tap buttons, in display order. */
 const OAUTH = [
   { id: "google", label: "Google", mark: <GoogleMark /> },
@@ -24,7 +41,8 @@ export function AuthOverlay() {
   const open = useUIStore((s) => s.authOpen);
   const mode = useUIStore((s) => s.authMode);
   const close = useUIStore((s) => s.closeAuth);
-  const setMode = useUIStore((s) => s.openAuth);
+  const openAuth = useUIStore((s) => s.openAuth);
+  const setMode = openAuth;
   const { status } = useSession();
 
   const [configured, setConfigured] = useState<string[] | null>(null);
@@ -49,6 +67,19 @@ export function AuthOverlay() {
   useEffect(() => {
     if (status === "authenticated" && open) close();
   }, [status, open, close]);
+
+  // Gate: auto-open on first load when signed out, until the user signs in or
+  // chooses to explore. Once they've explored, we don't nag on later reloads.
+  useEffect(() => {
+    if (status === "unauthenticated" && !hasExplored()) openAuth("signin");
+  }, [status, openAuth]);
+
+  // Dismissing the gate (×, backdrop, Esc, "explore") counts as choosing to
+  // explore so it won't reappear on reload. Signing in bypasses this naturally.
+  const dismiss = () => {
+    if (status !== "authenticated") markExplored();
+    close();
+  };
   // Reset transient state when the overlay closes (render-phase, no effect).
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
@@ -62,10 +93,13 @@ export function AuthOverlay() {
   // Esc to dismiss.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") dismiss();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, close]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, status]);
 
   const signup = mode === "signup";
 
@@ -95,7 +129,7 @@ export function AuthOverlay() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.28, ease: EASE }}
-          onMouseDown={(e) => e.target === e.currentTarget && close()}
+          onMouseDown={(e) => e.target === e.currentTarget && dismiss()}
           role="dialog"
           aria-modal="true"
           aria-label={signup ? "Create your orire account" : "Sign in to orire"}
@@ -114,7 +148,7 @@ export function AuthOverlay() {
             exit={{ opacity: 0, y: 16, scale: 0.97, filter: "blur(8px)" }}
             transition={{ duration: 0.5, ease: EASE }}
           >
-            <button className="auth-close" onClick={close} aria-label="Close">
+            <button className="auth-close" onClick={dismiss} aria-label="Close">
               ×
             </button>
 
@@ -234,7 +268,7 @@ export function AuthOverlay() {
                   Your AI API keys never leave your browser. By continuing you agree to use orire
                   responsibly.
                 </p>
-                <button className="auth-skip" onClick={close}>
+                <button className="auth-skip" onClick={dismiss}>
                   Explore without an account →
                 </button>
               </>
