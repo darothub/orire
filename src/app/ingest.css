@@ -2039,25 +2039,47 @@
 .conn-setdefault:hover { color: var(--text); border-color: var(--accent); }
 
 /* ── Re-brand flow (req 3) ───────────────────────────────────────────── */
-.rb-orline {
+.rb-existing {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line-2, var(--line));
+  background: linear-gradient(135deg, color-mix(in oklab, var(--accent, #6ea8fe) 10%, var(--panel)), var(--panel));
+}
+.rb-existing-main {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 14px 0 2px;
+  min-width: 0;
+  flex: 1;
 }
-.rb-orline > span {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.rb-existing-ico {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.rb-existing-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.rb-existing-text strong {
+  font-size: 14px;
+  color: var(--text);
+}
+.rb-existing-text span {
+  font-size: 12.5px;
+  line-height: 1.5;
   color: var(--faint);
 }
-.rb-orline::before,
-.rb-orline::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--line);
+.rb-existing .flow-btn {
+  flex-shrink: 0;
 }
 .rb-source {
   margin-top: 4px;

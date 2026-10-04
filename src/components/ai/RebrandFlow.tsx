@@ -142,6 +142,25 @@ function UploadStep() {
       </div>
 
       <div className="step-body">
+        {hasWorking && (
+          <motion.div className="rb-existing" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="rb-existing-main">
+              <span className="rb-existing-ico" aria-hidden>📄</span>
+              <div className="rb-existing-text">
+                <strong>
+                  You already have a CV in the editor{cv.basics.fullName ? ` — ${cv.basics.fullName}` : ""}
+                </strong>
+                <span>
+                  {facts.experience} roles · {facts.education} education · {facts.skills} skills
+                  {facts.projects ? ` · ${facts.projects} projects` : ""}. Re-brand it as-is, or upload a new
+                  file below to start fresh.
+                </span>
+              </div>
+            </div>
+            <button className="flow-btn primary" onClick={useWorking}>Continue with this CV →</button>
+          </motion.div>
+        )}
+
         <div
           className={`imp-drop ${dragOver ? "over" : ""}`}
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -165,13 +184,6 @@ function UploadStep() {
             <span className="imp-drop-sub">PDF · DOCX · {hasAIKey ? `structured by ${providerLabel}` : "built-in parser"}</span>
           </div>
         </div>
-
-        {hasWorking && (
-          <div className="rb-orline">
-            <span>or</span>
-            <button className="flow-btn" onClick={useWorking}>Re-brand my current CV →</button>
-          </div>
-        )}
 
         {busy && <div className="imp-busy">Extracting text…</div>}
         {fatal && <div className="imp-error"><strong>Upload failed</strong><pre>{fatal}</pre></div>}
