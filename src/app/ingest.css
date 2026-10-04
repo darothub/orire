@@ -697,6 +697,15 @@
   padding: 12px 14px;
   margin: 12px 0 0;
 }
+.cmp-cache-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim, #9aa4b2);
+  margin: 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .cmp-verdict-match {
   display: flex;
   align-items: center;

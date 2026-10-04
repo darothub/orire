@@ -14,7 +14,7 @@ import { parseModelJSON, factGround, RefineParseError, type GroundingResult } fr
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
 import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
-import { parseVerdict, type JudgeVerdict } from "@/lib/ai/judge";
+import { parseVerdict, judgeCacheKey, type JudgeVerdict } from "@/lib/ai/judge";
 import type { CVData } from "@/lib/cv/schema";
 
 /** The four steps of the Refine module, in order. */
@@ -58,6 +58,8 @@ interface RefineState {
   judgePhase: JudgePhase;
   verdict: JudgeVerdict | null;
   judgeErr: ColError | null;
+  /** True when the current verdict was served from the determinism cache. */
+  judgeFromCache: boolean;
 
   /** Simulated "ideal candidate" generation status (req 20), surfaced inside Refine.
    *  The generated ideal is stored in the shared targetStore, not here. */
@@ -75,7 +77,7 @@ interface RefineState {
   setJudgeProvider: (p: ProviderId) => void;
 
   runAll: () => Promise<void>;
-  runJudge: () => Promise<void>;
+  runJudge: (force?: boolean) => Promise<void>;
   runSimulate: () => Promise<void>;
   /** Record that a provider's refined CV was applied to the editor. */
   markApplied: (p: ProviderId) => void;
@@ -87,6 +89,10 @@ interface RefineState {
 }
 
 const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
+/** Determinism cache for judge verdicts (finding #4). Keyed by a stable
+ *  fingerprint of (judge provider, model, JD, canonical candidate content) so
+ *  re-judging the same inputs returns the same verdict instead of re-sampling. */
+const judgeCache = new Map<string, JudgeVerdict>();
 /** A provider is runnable when it's a CLI (local login), has a BYO key, or the
  *  member's team has a pooled key for it (Phase B3b). */
 function providerReady(p: ProviderId, keys: Record<ProviderId, string>): boolean {
@@ -109,6 +115,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   judgePhase: "idle",
   verdict: null,
   judgeErr: null,
+  judgeFromCache: false,
 
   idealPhase: "idle",
   idealErr: null,
@@ -230,7 +237,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     }
   },
 
-  runJudge: async () => {
+  runJudge: async (force = false) => {
     const { cols, judgeProvider } = get();
     const jd = useTargetStore.getState().jd;
     const done = PROVIDER_IDS.filter((p) => cols[p].phase === "done" && cols[p].result);
@@ -240,8 +247,20 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       set({ judgePhase: "error", judgeErr: { title: "Not connected", body: `Connect ${PROVIDERS[judgeProvider].label} first.` } });
       return;
     }
-    set({ judgePhase: "running", judgeErr: null, verdict: null });
     const candidates = done.map((p) => ({ id: p, label: PROVIDERS[p].label, cv: cols[p].result!.cv }));
+    const cacheKey = judgeCacheKey(judgeProvider, models[judgeProvider] ?? "", jd, candidates);
+
+    // Deterministic re-judge: identical inputs reuse the cached verdict instead
+    // of re-sampling the model (unless the caller explicitly forces a fresh run).
+    if (!force) {
+      const cached = judgeCache.get(cacheKey);
+      if (cached) {
+        set({ verdict: cached, judgePhase: "done", judgeErr: null, judgeFromCache: true });
+        return;
+      }
+    }
+
+    set({ judgePhase: "running", judgeErr: null, verdict: null, judgeFromCache: false });
     try {
       const data = await sharedRun<RefineResponse>("judge", "Refine", () =>
         fetch("/api/ai/judge", {
@@ -257,7 +276,9 @@ export const useRefineStore = create<RefineState>((set, get) => ({
         });
         return;
       }
-      set({ verdict: parseVerdict(data.raw, candidates.map((c) => c.id)), judgePhase: "done" });
+      const verdict = parseVerdict(data.raw, candidates.map((c) => c.id));
+      judgeCache.set(cacheKey, verdict);
+      set({ verdict, judgePhase: "done", judgeFromCache: false });
     } catch (e) {
       const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
       set({ judgePhase: "error", judgeErr: { title: "Could not process the verdict", body: msg } });
@@ -306,9 +327,9 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   markApplied: (p) => set({ appliedProvider: p }),
 
   resetRun: () =>
-    set({ started: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, idealPhase: "idle", idealErr: null, appliedProvider: null }),
+    set({ started: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, idealPhase: "idle", idealErr: null, appliedProvider: null }),
 
-  resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null }),
+  resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false }),
 
   reset: () =>
     set({
@@ -322,6 +343,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       judgePhase: "idle",
       verdict: null,
       judgeErr: null,
+      judgeFromCache: false,
       idealPhase: "idle",
       idealErr: null,
       appliedProvider: null,

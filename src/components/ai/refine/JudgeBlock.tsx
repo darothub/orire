@@ -17,6 +17,7 @@ export function JudgeBlock() {
   const judgePhase = useRefineStore((s) => s.judgePhase);
   const verdict = useRefineStore((s) => s.verdict);
   const judgeErr = useRefineStore((s) => s.judgeErr);
+  const judgeFromCache = useRefineStore((s) => s.judgeFromCache);
   const runJudge = useRefineStore((s) => s.runJudge);
   const resetJudge = useRefineStore((s) => s.resetJudge);
   const baseMatch = useRefineStore((s) => s.baseMatch);
@@ -79,6 +80,11 @@ export function JudgeBlock() {
             </div>
           </div>
           {verdict.reasoning && <p className="cmp-reasoning">{verdict.reasoning}</p>}
+          {judgeFromCache && (
+            <p className="cmp-cache-note" title="Identical inputs return the same verdict. Use “Run fresh” to re-sample the model.">
+              ⦿ Deterministic result — reused from identical inputs.
+            </p>
+          )}
           {(() => {
             const w = verdict.winner as ProviderId;
             const wm = cols[w]?.match;
@@ -114,6 +120,7 @@ export function JudgeBlock() {
           <div className="imp-actions">
             <button className="flow-btn primary" onClick={applyWinner}>Apply winner</button>
             <button className="flow-btn ghost" onClick={resetJudge}>Re-judge</button>
+            <button className="flow-btn ghost" onClick={() => void runJudge(true)} title="Re-sample the model, ignoring the deterministic cache">Run fresh</button>
           </div>
         </motion.div>
       )}

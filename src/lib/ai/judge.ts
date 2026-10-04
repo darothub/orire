@@ -53,7 +53,7 @@ export function buildJudgePrompt(jobDescription: string, candidates: JudgeCandid
   const blocks = candidates
     .map(
       (c) =>
-        `CANDIDATE id="${c.id}" (${c.label}):\n\`\`\`json\n${JSON.stringify(c.cv, null, 2)}\n\`\`\``
+        `CANDIDATE id="${c.id}" (${c.label}):\n\`\`\`json\n${JSON.stringify(canonicalCV(c.cv), null, 2)}\n\`\`\``
     )
     .join("\n\n");
   return [
@@ -69,6 +69,71 @@ export function buildJudgePrompt(jobDescription: string, candidates: JudgeCandid
     "Score each candidate and choose the single best match for the job.",
     JUDGE_SCHEMA,
   ].join("\n");
+}
+
+/**
+ * Strip volatile, non-semantic fields (internal item `id`s) so the judge sees
+ * only content. `factGround` re-ids CV items on every refine pass, which would
+ * otherwise change the judge prompt — and any determinism cache key — even when
+ * the actual CV content is identical.
+ */
+export function canonicalCV(cv: CVData): unknown {
+  return stripIds(cv);
+}
+function stripIds(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(stripIds);
+  if (v && typeof v === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      if (k === "id") continue;
+      out[k] = stripIds(val);
+    }
+    return out;
+  }
+  return v;
+}
+
+/** Deterministic JSON with recursively sorted object keys — used for hashing. */
+function stableStringify(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stableStringify).join(",")}]`;
+  if (v && typeof v === "object") {
+    const entries = Object.entries(v as Record<string, unknown>)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([k, val]) => `${JSON.stringify(k)}:${stableStringify(val)}`);
+    return `{${entries.join(",")}}`;
+  }
+  return JSON.stringify(v) ?? "null";
+}
+
+/** FNV-1a 32-bit hash → hex. Small, dependency-free, stable across runs. */
+function fnv1a(str: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+/**
+ * Stable fingerprint of a judge request. Identical inputs (same judge provider,
+ * model, job description and candidate content — ignoring volatile ids) yield
+ * the same key, so a verdict can be cached and re-judging returns the same
+ * result instead of re-sampling the model.
+ */
+export function judgeCacheKey(
+  judgeProvider: string,
+  model: string,
+  jobDescription: string,
+  candidates: JudgeCandidate[],
+): string {
+  const payload = stableStringify({
+    j: judgeProvider,
+    m: model ?? "",
+    jd: jobDescription.trim(),
+    c: candidates.map((c) => ({ id: c.id, cv: canonicalCV(c.cv) })),
+  });
+  return fnv1a(payload);
 }
 
 function clamp(v: unknown): number {
