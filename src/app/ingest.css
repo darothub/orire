@@ -1668,6 +1668,20 @@
 }
 .run-stale strong { display: block; font-size: 13px; color: var(--text); }
 .run-stale span { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.run-stale-text { flex: 1 1 auto; min-width: 0; }
+.run-stale-actions {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  align-self: center;
+}
+.run-stale-actions .flow-btn { white-space: nowrap; }
+@media (max-width: 620px) {
+  .run-stale { flex-wrap: wrap; }
+  .run-stale-actions { flex-direction: row; width: 100%; }
+  .run-stale-actions .flow-btn { flex: 1 1 0; }
+}
 
 /* Step body */
 .refine-stage { position: relative; }

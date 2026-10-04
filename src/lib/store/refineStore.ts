@@ -53,6 +53,10 @@ interface RefineState {
   /** Input fingerprint captured when the last comparison started. If the live
    *  inputs no longer match this, the shown results are stale (req: re-run). */
   runSig: string | null;
+  /** True once the user navigated back to an earlier step after a comparison
+   *  had started. Only then do we offer to re-run — a live edit on the compare
+   *  screen itself never nags, and the user can always keep existing results. */
+  revisited: boolean;
   cols: Record<ProviderId, ColState>;
 
   /** JD match of the ORIGINAL CV (before any refine), computed once per run. */
@@ -88,6 +92,8 @@ interface RefineState {
   /** Record that a provider's refined CV was applied to the editor. */
   markApplied: (p: ProviderId) => void;
   resetRun: () => void;
+  /** Dismiss the stale-inputs prompt and keep the existing comparison as-is. */
+  keepResults: () => void;
   /** Reset only the judge verdict so a different judge can be picked while the
    *  comparison results (cols) stay on screen. */
   resetJudge: () => void;
@@ -113,6 +119,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   runProviders: [],
   started: false,
   runSig: null,
+  revisited: false,
   cols: idleCols(),
 
   baseMatch: null,
@@ -131,7 +138,9 @@ export const useRefineStore = create<RefineState>((set, get) => ({
 
   appliedProvider: null,
 
-  setStep: (step) => set({ step }),
+  // Leaving the Compare step after a run started marks the session "revisited",
+  // which is the only condition under which we later offer to re-run.
+  setStep: (step) => set((s) => ({ step, revisited: s.revisited || (s.started && step !== "run") })),
   toggleRunProvider: (p) =>
     set((s) => ({
       runProviders: s.runProviders.includes(p)
@@ -151,6 +160,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       set({
         started: true,
         runSig: refineRunSignature(runProviders, jd, cv),
+        revisited: false,
         planBlock: null,
         cols: idleCols(),
         baseMatch: jdMatch(cv, jd),
@@ -334,8 +344,10 @@ export const useRefineStore = create<RefineState>((set, get) => ({
 
   markApplied: (p) => set({ appliedProvider: p }),
 
+  keepResults: () => set({ revisited: false }),
+
   resetRun: () =>
-    set({ started: false, runSig: null, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, idealPhase: "idle", idealErr: null, appliedProvider: null }),
+    set({ started: false, runSig: null, revisited: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, idealPhase: "idle", idealErr: null, appliedProvider: null }),
 
   resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false }),
 
@@ -345,6 +357,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       runProviders: [],
       started: false,
       runSig: null,
+      revisited: false,
       planBlock: null,
       cols: idleCols(),
       baseMatch: null,
