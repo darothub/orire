@@ -70,6 +70,16 @@ export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
   providers: buildProviders(),
   callbacks: {
+    // Captcha gate for OAuth (e.g. Google): when Turnstile is enabled, the
+    // client must have passed /api/auth/turnstile first (which sets an HttpOnly
+    // cookie). Credentials sign-in is already gated inside authorize().
+    async signIn({ account }) {
+      if (account && account.provider !== "credentials" && captchaEnabled()) {
+        const jar = await cookies();
+        if (jar.get(CAPTCHA_COOKIE)?.value !== "1") return false;
+      }
+      return true;
+    },
     // Carry the DB user id on the JWT so server actions can scope data per user.
     jwt({ token, user }) {
       if (user?.id) token.id = user.id;

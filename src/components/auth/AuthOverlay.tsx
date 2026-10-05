@@ -168,37 +168,49 @@ export function AuthOverlay() {
   }, [open, status]);
 
   const signup = mode === "signup";
+  const captchaOn = !!TURNSTILE_SITE_KEY;
 
-  const oauth = (id: string) => {
+  // Verify the solved Turnstile token server-side (sets the short-lived cookie
+  // the auth backend checks). Shared by Google OAuth and email sign-in.
+  const passCaptcha = async (): Promise<boolean> => {
+    if (!captchaOn) return true;
+    if (!captchaToken) {
+      setAuthErr("Please complete the verification challenge.");
+      return false;
+    }
+    const vr = await fetch("/api/auth/turnstile", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token: captchaToken }),
+    });
+    const vj = await vr.json().catch(() => ({}));
+    if (!vr.ok || vj?.ok === false) {
+      setAuthErr(vj?.error ? String(vj.error) : "Verification failed. Please try again.");
+      setCaptchaToken(null);
+      setCaptchaReset((n) => n + 1);
+      return false;
+    }
+    return true;
+  };
+
+  const oauth = async (id: string) => {
+    if (busy) return;
     setBusy(id);
+    setAuthErr(null);
+    if (!(await passCaptcha())) {
+      setBusy(null);
+      return;
+    }
     void signIn(id, { callbackUrl: "/" });
   };
 
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password || busy) return;
-    const captchaOn = !!TURNSTILE_SITE_KEY;
-    if (captchaOn && !captchaToken) {
-      setAuthErr("Please complete the verification challenge.");
-      return;
-    }
     setBusy("email");
     setAuthErr(null);
     try {
-      if (captchaOn) {
-        const vr = await fetch("/api/auth/turnstile", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ token: captchaToken }),
-        });
-        const vj = await vr.json().catch(() => ({}));
-        if (!vr.ok || vj?.ok === false) {
-          setAuthErr(vj?.error ? String(vj.error) : "Verification failed. Please try again.");
-          setCaptchaToken(null);
-          setCaptchaReset((n) => n + 1);
-          return;
-        }
-      }
+      if (!(await passCaptcha())) return;
 
       // Sign-up first creates the account, then we sign in with the same creds.
       if (signup) {
@@ -318,6 +330,19 @@ export function AuthOverlay() {
               </motion.div>
             </AnimatePresence>
 
+            {captchaOn && (
+              <div className="auth-captcha-frame">
+                <span className="auth-captcha-label">
+                  <span aria-hidden>🛡</span> Quick security check
+                </span>
+                <TurnstileWidget
+                  onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
+                  onExpire={() => setCaptchaToken(null)}
+                  resetKey={captchaReset}
+                />
+              </div>
+            )}
+
             <div className="auth-oauth">
               {OAUTH.map((p) => {
                 const ready = configured?.includes(p.id) ?? false;
@@ -365,18 +390,6 @@ export function AuthOverlay() {
                 minLength={signup ? 8 : undefined}
                 required
               />
-              {TURNSTILE_SITE_KEY && (
-                <div className="auth-captcha-frame">
-                  <span className="auth-captcha-label">
-                    <span aria-hidden>🛡</span> Quick security check
-                  </span>
-                  <TurnstileWidget
-                    onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
-                    onExpire={() => setCaptchaToken(null)}
-                    resetKey={captchaReset}
-                  />
-                </div>
-              )}
               <button className="auth-submit" type="submit" disabled={busy === "email"}>
                 {busy === "email"
                   ? signup
