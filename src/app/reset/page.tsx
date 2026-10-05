@@ -62,7 +62,7 @@ function ResetForm() {
         <p className="authpage-sub">
           Your password has been changed. You can now sign in with it.
         </p>
-        <Link className="authpage-back" href="/">
+        <Link className="authpage-back" href="/?signin=1">
           ← Back to sign in
         </Link>
       </>
@@ -103,7 +103,7 @@ function ResetForm() {
           {error}
         </p>
       )}
-      <Link className="authpage-back" href="/">
+      <Link className="authpage-back" href="/?signin=1">
         ← Back to sign in
       </Link>
     </>

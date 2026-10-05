@@ -132,6 +132,25 @@ export function AuthOverlay() {
   useEffect(() => {
     if (hasExplored()) setExplored(true);
   }, [setExplored]);
+  // An explicit "sign in" entry point (e.g. the "Back to sign in" links on the
+  // forgot/reset pages) lands on "/?signin=1". Honour it even if the visitor
+  // previously chose to explore: forget that choice, force the overlay open,
+  // then strip the param so a reload doesn't keep re-triggering it.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("signin") === null) return;
+    clearExplored();
+    setExplored(false);
+    if (status !== "authenticated") openAuth("signin");
+    params.delete("signin");
+    const qs = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash,
+    );
+  }, [status, openAuth, setExplored]);
   useEffect(() => {
     if (status !== "authenticated" && !hasExplored()) openAuth("signin");
   }, [status, openAuth]);

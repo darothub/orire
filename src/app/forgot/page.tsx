@@ -45,7 +45,7 @@ export default function ForgotPage() {
               If an account exists for <strong>{email}</strong>, we’ve sent a
               link to reset your password. It expires in 1 hour.
             </p>
-            <Link className="authpage-back" href="/">
+            <Link className="authpage-back" href="/?signin=1">
               ← Back to sign in
             </Link>
           </>
@@ -74,7 +74,7 @@ export default function ForgotPage() {
                 {error}
               </p>
             )}
-            <Link className="authpage-back" href="/">
+            <Link className="authpage-back" href="/?signin=1">
               ← Back to sign in
             </Link>
           </>
