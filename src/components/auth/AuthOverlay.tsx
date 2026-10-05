@@ -48,8 +48,8 @@ const OAUTH = [
  * Full-screen login / sign-up page shown as a dismissible overlay. The backdrop
  * is transparent + blurred so the app's animated ambient (plus the drifting
  * aurora orbs below) shows through, matching the lively feel of the Refine flow.
- * OAuth buttons light up only for providers configured on the server; the email
- * magic-link always works (prints to the dev terminal with no SMTP).
+ * OAuth buttons light up only for providers configured on the server; email +
+ * password sign-in and sign-up are always available.
  */
 export function AuthOverlay() {
   const open = useUIStore((s) => s.authOpen);
@@ -62,7 +62,7 @@ export function AuthOverlay() {
 
   const [configured, setConfigured] = useState<string[] | null>(null);
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaReset, setCaptchaReset] = useState(0);
@@ -84,7 +84,7 @@ export function AuthOverlay() {
         .then((j: Record<string, unknown>) => {
           if (!alive) return;
           const ids = Object.keys(j ?? {});
-          const hasOAuth = ids.some((id) => id !== "nodemailer");
+          const hasOAuth = ids.some((id) => id !== "credentials");
           if (hasOAuth || attempts >= 5) {
             setConfigured(ids);
             return;
@@ -143,7 +143,6 @@ export function AuthOverlay() {
   if (open !== prevOpen) {
     setPrevOpen(open);
     if (!open) {
-      setSent(false);
       setBusy(null);
       setCaptchaToken(null);
       setAuthErr(null);
@@ -170,7 +169,7 @@ export function AuthOverlay() {
 
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || busy) return;
+    if (!email.trim() || !password || busy) return;
     const captchaOn = !!TURNSTILE_SITE_KEY;
     if (captchaOn && !captchaToken) {
       setAuthErr("Please complete the verification challenge.");
@@ -193,10 +192,41 @@ export function AuthOverlay() {
           return;
         }
       }
-      await signIn("nodemailer", { email: email.trim(), redirect: false });
-      setSent(true);
+
+      // Sign-up first creates the account, then we sign in with the same creds.
+      if (signup) {
+        const sr = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password }),
+        });
+        const sj = await sr.json().catch(() => ({}));
+        if (!sr.ok) {
+          setAuthErr(sj?.error ? String(sj.error) : "Could not create your account.");
+          return;
+        }
+      }
+
+      const res = await signIn("credentials", {
+        email: email.trim(),
+        password,
+        redirect: false,
+      });
+      if (res?.error) {
+        setAuthErr(
+          signup
+            ? "Account created, but automatic sign-in failed. Please sign in."
+            : "Invalid email or password.",
+        );
+        if (captchaOn) {
+          setCaptchaToken(null);
+          setCaptchaReset((n) => n + 1);
+        }
+        return;
+      }
+      // Success — the authenticated effect closes the overlay.
     } catch (err) {
-      setAuthErr((err as Error)?.message ?? "Could not send the sign-in link.");
+      setAuthErr((err as Error)?.message ?? "Something went wrong. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -286,92 +316,83 @@ export function AuthOverlay() {
               <li><span aria-hidden>❖</span> 20 standout templates, live preview as you edit</li>
             </ul>
 
-            {sent ? (
-              <motion.div
-                className="auth-sent"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, ease: EASE }}
-              >
-                <div className="auth-sent-ico">✉</div>
-                <strong>Check your inbox</strong>
-                <span>
-                  We sent a sign-in link to <b>{email}</b>. In local dev it prints to the server
-                  terminal.
-                </span>
-                <button className="auth-link" onClick={() => setSent(false)}>
-                  Use a different method
-                </button>
-              </motion.div>
-            ) : (
-              <>
-                <div className="auth-oauth">
-                  {OAUTH.map((p) => {
-                    const ready = configured?.includes(p.id) ?? false;
-                    const loading = busy === p.id;
-                    return (
-                      <button
-                        key={p.id}
-                        className={`auth-oauth-btn ${p.id}`}
-                        onClick={() => ready && oauth(p.id)}
-                        disabled={!!busy || !ready}
-                        title={ready ? `Continue with ${p.label}` : `${p.label} sign-in isn't configured on this server`}
-                      >
-                        <span className="auth-oauth-mark">{p.mark}</span>
-                        <span>
-                          {loading ? "Redirecting…" : `${signup ? "Sign up" : "Continue"} with ${p.label}`}
-                        </span>
-                        {!ready && configured !== null && <span className="auth-oauth-soon">soon</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div className="auth-divider">
-                  <span>or {signup ? "sign up" : "continue"} with email</span>
-                </div>
-
-                <form className="auth-email" onSubmit={submitEmail}>
-                  <input
-                    type="email"
-                    className="auth-input"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    autoComplete="email"
-                    required
-                  />
-                  {TURNSTILE_SITE_KEY && (
-                    <div className="auth-captcha-frame">
-                      <span className="auth-captcha-label">
-                        <span aria-hidden>🛡</span> Quick security check
-                      </span>
-                      <TurnstileWidget
-                        onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
-                        onExpire={() => setCaptchaToken(null)}
-                        resetKey={captchaReset}
-                      />
-                    </div>
-                  )}
-                  <button className="auth-submit" type="submit" disabled={busy === "email"}>
-                    {busy === "email"
-                      ? "Sending…"
-                      : signup
-                        ? "Email me a sign-up link"
-                        : "Email me a sign-in link"}
+            <div className="auth-oauth">
+              {OAUTH.map((p) => {
+                const ready = configured?.includes(p.id) ?? false;
+                const loading = busy === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    className={`auth-oauth-btn ${p.id}`}
+                    onClick={() => ready && oauth(p.id)}
+                    disabled={!!busy || !ready}
+                    title={ready ? `Continue with ${p.label}` : `${p.label} sign-in isn't configured on this server`}
+                  >
+                    <span className="auth-oauth-mark">{p.mark}</span>
+                    <span>
+                      {loading ? "Redirecting…" : `${signup ? "Sign up" : "Continue"} with ${p.label}`}
+                    </span>
+                    {!ready && configured !== null && <span className="auth-oauth-soon">soon</span>}
                   </button>
-                </form>
+                );
+              })}
+            </div>
 
-                {authErr && <p className="auth-error" role="alert">{authErr}</p>}
+            <div className="auth-divider">
+              <span>or {signup ? "sign up" : "continue"} with email</span>
+            </div>
 
-                <p className="auth-fine">
-                  By continuing you agree to use orire responsibly.
-                </p>
-                <button className="auth-skip" onClick={dismiss}>
-                  Explore without an account →
-                </button>
-              </>
-            )}
+            <form className="auth-email" onSubmit={submitEmail}>
+              <input
+                type="email"
+                className="auth-input"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+              <input
+                type="password"
+                className="auth-input"
+                placeholder={signup ? "Create a password (min 8 characters)" : "Password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={signup ? "new-password" : "current-password"}
+                minLength={signup ? 8 : undefined}
+                required
+              />
+              {TURNSTILE_SITE_KEY && (
+                <div className="auth-captcha-frame">
+                  <span className="auth-captcha-label">
+                    <span aria-hidden>🛡</span> Quick security check
+                  </span>
+                  <TurnstileWidget
+                    onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
+                    onExpire={() => setCaptchaToken(null)}
+                    resetKey={captchaReset}
+                  />
+                </div>
+              )}
+              <button className="auth-submit" type="submit" disabled={busy === "email"}>
+                {busy === "email"
+                  ? signup
+                    ? "Creating account…"
+                    : "Signing in…"
+                  : signup
+                    ? "Create account"
+                    : "Sign in"}
+              </button>
+            </form>
+
+            {authErr && <p className="auth-error" role="alert">{authErr}</p>}
+
+            <p className="auth-fine">
+              By continuing you agree to use orire responsibly.
+            </p>
+            <button className="auth-skip" onClick={dismiss}>
+              Explore without an account →
+            </button>
           </motion.div>
         </motion.div>
       )}

@@ -2365,18 +2365,6 @@ body {
 }
 .auth-skip:hover { color: var(--text); background: var(--surface-soft); }
 
-.auth-sent {
-  display: grid; justify-items: center; text-align: center; gap: 8px;
-  padding: 18px 8px 8px;
-}
-.auth-sent-ico {
-  width: 46px; height: 46px; display: grid; place-items: center;
-  border-radius: 14px; background: rgba(139,124,255,0.14); font-size: 22px;
-}
-.auth-sent strong { font-size: 16px; }
-.auth-sent span { font-size: 13px; color: var(--muted); line-height: 1.5; }
-.auth-link { border: none; background: transparent; color: var(--accent-2); font-size: 13px; cursor: pointer; margin-top: 4px; }
-
 @media (max-width: 480px) {
   .auth-card { padding: 24px 20px 20px; border-radius: 18px; }
   .auth-head h1 { font-size: 19px; }

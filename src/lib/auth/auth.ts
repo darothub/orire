@@ -1,8 +1,9 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import Nodemailer from "next-auth/providers/nodemailer";
+import Credentials from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { CAPTCHA_COOKIE, captchaEnabled } from "@/lib/auth/turnstile";
+import { verifyPassword } from "@/lib/auth/password";
 // GitHub OAuth is disabled for now. Re-enable by restoring this import, the
 // provider block below, and the GitHub button in AuthOverlay.
 // import GitHub from "next-auth/providers/github";
@@ -12,43 +13,44 @@ import { prisma } from "@/lib/db/prisma";
 
 /**
  * Auth providers are enabled by environment so local dev needs zero secrets:
- *  - Magic-link email is always on. With no SMTP configured the sign-in URL is
- *    printed to the server terminal (dev). Set EMAIL_SERVER + EMAIL_FROM for real send.
+ *  - Email + password is always on. Accounts are created via /api/auth/signup
+ *    (password hashed with bcrypt) and verified here on sign-in.
  *  - GitHub is disabled for now (hidden in the UI). Google turns on
  *    automatically when its client id/secret are present.
+ *
+ * Note: the Credentials provider requires the JWT session strategy, so this
+ * config uses `strategy: "jwt"` (not database sessions). The Prisma adapter is
+ * still used to persist users/accounts and to link Google OAuth sign-ins.
  */
 function buildProviders(): Provider[] {
   const providers: Provider[] = [
-    Nodemailer({
-      server: process.env.EMAIL_SERVER ?? { host: "localhost", port: 1025 },
-      from: process.env.EMAIL_FROM ?? "orire <no-reply@orire.local>",
-      async sendVerificationRequest({ identifier, url, provider }) {
+    Credentials({
+      id: "credentials",
+      name: "Email and password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(creds) {
+        const email = String(creds?.email ?? "").trim().toLowerCase();
+        const password = String(creds?.password ?? "");
+        if (!email || !password) return null;
+
         // Captcha gate: when Turnstile is enabled, the client must have passed
         // /api/auth/turnstile first (which sets an HttpOnly cookie). No cookie,
-        // no email — this blocks headless magic-link bombing.
+        // no sign-in — this blocks headless credential-stuffing.
         if (captchaEnabled()) {
           const jar = await cookies();
           if (jar.get(CAPTCHA_COOKIE)?.value !== "1") {
-            throw new Error("Captcha verification required before sending a sign-in link.");
+            throw new Error("Captcha verification required before signing in.");
           }
         }
-        if (process.env.EMAIL_SERVER) {
-          // Real SMTP configured — send via nodemailer default transport.
-          const nodemailer = await import("nodemailer");
-          const transport = nodemailer.createTransport(provider.server);
-          await transport.sendMail({
-            to: identifier,
-            from: provider.from,
-            subject: "Your orire sign-in link",
-            text: `Sign in to orire:\n${url}\n`,
-            html: `<p>Sign in to <strong>orire</strong>:</p><p><a href="${url}">${url}</a></p>`,
-          });
-          return;
-        }
-        // Dev fallback: surface the link in the terminal.
-        console.log(
-          `\n\u001b[35m\u2727 orire sign-in link for ${identifier}:\u001b[0m\n${url}\n`,
-        );
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user?.passwordHash) return null;
+        const ok = await verifyPassword(password, user.passwordHash);
+        if (!ok) return null;
+        return { id: user.id, email: user.email, name: user.name, image: user.image };
       },
     }),
   ];
@@ -65,14 +67,17 @@ function buildProviders(): Provider[] {
 
 export const authConfig: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "database" },
+  session: { strategy: "jwt" },
   providers: buildProviders(),
-  pages: { verifyRequest: "/?checkEmail=1" },
   callbacks: {
-    // Expose the DB user id on the session (needed by server actions that scope
-    // data per user). Not included by default in the session payload.
-    session({ session, user }) {
-      if (session.user) session.user.id = user.id;
+    // Carry the DB user id on the JWT so server actions can scope data per user.
+    jwt({ token, user }) {
+      if (user?.id) token.id = user.id;
+      return token;
+    },
+    // Expose the user id on the session (read by server actions via auth()).
+    session({ session, token }) {
+      if (session.user && token.id) session.user.id = String(token.id);
       return session;
     },
   },
