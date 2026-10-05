@@ -257,6 +257,7 @@ export function AuthOverlay() {
           <Showcase />
           <div className="auth-scrim" aria-hidden />
 
+          <div className="auth-stage">
           <motion.div
             className="auth-card"
             initial={{ opacity: 0, y: 24, scale: 0.96, filter: "blur(10px)" }}
@@ -316,12 +317,6 @@ export function AuthOverlay() {
                 </p>
               </motion.div>
             </AnimatePresence>
-
-            <ul className="auth-usps" aria-label="What orire does">
-              <li><span aria-hidden>✎</span> Rebrand any CV into a clean, ATS-ready layout</li>
-              <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
-              <li><span aria-hidden>❖</span> 20 standout templates, live preview as you edit</li>
-            </ul>
 
             <div className="auth-oauth">
               {OAUTH.map((p) => {
@@ -403,6 +398,13 @@ export function AuthOverlay() {
               Explore without an account →
             </button>
           </motion.div>
+
+          <ul className="auth-usps" aria-label="What orire does">
+            <li><span aria-hidden>✎</span> Rebrand any CV into a clean, ATS-ready layout</li>
+            <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
+            <li><span aria-hidden>❖</span> 20 standout templates, live preview as you edit</li>
+          </ul>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

@@ -2096,8 +2096,13 @@ body {
     padding-left: clamp(48px, 8vw, 150px);
   }
 }
-.auth-overlay > .auth-card {
+.auth-overlay > .auth-stage {
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: min(440px, 100%);
 }
 
 /* ============ Living template showcase (parallax wall of CVs) ============ */
@@ -2177,6 +2182,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .sc-up, .sc-down { animation: none !important; }
 }
+
+.auth-stage { max-height: calc(100dvh - 48px); }
+.auth-stage .auth-card { max-height: none; flex: 0 1 auto; min-height: 0; overflow-y: auto; }
 
 .auth-card {
   position: relative;
@@ -2345,8 +2353,13 @@ body {
 }
 .auth-fine { font-size: 11.5px; color: var(--faint); line-height: 1.5; margin: 16px 0 12px; }
 .auth-usps {
-  list-style: none; margin: 2px 0 18px; padding: 0;
-  display: flex; flex-direction: column; gap: 7px;
+  list-style: none; margin: 0; padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 9px;
+  border-radius: 16px;
+  border: 1px solid var(--surface-hover);
+  background: color-mix(in oklab, var(--bg, #070a0f) 55%, transparent);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
 }
 .auth-usps li {
   display: flex; align-items: center; gap: 9px;
