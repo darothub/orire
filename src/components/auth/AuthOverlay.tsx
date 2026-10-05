@@ -25,6 +25,14 @@ function markExplored() {
     /* ignore */
   }
 }
+/** Forget the "explored" choice so the sign-in gate shows again (e.g. after sign out). */
+export function clearExplored() {
+  try {
+    window.localStorage.removeItem(EXPLORED_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 /** OAuth providers we surface as one-tap buttons, in display order. */
 // GitHub is disabled for now. To bring it back: restore the `import GitHub` and

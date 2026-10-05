@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
 import { useUIStore } from "@/lib/store/uiStore";
+import { clearExplored } from "@/components/auth/AuthOverlay";
 
 /**
  * Account control in the app bar. Signed out → opens the full-screen login /
@@ -52,7 +53,14 @@ export function AccountButton() {
                 <span>{label}</span>
               </div>
               <div className="acct-pop-note">✓ Your CV auto-saves to the cloud.</div>
-              <button className="flow-btn ghost sm" onClick={() => void signOut()}>
+              <button
+                className="flow-btn ghost sm"
+                onClick={() => {
+                  setOpen(false);
+                  clearExplored();
+                  void signOut({ callbackUrl: "/" });
+                }}
+              >
                 Sign out
               </button>
             </motion.div>
