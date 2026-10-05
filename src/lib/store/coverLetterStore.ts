@@ -6,15 +6,10 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { sharedRun } from "@/lib/store/runStore";
-import { PROVIDERS, needsKey, type ProviderId, type RefineResponse } from "@/lib/ai/types";
+import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { coerceCoverLetter, type CoverLetterTone } from "@/lib/ai/coverLetter";
 import { RefineParseError } from "@/lib/ai/guardrails";
 import type { CoverLetter } from "@/lib/cv/coverLetter";
-
-function providerReady(p: ProviderId, keys: Record<ProviderId, string>): boolean {
-  if (!needsKey(p)) return true;
-  return Boolean(keys[p]?.trim());
-}
 
 export type CLPhase = "idle" | "running" | "error" | "done";
 export interface CLError {
@@ -88,16 +83,10 @@ export const useCoverLetterStore = create<CoverLetterState>((set) => ({
       set({ phase: "error", error: { title: "No job description", body: "Add a job description before generating a cover letter." } });
       return;
     }
-    const { keys, models } = useSettingsStore.getState();
+    const { models } = useSettingsStore.getState();
     const { runProviders, judgeProvider } = useRefineStore.getState();
     // Prefer a provider already used in the compare; fall back to the judge provider.
-    const provider =
-      runProviders.find((p) => providerReady(p, keys)) ??
-      (providerReady(judgeProvider, keys) ? judgeProvider : undefined);
-    if (!provider) {
-      set({ phase: "error", error: { title: "Not connected", body: "Connect an assistant to generate a cover letter." } });
-      return;
-    }
+    const provider = runProviders[0] ?? judgeProvider;
 
     const cv = useCVStore.getState().cv;
     set({ phase: "running", error: null, provider });
@@ -108,7 +97,6 @@ export const useCoverLetterStore = create<CoverLetterState>((set) => ({
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             provider,
-            apiKey: keys[provider] ?? "",
             model: models[provider],
             cv,
             jobDescription: jd,

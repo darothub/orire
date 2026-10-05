@@ -76,7 +76,7 @@ test.describe("export", () => {
 });
 
 test.describe("connect (AI providers)", () => {
-  test("lists bring-your-own-key providers and no removed surfaces", async ({ appPage }) => {
+  test("lists managed AI providers and no removed surfaces", async ({ appPage }) => {
     await stubAI(appPage);
     await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Connect AI" }).click();
     await expect(appPage.getByRole("heading", { name: "Connect AI", exact: true })).toBeVisible();

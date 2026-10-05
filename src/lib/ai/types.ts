@@ -1,10 +1,10 @@
 /**
  * orire — AI layer types.
  *
- * BYO-key model: the user supplies their own provider API key. Keys live only
- * in the browser (localStorage) and are forwarded per-request to our local
- * Next.js route, which proxies the provider call. No key is ever persisted
- * server-side or sent to any third party other than the chosen provider.
+ * Managed-key model: orire holds the provider API keys server-side. The client
+ * never sends a key; it only names the provider + model, and the Next.js route
+ * resolves orire's own key for that provider. Plan gating (not key possession)
+ * governs which models an account may run.
  */
 
 export type ProviderId = "openai" | "anthropic";
@@ -12,8 +12,6 @@ export type ProviderId = "openai" | "anthropic";
 export interface ProviderMeta {
   id: ProviderId;
   label: string;
-  /** Human label for the key, e.g. "sk-…". */
-  keyHint: string;
   defaultModel: string;
   models: string[];
 }
@@ -22,7 +20,6 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   openai: {
     id: "openai",
     label: "OpenAI (ChatGPT)",
-    keyHint: "sk-…",
     defaultModel: "gpt-4o",
     models: [
       "gpt-4o",
@@ -38,7 +35,6 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   anthropic: {
     id: "anthropic",
     label: "Anthropic (Claude)",
-    keyHint: "sk-ant-…",
     defaultModel: "claude-3-7-sonnet-latest",
     models: [
       "claude-3-7-sonnet-latest",
@@ -51,15 +47,9 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   },
 };
 
-/** Every provider authenticates with a BYO API key. */
-export function needsKey(_provider: ProviderId): boolean {
-  return true;
-}
-
 /** Request payload posted to /api/ai/refine. */
 export interface RefineRequest {
   provider: ProviderId;
-  apiKey: string;
   model: string;
   jobDescription: string;
   /** The current CV — the sole source of truth for facts. */

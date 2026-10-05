@@ -1,15 +1,13 @@
 /**
- * orire — subscription plan policy (client-side, BYO-key model).
+ * orire — subscription plan policy.
  *
- * orire runs on the user's own provider keys/CLI logins, so "plans" here gate
- * PRODUCT capability, not our token spend: how many assistants can run at once
- * (single vs parallel compare), how many refines per month, and which model
- * tiers are usable without bringing your own key. The economics behind these
- * limits are pressure-tested in the pricing model — premium models are the
- * expensive ones, so on cheaper plans they require a BYO key.
+ * orire runs on its own managed provider keys, so "plans" gate both PRODUCT
+ * capability (how many assistants run at once, refines per month) and our token
+ * spend (which model tiers an account may run on our dime). Premium models are
+ * the expensive ones, so only the top plan includes them.
  *
  * This module is pure/deterministic and unit-tested; enforcement lives in the
- * refine store + UI, which read these entitlements.
+ * refine route + UI, which read these entitlements.
  */
 
 import type { ProviderId } from "@/lib/ai/types";
@@ -31,10 +29,8 @@ export interface Plan {
   allowCompare: boolean;
   /** Monthly refine/compare runs; null = effectively unlimited (fair-use). */
   monthlyRefines: number | null;
-  /** Model tiers usable WITHOUT a BYO key on this plan. */
+  /** Model tiers this plan may run (on orire's managed keys). */
   includedTiers: ModelTier[];
-  /** When true, premium-tier models are allowed only via a BYO key/CLI login. */
-  premiumRequiresKey: boolean;
   /** Headline entitlements for the plan card. */
   perks: string[];
 }
@@ -49,7 +45,6 @@ export const PLANS: Record<PlanId, Plan> = {
     allowCompare: false,
     monthlyRefines: 3,
     includedTiers: ["budget"],
-    premiumRequiresKey: true,
     perks: ["5 templates", "3 JD refines / mo", "Single assistant", "Watermarked export"],
   },
   pro: {
@@ -61,8 +56,7 @@ export const PLANS: Record<PlanId, Plan> = {
     allowCompare: true,
     monthlyRefines: 30,
     includedTiers: ["budget", "mid"],
-    premiumRequiresKey: true,
-    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + judge", "Cover letters", "Clean PDF, all page modes", "BYO key unlocks premium"],
+    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + judge", "Cover letters", "Clean PDF, all page modes"],
   },
   career: {
     id: "career",
@@ -72,9 +66,8 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 3,
     allowCompare: true,
     monthlyRefines: null,
-    includedTiers: ["budget", "mid"],
-    premiumRequiresKey: true,
-    perks: ["Unlimited refines (fair-use)", "Parallel compare + judge", "JD simulation", "DOCX + company history", "BYO key unlocks premium"],
+    includedTiers: ["budget", "mid", "premium"],
+    perks: ["Unlimited refines (fair-use)", "Premium models included", "Parallel compare + judge", "JD simulation", "DOCX + company history"],
   },
 };
 
@@ -86,9 +79,8 @@ const PREMIUM_PATTERNS = [/opus/i, /gpt-4(?:\.\d+)?$/i, /gpt-4-turbo/i, /\bo3\b/
 const BUDGET_PATTERNS = [/mini/i, /nano/i, /haiku/i, /flash/i, /small/i, /-lite/i];
 
 /**
- * Classify a model into a cost tier. CLI providers that expose no explicit
- * model (empty string) default to "mid" — the assistant picks its own model and
- * cost is the user's own login, so it is never blocked as "premium on our dime".
+ * Classify a model into a cost tier. An empty model string defaults to "mid"
+ * so it is never blocked as "premium" by accident.
  */
 export function modelTier(provider: ProviderId, model: string): ModelTier {
   const m = (model ?? "").trim();
@@ -106,25 +98,20 @@ export interface ModelAllowance {
 }
 
 /**
- * Whether a given provider+model may run on `plan`, considering whether the
- * user has supplied their own key/CLI login (`hasOwnKey`). Premium models on
- * key-gated plans are allowed ONLY when the user brings their own key.
+ * Whether a given provider+model may run on `plan`. A model is allowed iff its
+ * cost tier is included in the plan (orire runs it on its own managed keys).
  */
 export function modelAllowedOnPlan(
   planId: PlanId,
   provider: ProviderId,
-  model: string,
-  hasOwnKey: boolean
+  model: string
 ): ModelAllowance {
   const plan = PLANS[planId];
   const tier = modelTier(provider, model);
   if (plan.includedTiers.includes(tier)) return { allowed: true, tier };
-  if (tier === "premium" && plan.premiumRequiresKey && hasOwnKey) {
-    return { allowed: true, tier };
-  }
   const reason =
     tier === "premium"
-      ? `${plan.label} needs your own API key to run premium models like “${model}”.`
+      ? `${plan.label} doesn’t include premium models like “${model}”. Upgrade to Career to run them.`
       : `${plan.label} doesn’t include ${tier}-tier models.`;
   return { allowed: false, tier, reason };
 }

@@ -2,15 +2,16 @@
  * orire — AI refine proxy route (Node runtime).
  *
  * Receives the user's chosen provider + CV + job description, dispatches to the
- * provider server-side (BYO-key HTTPS), and returns the raw model text.
+ * provider server-side on orire's managed key, and returns the raw model text.
  * Provider errors are returned VERBATIM (req 12).
  */
 
 import { NextResponse } from "next/server";
 import type { CVData } from "@/lib/cv/schema";
 import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
-import { PROVIDERS, needsKey, type ProviderId, type RefineResponse } from "@/lib/ai/types";
+import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
+import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan } from "@/lib/plan/plan";
 
@@ -18,7 +19,6 @@ export const runtime = "nodejs";
 
 interface Body {
   provider?: ProviderId;
-  apiKey?: string;
   model?: string;
   jobDescription?: string;
   cv?: CVData;
@@ -41,11 +41,10 @@ export async function POST(req: Request) {
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
-  // Personal BYO key, or the caller's team pooled key (Phase B3b) when signed
-  // in and seated. The pooled secret is resolved server-side and never sent back.
-  const apiKey = (body.apiKey ?? "").trim();
-  if (needsKey(provider) && !apiKey) {
-    return NextResponse.json(fail(provider, "Missing API key. Add it in Settings."), { status: 400 });
+  // Managed key: orire holds the provider key server-side.
+  const apiKey = serverKeyFor(provider);
+  if (!apiKey) {
+    return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   const model = (body.model ?? "").trim();
   if (!model) {
@@ -72,10 +71,7 @@ export async function POST(req: Request) {
   }
 
   // Per-column model-tier enforcement, driven by the plan attested in the token.
-  // `hasOwnKey` is a BYO key on this request — premium models on key-gated plans
-  // need it.
-  const hasOwnKey = apiKey.length > 0;
-  const modelGate = modelAllowedOnPlan(check.payload!.plan, provider, model, hasOwnKey);
+  const modelGate = modelAllowedOnPlan(check.payload!.plan, provider, model);
   if (!modelGate.allowed) {
     return NextResponse.json(
       fail(provider, modelGate.reason ?? "That model isn’t available on your plan.", 402),

@@ -126,8 +126,8 @@ export function PlanPanel() {
               ? "Subscribe securely via Stripe. Manage or cancel anytime from the billing portal."
               : "Switch instantly to try each tier’s limits — enforced server-side against your account."
             : "Sign in to save your plan. Switching here is a local trial until you do."}
-          {" "}Premium models stay behind your own key on Free/Pro/Career — that’s what keeps the
-          flat price sustainable.
+          {" "}Premium models are included on Career; Free and Pro run on budget and mid-tier
+          models — that’s what keeps the flat price sustainable.
         </span>
       </div>
 

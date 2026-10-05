@@ -72,8 +72,8 @@ function ConnectView() {
         <div>
           <h2>Connect AI</h2>
           <p>
-            Bring your own key. Nothing is stored server-side — keys live only in this browser and
-            are sent straight to the provider you pick.
+            Assistants are provided by orire — no API key needed. Pick your default assistant and
+            the models to run; your plan sets which models are available.
           </p>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore, type ImportMode } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import { PROVIDERS, needsKey } from "@/lib/ai/types";
+import { PROVIDERS } from "@/lib/ai/types";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import { mergeParsedCVs, type MergeResult, type BasicsField } from "@/lib/ingest/merge";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
@@ -28,7 +28,6 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const cv = useCVStore((s) => s.cv);
   const applyImport = useCVStore((s) => s.applyImport);
   const provider = useSettingsStore((s) => s.provider);
-  const keys = useSettingsStore((s) => s.keys);
   const models = useSettingsStore((s) => s.models);
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -42,8 +41,6 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const inputRef = useRef<HTMLInputElement>(null);
   const facts = countFacts(cv);
   const hasContent = facts.experience + facts.education + facts.skills + facts.projects > 0;
-  const apiKey = keys[provider]?.trim() ?? "";
-  const hasAIKey = needsKey(provider) ? apiKey.length > 0 : true;
   const providerLabel = PROVIDERS[provider].label;
 
   const upload = useCallback(async (files: FileList | File[]) => {
@@ -76,18 +73,18 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const apply = async (r: FileResult, mode: ImportMode, i: number) => {
     setAiError(null);
     setApplied(null);
-    // No key connected → deterministic heuristic parse (fallback path).
-    if (!hasAIKey || !r.text.trim()) {
+    // Empty extracted text → deterministic heuristic parse (fallback path).
+    if (!r.text.trim()) {
       applyHeuristic(r, mode, "");
       return;
     }
-    // Key connected → structure the raw text with the connected assistant.
+    // Structure the raw text with the selected managed assistant.
     setAiBusy(i);
     try {
       const res = await fetch("/api/ai/structure", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, apiKey, model: models[provider], text: r.text }),
+        body: JSON.stringify({ provider, model: models[provider], text: r.text }),
       });
       const data = (await res.json()) as StructureResponse;
       if (data.ok && data.parsed) {
@@ -134,9 +131,8 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
     <div className="step-body">
       <p className="step-hint">
         Upload one or more existing CVs (PDF or DOCX). We extract the text and map it into your working CV — the
-        source of facts for refining. {hasAIKey
-          ? `With ${providerLabel} connected, “Replace editor (AI)” structures the CV accurately; the built-in parser is used as a fallback.`
-          : "Connect an assistant in step 1 for far more accurate structuring."}
+        source of facts for refining. With {providerLabel}, “Replace editor (AI)” structures the CV
+        accurately; the built-in parser is used as a fallback.
       </p>
 
       {hasContent && (
@@ -274,10 +270,10 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
                   </div>
                   <div className="imp-actions">
                     <button className="imp-btn primary" disabled={aiBusy === i} onClick={() => apply(r, "replace", i)}>
-                      {aiBusy === i ? "Structuring…" : hasAIKey ? "Replace editor (AI)" : "Replace editor"}
+                      {aiBusy === i ? "Structuring…" : "Replace editor (AI)"}
                     </button>
                     <button className="imp-btn" disabled={aiBusy === i} onClick={() => apply(r, "merge", i)}>Append</button>
-                    {hasAIKey && <span className="imp-ai-hint">via {providerLabel}</span>}
+                    <span className="imp-ai-hint">via {providerLabel}</span>
                   </div>
                   {aiError?.i === i && (
                     <div className="imp-error"><strong>{providerLabel} error (fell back to built-in parser)</strong><pre>{aiError.message}</pre></div>

@@ -285,8 +285,8 @@ export function AuthOverlay() {
                 </form>
 
                 <p className="auth-fine">
-                  Your AI API keys never leave your browser. By continuing you agree to use orire
-                  responsibly.
+                  AI assistants are built in — no API key needed. By continuing you agree to use
+                  orire responsibly.
                 </p>
                 <button className="auth-skip" onClick={dismiss}>
                   Explore without an account →

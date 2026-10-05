@@ -26,7 +26,7 @@ const VIEW_META: { view: WorkspaceView; label: string; hint: string; icon: strin
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
   { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
   { view: "rate", label: "Rate", hint: "Score initial → final", icon: "★" },
-  { view: "connect", label: "Connect AI", hint: "Providers & API keys", icon: "⚙" },
+  { view: "connect", label: "Connect AI", hint: "Providers & models", icon: "⚙" },
 ];
 
 /** ⌘K / Ctrl-K command palette: jump to any workspace, switch template, or fire

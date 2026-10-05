@@ -2,10 +2,8 @@
 
 import { motion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
-import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useRunStore } from "@/lib/store/runStore";
-import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 
 type Badge = "warn" | "busy" | null;
 
@@ -28,7 +26,7 @@ const PRIMARY: RailItem[] = [
 ];
 
 const FOOTER: RailItem[] = [
-  { view: "connect", label: "Connect AI", hint: "Providers & API keys", icon: "⚙" },
+  { view: "connect", label: "Connect AI", hint: "Assistants & models", icon: "⚙" },
 ];
 
 function RailButton({ item, badge }: { item: RailItem; badge?: Badge }) {
@@ -58,13 +56,11 @@ function RailButton({ item, badge }: { item: RailItem; badge?: Badge }) {
 }
 
 export function WorkspaceRail() {
-  const keys = useSettingsStore((s) => s.keys);
   const cols = useRefineStore((s) => s.cols);
   const judgePhase = useRefineStore((s) => s.judgePhase);
   const runProviders = useRefineStore((s) => s.runProviders);
   const active = useRunStore((s) => s.active);
 
-  const noKeys = !PROVIDER_IDS.some((p) => keys[p]?.trim());
   const simBusy = Boolean(active["simulate"]);
   const refineBusy =
     judgePhase === "running" ||
@@ -73,7 +69,6 @@ export function WorkspaceRail() {
     runProviders.some((p) => cols[p]?.phase === "running");
 
   const badgeFor = (v: WorkspaceView): Badge => {
-    if (v === "connect") return noKeys ? "warn" : null;
     if (v === "refine") return refineBusy ? "busy" : null;
     if (v === "target") return simBusy || active["retone"] ? "busy" : null;
     return null;
@@ -95,5 +90,3 @@ export function WorkspaceRail() {
     </nav>
   );
 }
-
-const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];

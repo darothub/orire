@@ -6,7 +6,7 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRebrandStore } from "@/lib/store/rebrandStore";
 import { useViewStore } from "@/lib/store/viewStore";
-import { PROVIDERS, needsKey } from "@/lib/ai/types";
+import { PROVIDERS } from "@/lib/ai/types";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { mergeParsedCVs } from "@/lib/ingest/merge";
 import { diffScores, grade } from "@/lib/cv/rating";
@@ -44,7 +44,6 @@ function UploadStep() {
   const cv = useCVStore((s) => s.cv);
   const rawProvider = useSettingsStore((s) => s.provider);
   const provider = rawProvider in PROVIDERS ? rawProvider : "openai";
-  const keys = useSettingsStore((s) => s.keys);
   const models = useSettingsStore((s) => s.models);
   const setDraft = useRebrandStore((s) => s.setDraft);
 
@@ -56,8 +55,6 @@ function UploadStep() {
   const [aiError, setAiError] = useState<{ i: number; message: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const apiKey = keys[provider]?.trim() ?? "";
-  const hasAIKey = needsKey(provider) ? apiKey.length > 0 : true;
   const providerLabel = PROVIDERS[provider].label;
   const facts = countFacts(cv);
   const hasWorking = facts.experience + facts.education + facts.skills + facts.projects > 0;
@@ -86,8 +83,8 @@ function UploadStep() {
   const rebrandFrom = async (r: FileResult, i: number) => {
     if (!r.parsed) return;
     setAiError(null);
-    // No key (or no text) → deterministic heuristic parse.
-    if (!hasAIKey || !r.text.trim()) {
+    // No extracted text → deterministic heuristic parse.
+    if (!r.text.trim()) {
       setDraft(cvDataFromParsed(r.parsed), r.name, "built-in parser");
       return;
     }
@@ -96,7 +93,7 @@ function UploadStep() {
       const res = await fetch("/api/ai/structure", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ provider, apiKey, model: models[provider], text: r.text }),
+        body: JSON.stringify({ provider, model: models[provider], text: r.text }),
       });
       const data = (await res.json()) as StructureResponse;
       if (data.ok && data.parsed) {
@@ -180,7 +177,7 @@ function UploadStep() {
           <div className="imp-drop-inner">
             <span className="imp-drop-ico">⇪</span>
             <strong>{dragOver ? "Drop to re-brand" : "Drag & drop, or click to choose files"}</strong>
-            <span className="imp-drop-sub">PDF · DOCX · {hasAIKey ? `structured by ${providerLabel}` : "built-in parser"}</span>
+            <span className="imp-drop-sub">PDF · DOCX · structured by {providerLabel}</span>
           </div>
         </div>
 
@@ -218,9 +215,9 @@ function UploadStep() {
                     </div>
                     <div className="imp-actions">
                       <button className="imp-btn primary" disabled={aiBusy === i} onClick={() => rebrandFrom(r, i)}>
-                        {aiBusy === i ? "Restructuring…" : hasAIKey ? "Re-brand this (AI)" : "Re-brand this"}
+                        {aiBusy === i ? "Restructuring…" : "Re-brand this (AI)"}
                       </button>
-                      {hasAIKey && <span className="imp-ai-hint">via {providerLabel}</span>}
+                      <span className="imp-ai-hint">via {providerLabel}</span>
                     </div>
                     {aiError?.i === i && (
                       <div className="imp-error"><strong>{providerLabel} error (fell back to built-in parser)</strong><pre>{aiError.message}</pre></div>

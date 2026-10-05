@@ -33,8 +33,6 @@ import { signRunToken } from "@/lib/plan/runToken";
 export interface RunSelection {
   provider: ProviderId;
   model: string;
-  /** Client claims it has its own key/CLI for this provider (BYO premium path). */
-  hasOwnKey: boolean;
 }
 
 export interface AuthorizeResult {

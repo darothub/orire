@@ -12,8 +12,9 @@
 
 import { NextResponse } from "next/server";
 import { COVER_LETTER_SYSTEM, buildCoverLetterPrompt, type CoverLetterTone } from "@/lib/ai/coverLetter";
-import { PROVIDERS, needsKey, type ProviderId, type RefineResponse } from "@/lib/ai/types";
+import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
+import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import type { CVData } from "@/lib/cv/schema";
 import { auth } from "@/lib/auth/auth";
 import { getPlanId } from "@/lib/entitlement/entitlement";
@@ -23,7 +24,6 @@ export const runtime = "nodejs";
 
 interface Body {
   provider?: ProviderId;
-  apiKey?: string;
   model?: string;
   cv?: CVData;
   jobDescription?: string;
@@ -58,9 +58,9 @@ export async function POST(req: Request) {
     );
   }
 
-  const apiKey = (body.apiKey ?? "").trim();
-  if (needsKey(provider) && !apiKey) {
-    return NextResponse.json(fail(provider, "Missing API key. Add it in Settings."), { status: 400 });
+  const apiKey = serverKeyFor(provider);
+  if (!apiKey) {
+    return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   const model = (body.model ?? "").trim();
   if (!model) {

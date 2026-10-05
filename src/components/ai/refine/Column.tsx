@@ -13,7 +13,6 @@ import { gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
 import { countFacts, type FactCounts } from "./shared";
 
 export function Column({ provider, state, before, applied, onApply }: { provider: ProviderId; state: ColState; before: FactCounts; applied: boolean; onApply: () => void }) {
-  const setView = useViewStore((s) => s.setView);
   const ideal = useTargetStore((s) => s.ideal);
   const baseMatch = useRefineStore((s) => s.baseMatch);
   const meta = PROVIDERS[provider];
@@ -27,13 +26,9 @@ export function Column({ provider, state, before, applied, onApply }: { provider
           {state.phase === "running" && "running…"}
           {state.phase === "done" && "done"}
           {state.phase === "error" && "error"}
-          {state.phase === "nokey" && "no key"}
         </span>
       </div>
       {state.phase === "running" && <div className="cmp-loading"><span className="cmp-spinner" /> Contacting {meta.label}…</div>}
-      {state.phase === "nokey" && (
-        <div className="cmp-empty">No API key for {meta.label}. <button className="ai-link" onClick={() => setView("connect")}>Connect</button></div>
-      )}
       {state.phase === "error" && state.error && (
         <div className="imp-error"><strong>{state.error.title}{state.error.status ? ` (HTTP ${state.error.status})` : ""}</strong><pre>{state.error.body}</pre></div>
       )}

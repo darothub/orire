@@ -6,7 +6,7 @@ import { usePlanStore } from "@/lib/store/planStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { sharedRun } from "@/lib/store/runStore";
-import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { authorizeRefineRun } from "@/app/actions/refine";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
@@ -28,7 +28,7 @@ export const REFINE_STEPS: { key: RefineStep; label: string }[] = [
   { key: "run", label: "Compare" },
 ];
 
-export type ColPhase = "idle" | "nokey" | "running" | "error" | "done";
+export type ColPhase = "idle" | "running" | "error" | "done";
 export interface ColError {
   title: string;
   body: string;
@@ -104,11 +104,6 @@ const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
  *  fingerprint of (judge provider, model, JD, canonical candidate content) so
  *  re-judging the same inputs returns the same verdict instead of re-sampling. */
 const judgeCache = new Map<string, JudgeVerdict>();
-/** A provider is runnable when it has a BYO key (or needs none). */
-function providerReady(p: ProviderId, keys: Record<ProviderId, string>): boolean {
-  if (!needsKey(p)) return true;
-  return Boolean(keys[p]?.trim());
-}
 const idleCols = (): Record<ProviderId, ColState> =>
   Object.fromEntries(PROVIDER_IDS.map((p) => [p, { phase: "idle" as ColPhase }])) as Record<ProviderId, ColState>;
 
@@ -151,7 +146,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const { runProviders } = get();
     const jd = useTargetStore.getState().jd;
     if (!jd.trim() || runProviders.length === 0) return;
-    const { keys, models } = useSettingsStore.getState();
+    const { models } = useSettingsStore.getState();
     const cv = useCVStore.getState().cv;
 
     const resetStarted = () =>
@@ -170,16 +165,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
         idealErr: null,
       });
 
-    // Don't spend a refine on a run where no selected assistant is usable.
-    const anyReady = runProviders.some((p) => providerReady(p, keys));
-    if (!anyReady) {
-      resetStarted();
-      for (const provider of runProviders) {
-        set((s) => ({ cols: { ...s.cols, [provider]: { phase: "nokey" } } }));
-      }
-      return;
-    }
-
     // ---- Server-enforced gate (Phase B1): the server checks plan + usage in
     // Postgres, consumes one refine, and returns a signed run token that
     // /api/ai/refine requires. This is the enforceable version of the gate —
@@ -187,7 +172,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const selections = runProviders.map((provider) => ({
       provider,
       model: models[provider] ?? "",
-      hasOwnKey: Boolean(keys[provider]?.trim()),
     }));
     let authz;
     try {
@@ -211,17 +195,13 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     usePlanStore.getState().recordRefine();
 
     for (const provider of runProviders) {
-      if (!providerReady(provider, keys)) {
-        set((s) => ({ cols: { ...s.cols, [provider]: { phase: "nokey" } } }));
-        continue;
-      }
       set((s) => ({ cols: { ...s.cols, [provider]: { phase: "running" } } }));
       void (async () => {
         try {
           const res = await fetch("/api/ai/refine", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd, cv, runToken }),
+            body: JSON.stringify({ provider, model: models[provider], jobDescription: jd, cv, runToken }),
           });
           const data = (await res.json()) as RefineResponse;
           if (!data.ok || !data.raw) {
@@ -258,11 +238,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const jd = useTargetStore.getState().jd;
     const done = PROVIDER_IDS.filter((p) => cols[p].phase === "done" && cols[p].result);
     if (done.length < 2) return;
-    const { keys, models } = useSettingsStore.getState();
-    if (!providerReady(judgeProvider, keys)) {
-      set({ judgePhase: "error", judgeErr: { title: "Not connected", body: `Connect ${PROVIDERS[judgeProvider].label} first.` } });
-      return;
-    }
+    const { models } = useSettingsStore.getState();
     const candidates = done.map((p) => ({ id: p, label: PROVIDERS[p].label, cv: cols[p].result!.cv }));
     const cacheKey = judgeCacheKey(judgeProvider, models[judgeProvider] ?? "", jd, candidates);
 
@@ -282,7 +258,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
         fetch("/api/ai/judge", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ provider: judgeProvider, apiKey: keys[judgeProvider] ?? "", model: models[judgeProvider], jobDescription: jd, candidates }),
+          body: JSON.stringify({ provider: judgeProvider, model: models[judgeProvider], jobDescription: jd, candidates }),
         }).then((r) => r.json() as Promise<RefineResponse>),
       );
       if (!data.ok || !data.raw) {
@@ -305,22 +281,16 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const { runProviders, judgeProvider } = get();
     const jd = useTargetStore.getState().jd;
     if (!jd.trim()) return;
-    const { keys, models } = useSettingsStore.getState();
+    const { models } = useSettingsStore.getState();
     // Prefer a provider already used in the run; fall back to the judge provider.
-    const provider =
-      runProviders.find((p) => providerReady(p, keys)) ??
-      (providerReady(judgeProvider, keys) ? judgeProvider : undefined);
-    if (!provider) {
-      set({ idealPhase: "error", idealErr: { title: "Not connected", body: "Connect an assistant to simulate the ideal candidate." } });
-      return;
-    }
+    const provider = runProviders[0] ?? judgeProvider;
     set({ idealPhase: "running", idealErr: null });
     try {
       const data = await sharedRun<RefineResponse>("simulate", "Refine", () =>
         fetch("/api/ai/simulate", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
+          body: JSON.stringify({ provider, model: models[provider], jobDescription: jd }),
         }).then((r) => r.json() as Promise<RefineResponse>),
       );
       if (!data.ok || !data.raw) {

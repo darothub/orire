@@ -30,18 +30,19 @@ describe("modelTier", () => {
 
 describe("modelAllowedOnPlan", () => {
   it("free allows only budget", () => {
-    expect(modelAllowedOnPlan("free", "openai", "gpt-4o-mini", false).allowed).toBe(true);
-    expect(modelAllowedOnPlan("free", "openai", "gpt-4o", false).allowed).toBe(false);
+    expect(modelAllowedOnPlan("free", "openai", "gpt-4o-mini").allowed).toBe(true);
+    expect(modelAllowedOnPlan("free", "openai", "gpt-4o").allowed).toBe(false);
   });
-  it("pro allows mid without a key", () => {
-    expect(modelAllowedOnPlan("pro", "openai", "gpt-4o", false).allowed).toBe(true);
+  it("pro allows mid but not premium", () => {
+    expect(modelAllowedOnPlan("pro", "openai", "gpt-4o").allowed).toBe(true);
+    expect(modelAllowedOnPlan("pro", "anthropic", "claude-3-opus-latest").allowed).toBe(false);
   });
-  it("pro blocks premium unless the user brings a key", () => {
-    expect(modelAllowedOnPlan("pro", "anthropic", "claude-3-opus-latest", false).allowed).toBe(false);
-    expect(modelAllowedOnPlan("pro", "anthropic", "claude-3-opus-latest", true).allowed).toBe(true);
+  it("career includes premium models", () => {
+    expect(modelAllowedOnPlan("career", "anthropic", "claude-3-opus-latest").allowed).toBe(true);
+    expect(modelAllowedOnPlan("career", "openai", "gpt-4o").allowed).toBe(true);
   });
   it("gives a helpful reason when blocked", () => {
-    const r = modelAllowedOnPlan("free", "openai", "gpt-4o", false);
+    const r = modelAllowedOnPlan("free", "openai", "gpt-4o");
     expect(r.allowed).toBe(false);
     expect(r.reason).toMatch(/mid/i);
   });

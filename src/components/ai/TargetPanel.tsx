@@ -12,7 +12,7 @@ import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
 import { analyzeTone, type ToneLabel, type ToneProfile } from "@/lib/ai/retone";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { factGround, parseModelJSON, scoreGrounding, RefineParseError } from "@/lib/ai/guardrails";
-import { PROVIDERS, needsKey, type RefineResponse } from "@/lib/ai/types";
+import { PROVIDERS, type RefineResponse } from "@/lib/ai/types";
 import { SECTION_LABELS, type CVData, type SectionKey } from "@/lib/cv/schema";
 
 function coverageColor(v: number): string {
@@ -39,7 +39,6 @@ export function TargetView() {
   const clearTarget = useTargetStore((s) => s.clearTarget);
 
   const provider = useSettingsStore((s) => s.provider);
-  const keys = useSettingsStore((s) => s.keys);
   const models = useSettingsStore((s) => s.models);
 
   // Deterministic read of the target's writing voice (recomputed per target).
@@ -59,18 +58,10 @@ export function TargetView() {
   const simOrigin = useRunOrigin("simulate");
 
   const meta = PROVIDERS[provider];
-  const hasKey = needsKey(provider)
-    ? Boolean(keys[provider]?.trim())
-    : true;
 
   const MineTpl = getTemplate(activeTemplate).Component;
 
   async function generate() {
-    if (!hasKey) {
-      setGenErr({ title: "Not connected", body: `Connect ${meta.label} first.` });
-      setGenPhase("error");
-      return;
-    }
     if (!jd.trim()) return;
     setGenPhase("running");
     setGenErr(null);
@@ -79,7 +70,7 @@ export function TargetView() {
         fetch("/api/ai/simulate", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], jobDescription: jd }),
+          body: JSON.stringify({ provider, model: models[provider], jobDescription: jd }),
         }).then((r) => r.json() as Promise<RefineResponse>),
       );
       if (!data.ok || !data.raw) {
@@ -121,7 +112,7 @@ export function TargetView() {
         </div>
 
         <div className="ai-runbar">
-          <span className={`ai-pill ${hasKey ? "" : "muted"}`}>{meta.label} · {models[provider]}</span>
+          <span className="ai-pill">{meta.label} · {models[provider]}</span>
           <button className="ai-link" onClick={() => setView("connect")}>Connect AI</button>
         </div>
 
@@ -187,11 +178,6 @@ export function TargetView() {
 
   async function runRetone() {
     if (!detected) return;
-    if (!hasKey) {
-      setErr({ title: "Not connected", body: `Connect ${meta.label} first.` });
-      setPhase("error");
-      return;
-    }
     setPhase("running");
     setErr(null);
     setPreview(null);
@@ -202,7 +188,7 @@ export function TargetView() {
         fetch("/api/ai/retone", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ provider, apiKey: keys[provider] ?? "", model: models[provider], cv, tone }),
+          body: JSON.stringify({ provider, model: models[provider], cv, tone }),
         }).then((r) => r.json() as Promise<RefineResponse>),
       );
       if (!data.ok || !data.raw) {

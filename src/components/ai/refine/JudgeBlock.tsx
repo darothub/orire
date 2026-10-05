@@ -4,9 +4,8 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
-import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useViewStore } from "@/lib/store/viewStore";
-import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 
 export function JudgeBlock() {
   const cols = useRefineStore((s) => s.cols);
@@ -20,13 +19,12 @@ export function JudgeBlock() {
   const runJudge = useRefineStore((s) => s.runJudge);
   const resetJudge = useRefineStore((s) => s.resetJudge);
   const baseMatch = useRefineStore((s) => s.baseMatch);
-  const keys = useSettingsStore((s) => s.keys);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const setView = useViewStore((s) => s.setView);
 
   const done = runProviders.filter((p) => cols[p].phase === "done" && cols[p].result);
 
-  const eligible = runProviders.filter((p) => !needsKey(p) || keys[p]?.trim());
+  const eligible = runProviders;
   // Keep the stored judge provider in sync with what the dropdown can show:
   // the default ("openai") may not be connected, which would make the first
   // "Judge results" click fail even though a valid provider appears selected.
