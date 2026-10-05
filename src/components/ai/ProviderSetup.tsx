@@ -5,7 +5,7 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
-import { PLANS, providerCountAllowed, modelAllowedOnPlan } from "@/lib/plan/plan";
+import { PLANS, providerCountAllowed, planQualityLabel } from "@/lib/plan/plan";
 
 const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
 
@@ -15,14 +15,12 @@ const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
  *
  * Assistants are fully managed by orire — we hold the provider keys server-side,
  * so there is nothing for the user to paste. The user only picks which assistant
- * to use and which model (gated by their plan tier).
+ * to use; the quality tier is set by their plan (no raw model names exposed).
  *
  * When `selectable` is true, each card carries a run toggle bound to the Refine
  * store — pick one assistant for a single pass, or two to compare in parallel.
  */
 export function ProviderSetup({ selectable = false }: { selectable?: boolean }) {
-  const models = useSettingsStore((s) => s.models);
-  const setModel = useSettingsStore((s) => s.setModel);
   const defaultProvider = useSettingsStore((s) => s.provider);
   const setProvider = useSettingsStore((s) => s.setProvider);
 
@@ -78,9 +76,6 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
         const meta = PROVIDERS[p];
         const selected = runProviders.includes(p);
         const isDefault = !selectable && p === defaultProvider;
-        const allowedModels = meta.models.filter((m) => modelAllowedOnPlan(plan, p, m).allowed);
-        const modelList = allowedModels.length > 0 ? allowedModels : meta.models;
-        const currentAllowed = modelAllowedOnPlan(plan, p, models[p]).allowed;
         return (
           <motion.div
             key={p}
@@ -120,31 +115,14 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
               )}
             </div>
 
-            <label className="conn-field">
-              <span className="ed-label">
-                Model
-                <span className="conn-hint"> — included with {planMeta.label}</span>
-              </span>
-              <input
-                className="ed-input"
-                list={`models-${p}`}
-                value={models[p]}
-                spellCheck={false}
-                autoComplete="off"
-                placeholder={meta.defaultModel}
-                onChange={(e) => setModel(p, e.target.value)}
-              />
-              <datalist id={`models-${p}`}>
-                {modelList.map((m) => (
-                  <option key={m} value={m} />
-                ))}
-              </datalist>
-              {!currentAllowed && (
-                <span className="conn-model-err">
-                  “{models[p]}” isn’t included in {planMeta.label}. Pick one from the list or upgrade.
-                </span>
-              )}
-            </label>
+            <div className="conn-field">
+              <span className="ed-label">Quality</span>
+              <div className="conn-quality">
+                <span className="conn-quality-dot" aria-hidden />
+                <span className="conn-quality-name">{planQualityLabel(plan)}</span>
+                <span className="conn-hint">included with {planMeta.label}</span>
+              </div>
+            </div>
           </motion.div>
         );
       })}

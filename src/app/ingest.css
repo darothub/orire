@@ -1865,6 +1865,25 @@
 }
 .conn-refresh:disabled { opacity: 0.5; cursor: default; }
 .conn-model-err { display: block; margin-top: 5px; color: #f08a8a; font-size: 11px; }
+.conn-quality {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+.conn-quality-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7dd3fc, #a78bfa);
+  box-shadow: 0 0 8px rgba(125, 211, 252, 0.55);
+  flex: none;
+}
+.conn-quality-name { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.conn-quality .conn-hint { margin-left: auto; }
 .conn-key-row { display: flex; gap: 8px; }
 .conn-key-row .ed-input { flex: 1; }
 .conn-reveal {

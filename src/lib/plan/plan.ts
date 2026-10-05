@@ -73,6 +73,18 @@ export const PLANS: Record<PlanId, Plan> = {
 
 export const PLAN_ORDER: PlanId[] = ["free", "pro", "career"];
 
+/**
+ * User-facing quality label for the assistants a plan runs. We deliberately
+ * hide raw model names/pickers — users pick an assistant and a plan, and the
+ * plan determines the quality tier orire runs it at (on managed keys).
+ */
+export function planQualityLabel(planId: PlanId): string {
+  const tiers = PLANS[planId].includedTiers;
+  if (tiers.includes("premium")) return "Premium quality";
+  if (tiers.includes("mid")) return "Advanced quality";
+  return "Standard quality";
+}
+
 /** Model-name fragments that indicate a premium (large/expensive) model. */
 const PREMIUM_PATTERNS = [/opus/i, /gpt-4(?:\.\d+)?$/i, /gpt-4-turbo/i, /\bo3\b/i, /o1(?:-preview)?/i];
 /** Fragments that indicate a budget (small/cheap) model. */

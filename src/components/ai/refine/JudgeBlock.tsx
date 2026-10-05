@@ -77,7 +77,7 @@ export function JudgeBlock() {
           </div>
           {verdict.reasoning && <p className="cmp-reasoning">{verdict.reasoning}</p>}
           {judgeFromCache && (
-            <p className="cmp-cache-note" title="Identical inputs return the same verdict. Use “Run fresh” to re-sample the model.">
+            <p className="cmp-cache-note" title="Identical inputs return the same verdict. Use “Run fresh” to re-sample the assistant.">
               ⦿ Deterministic result — reused from identical inputs.
             </p>
           )}
@@ -116,7 +116,7 @@ export function JudgeBlock() {
           <div className="imp-actions">
             <button className="flow-btn primary" onClick={applyWinner}>Apply winner</button>
             <button className="flow-btn ghost" onClick={resetJudge}>Re-judge</button>
-            <button className="flow-btn ghost" onClick={() => void runJudge(true)} title="Re-sample the model, ignoring the deterministic cache">Run fresh</button>
+            <button className="flow-btn ghost" onClick={() => void runJudge(true)} title="Re-sample the assistant, ignoring the deterministic cache">Run fresh</button>
           </div>
         </motion.div>
       )}

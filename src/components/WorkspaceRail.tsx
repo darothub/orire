@@ -26,7 +26,7 @@ const PRIMARY: RailItem[] = [
 ];
 
 const FOOTER: RailItem[] = [
-  { view: "connect", label: "Connect AI", hint: "Assistants & models", icon: "⚙" },
+  { view: "connect", label: "Connect AI", hint: "Assistants", icon: "⚙" },
 ];
 
 function RailButton({ item, badge }: { item: RailItem; badge?: Badge }) {

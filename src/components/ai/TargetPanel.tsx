@@ -6,6 +6,8 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { usePlanStore } from "@/lib/store/planStore";
+import { planQualityLabel } from "@/lib/plan/plan";
 import { sharedRun, useIsRunning, useRunOrigin } from "@/lib/store/runStore";
 import { getTemplate } from "@/components/templates/registry";
 import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
@@ -40,6 +42,7 @@ export function TargetView() {
 
   const provider = useSettingsStore((s) => s.provider);
   const models = useSettingsStore((s) => s.models);
+  const plan = usePlanStore((s) => s.plan);
 
   // Deterministic read of the target's writing voice (recomputed per target).
   const detected = useMemo<ToneProfile | null>(() => (ideal ? analyzeTone(ideal) : null), [ideal]);
@@ -112,7 +115,7 @@ export function TargetView() {
         </div>
 
         <div className="ai-runbar">
-          <span className="ai-pill">{meta.label} · {models[provider]}</span>
+          <span className="ai-pill">{meta.label} · {planQualityLabel(plan)}</span>
           <button className="ai-link" onClick={() => setView("connect")}>Connect AI</button>
         </div>
 
