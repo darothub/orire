@@ -21,8 +21,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Resolve the session on the server so the client knows the auth state on the
   // very first paint — no "loading" flash of the wrong page after login/logout.
   const session = await auth();
+  // Applied before first paint so the chosen theme never flashes. Stored choice
+  // wins; otherwise follow the OS. Defaults to dark (the brand default).
+  const themeScript = `(function(){try{var t=localStorage.getItem('orire-theme');if(t!=='light'&&t!=='dark'){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();`;
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full">
         <AuthProvider session={session}>{children}</AuthProvider>
       </body>

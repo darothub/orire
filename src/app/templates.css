@@ -2,7 +2,7 @@
 .picker {
   padding: 16px 22px 10px;
   border-bottom: 1px solid var(--line);
-  background: rgba(12, 14, 20, 0.6);
+  background: var(--deck-bg);
   backdrop-filter: blur(6px);
 }
 .picker-track {

@@ -19,6 +19,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CloudSync } from "@/components/auth/CloudSync";
 import { useSession } from "next-auth/react";
 import { getTemplate } from "@/components/templates/registry";
@@ -268,6 +269,7 @@ export default function Home() {
           </button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
           <button className="btn-primary" onClick={() => setView("export")}>Export PDF</button>
+          <ThemeToggle />
           <AccountButton />
         </div>
       </header>

@@ -7,6 +7,7 @@ import { useUIStore } from "@/lib/store/uiStore";
 import { getTemplate } from "@/components/templates/registry";
 import { sampleCV } from "@/lib/cv/sample";
 import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/TurnstileWidget";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -199,6 +200,7 @@ export function AuthOverlay() {
             <button className="auth-close" onClick={dismiss} aria-label="Close">
               ×
             </button>
+            <ThemeToggle className="auth-theme" />
 
             <div className="auth-brand">
               <span className="auth-brand-mark">✦</span>
