@@ -48,7 +48,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
             <span className="ed-label">Default assistant</span>
             <span className="conn-hint">
               Used for importing, structuring, simulation and single-pass refine. Comparison uses the
-              assistants you pick in Refine. Assistants are provided by orire — no key needed.
+              assistants you pick in Refine. Assistants are provided by orire.
             </span>
           </div>
           <div className="conn-switch" role="tablist" aria-label="Default assistant">

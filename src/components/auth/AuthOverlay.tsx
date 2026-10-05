@@ -11,23 +11,13 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-/** Remembers that the user passed the gate by choosing to explore (not nag on reload). */
+/**
+ * Legacy "explore without an account" flag. Anonymous exploration has been
+ * removed (the free quota must be tied to an account so it can't be reset by
+ * switching browsers), but sign-out still clears this key to tidy up any value
+ * left in storage from older builds.
+ */
 const EXPLORED_KEY = "orire.auth.explored";
-function hasExplored() {
-  try {
-    return typeof window !== "undefined" && window.localStorage.getItem(EXPLORED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-function markExplored() {
-  try {
-    window.localStorage.setItem(EXPLORED_KEY, "1");
-  } catch {
-    /* ignore */
-  }
-}
-/** Forget the "explored" choice so the sign-in gate shows again (e.g. after sign out). */
 export function clearExplored() {
   try {
     window.localStorage.removeItem(EXPLORED_KEY);
@@ -52,18 +42,19 @@ const OAUTH = [
 const PASSWORD_AUTH_ENABLED = process.env.NEXT_PUBLIC_PASSWORD_AUTH === "true";
 
 /**
- * Full-screen login / sign-up page shown as a dismissible overlay. The backdrop
+ * Full-screen login / sign-up page shown as a mandatory gate. The backdrop
  * is transparent + blurred so the app's animated ambient (plus the drifting
  * aurora orbs below) shows through, matching the lively feel of the Refine flow.
  * OAuth buttons light up only for providers configured on the server; email +
- * password sign-in and sign-up are always available.
+ * password sign-in and sign-up are always available. There is no "explore"
+ * escape hatch — an account is required so the free quota can be enforced
+ * server-side per user.
  */
 export function AuthOverlay() {
   const open = useUIStore((s) => s.authOpen);
   const mode = useUIStore((s) => s.authMode);
   const close = useUIStore((s) => s.closeAuth);
   const openAuth = useUIStore((s) => s.openAuth);
-  const setExplored = useUIStore((s) => s.setExplored);
   const setMode = openAuth;
   const { status } = useSession();
 
@@ -123,26 +114,19 @@ export function AuthOverlay() {
     if (status === "authenticated" && open) close();
   }, [status, open, close]);
 
-  // Gate: auto-open on first load when not signed in, until the user signs in or
-  // chooses to explore. We hydrate the shared `explored` flag from localStorage
-  // on mount so the page-level gate knows immediately whether to keep the
-  // workspace hidden. We trigger during the `loading` phase too (not just once
-  // `unauthenticated` resolves) so the overlay appears immediately and the
-  // landing page isn't briefly visible/interactive first.
-  useEffect(() => {
-    if (hasExplored()) setExplored(true);
-  }, [setExplored]);
-  // An explicit "sign in" entry point (e.g. the "Back to sign in" links on the
-  // forgot/reset pages) lands on "/?signin=1". Honour it even if the visitor
-  // previously chose to explore: forget that choice, force the overlay open,
-  // then strip the param so a reload doesn't keep re-triggering it.
+  // Mandatory gate: keep the overlay open whenever the visitor isn't signed in.
+  // There is no "explore" bypass — the workspace stays hidden until auth.
+  // We trigger during the `loading` phase too (not just once `unauthenticated`
+  // resolves) so the overlay appears immediately and the landing page isn't
+  // briefly visible/interactive first.
+  //
+  // The "Back to sign in" links on the forgot/reset pages land on "/?signin=1";
+  // honour it by seeding the sign-in tab, then strip the param so a reload
+  // doesn't keep re-triggering it.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("signin") === null) return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("signin") === null) return;
-    clearExplored();
-    setExplored(false);
-    if (status !== "authenticated") openAuth("signin");
     params.delete("signin");
     const qs = params.toString();
     window.history.replaceState(
@@ -150,20 +134,10 @@ export function AuthOverlay() {
       "",
       window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash,
     );
-  }, [status, openAuth, setExplored]);
+  }, []);
   useEffect(() => {
-    if (status !== "authenticated" && !hasExplored()) openAuth("signin");
+    if (status !== "authenticated") openAuth("signin");
   }, [status, openAuth]);
-
-  // Dismissing the gate (×, backdrop, Esc, "explore") counts as choosing to
-  // explore so it won't reappear on reload. Signing in bypasses this naturally.
-  const dismiss = () => {
-    if (status !== "authenticated") {
-      markExplored();
-      setExplored(true);
-    }
-    close();
-  };
   // Reset transient state when the overlay closes (render-phase, no effect).
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
@@ -175,16 +149,7 @@ export function AuthOverlay() {
     }
   }
 
-  // Esc to dismiss.
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dismiss();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, status]);
+  // Esc no longer dismisses — the gate is mandatory until the user signs in.
 
   const signup = mode === "signup";
   const captchaOn = !!TURNSTILE_SITE_KEY;
@@ -279,7 +244,6 @@ export function AuthOverlay() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.28, ease: EASE }}
-          onMouseDown={(e) => e.target === e.currentTarget && dismiss()}
           role="dialog"
           aria-modal="true"
           aria-label={signup ? "Create your orire account" : "Sign in to orire"}
@@ -296,9 +260,6 @@ export function AuthOverlay() {
             exit={{ opacity: 0, y: 16, scale: 0.97, filter: "blur(8px)" }}
             transition={{ duration: 0.5, ease: EASE }}
           >
-            <button className="auth-close" onClick={dismiss} aria-label="Close">
-              ×
-            </button>
             <ThemeToggle className="auth-theme" />
 
             <div className="auth-brand">
@@ -443,9 +404,6 @@ export function AuthOverlay() {
             <p className="auth-fine">
               By continuing you agree to use orire responsibly.
             </p>
-            <button className="auth-skip" onClick={dismiss}>
-              Explore without an account →
-            </button>
           </motion.div>
 
           <ul className="auth-usps" aria-label="What orire does">

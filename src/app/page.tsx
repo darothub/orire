@@ -75,7 +75,7 @@ function ConnectView() {
         <div>
           <h2>Connect AI</h2>
           <p>
-            Assistants are provided by orire — no API key needed. Pick your default assistant and
+            Assistants are provided by orire. Pick your default assistant and
             the models to run; your plan sets which models are available.
           </p>
         </div>
@@ -156,8 +156,7 @@ export default function Home() {
   // flash of the wrong page either way. `.app`'s client-only internals still
   // defer on `mounted`, so rendering the shell before hydration is safe.
   const { status } = useSession();
-  const explored = useUIStore((s) => s.explored);
-  const revealApp = status === "authenticated" || explored;
+  const revealApp = status === "authenticated";
 
   // First-run guide (req: onboarding). Auto-open the spotlight tour once per
   // device the first time the workspace is revealed (after login or "explore").

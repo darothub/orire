@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { usePlanStore } from "@/lib/store/planStore";
+import { useUIStore } from "@/lib/store/uiStore";
 import { devSetPlan, readEntitlement } from "@/app/actions/refine";
 import { billingStatus, openBillingPortal, startCheckout, type BillingStatus } from "@/app/actions/billing";
 import {
@@ -29,6 +30,7 @@ export function PlanPanel() {
   const plan = usePlanStore((s) => s.plan);
   const setPlan = usePlanStore((s) => s.setPlan);
   const syncFromServer = usePlanStore((s) => s.syncFromServer);
+  const openAuth = useUIStore((s) => s.openAuth);
   const used = usePlanStore((s) => s.usedThisMonth());
 
   const [billing, setBilling] = useState<BillingStatus | null>(null);
@@ -91,6 +93,13 @@ export function PlanPanel() {
   const pick = async (id: PlanId) => {
     setNotice(null);
     if (!signedIn) {
+      // Paid plans require an account — you can't subscribe anonymously, and a
+      // local-only switch would let an explorer unlock Pro/Career for free.
+      // Push them into sign-up; they can subscribe once authenticated.
+      if (id !== "free") {
+        openAuth("signup");
+        return;
+      }
       setPlan(id);
       return;
     }
