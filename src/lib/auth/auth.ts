@@ -1,7 +1,9 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Nodemailer from "next-auth/providers/nodemailer";
-import GitHub from "next-auth/providers/github";
+// GitHub OAuth is disabled for now. Re-enable by restoring this import, the
+// provider block below, and the GitHub button in AuthOverlay.
+// import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import type { Provider } from "next-auth/providers";
 import { prisma } from "@/lib/db/prisma";
@@ -10,7 +12,8 @@ import { prisma } from "@/lib/db/prisma";
  * Auth providers are enabled by environment so local dev needs zero secrets:
  *  - Magic-link email is always on. With no SMTP configured the sign-in URL is
  *    printed to the server terminal (dev). Set EMAIL_SERVER + EMAIL_FROM for real send.
- *  - GitHub / Google turn on automatically when their client id/secret are present.
+ *  - GitHub is disabled for now (hidden in the UI). Google turns on
+ *    automatically when its client id/secret are present.
  */
 function buildProviders(): Provider[] {
   const providers: Provider[] = [
@@ -39,9 +42,10 @@ function buildProviders(): Provider[] {
     }),
   ];
 
-  if (process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET) {
-    providers.push(GitHub);
-  }
+  // GitHub OAuth disabled for now:
+  // if (process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET) {
+  //   providers.push(GitHub);
+  // }
   if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
     providers.push(Google);
   }
