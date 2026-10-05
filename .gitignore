@@ -52,3 +52,9 @@ next-env.d.ts
 *.exe
 .npmrc
 !.env.example
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
