@@ -2209,6 +2209,11 @@
 .rb-existing .flow-btn {
   flex-shrink: 0;
 }
+.rb-existing.is-sample {
+  border-style: dashed;
+  border-color: color-mix(in oklab, var(--accent, #6ea8fe) 40%, var(--line));
+  background: linear-gradient(135deg, color-mix(in oklab, var(--accent, #6ea8fe) 7%, var(--panel)), var(--panel));
+}
 .rb-source {
   margin-top: 4px;
   padding: 12px 14px;

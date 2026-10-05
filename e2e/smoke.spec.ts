@@ -55,8 +55,8 @@ test.describe("re-brand flow", () => {
 
     await expect(appPage.getByRole("heading", { name: "Re-brand a CV" })).toBeVisible();
 
-    // Use the existing CV (no upload / no AI needed).
-    await appPage.getByRole("button", { name: /Continue with this CV/ }).click();
+    // Explore the flow with the seeded sample CV (no upload / no AI needed).
+    await appPage.getByRole("button", { name: /Try with sample CV/ }).click();
 
     await expect(appPage.getByRole("heading", { name: "Choose a look" })).toBeVisible();
     await appPage.getByRole("button", { name: "Apply re-brand" }).click();

@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore, type ImportMode } from "@/lib/store/cvStore";
+import { isSampleCV } from "@/lib/cv/sample";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { PROVIDERS } from "@/lib/ai/types";
 import type { ParsedCV } from "@/lib/ingest/parse";
@@ -40,7 +41,8 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const [choices, setChoices] = useState<Partial<Record<BasicsField, number>>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const facts = countFacts(cv);
-  const hasContent = facts.experience + facts.education + facts.skills + facts.projects > 0;
+  const isSeed = isSampleCV(cv);
+  const hasContent = !isSeed && facts.experience + facts.education + facts.skills + facts.projects > 0;
   const providerLabel = PROVIDERS[provider].label;
 
   const upload = useCallback(async (files: FileList | File[]) => {
@@ -134,6 +136,21 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
         source of facts for refining. With {providerLabel}, “Replace editor (AI)” structures the CV
         accurately; the built-in parser is used as a fallback.
       </p>
+
+      {isSeed && (
+        <motion.div className="rb-existing is-sample" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="rb-existing-main">
+            <span className="rb-existing-ico" aria-hidden>✨</span>
+            <div className="rb-existing-text">
+              <strong>This is orire’s sample CV — not yours yet</strong>
+              <span>
+                Upload your own CV (PDF or DOCX) below to refine it. Or explore the flow with our
+                sample using “Try with sample CV”.
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {hasContent && (
         <motion.div className="rb-existing" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
@@ -298,7 +315,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
       <div className="step-nav">
         <button className="flow-btn ghost" onClick={onBack}>Back</button>
         <button className="flow-btn primary" onClick={onNext}>
-          {hasContent ? "Continue" : "Skip — use current CV"}
+          {isSeed ? "Try with sample CV" : hasContent ? "Continue" : "Skip — use current CV"}
         </button>
       </div>
     </div>

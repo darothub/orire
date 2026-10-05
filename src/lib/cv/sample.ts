@@ -115,3 +115,15 @@ export const sampleCV: CVData = {
   ],
   order: ["summary", "experience", "projects", "education", "skills", "certifications"],
 };
+
+/** Serialised fingerprint of the pristine seed, computed once. */
+const SAMPLE_FINGERPRINT = JSON.stringify(sampleCV);
+
+/**
+ * True when `cv` is still the untouched demo seed — i.e. the user has neither
+ * uploaded, refined, nor edited anything. Used to avoid presenting the sample
+ * as the user's "existing CV" in the Rebrand/Refine import steps.
+ */
+export function isSampleCV(cv: CVData): boolean {
+  return JSON.stringify(cv) === SAMPLE_FINGERPRINT;
+}

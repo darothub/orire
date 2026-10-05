@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
+import { isSampleCV } from "@/lib/cv/sample";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRebrandStore } from "@/lib/store/rebrandStore";
 import { useViewStore } from "@/lib/store/viewStore";
@@ -57,7 +58,7 @@ function UploadStep() {
 
   const providerLabel = PROVIDERS[provider].label;
   const facts = countFacts(cv);
-  const hasWorking = facts.experience + facts.education + facts.skills + facts.projects > 0;
+  const hasWorking = !isSampleCV(cv) && facts.experience + facts.education + facts.skills + facts.projects > 0;
 
   const upload = useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files);
@@ -138,6 +139,21 @@ function UploadStep() {
       </div>
 
       <div className="step-body">
+        {isSampleCV(cv) && (
+          <motion.div className="rb-existing is-sample" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="rb-existing-main">
+              <span className="rb-existing-ico" aria-hidden>✨</span>
+              <div className="rb-existing-text">
+                <strong>This is orire’s sample CV — not yours yet</strong>
+                <span>
+                  Upload your own CV (PDF or DOCX) below to re-brand it. Or explore the flow with our
+                  sample.
+                </span>
+              </div>
+            </div>
+            <button className="flow-btn ghost" onClick={useWorking}>Try with sample CV →</button>
+          </motion.div>
+        )}
         {hasWorking && (
           <motion.div className="rb-existing" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
             <div className="rb-existing-main">
