@@ -2227,6 +2227,11 @@ body {
 .auth-submit:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.05); }
 .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
+.auth-captcha { display: flex; justify-content: center; margin: 2px 0 0; min-height: 0; }
+.auth-error {
+  font-size: 12.5px; line-height: 1.45; margin: 10px 0 0;
+  color: var(--danger, #ff6b6b);
+}
 .auth-fine { font-size: 11.5px; color: var(--faint); line-height: 1.5; margin: 16px 0 12px; }
 .auth-usps {
   list-style: none; margin: 2px 0 18px; padding: 0;

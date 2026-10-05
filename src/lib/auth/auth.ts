@@ -1,6 +1,8 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Nodemailer from "next-auth/providers/nodemailer";
+import { cookies } from "next/headers";
+import { CAPTCHA_COOKIE, captchaEnabled } from "@/lib/auth/turnstile";
 // GitHub OAuth is disabled for now. Re-enable by restoring this import, the
 // provider block below, and the GitHub button in AuthOverlay.
 // import GitHub from "next-auth/providers/github";
@@ -21,6 +23,15 @@ function buildProviders(): Provider[] {
       server: process.env.EMAIL_SERVER ?? { host: "localhost", port: 1025 },
       from: process.env.EMAIL_FROM ?? "orire <no-reply@orire.local>",
       async sendVerificationRequest({ identifier, url, provider }) {
+        // Captcha gate: when Turnstile is enabled, the client must have passed
+        // /api/auth/turnstile first (which sets an HttpOnly cookie). No cookie,
+        // no email — this blocks headless magic-link bombing.
+        if (captchaEnabled()) {
+          const jar = await cookies();
+          if (jar.get(CAPTCHA_COOKIE)?.value !== "1") {
+            throw new Error("Captcha verification required before sending a sign-in link.");
+          }
+        }
         if (process.env.EMAIL_SERVER) {
           // Real SMTP configured — send via nodemailer default transport.
           const nodemailer = await import("nodemailer");

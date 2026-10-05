@@ -6,6 +6,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useUIStore } from "@/lib/store/uiStore";
 import { getTemplate } from "@/components/templates/registry";
 import { sampleCV } from "@/lib/cv/sample";
+import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/TurnstileWidget";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -62,6 +63,9 @@ export function AuthOverlay() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaReset, setCaptchaReset] = useState(0);
+  const [authErr, setAuthErr] = useState<string | null>(null);
 
   // Which OAuth providers are actually enabled on the server (env-driven).
   useEffect(() => {
@@ -110,6 +114,8 @@ export function AuthOverlay() {
     if (!open) {
       setSent(false);
       setBusy(null);
+      setCaptchaToken(null);
+      setAuthErr(null);
     }
   }
 
@@ -134,10 +140,32 @@ export function AuthOverlay() {
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || busy) return;
+    const captchaOn = !!TURNSTILE_SITE_KEY;
+    if (captchaOn && !captchaToken) {
+      setAuthErr("Please complete the verification challenge.");
+      return;
+    }
     setBusy("email");
+    setAuthErr(null);
     try {
+      if (captchaOn) {
+        const vr = await fetch("/api/auth/turnstile", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ token: captchaToken }),
+        });
+        const vj = await vr.json().catch(() => ({}));
+        if (!vr.ok || vj?.ok === false) {
+          setAuthErr(vj?.error ? String(vj.error) : "Verification failed. Please try again.");
+          setCaptchaToken(null);
+          setCaptchaReset((n) => n + 1);
+          return;
+        }
+      }
       await signIn("nodemailer", { email: email.trim(), redirect: false });
       setSent(true);
+    } catch (err) {
+      setAuthErr((err as Error)?.message ?? "Could not send the sign-in link.");
     } finally {
       setBusy(null);
     }
@@ -281,6 +309,11 @@ export function AuthOverlay() {
                     autoComplete="email"
                     required
                   />
+                  <TurnstileWidget
+                    onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
+                    onExpire={() => setCaptchaToken(null)}
+                    resetKey={captchaReset}
+                  />
                   <button className="auth-submit" type="submit" disabled={busy === "email"}>
                     {busy === "email"
                       ? "Sending…"
@@ -289,6 +322,8 @@ export function AuthOverlay() {
                         : "Email me a sign-in link"}
                   </button>
                 </form>
+
+                {authErr && <p className="auth-error" role="alert">{authErr}</p>}
 
                 <p className="auth-fine">
                   AI assistants are built in — no API key needed. By continuing you agree to use
