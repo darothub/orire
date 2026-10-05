@@ -69,15 +69,45 @@ export function AuthOverlay() {
   const [authErr, setAuthErr] = useState<string | null>(null);
 
   // Which OAuth providers are actually enabled on the server (env-driven).
+  // Retry on an empty/failed response instead of caching it — otherwise a
+  // single race during server start-up would strand a configured provider
+  // (e.g. Google) behind a permanent "soon" badge until a full reload.
   useEffect(() => {
-    if (!open || configured) return;
+    if (!open) return;
+    if (configured && configured.length > 0) return;
     let alive = true;
-    fetch("/api/auth/providers")
-      .then((r) => (r.ok ? r.json() : {}))
-      .then((j: Record<string, unknown>) => alive && setConfigured(Object.keys(j ?? {})))
-      .catch(() => alive && setConfigured([]));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+    const load = () => {
+      fetch("/api/auth/providers")
+        .then((r) => (r.ok ? r.json() : {}))
+        .then((j: Record<string, unknown>) => {
+          if (!alive) return;
+          const ids = Object.keys(j ?? {});
+          const hasOAuth = ids.some((id) => id !== "nodemailer");
+          if (hasOAuth || attempts >= 5) {
+            setConfigured(ids);
+            return;
+          }
+          // No OAuth provider yet — keep `configured` null (no "soon" flash)
+          // and retry with backoff in case the server is still warming up.
+          attempts += 1;
+          timer = setTimeout(load, 400 * attempts);
+        })
+        .catch(() => {
+          if (!alive) return;
+          if (attempts < 5) {
+            attempts += 1;
+            timer = setTimeout(load, 400 * attempts);
+          } else {
+            setConfigured([]);
+          }
+        });
+    };
+    load();
     return () => {
       alive = false;
+      if (timer) clearTimeout(timer);
     };
   }, [open, configured]);
 
@@ -252,7 +282,7 @@ export function AuthOverlay() {
 
             <ul className="auth-usps" aria-label="What orire does">
               <li><span aria-hidden>✎</span> Rebrand any CV into a clean, ATS-ready layout</li>
-              <li><span aria-hidden>✦</span> Tailor it to a job with built-in AI — no key needed</li>
+              <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
               <li><span aria-hidden>❖</span> 20 standout templates, live preview as you edit</li>
             </ul>
 
@@ -311,11 +341,18 @@ export function AuthOverlay() {
                     autoComplete="email"
                     required
                   />
-                  <TurnstileWidget
-                    onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
-                    onExpire={() => setCaptchaToken(null)}
-                    resetKey={captchaReset}
-                  />
+                  {TURNSTILE_SITE_KEY && (
+                    <div className="auth-captcha-frame">
+                      <span className="auth-captcha-label">
+                        <span aria-hidden>🛡</span> Quick security check
+                      </span>
+                      <TurnstileWidget
+                        onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
+                        onExpire={() => setCaptchaToken(null)}
+                        resetKey={captchaReset}
+                      />
+                    </div>
+                  )}
                   <button className="auth-submit" type="submit" disabled={busy === "email"}>
                     {busy === "email"
                       ? "Sending…"
@@ -328,8 +365,7 @@ export function AuthOverlay() {
                 {authErr && <p className="auth-error" role="alert">{authErr}</p>}
 
                 <p className="auth-fine">
-                  AI assistants are built in — no API key needed. By continuing you agree to use
-                  orire responsibly.
+                  By continuing you agree to use orire responsibly.
                 </p>
                 <button className="auth-skip" onClick={dismiss}>
                   Explore without an account →

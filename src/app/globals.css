@@ -85,6 +85,25 @@ html[data-theme="light"] .auth-gate-cover {
     var(--bg);
 }
 
+/* Login surface in light theme: flip the dark glass card + the dark scrim that
+   sits over the drifting template wall, so the whole page switches — not just
+   the custom buttons. */
+html[data-theme="light"] .auth-card {
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.86), rgba(243, 245, 251, 0.82));
+  border-color: var(--line-2);
+  box-shadow: 0 40px 90px -34px rgba(31, 41, 71, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+html[data-theme="light"] .auth-scrim {
+  background:
+    linear-gradient(100deg, rgba(245, 247, 251, 0.94) 0%, rgba(245, 247, 251, 0.82) 32%, rgba(245, 247, 251, 0.36) 58%, rgba(245, 247, 251, 0.62) 100%),
+    radial-gradient(90% 90% at 22% 50%, rgba(245, 247, 251, 0.55), transparent 70%);
+}
+@media (max-width: 640px) {
+  html[data-theme="light"] .auth-scrim {
+    background: radial-gradient(120% 90% at 50% 8%, rgba(106, 86, 246, 0.12), transparent 62%);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -2283,6 +2302,22 @@ body {
 .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .auth-captcha { display: flex; justify-content: center; margin: 2px 0 0; min-height: 0; }
+/* Captcha wrapped in an orire-styled frame so the Cloudflare box doesn't float
+   bare on the card. Matches the input/button radius and theme tokens. */
+.auth-captcha-frame {
+  display: grid;
+  gap: 8px;
+  padding: 11px 12px 12px;
+  border-radius: 11px;
+  border: 1px dashed var(--line-2);
+  background: var(--surface-soft);
+}
+.auth-captcha-label {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.01em;
+  color: var(--muted);
+}
+.auth-captcha-label span[aria-hidden] { font-size: 12.5px; }
 .auth-error {
   font-size: 12.5px; line-height: 1.45; margin: 10px 0 0;
   color: var(--danger, #ff6b6b);
@@ -2328,7 +2363,7 @@ body {
   color: var(--muted); font-size: 13px; font-weight: 550; cursor: pointer;
   border-radius: 9px; transition: color 0.15s ease, background 0.15s ease;
 }
-.auth-skip:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+.auth-skip:hover { color: var(--text); background: var(--surface-soft); }
 
 .auth-sent {
   display: grid; justify-items: center; text-align: center; gap: 8px;
