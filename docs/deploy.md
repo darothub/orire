@@ -19,34 +19,33 @@ sync. SOPS stays the single source of truth; Vercel holds a synced snapshot.
 - A **managed Postgres** — Vercel doesn't run your Docker Postgres. Use
   [Neon](https://neon.tech) (has a native Vercel integration) or Supabase.
 
-## 1. Provision Postgres and capture DATABASE_URL
+## 1. Provision Postgres and capture DATABASE_URL  ✅ done
 
-Create a Postgres instance (Neon recommended). Copy its pooled connection
-string. Store it in SOPS prod so it stays canonical:
+A Neon Postgres is provisioned. Stored in SOPS prod:
 
-```bash
-cd ../central-config
-export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
-sops set projects/orire/prod.env '["DATABASE_URL"]' '"postgresql://USER:PASS@HOST/DB?sslmode=require"'
-```
+- `DATABASE_URL` → Neon **pooled** host (`…-pooler…`) for the app runtime.
+- `DIRECT_URL` → Neon **direct** host (no `-pooler`) for Prisma Migrate.
 
-> Neon tip: use the **pooled** (`-pooler`) host for the app runtime. Prisma
-> `migrate deploy` (run in the Vercel build) needs a **direct** connection — if
-> you hit pooler errors during migrate, add a `directUrl` in `schema.prisma`
-> and store `DIRECT_URL` too.
+`prisma/schema.prisma` declares both (`url` + `directUrl`). Migrations run in the
+Vercel build (`prisma migrate deploy`) against the direct URL; serverless
+functions use the pooled URL at runtime.
 
-## 2. Add the remaining prod-only secrets to SOPS
+> Note: Neon only accepts connections on **:5432**, which is often blocked on
+> local/corporate networks — so you may not be able to reach it from a laptop.
+> That's fine: the Vercel build network reaches Neon and applies migrations
+> there. To run migrations locally, do it from an unblocked network.
 
-Already set for you: `AUTH_SECRET` (generated), `AUTH_URL`, `NEXTAUTH_URL`
-(both `https://orire.app`). Still needed from you:
+## 2. Remaining prod secrets  ✅ done
 
-```bash
-# Google OAuth (prod credentials — see §5)
-sops set projects/orire/prod.env '["AUTH_GOOGLE_ID"]' '"...apps.googleusercontent.com"'
-sops set projects/orire/prod.env '["AUTH_GOOGLE_SECRET"]' '"GOCSPX-..."'
-```
+All set in SOPS prod: `AUTH_SECRET` (generated), `AUTH_URL`/`NEXTAUTH_URL`
+(`https://orire.app`), and `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` (reusing the
+existing Google OAuth client — make sure its authorized redirect URI includes
+`https://orire.app/api/auth/callback/google`, see §5). Resend, Stripe and
+Turnstile were already present.
 
-Resend, Stripe, Turnstile and the email vars are already in prod from earlier.
+> If you created a **separate** prod Google OAuth client, overwrite the two
+> values and re-sync:
+> `sops set projects/orire/prod.env '["AUTH_GOOGLE_ID"]' '"...”'` etc.
 
 ## 3. Link the repo to a Vercel project
 
@@ -95,8 +94,9 @@ Create a webhook endpoint in the Stripe dashboard pointing at
 
 ## Checklist
 
-- [ ] Managed Postgres created; `DATABASE_URL` in SOPS prod
-- [ ] `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` (prod) in SOPS + redirect URI added
+- [x] Managed Postgres created; `DATABASE_URL` + `DIRECT_URL` in SOPS prod
+- [x] `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` (prod) in SOPS
+- [ ] Google redirect URI `https://orire.app/api/auth/callback/google` added
 - [ ] `vercel link` done
 - [ ] `npm run vercel:env` ran clean
 - [ ] `vercel --prod` deployed; migrations applied
