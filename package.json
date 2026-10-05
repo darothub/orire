@@ -15,7 +15,10 @@
     "db:up": "sh scripts/db-up.sh",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "dev:login": "open http://localhost:3001/api/dev/login"
+    "dev:login": "open http://localhost:3001/api/dev/login",
+    "stripe:verify": "node --env-file=.env scripts/verify-stripe.mjs",
+    "stripe:prices": "node --env-file=.env scripts/create-stripe-prices.mjs",
+    "stripe:webhook": "node --env-file=.env scripts/verify-webhook.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

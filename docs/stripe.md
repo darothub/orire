@@ -6,6 +6,21 @@ switch, so development needs zero billing secrets. When Stripe is configured,
 paid plans go through Stripe Checkout and a webhook writes the authoritative
 `Entitlement` row.
 
+## Verification scripts (CLI-free)
+
+Three Node scripts verify the integration without the Stripe CLI (they read
+`.env` via `--env-file`):
+
+- `npm run stripe:prices` — idempotently create the Pro/Career products +
+  recurring prices and print their `price_...` ids (uses `lookup_key`, so
+  re-runs reuse existing prices). Run once in test mode, again in live mode.
+- `npm run stripe:verify` — validate the secret key, confirm each configured
+  price is active + recurring, list all recurring prices, and create real
+  Checkout Sessions to prove the exact app flow.
+- `npm run stripe:webhook` — seed a throwaway user+entitlement, sign a
+  subscription event with the SDK, POST it to the running `/api/billing/webhook`,
+  and assert the entitlement flips (needs DB up + the app running with Stripe env).
+
 ## Current status
 
 - `.env` has **no `STRIPE_*` keys**, so billing is in dev-fallback mode.
