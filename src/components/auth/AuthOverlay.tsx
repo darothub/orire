@@ -80,10 +80,13 @@ export function AuthOverlay() {
     if (status === "authenticated" && open) close();
   }, [status, open, close]);
 
-  // Gate: auto-open on first load when signed out, until the user signs in or
-  // chooses to explore. Once they've explored, we don't nag on later reloads.
+  // Gate: auto-open on first load when not signed in, until the user signs in or
+  // chooses to explore. We trigger during the `loading` phase too (not just once
+  // `unauthenticated` resolves) so the overlay appears almost immediately and the
+  // landing page isn't briefly visible/interactive first. Once they've explored,
+  // we don't nag on later reloads.
   useEffect(() => {
-    if (status === "unauthenticated" && !hasExplored()) openAuth("signin");
+    if (status !== "authenticated" && !hasExplored()) openAuth("signin");
   }, [status, openAuth]);
 
   // Dismissing the gate (×, backdrop, Esc, "explore") counts as choosing to
