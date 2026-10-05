@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useUIStore } from "@/lib/store/uiStore";
+import { analytics } from "@/lib/analytics/events";
 import { devSetPlan, readEntitlement } from "@/app/actions/refine";
 import { billingStatus, openBillingPortal, startCheckout, type BillingStatus } from "@/app/actions/billing";
 import {
@@ -97,6 +98,7 @@ export function PlanPanel() {
       // local-only switch would let an explorer unlock Pro/Career for free.
       // Push them into sign-up; they can subscribe once authenticated.
       if (id !== "free") {
+        analytics.paywallSignupPrompt(id);
         openAuth("signup");
         return;
       }
@@ -117,11 +119,13 @@ export function PlanPanel() {
       setBusy(id);
       if (canEmbedCheckout()) {
         // Embedded checkout — keep the user on an orire-branded page.
+        analytics.checkoutStarted(id, "embedded");
         setCheckoutPlan(id);
         setBusy(null);
         return;
       }
       // No publishable key configured: fall back to hosted Checkout redirect.
+      analytics.checkoutStarted(id, "hosted");
       const r = await startCheckout(id);
       if (r.url) redirect(r.url);
       else {

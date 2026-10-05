@@ -14,6 +14,7 @@ import { diffScores, grade } from "@/lib/cv/rating";
 import { countFacts } from "./refine/shared";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
+import { analytics } from "@/lib/analytics/events";
 
 interface FileResult {
   name: string;
@@ -71,6 +72,7 @@ function UploadStep() {
       const data = await res.json();
       if (!res.ok) { setFatal(data?.error ? String(data.error) : `Request failed (HTTP ${res.status}).`); return; }
       setResults(data.files as FileResult[]);
+      analytics.cvUploaded(list.length, "rebrand");
     } catch (e) {
       setFatal(e instanceof Error ? e.message : String(e));
     } finally { setBusy(false); }
@@ -99,10 +101,12 @@ function UploadStep() {
       const data = (await res.json()) as StructureResponse;
       if (data.ok && data.parsed) {
         setDraft(cvDataFromParsed(data.parsed), r.name, `structured by ${providerLabel}`);
+        analytics.rebrandStructured(provider, true);
       } else {
         // Surface the provider error verbatim (req 12), then fall back.
         setAiError({ i, message: data.error?.message ?? "The assistant could not structure this CV." });
         setDraft(cvDataFromParsed(r.parsed), r.name, "assistant failed · built-in parser");
+        analytics.rebrandStructured(provider, false);
       }
     } catch (e) {
       setAiError({ i, message: e instanceof Error ? e.message : String(e) });
@@ -271,6 +275,7 @@ function BrandStep() {
     captureBaseline();
     loadCV(draft);
     setTemplate(templateId);
+    analytics.templateSelected(templateId);
     resetRebrand();
     setApplied(true);
     setTimeout(() => setView("edit"), 450);

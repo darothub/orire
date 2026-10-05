@@ -10,6 +10,7 @@ import type { ParsedCV } from "@/lib/ingest/parse";
 import { mergeParsedCVs, type MergeResult, type BasicsField } from "@/lib/ingest/merge";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
 import { countFacts } from "./shared";
+import { analytics } from "@/lib/analytics/events";
 
 interface FileResult {
   name: string;
@@ -56,6 +57,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
       const data = await res.json();
       if (!res.ok) { setFatal(data?.error ? String(data.error) : `Request failed (HTTP ${res.status}).`); return; }
       setResults(data.files as FileResult[]);
+      analytics.cvUploaded(list.length, "refine");
     } catch (e) {
       setFatal(e instanceof Error ? e.message : String(e));
     } finally { setBusy(false); }

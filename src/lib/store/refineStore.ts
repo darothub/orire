@@ -15,6 +15,7 @@ import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
 import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
 import { parseVerdict, judgeCacheKey, type JudgeVerdict } from "@/lib/ai/judge";
 import { refineRunSignature } from "@/lib/ai/refineSignature";
+import { analytics } from "@/lib/analytics/events";
 import type { CVData } from "@/lib/cv/schema";
 
 export { refineRunSignature };
@@ -191,6 +192,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const runToken = authz.token;
 
     resetStarted();
+    analytics.refineRun(runProviders.length, runProviders.length === 1 ? "single" : "compare");
     // Local trial counter (anonymous only; no-op when server-authoritative).
     usePlanStore.getState().recordRefine();
 
@@ -253,6 +255,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     }
 
     set({ judgePhase: "running", judgeErr: null, verdict: null, judgeFromCache: false });
+    analytics.judgeRun(judgeProvider);
     try {
       const data = await sharedRun<RefineResponse>("judge", "Refine", () =>
         fetch("/api/ai/judge", {
@@ -285,6 +288,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     // Prefer a provider already used in the run; fall back to the judge provider.
     const provider = runProviders[0] ?? judgeProvider;
     set({ idealPhase: "running", idealErr: null });
+    analytics.simulateRun(provider);
     try {
       const data = await sharedRun<RefineResponse>("simulate", "Refine", () =>
         fetch("/api/ai/simulate", {
