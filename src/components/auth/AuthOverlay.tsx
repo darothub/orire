@@ -45,6 +45,13 @@ const OAUTH = [
 ] as const;
 
 /**
+ * Email + password sign-in is hidden for now because there's no SMTP wired up,
+ * so we can't offer password reset yet. Re-enable by setting
+ * NEXT_PUBLIC_PASSWORD_AUTH=true (no code change) once reset email works.
+ */
+const PASSWORD_AUTH_ENABLED = process.env.NEXT_PUBLIC_PASSWORD_AUTH === "true";
+
+/**
  * Full-screen login / sign-up page shown as a dismissible overlay. The backdrop
  * is transparent + blurred so the app's animated ambient (plus the drifting
  * aurora orbs below) shows through, matching the lively feel of the Refine flow.
@@ -338,10 +345,11 @@ export function AuthOverlay() {
               })}
             </div>
 
-            <div className="auth-divider">
+            <div className="auth-divider" hidden={!PASSWORD_AUTH_ENABLED}>
               <span>or {signup ? "sign up" : "continue"} with email</span>
             </div>
 
+            {PASSWORD_AUTH_ENABLED && (
             <form className="auth-email" onSubmit={submitEmail}>
               <input
                 type="email"
@@ -384,6 +392,7 @@ export function AuthOverlay() {
                     : "Sign in"}
               </button>
             </form>
+            )}
 
             {authErr && <p className="auth-error" role="alert">{authErr}</p>}
 
