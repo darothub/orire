@@ -330,19 +330,6 @@ export function AuthOverlay() {
               </motion.div>
             </AnimatePresence>
 
-            {captchaOn && (
-              <div className="auth-captcha-frame">
-                <span className="auth-captcha-label">
-                  <span aria-hidden>🛡</span> Quick security check
-                </span>
-                <TurnstileWidget
-                  onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
-                  onExpire={() => setCaptchaToken(null)}
-                  resetKey={captchaReset}
-                />
-              </div>
-            )}
-
             {PASSWORD_AUTH_ENABLED && (
             <form className="auth-email" onSubmit={submitEmail}>
               <input
@@ -364,6 +351,18 @@ export function AuthOverlay() {
                 minLength={signup ? 8 : undefined}
                 required
               />
+              {captchaOn && (
+                <div className="auth-captcha-frame">
+                  <span className="auth-captcha-label">
+                    <span aria-hidden>🛡</span> Quick security check
+                  </span>
+                  <TurnstileWidget
+                    onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
+                    onExpire={() => setCaptchaToken(null)}
+                    resetKey={captchaReset}
+                  />
+                </div>
+              )}
               <button className="auth-submit" type="submit" disabled={busy === "email"}>
                 {busy === "email"
                   ? signup
@@ -379,6 +378,19 @@ export function AuthOverlay() {
                 </a>
               )}
             </form>
+            )}
+
+            {captchaOn && !PASSWORD_AUTH_ENABLED && (
+              <div className="auth-captcha-frame">
+                <span className="auth-captcha-label">
+                  <span aria-hidden>🛡</span> Quick security check
+                </span>
+                <TurnstileWidget
+                  onToken={(t) => { setCaptchaToken(t); setAuthErr(null); }}
+                  onExpire={() => setCaptchaToken(null)}
+                  resetKey={captchaReset}
+                />
+              </div>
             )}
 
             <div className="auth-divider" hidden={!PASSWORD_AUTH_ENABLED}>
