@@ -1,4 +1,5 @@
 import { test, expect, stubAI } from "./fixtures";
+import { test as rawTest } from "@playwright/test";
 
 /**
  * orire smoke suite — exercises the core, launch-critical user journeys with no
@@ -61,6 +62,44 @@ test.describe("theme", () => {
     // The choice survives a reload (persisted + applied with no flash).
     await appPage.reload();
     await expect(appPage.locator("html")).toHaveAttribute("data-theme", flipped);
+  });
+});
+
+rawTest.describe("onboarding tour", () => {
+  rawTest("auto-opens for a new user, then skipping persists so it stays closed", async ({
+    page,
+  }) => {
+    // Seed only the "explored" flag (dismiss auth) — NOT the onboarded flag — so
+    // this behaves like a brand-new user who should get the guided tour.
+    await page.addInitScript(() => {
+      try {
+        window.localStorage.setItem("orire.auth.explored", "1");
+      } catch {
+        /* storage unavailable */
+      }
+    });
+    await page.goto("/");
+
+    const dialog = page.getByRole("dialog", { name: "Getting started tour" });
+    await expect(dialog).toBeVisible(); // auto-opens shortly after reveal
+    await expect(dialog.getByText("Welcome to orire")).toBeVisible();
+
+    // Advancing walks through the steps; the spotlight tracks each rail item.
+    await dialog.getByRole("button", { name: "Next", exact: true }).click();
+    await expect(dialog.getByText("Edit, live")).toBeVisible();
+
+    // Skipping closes it and records that it was seen.
+    await dialog.getByRole("button", { name: "Skip" }).click();
+    await expect(dialog).toBeHidden();
+    const seen = await page.evaluate(() => localStorage.getItem("orire-onboarded"));
+    expect(seen).toBe("1");
+
+    // It does not re-open on the next visit.
+    await page.reload();
+    await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Getting started tour" }),
+    ).toBeHidden();
   });
 });
 

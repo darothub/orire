@@ -21,6 +21,8 @@ import { AccountButton } from "@/components/auth/AccountButton";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CloudSync } from "@/components/auth/CloudSync";
+import { OnboardingTour } from "@/components/OnboardingTour";
+import { useOnboardingStore, hasSeenOnboarding } from "@/lib/store/onboardingStore";
 import { useSession } from "next-auth/react";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
@@ -156,6 +158,18 @@ export default function Home() {
   const { status } = useSession();
   const explored = useUIStore((s) => s.explored);
   const revealApp = status === "authenticated" || explored;
+
+  // First-run guide (req: onboarding). Auto-open the spotlight tour once per
+  // device the first time the workspace is revealed (after login or "explore").
+  // Gated by a localStorage flag in the store so returning users never see it;
+  // it can be replayed from the command palette.
+  const startTour = useOnboardingStore((s) => s.start);
+  useEffect(() => {
+    if (!mounted || !revealApp) return;
+    if (hasSeenOnboarding()) return;
+    const t = setTimeout(() => startTour(), 700);
+    return () => clearTimeout(t);
+  }, [mounted, revealApp, startTour]);
 
   const cv = useCVStore((s) => s.cv);
   const active = useCVStore((s) => s.activeTemplate);
@@ -364,6 +378,7 @@ export default function Home() {
       </main>
 
       <CommandPalette />
+      <OnboardingTour />
         </div>
       ) : (
         <div className="auth-gate-cover" aria-hidden />

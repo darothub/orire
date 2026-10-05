@@ -10,11 +10,14 @@ import { test as base, expect, type Page } from "@playwright/test";
  * (zustand), so this is enough for a hermetic smoke suite.
  */
 
-/** Seed localStorage before any app script runs so the overlay never appears. */
+/** Seed localStorage before any app script runs so the overlay never appears.
+ *  Also marks the onboarding tour as seen so it doesn't auto-open and intercept
+ *  clicks in the core-flow tests (the tour has its own dedicated spec). */
 async function seedExplored(page: Page) {
   await page.addInitScript(() => {
     try {
       window.localStorage.setItem("orire.auth.explored", "1");
+      window.localStorage.setItem("orire-onboarded", "1");
     } catch {
       /* storage unavailable — overlay can still be dismissed in-test */
     }

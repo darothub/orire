@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useUIStore } from "@/lib/store/uiStore";
+import { useOnboardingStore } from "@/lib/store/onboardingStore";
 import { TEMPLATES } from "@/components/templates/registry";
 
 interface Command {
@@ -45,6 +46,7 @@ export function CommandPalette() {
   const reset = useCVStore((s) => s.reset);
   const previewEdit = useUIStore((s) => s.previewEdit);
   const togglePreviewEdit = useUIStore((s) => s.togglePreviewEdit);
+  const startTour = useOnboardingStore((s) => s.start);
 
   // Global open/close shortcut.
   useEffect(() => {
@@ -127,6 +129,15 @@ export function CommandPalette() {
         icon: "↺",
         keywords: "reset clear restore sample new",
         run: () => runAnd(reset),
+      },
+      {
+        id: "act:tour",
+        group: "Actions",
+        title: "Take the tour",
+        hint: "Replay the guided walkthrough",
+        icon: "🧭",
+        keywords: "tour onboarding guide walkthrough help intro getting started",
+        run: () => runAnd(startTour),
       },
     ];
 

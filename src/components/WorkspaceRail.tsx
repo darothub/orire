@@ -36,6 +36,7 @@ function RailButton({ item, badge }: { item: RailItem; badge?: Badge }) {
   return (
     <button
       className={`rail-item ${active ? "is-active" : ""}`}
+      data-tour={`rail-${item.view}`}
       onClick={() => setView(item.view)}
       title={`${item.label} — ${item.hint}`}
       aria-label={item.label}
