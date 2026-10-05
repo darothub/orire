@@ -220,6 +220,12 @@ export function AuthOverlay() {
               </motion.div>
             </AnimatePresence>
 
+            <ul className="auth-usps" aria-label="What orire does">
+              <li><span aria-hidden>✎</span> Rebrand any CV into a clean, ATS-ready layout</li>
+              <li><span aria-hidden>✦</span> Tailor it to a job with built-in AI — no key needed</li>
+              <li><span aria-hidden>❖</span> 20 standout templates, live preview as you edit</li>
+            </ul>
+
             {sent ? (
               <motion.div
                 className="auth-sent"
