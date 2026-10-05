@@ -80,6 +80,5 @@ describe("allowCoverLetter plan gate", () => {
     expect(allowCoverLetter("free")).toBe(false);
     expect(allowCoverLetter("pro")).toBe(true);
     expect(allowCoverLetter("career")).toBe(true);
-    expect(allowCoverLetter("teams")).toBe(true);
   });
 });

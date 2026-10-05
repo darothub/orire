@@ -2,7 +2,6 @@
 
 import { create } from "zustand";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import { usePooledStore } from "@/lib/store/pooledStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useRefineStore } from "@/lib/store/refineStore";
@@ -14,7 +13,7 @@ import type { CoverLetter } from "@/lib/cv/coverLetter";
 
 function providerReady(p: ProviderId, keys: Record<ProviderId, string>): boolean {
   if (!needsKey(p)) return true;
-  return Boolean(keys[p]?.trim()) || usePooledStore.getState().has(p);
+  return Boolean(keys[p]?.trim());
 }
 
 export type CLPhase = "idle" | "running" | "error" | "done";

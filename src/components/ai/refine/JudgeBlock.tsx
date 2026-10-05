@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import { usePooledStore } from "@/lib/store/pooledStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
 
@@ -22,13 +21,12 @@ export function JudgeBlock() {
   const resetJudge = useRefineStore((s) => s.resetJudge);
   const baseMatch = useRefineStore((s) => s.baseMatch);
   const keys = useSettingsStore((s) => s.keys);
-  const pooled = usePooledStore((s) => s.providers);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const setView = useViewStore((s) => s.setView);
 
   const done = runProviders.filter((p) => cols[p].phase === "done" && cols[p].result);
 
-  const eligible = runProviders.filter((p) => !needsKey(p) || keys[p]?.trim() || pooled.includes(p));
+  const eligible = runProviders.filter((p) => !needsKey(p) || keys[p]?.trim());
   // Keep the stored judge provider in sync with what the dropdown can show:
   // the default ("openai") may not be connected, which would make the first
   // "Judge results" click fail even though a valid provider appears selected.

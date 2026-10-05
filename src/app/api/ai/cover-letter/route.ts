@@ -14,10 +14,9 @@ import { NextResponse } from "next/server";
 import { COVER_LETTER_SYSTEM, buildCoverLetterPrompt, type CoverLetterTone } from "@/lib/ai/coverLetter";
 import { PROVIDERS, needsKey, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
-import { effectiveProviderKey } from "@/lib/ai/server/pooledKey";
 import type { CVData } from "@/lib/cv/schema";
 import { auth } from "@/lib/auth/auth";
-import { getEffectivePlanId } from "@/lib/team/team";
+import { getPlanId } from "@/lib/entitlement/entitlement";
 import { allowCoverLetter } from "@/lib/plan/plan";
 
 export const runtime = "nodejs";
@@ -51,7 +50,7 @@ export async function POST(req: Request) {
   // Server-authoritative plan gate (Pro+). Free users get an upsell block.
   const session = await auth();
   const userId = session?.user?.id ?? null;
-  const plan = userId ? await getEffectivePlanId(userId) : "free";
+  const plan = userId ? await getPlanId(userId) : "free";
   if (!allowCoverLetter(plan)) {
     return NextResponse.json(
       fail(provider, "Cover letters are a Pro feature. Upgrade your plan to generate one.", 402),
@@ -59,7 +58,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const apiKey = await effectiveProviderKey(provider, body.apiKey ?? "");
+  const apiKey = (body.apiKey ?? "").trim();
   if (needsKey(provider) && !apiKey) {
     return NextResponse.json(fail(provider, "Missing API key. Add it in Settings."), { status: 400 });
   }

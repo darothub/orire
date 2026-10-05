@@ -8,7 +8,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { PROVIDERS, isCLI, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 
 export const runtime = "nodejs";
 
@@ -84,10 +84,6 @@ export async function POST(req: Request) {
   const { provider, apiKey } = body;
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
-  }
-  // CLI providers have no queryable model API — return their known aliases.
-  if (isCLI(provider)) {
-    return NextResponse.json({ ok: true, provider, models: PROVIDERS[provider].models } as ModelsResponse);
   }
   if (!apiKey?.trim()) {
     return NextResponse.json(fail(provider, "Add an API key first."), { status: 400 });

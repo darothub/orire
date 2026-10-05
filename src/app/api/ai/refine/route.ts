@@ -2,16 +2,15 @@
  * orire — AI refine proxy route (Node runtime).
  *
  * Receives the user's chosen provider + CV + job description, dispatches to the
- * provider server-side (BYO-key HTTPS, or the local Claude Code CLI), and
- * returns the raw model text. Provider errors are returned VERBATIM (req 12).
+ * provider server-side (BYO-key HTTPS), and returns the raw model text.
+ * Provider errors are returned VERBATIM (req 12).
  */
 
 import { NextResponse } from "next/server";
 import type { CVData } from "@/lib/cv/schema";
 import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
-import { PROVIDERS, needsKey, isCLI, type ProviderId, type RefineResponse } from "@/lib/ai/types";
+import { PROVIDERS, needsKey, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
-import { effectiveProviderKey } from "@/lib/ai/server/pooledKey";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan } from "@/lib/plan/plan";
 
@@ -44,7 +43,7 @@ export async function POST(req: Request) {
   }
   // Personal BYO key, or the caller's team pooled key (Phase B3b) when signed
   // in and seated. The pooled secret is resolved server-side and never sent back.
-  const apiKey = await effectiveProviderKey(provider, body.apiKey ?? "");
+  const apiKey = (body.apiKey ?? "").trim();
   if (needsKey(provider) && !apiKey) {
     return NextResponse.json(fail(provider, "Missing API key. Add it in Settings."), { status: 400 });
   }
@@ -73,9 +72,9 @@ export async function POST(req: Request) {
   }
 
   // Per-column model-tier enforcement, driven by the plan attested in the token.
-  // `hasOwnKey` is what the server can actually see: a CLI provider or a key on
-  // this request. Premium models on key-gated plans need that BYO key.
-  const hasOwnKey = isCLI(provider) || apiKey.length > 0;
+  // `hasOwnKey` is a BYO key on this request — premium models on key-gated plans
+  // need it.
+  const hasOwnKey = apiKey.length > 0;
   const modelGate = modelAllowedOnPlan(check.payload!.plan, provider, model, hasOwnKey);
   if (!modelGate.allowed) {
     return NextResponse.json(

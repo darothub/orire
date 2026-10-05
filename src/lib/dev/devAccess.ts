@@ -1,8 +1,8 @@
 /**
  * orire — dev-only full-access provisioning (local development aid).
  *
- * Mints a database session for a fixed dev user on the top ("teams") plan so a
- * developer can click into the app with every plan gate and team feature
+ * Mints a database session for a fixed dev user on the top ("career") plan so a
+ * developer can click into the app with every plan gate
  * unlocked — no magic-link email, no Stripe, no personal API key required for
  * premium *gating*. (Actually *calling* a provider still needs a real key; that
  * can't be faked.)
@@ -26,7 +26,7 @@ export const DEV_EMAIL = process.env.ORIRE_DEV_EMAIL ?? "dev@orire.local";
 const DEV_NAME = "Dev User";
 
 /** Default plan granted by the dev login — top tier, full access. */
-export const DEV_PLAN: PlanId = "teams";
+export const DEV_PLAN: PlanId = "career";
 
 /** Session lifetime for a minted dev session. */
 const SESSION_DAYS = 30;

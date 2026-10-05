@@ -3,11 +3,10 @@
 import { create } from "zustand";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
-import { usePooledStore } from "@/lib/store/pooledStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { sharedRun } from "@/lib/store/runStore";
-import { PROVIDERS, needsKey, isCLI, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, needsKey, type ProviderId } from "@/lib/ai/types";
 import { authorizeRefineRun } from "@/app/actions/refine";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
@@ -105,11 +104,10 @@ const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
  *  fingerprint of (judge provider, model, JD, canonical candidate content) so
  *  re-judging the same inputs returns the same verdict instead of re-sampling. */
 const judgeCache = new Map<string, JudgeVerdict>();
-/** A provider is runnable when it's a CLI (local login), has a BYO key, or the
- *  member's team has a pooled key for it (Phase B3b). */
+/** A provider is runnable when it has a BYO key (or needs none). */
 function providerReady(p: ProviderId, keys: Record<ProviderId, string>): boolean {
   if (!needsKey(p)) return true;
-  return Boolean(keys[p]?.trim()) || usePooledStore.getState().has(p);
+  return Boolean(keys[p]?.trim());
 }
 const idleCols = (): Record<ProviderId, ColState> =>
   Object.fromEntries(PROVIDER_IDS.map((p) => [p, { phase: "idle" as ColPhase }])) as Record<ProviderId, ColState>;
@@ -189,7 +187,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     const selections = runProviders.map((provider) => ({
       provider,
       model: models[provider] ?? "",
-      hasOwnKey: isCLI(provider) ? true : Boolean(keys[provider]?.trim()) || usePooledStore.getState().has(provider),
+      hasOwnKey: Boolean(keys[provider]?.trim()),
     }));
     let authz;
     try {

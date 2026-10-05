@@ -39,9 +39,9 @@ describe("runToken", () => {
     const { signRunToken, verifyRunToken } = await mod();
     const token = signRunToken({ userId: "u1", plan: "free", providers: ["openai"] });
     const [, mac] = token.split(".", 2);
-    // Forge a free→teams upgrade in the payload while keeping the old signature.
+    // Forge a free→career upgrade in the payload while keeping the old signature.
     const forgedBody = Buffer.from(
-      JSON.stringify({ u: "u1", plan: "teams", p: ["openai"], exp: Date.now() + 60_000 }),
+      JSON.stringify({ u: "u1", plan: "career", p: ["openai"], exp: Date.now() + 60_000 }),
       "utf8"
     )
       .toString("base64")

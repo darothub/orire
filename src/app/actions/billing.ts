@@ -21,16 +21,6 @@ import {
   getEntitlementSummary,
   linkStripeCustomer,
 } from "@/lib/entitlement/entitlement";
-import { getTeamContext } from "@/lib/team/team";
-
-export interface TeamBillingContext {
-  onTeam: boolean;
-  isOwner: boolean;
-  name: string | null;
-  plan: PlanId;
-  seatsUsed: number;
-  seatLimit: number;
-}
 
 export interface BillingStatus {
   configured: boolean;
@@ -44,8 +34,6 @@ export interface BillingStatus {
   status: string | null;
   /** Current period end as ISO (renewal/cancel date), or null. */
   renewsAt: string | null;
-  /** Team the user is seated on, for owner-vs-member billing clarity. */
-  team: TeamBillingContext | null;
 }
 
 export interface RedirectResult {
@@ -76,25 +64,13 @@ export async function billingStatus(): Promise<BillingStatus> {
       canManage: false,
       status: null,
       renewsAt: null,
-      team: null,
     };
   }
-  const [summary, row, teamCtx] = await Promise.all([
+  const [summary, row] = await Promise.all([
     getEntitlementSummary(userId),
     getEntitlementRow(userId),
-    getTeamContext(userId),
   ]);
   const hasSubscription = Boolean(row?.stripeSubscriptionId) && summary.plan !== "free";
-  const team: TeamBillingContext | null = teamCtx
-    ? {
-        onTeam: true,
-        isOwner: teamCtx.role === "owner",
-        name: teamCtx.team.name,
-        plan: teamCtx.team.plan,
-        seatsUsed: teamCtx.members.length,
-        seatLimit: teamCtx.team.seatLimit,
-      }
-    : null;
   return {
     configured,
     signedIn: true,
@@ -103,7 +79,6 @@ export async function billingStatus(): Promise<BillingStatus> {
     canManage: configured && Boolean(row?.stripeCustomerId),
     status: row?.status ?? null,
     renewsAt: row?.currentPeriodEnd?.toISOString() ?? null,
-    team,
   };
 }
 

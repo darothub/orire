@@ -34,7 +34,6 @@ export function getStripe(): Stripe {
 const PRICE_ENV: Record<Exclude<PlanId, "free">, string> = {
   pro: "STRIPE_PRICE_PRO",
   career: "STRIPE_PRICE_CAREER",
-  teams: "STRIPE_PRICE_TEAMS",
 };
 
 /** The configured Stripe price id for a plan, or null when unset/free. */
@@ -46,7 +45,7 @@ export function priceIdForPlan(plan: PlanId): string | null {
 /** Reverse map a Stripe price id back to a plan id (for webhook handling). */
 export function planForPriceId(priceId: string | null | undefined): PlanId | null {
   if (!priceId) return null;
-  for (const plan of ["pro", "career", "teams"] as const) {
+  for (const plan of ["pro", "career"] as const) {
     if (process.env[PRICE_ENV[plan]] === priceId) return plan;
   }
   return null;

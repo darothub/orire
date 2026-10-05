@@ -16,7 +16,7 @@ import { prisma } from "@/lib/db/prisma";
 import type { PlanId } from "@/lib/plan/plan";
 import { PLANS } from "@/lib/plan/plan";
 
-const PLAN_IDS = new Set<string>(["free", "pro", "career", "teams"]);
+const PLAN_IDS = new Set<string>(["free", "pro", "career"]);
 
 /** Current billing month key, "YYYY-MM" (UTC). */
 export function currentMonth(now: Date = new Date()): string {

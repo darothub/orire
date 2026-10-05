@@ -23,8 +23,8 @@ describe("modelTier", () => {
     expect(modelTier("openai", "gpt-4o")).toBe("mid");
     expect(modelTier("anthropic", "claude-3-7-sonnet-latest")).toBe("mid");
   });
-  it("defaults empty CLI model to mid (own login, never blocked as premium)", () => {
-    expect(modelTier("codex-cli", "")).toBe("mid");
+  it("defaults an empty model to mid (never blocked as premium)", () => {
+    expect(modelTier("openai", "")).toBe("mid");
   });
 });
 
@@ -39,9 +39,6 @@ describe("modelAllowedOnPlan", () => {
   it("pro blocks premium unless the user brings a key", () => {
     expect(modelAllowedOnPlan("pro", "anthropic", "claude-3-opus-latest", false).allowed).toBe(false);
     expect(modelAllowedOnPlan("pro", "anthropic", "claude-3-opus-latest", true).allowed).toBe(true);
-  });
-  it("teams allows premium without a key", () => {
-    expect(modelAllowedOnPlan("teams", "anthropic", "claude-3-opus-latest", false).allowed).toBe(true);
   });
   it("gives a helpful reason when blocked", () => {
     const r = modelAllowedOnPlan("free", "openai", "gpt-4o", false);
@@ -78,6 +75,6 @@ describe("nextPlan", () => {
   it("walks the ladder and stops at the top", () => {
     expect(nextPlan("free")?.id).toBe("pro");
     expect(nextPlan("pro")?.id).toBe("career");
-    expect(nextPlan("teams")).toBeNull();
+    expect(nextPlan("career")).toBeNull();
   });
 });

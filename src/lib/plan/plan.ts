@@ -14,7 +14,7 @@
 
 import type { ProviderId } from "@/lib/ai/types";
 
-export type PlanId = "free" | "pro" | "career" | "teams";
+export type PlanId = "free" | "pro" | "career";
 
 /** Rough cost/quality tier of a model, used to gate premium usage per plan. */
 export type ModelTier = "budget" | "mid" | "premium";
@@ -76,21 +76,9 @@ export const PLANS: Record<PlanId, Plan> = {
     premiumRequiresKey: true,
     perks: ["Unlimited refines (fair-use)", "Parallel compare + judge", "JD simulation", "DOCX + company history", "BYO key unlocks premium"],
   },
-  teams: {
-    id: "teams",
-    label: "Teams / Coach",
-    price: 99,
-    blurb: "For coaches, bootcamps, agencies.",
-    maxProviders: 4,
-    allowCompare: true,
-    monthlyRefines: null,
-    includedTiers: ["budget", "mid", "premium"],
-    premiumRequiresKey: false,
-    perks: ["5 seats", "Pooled keys", "Branded templates", "Bulk export", "All model tiers"],
-  },
 };
 
-export const PLAN_ORDER: PlanId[] = ["free", "pro", "career", "teams"];
+export const PLAN_ORDER: PlanId[] = ["free", "pro", "career"];
 
 /** Model-name fragments that indicate a premium (large/expensive) model. */
 const PREMIUM_PATTERNS = [/opus/i, /gpt-4(?:\.\d+)?$/i, /gpt-4-turbo/i, /\bo3\b/i, /o1(?:-preview)?/i];

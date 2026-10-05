@@ -26,7 +26,6 @@ const VIEW_META: { view: WorkspaceView; label: string; hint: string; icon: strin
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
   { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
   { view: "rate", label: "Rate", hint: "Score initial → final", icon: "★" },
-  { view: "progress", label: "Progress", hint: "What's shipped", icon: "▦" },
   { view: "connect", label: "Connect AI", hint: "Providers & API keys", icon: "⚙" },
 ];
 

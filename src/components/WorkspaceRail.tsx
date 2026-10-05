@@ -25,7 +25,6 @@ const PRIMARY: RailItem[] = [
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
   { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
   { view: "rate", label: "Rate", hint: "Score initial → final", icon: "★" },
-  { view: "progress", label: "Progress", hint: "What's shipped", icon: "▦" },
 ];
 
 const FOOTER: RailItem[] = [

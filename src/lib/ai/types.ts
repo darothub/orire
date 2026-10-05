@@ -7,28 +7,21 @@
  * server-side or sent to any third party other than the chosen provider.
  */
 
-export type ProviderId = "openai" | "anthropic" | "claude-cli" | "codex-cli";
+export type ProviderId = "openai" | "anthropic";
 
 export interface ProviderMeta {
   id: ProviderId;
   label: string;
-  /** How the connection authenticates. "api" = BYO key; "cli" = local binary. */
-  kind: "api" | "cli";
-  /** Human label for the key, e.g. "sk-…". Empty for CLI providers. */
+  /** Human label for the key, e.g. "sk-…". */
   keyHint: string;
   defaultModel: string;
   models: string[];
-  /** Short note shown in place of a key field for CLI providers. */
-  authHint?: string;
-  /** Executable name probed/spawned for CLI providers (e.g. "claude", "codex"). */
-  cliBin?: string;
 }
 
 export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   openai: {
     id: "openai",
     label: "OpenAI (ChatGPT)",
-    kind: "api",
     keyHint: "sk-…",
     defaultModel: "gpt-4o",
     models: [
@@ -45,7 +38,6 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   anthropic: {
     id: "anthropic",
     label: "Anthropic (Claude)",
-    kind: "api",
     keyHint: "sk-ant-…",
     defaultModel: "claude-3-7-sonnet-latest",
     models: [
@@ -57,39 +49,11 @@ export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
       "claude-opus-4-0",
     ],
   },
-  "claude-cli": {
-    id: "claude-cli",
-    label: "Claude Code (CLI)",
-    kind: "cli",
-    keyHint: "",
-    authHint: "Uses your local Claude Code login — no API key needed.",
-    cliBin: "claude",
-    defaultModel: "sonnet",
-    models: ["sonnet", "opus", "haiku"],
-  },
-  "codex-cli": {
-    id: "codex-cli",
-    label: "Codex (CLI)",
-    kind: "cli",
-    keyHint: "",
-    authHint: "Uses your local Codex login (`codex login`) — no API key needed.",
-    cliBin: "codex",
-    // Empty = let Codex use the model your account/login exposes. ChatGPT-plan
-    // logins reject e.g. gpt-5-codex, so we never force a model; users may type
-    // one their account supports to override.
-    defaultModel: "",
-    models: [],
-  },
 };
 
-/** True when a provider authenticates with a BYO API key (vs a local CLI login). */
-export function needsKey(provider: ProviderId): boolean {
-  return PROVIDERS[provider].kind === "api";
-}
-
-/** True when a provider is backed by a local command-line binary. */
-export function isCLI(provider: ProviderId): boolean {
-  return PROVIDERS[provider].kind === "cli";
+/** Every provider authenticates with a BYO API key. */
+export function needsKey(_provider: ProviderId): boolean {
+  return true;
 }
 
 /** Request payload posted to /api/ai/refine. */

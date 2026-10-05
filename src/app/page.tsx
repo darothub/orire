@@ -10,11 +10,9 @@ import { RefineFlow } from "@/components/ai/RefineFlow";
 import { RebrandFlow } from "@/components/ai/RebrandFlow";
 import { ProviderSetup } from "@/components/ai/ProviderSetup";
 import { PlanPanel } from "@/components/PlanPanel";
-import { TeamPanel } from "@/components/TeamPanel";
 import { RateView } from "@/components/ai/RatingPanel";
 import { TargetView } from "@/components/ai/TargetPanel";
 import { CoverLetterView } from "@/components/ai/CoverLetterView";
-import { ProgressView } from "@/components/ProgressPanel";
 import { HistoryView } from "@/components/HistoryView";
 import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -80,7 +78,6 @@ function ConnectView() {
       </div>
       <ProviderSetup />
       <PlanPanel />
-      <TeamPanel />
     </motion.div>
   );
 }
@@ -99,7 +96,6 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "target" && <TargetView />}
           {view === "cover" && <CoverLetterView />}
           {view === "rate" && <RateView />}
-          {view === "progress" && <ProgressView />}
           {view === "history" && <HistoryView />}
           {view === "export" && <ExportView />}
           {view === "connect" && <ConnectView />}

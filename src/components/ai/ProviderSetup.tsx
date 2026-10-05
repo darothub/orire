@@ -5,19 +5,13 @@ import { motion } from "framer-motion";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { usePlanStore } from "@/lib/store/planStore";
-import { usePooledStore } from "@/lib/store/pooledStore";
-import { PROVIDERS, isCLI, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { PLANS, providerCountAllowed } from "@/lib/plan/plan";
 import type { ModelsResponse } from "@/app/api/ai/models/route";
-import type { CliStatus } from "@/app/api/ai/cli/route";
 
 const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
-const API_IDS = PROVIDER_IDS.filter((p) => !isCLI(p));
-const CLI_IDS = PROVIDER_IDS.filter((p) => isCLI(p));
 
 type FetchState = { phase: "idle" | "loading" | "done" | "error"; models: string[]; error?: string };
-
-type CliState = { phase: "idle" | "loading" | "done"; status?: CliStatus };
 
 function emptyRecord<T>(make: () => T): Record<ProviderId, T> {
   return Object.fromEntries(PROVIDER_IDS.map((p) => [p, make()])) as Record<ProviderId, T>;
@@ -27,10 +21,8 @@ function emptyRecord<T>(make: () => T): Record<ProviderId, T> {
  * Shared provider connection UI. Used both as the standalone "Connect" workspace
  * and as the first step of the Refine module.
  *
- * Two connection kinds:
- *   - API providers (OpenAI, Anthropic): BYO key + model discovery.
- *   - CLI providers (Claude Code): no key — uses the local login; we probe the
- *     binary for availability and offer model aliases.
+ * Every provider is BYO-key (OpenAI, Anthropic): the user pastes a key and we
+ * ask the provider which models that key can use.
  *
  * When `selectable` is true, each card carries a run toggle bound to the Refine
  * store — pick one assistant for a single pass, or two to compare in parallel.
@@ -47,18 +39,11 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
   const toggleRunProvider = useRefineStore((s) => s.toggleRunProvider);
   const plan = usePlanStore((s) => s.plan);
   const planMeta = PLANS[plan];
-  const pooledProviders = usePooledStore((s) => s.providers);
-  const refreshPooled = usePooledStore((s) => s.refresh);
-
-  useEffect(() => {
-    void refreshPooled();
-  }, [refreshPooled]);
 
   const [reveal, setReveal] = useState<Record<ProviderId, boolean>>(() => emptyRecord(() => false));
   const [fetched, setFetched] = useState<Record<ProviderId, FetchState>>(() =>
     emptyRecord<FetchState>(() => ({ phase: "idle", models: [] }))
   );
-  const [cli, setCli] = useState<Record<ProviderId, CliState>>(() => emptyRecord<CliState>(() => ({ phase: "idle" })));
   const timers = useRef<Record<ProviderId, ReturnType<typeof setTimeout> | null>>(emptyRecord(() => null));
 
   const loadModels = async (p: ProviderId) => {
@@ -92,7 +77,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
   // Auto-fetch models once an API key is present (debounced).
   useEffect(() => {
     const t = timers.current;
-    for (const p of API_IDS) {
+    for (const p of PROVIDER_IDS) {
       const key = keys[p]?.trim();
       if (t[p]) clearTimeout(t[p]!);
       if (!key) {
@@ -102,27 +87,12 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
       t[p] = setTimeout(() => void loadModels(p), 600);
     }
     return () => {
-      for (const p of API_IDS) if (t[p]) clearTimeout(t[p]!);
+      for (const p of PROVIDER_IDS) if (t[p]) clearTimeout(t[p]!);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keys.openai, keys.anthropic]);
 
-  // Probe CLI availability per provider.
-  const probeCli = async (p: ProviderId) => {
-    setCli((c) => ({ ...c, [p]: { phase: "loading" } }));
-    try {
-      const res = await fetch(`/api/ai/cli?provider=${encodeURIComponent(p)}`);
-      const status = (await res.json()) as CliStatus;
-      setCli((c) => ({ ...c, [p]: { phase: "done", status } }));
-    } catch (e) {
-      setCli((c) => ({ ...c, [p]: { phase: "done", status: { installed: false, error: e instanceof Error ? e.message : String(e) } } }));
-    }
-  };
-  useEffect(() => {
-    for (const p of CLI_IDS) void probeCli(p);
-  }, []);
-  const isConnected = (p: ProviderId): boolean =>
-    isCLI(p) ? cli[p].phase === "done" && !!cli[p].status?.installed : Boolean(keys[p]?.trim());
+  const isConnected = (p: ProviderId): boolean => Boolean(keys[p]?.trim());
 
   return (
     <div className="conn-wrap">
@@ -172,11 +142,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
       <div className="conn-grid">
       {PROVIDER_IDS.map((p, i) => {
         const meta = PROVIDERS[p];
-        const cliProvider = isCLI(p);
-        const cliState = cli[p];
-        const cliReady = cliProvider && cliState.phase === "done" && !!cliState.status?.installed;
-        const connected = cliProvider ? cliReady : Boolean(keys[p]?.trim());
-        const teamCovered = !cliProvider && !keys[p]?.trim() && pooledProviders.includes(p);
+        const connected = Boolean(keys[p]?.trim());
         const selected = runProviders.includes(p);
         const isDefault = !selectable && p === defaultProvider;
         return (
@@ -191,7 +157,6 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
               <div className="conn-brand">
                 <span className={`conn-dot ${p}`} />
                 <strong>{meta.label}</strong>
-                {cliProvider && <span className="conn-tag">CLI</span>}
                 {isDefault && <span className="conn-tag default">Default</span>}
               </div>
               {selectable ? (
@@ -216,69 +181,38 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                     Set default
                   </button>
                 )
-              ) : teamCovered ? (
-                <span className="conn-ok conn-team" title="Your team pools a key for this provider — premium runs use it, no personal key needed.">
-                  Covered by your team
-                </span>
               ) : (
-                <span className="conn-warn">{cliProvider ? "Not found" : "No key"}</span>
+                <span className="conn-warn">No key</span>
               )}
             </div>
 
-            {cliProvider ? (
-              <div className="conn-field">
-                <span className="ed-label">Connection</span>
-                <div className="conn-cli-status">
-                  {cliState.phase !== "done" ? (
-                    <span className="conn-hint">Checking for the {meta.label} binary…</span>
-                  ) : cliState.status?.installed ? (
-                    <span className="conn-cli-ok">✓ {cliState.status.version ?? meta.label} detected</span>
-                  ) : (
-                    <span className="conn-cli-err">
-                      Not found — install {meta.label} and sign in, then re-check.
-                      {cliState.status?.error ? <em> ({cliState.status.error})</em> : null}
-                    </span>
-                  )}
-                  <button className="conn-refresh" onClick={() => void probeCli(p)} disabled={cliState.phase === "loading"} title="Re-check">
-                    {cliState.phase === "loading" ? "…" : "↻"}
-                  </button>
-                </div>
-                <span className="conn-hint">{meta.authHint}</span>
+            <label className="conn-field">
+              <span className="ed-label">API key</span>
+              <div className="conn-key-row">
+                <input
+                  className="ed-input"
+                  type={reveal[p] ? "text" : "password"}
+                  value={keys[p] ?? ""}
+                  placeholder={meta.keyHint}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(e) => setKey(p, e.target.value)}
+                />
+                <button
+                  className="conn-reveal"
+                  onClick={() => setReveal((r) => ({ ...r, [p]: !r[p] }))}
+                  aria-label={reveal[p] ? "Hide key" : "Show key"}
+                >
+                  {reveal[p] ? "Hide" : "Show"}
+                </button>
               </div>
-            ) : (
-              <label className="conn-field">
-                <span className="ed-label">API key</span>
-                <div className="conn-key-row">
-                  <input
-                    className="ed-input"
-                    type={reveal[p] ? "text" : "password"}
-                    value={keys[p] ?? ""}
-                    placeholder={meta.keyHint}
-                    autoComplete="off"
-                    spellCheck={false}
-                    onChange={(e) => setKey(p, e.target.value)}
-                  />
-                  <button
-                    className="conn-reveal"
-                    onClick={() => setReveal((r) => ({ ...r, [p]: !r[p] }))}
-                    aria-label={reveal[p] ? "Hide key" : "Show key"}
-                  >
-                    {reveal[p] ? "Hide" : "Show"}
-                  </button>
-                </div>
-              </label>
-            )}
+            </label>
 
             <label className="conn-field">
               <span className="ed-label">
                 Model
                 <span className="conn-hint">
                   {(() => {
-                    if (cliProvider) {
-                      return meta.models.length > 0
-                        ? ` — ${meta.models.slice(0, 3).join(" / ")} or any model name`
-                        : " — leave blank to use the model your login exposes";
-                    }
                     const st = fetched[p];
                     if (!connected) return " — add a key to load your models";
                     if (st.phase === "loading") return " — loading your models…";
@@ -286,7 +220,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                     return " — pick one or type any model ID";
                   })()}
                 </span>
-                {!cliProvider && connected && (
+                {connected && (
                   <button
                     type="button"
                     className="conn-refresh"
@@ -304,7 +238,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                 value={models[p]}
                 spellCheck={false}
                 autoComplete="off"
-                placeholder={cliProvider && !meta.defaultModel ? "Assistant default" : meta.defaultModel}
+                placeholder={meta.defaultModel}
                 onChange={(e) => setModel(p, e.target.value)}
               />
               <datalist id={`models-${p}`}>
@@ -312,7 +246,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                   <option key={m} value={m} />
                 ))}
               </datalist>
-              {!cliProvider && fetched[p].phase === "error" && fetched[p].error && (
+              {fetched[p].phase === "error" && fetched[p].error && (
                 <span className="conn-model-err" title={fetched[p].error}>
                   Couldn’t load models: {fetched[p].error!.slice(0, 120)}
                 </span>

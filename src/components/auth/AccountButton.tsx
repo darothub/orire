@@ -68,7 +68,7 @@ export function AccountButton() {
       {process.env.NODE_ENV !== "production" && (
         <a
           className="btn-ghost acct-devlogin"
-          title="Dev only — sign in as a full-access (teams) account"
+          title="Dev only — sign in as a full-access (career) account"
           href="/api/dev/login"
         >
           ⚡ Dev login

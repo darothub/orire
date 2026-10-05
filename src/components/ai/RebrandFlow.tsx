@@ -4,7 +4,6 @@ import { useCallback, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import { usePooledStore } from "@/lib/store/pooledStore";
 import { useRebrandStore } from "@/lib/store/rebrandStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
@@ -57,8 +56,7 @@ function UploadStep() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const apiKey = keys[provider]?.trim() ?? "";
-  const pooled = usePooledStore((s) => s.providers);
-  const hasAIKey = needsKey(provider) ? apiKey.length > 0 || pooled.includes(provider) : true;
+  const hasAIKey = needsKey(provider) ? apiKey.length > 0 : true;
   const providerLabel = PROVIDERS[provider].label;
   const facts = countFacts(cv);
   const hasWorking = facts.experience + facts.education + facts.skills + facts.projects > 0;

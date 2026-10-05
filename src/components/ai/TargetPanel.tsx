@@ -6,7 +6,6 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import { usePooledStore } from "@/lib/store/pooledStore";
 import { sharedRun, useIsRunning, useRunOrigin } from "@/lib/store/runStore";
 import { getTemplate } from "@/components/templates/registry";
 import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
@@ -42,7 +41,6 @@ export function TargetView() {
   const provider = useSettingsStore((s) => s.provider);
   const keys = useSettingsStore((s) => s.keys);
   const models = useSettingsStore((s) => s.models);
-  const pooled = usePooledStore((s) => s.providers);
 
   // Deterministic read of the target's writing voice (recomputed per target).
   const detected = useMemo<ToneProfile | null>(() => (ideal ? analyzeTone(ideal) : null), [ideal]);
@@ -62,7 +60,7 @@ export function TargetView() {
 
   const meta = PROVIDERS[provider];
   const hasKey = needsKey(provider)
-    ? Boolean(keys[provider]?.trim()) || pooled.includes(provider)
+    ? Boolean(keys[provider]?.trim())
     : true;
 
   const MineTpl = getTemplate(activeTemplate).Component;

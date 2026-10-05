@@ -2,16 +2,14 @@
 
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
-import { usePooledStore } from "@/lib/store/pooledStore";
 import { ProviderSetup } from "@/components/ai/ProviderSetup";
 import { PROVIDERS, needsKey } from "@/lib/ai/types";
 
 export function ConnectStep({ onNext }: { onNext: () => void }) {
   const runProviders = useRefineStore((s) => s.runProviders);
   const keys = useSettingsStore((s) => s.keys);
-  const pooled = usePooledStore((s) => s.providers);
   const selectedMissingKey = runProviders.filter(
-    (p) => needsKey(p) && !keys[p]?.trim() && !pooled.includes(p)
+    (p) => needsKey(p) && !keys[p]?.trim()
   );
   const ready = runProviders.length >= 1 && selectedMissingKey.length === 0;
 

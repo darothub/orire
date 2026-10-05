@@ -2,12 +2,12 @@
  * orire — dev-only one-click full-access login (local development aid).
  *
  * GET /api/dev/login
- *   Upserts a fixed dev user on the top ("teams") plan, mints a database
+ *   Upserts a fixed dev user on the top ("career") plan, mints a database
  *   session, sets the Auth.js session cookie, and redirects to `/`. You land
- *   signed in with every plan gate and team feature unlocked.
+ *   signed in with every plan gate unlocked.
  *
  * Optional query params:
- *   ?plan=free|pro|career|teams   grant a specific plan (default: teams)
+ *   ?plan=free|pro|career   grant a specific plan (default: career)
  *   ?email=you@example.com        sign in as a specific email (default: dev@orire.local)
  *   ?next=/some/path              post-login redirect target (same-origin only)
  *
