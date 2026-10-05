@@ -29,6 +29,7 @@ model User {
   usage       UsageCounter[]
   ownedTeams      Team[]       @relation("TeamOwner")
   teamMemberships TeamMember[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Account {
@@ -64,6 +65,20 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// Single-use, hashed tokens for the "forgot password" flow. The raw token is
+// emailed to the user; only its SHA-256 hash is stored here.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ---------- Product domain ----------

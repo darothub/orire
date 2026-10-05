@@ -2330,6 +2330,39 @@ body {
   font-size: 12.5px; line-height: 1.45; margin: 10px 0 0;
   color: var(--danger, #ff6b6b);
 }
+.auth-forgot {
+  justify-self: end; margin-top: 2px;
+  font-size: 12px; font-weight: 550; color: var(--muted);
+  text-decoration: none; transition: color 0.15s ease;
+}
+.auth-forgot:hover { color: var(--accent-2); }
+
+/* ---------- Standalone auth pages (/forgot, /reset) ---------- */
+.authpage {
+  min-height: 100dvh; display: grid; place-items: center;
+  padding: 24px; background: var(--bg, #070a0f);
+}
+.authpage-card {
+  width: 100%; max-width: 380px;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 30px 28px 24px; border-radius: 20px;
+  border: 1px solid var(--surface-hover);
+  background: color-mix(in oklab, var(--panel) 92%, transparent);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+.authpage-brand {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 10px;
+}
+.authpage-brand span { color: var(--accent-2); }
+.authpage-title { font-size: 20px; font-weight: 700; color: var(--text); margin: 0; }
+.authpage-sub { font-size: 13px; line-height: 1.5; color: var(--muted); margin: 6px 0 4px; }
+.authpage-form { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.authpage-back {
+  margin-top: 16px; font-size: 13px; font-weight: 550;
+  color: var(--muted); text-decoration: none; transition: color 0.15s ease;
+}
+.authpage-back:hover { color: var(--accent-2); }
 
 /* ---------- Theme toggle ---------- */
 .theme-toggle {

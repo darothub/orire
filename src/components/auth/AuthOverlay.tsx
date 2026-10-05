@@ -399,6 +399,11 @@ export function AuthOverlay() {
                     ? "Create account"
                     : "Sign in"}
               </button>
+              {!signup && (
+                <a className="auth-forgot" href="/forgot">
+                  Forgot password?
+                </a>
+              )}
             </form>
             )}
 
