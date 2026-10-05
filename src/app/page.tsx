@@ -146,14 +146,15 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
-  // Gate the whole workspace behind the login page so the landing never flashes
-  // first. Reveal only once the user is authenticated or has explicitly chosen
-  // to explore without an account. During the initial `loading` phase (and
-  // before hydration) we keep it hidden, showing a branded cover + the login
-  // overlay instead of the editor/landing.
+  // Gate the whole workspace behind the login page so neither page flashes the
+  // other. The session is seeded from the server (see layout), so `status` is
+  // authoritative on the first paint — an authenticated user lands straight on
+  // the app and an unauthenticated one sees the login page, with no loading
+  // flash of the wrong page either way. `.app`'s client-only internals still
+  // defer on `mounted`, so rendering the shell before hydration is safe.
   const { status } = useSession();
   const explored = useUIStore((s) => s.explored);
-  const revealApp = mounted && (status === "authenticated" || explored);
+  const revealApp = status === "authenticated" || explored;
 
   const cv = useCVStore((s) => s.cv);
   const active = useCVStore((s) => s.activeTemplate);

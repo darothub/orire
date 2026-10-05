@@ -4,6 +4,7 @@ import "./templates.css";
 import "./resume.css";
 import "./ingest.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { auth } from "@/lib/auth/auth";
 
 export const metadata: Metadata = {
   title: "orire — CV studio",
@@ -16,11 +17,14 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Resolve the session on the server so the client knows the auth state on the
+  // very first paint — no "loading" flash of the wrong page after login/logout.
+  const session = await auth();
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider session={session}>{children}</AuthProvider>
       </body>
     </html>
   );
