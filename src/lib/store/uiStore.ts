@@ -16,6 +16,11 @@ interface UIState {
   authMode: "signin" | "signup";
   openAuth: (mode?: "signin" | "signup") => void;
   closeAuth: () => void;
+  /** User chose "Explore without an account" (mirrors the persisted localStorage
+   *  flag). While false and not signed in, the main workspace stays gated behind
+   *  the login page so the landing never flashes first. */
+  explored: boolean;
+  setExplored: (v: boolean) => void;
 }
 
 /** Ephemeral UI flags — intentionally NOT persisted. */
@@ -29,4 +34,6 @@ export const useUIStore = create<UIState>((set) => ({
   authMode: "signin",
   openAuth: (mode = "signin") => set({ authOpen: true, authMode: mode }),
   closeAuth: () => set({ authOpen: false }),
+  explored: false,
+  setExplored: (v) => set({ explored: v }),
 }));

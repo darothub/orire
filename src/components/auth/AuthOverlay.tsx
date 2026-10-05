@@ -54,6 +54,7 @@ export function AuthOverlay() {
   const mode = useUIStore((s) => s.authMode);
   const close = useUIStore((s) => s.closeAuth);
   const openAuth = useUIStore((s) => s.openAuth);
+  const setExplored = useUIStore((s) => s.setExplored);
   const setMode = openAuth;
   const { status } = useSession();
 
@@ -81,10 +82,14 @@ export function AuthOverlay() {
   }, [status, open, close]);
 
   // Gate: auto-open on first load when not signed in, until the user signs in or
-  // chooses to explore. We trigger during the `loading` phase too (not just once
-  // `unauthenticated` resolves) so the overlay appears almost immediately and the
-  // landing page isn't briefly visible/interactive first. Once they've explored,
-  // we don't nag on later reloads.
+  // chooses to explore. We hydrate the shared `explored` flag from localStorage
+  // on mount so the page-level gate knows immediately whether to keep the
+  // workspace hidden. We trigger during the `loading` phase too (not just once
+  // `unauthenticated` resolves) so the overlay appears immediately and the
+  // landing page isn't briefly visible/interactive first.
+  useEffect(() => {
+    if (hasExplored()) setExplored(true);
+  }, [setExplored]);
   useEffect(() => {
     if (status !== "authenticated" && !hasExplored()) openAuth("signin");
   }, [status, openAuth]);
@@ -92,7 +97,10 @@ export function AuthOverlay() {
   // Dismissing the gate (×, backdrop, Esc, "explore") counts as choosing to
   // explore so it won't reappear on reload. Signing in bypasses this naturally.
   const dismiss = () => {
-    if (status !== "authenticated") markExplored();
+    if (status !== "authenticated") {
+      markExplored();
+      setExplored(true);
+    }
     close();
   };
   // Reset transient state when the overlay closes (render-phase, no effect).

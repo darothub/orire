@@ -44,6 +44,16 @@ body {
 }
 
 /* ---------- App shell ---------- */
+.auth-gate-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(139, 124, 255, 0.14), transparent 60%),
+    radial-gradient(1000px 500px at 110% 10%, rgba(110, 231, 208, 0.1), transparent 55%),
+    var(--bg);
+}
+
 .app {
   height: 100vh;
   display: flex;

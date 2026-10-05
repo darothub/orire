@@ -20,6 +20,7 @@ import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { CloudSync } from "@/components/auth/CloudSync";
+import { useSession } from "next-auth/react";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
@@ -145,6 +146,15 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
+  // Gate the whole workspace behind the login page so the landing never flashes
+  // first. Reveal only once the user is authenticated or has explicitly chosen
+  // to explore without an account. During the initial `loading` phase (and
+  // before hydration) we keep it hidden, showing a branded cover + the login
+  // overlay instead of the editor/landing.
+  const { status } = useSession();
+  const explored = useUIStore((s) => s.explored);
+  const revealApp = mounted && (status === "authenticated" || explored);
+
   const cv = useCVStore((s) => s.cv);
   const active = useCVStore((s) => s.activeTemplate);
   const reset = useCVStore((s) => s.reset);
@@ -225,7 +235,9 @@ export default function Home() {
   const ActiveTemplate = tpl.Component;
 
   return (
-    <div className="app has-rail">
+    <>
+      {revealApp ? (
+        <div className="app has-rail">
       <header className="app-bar">
         <div className="brand">
           <span className="brand-dot" />
@@ -349,7 +361,11 @@ export default function Home() {
       </main>
 
       <CommandPalette />
+        </div>
+      ) : (
+        <div className="auth-gate-cover" aria-hidden />
+      )}
       <AuthOverlay />
-    </div>
+    </>
   );
 }
