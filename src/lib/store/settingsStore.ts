@@ -39,9 +39,14 @@ export const useSettingsStore = create<SettingsState>()(
       // backfilled with their defaults instead of coming back undefined.
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<SettingsState>;
+        // Guard against a stale persisted provider that no longer exists
+        // (e.g. a provider removed in a later release) — fall back to default.
+        const provider =
+          p.provider && p.provider in PROVIDERS ? p.provider : current.provider;
         return {
           ...current,
           ...p,
+          provider,
           keys: { ...current.keys, ...(p.keys ?? {}) },
           models: { ...current.models, ...(p.models ?? {}) },
         };

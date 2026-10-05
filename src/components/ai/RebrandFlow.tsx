@@ -42,7 +42,8 @@ export function RebrandFlow() {
 
 function UploadStep() {
   const cv = useCVStore((s) => s.cv);
-  const provider = useSettingsStore((s) => s.provider);
+  const rawProvider = useSettingsStore((s) => s.provider);
+  const provider = rawProvider in PROVIDERS ? rawProvider : "openai";
   const keys = useSettingsStore((s) => s.keys);
   const models = useSettingsStore((s) => s.models);
   const setDraft = useRebrandStore((s) => s.setDraft);

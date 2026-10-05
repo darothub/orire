@@ -57,6 +57,8 @@ body {
   padding: 14px 22px;
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 50;
 }
 
 .brand {
