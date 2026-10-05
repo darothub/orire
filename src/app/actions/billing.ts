@@ -41,6 +41,19 @@ export interface RedirectResult {
   error?: string;
 }
 
+export interface EmbeddedCheckoutResult {
+  /** Client secret for `EmbeddedCheckoutProvider`. */
+  clientSecret?: string;
+  error?: string;
+}
+
+export interface CheckoutSessionState {
+  /** Stripe session status: "open" | "complete" | "expired", or null. */
+  status: string | null;
+  /** "paid" | "unpaid" | "no_payment_required", or null. */
+  paymentStatus: string | null;
+}
+
 /** Build the app origin from the incoming request (falls back to APP_URL/env). */
 async function appOrigin(): Promise<string> {
   const h = await headers();
@@ -130,6 +143,59 @@ export async function startCheckout(plan: PlanId): Promise<RedirectResult> {
   } catch (err) {
     // Surface the provider message verbatim (req 12 spirit).
     return { error: err instanceof Error ? err.message : "Could not start checkout." };
+  }
+}
+
+/**
+ * Create an **embedded** Checkout session for a paid plan and return its
+ * `client_secret` so the Stripe payment UI can render on an orire-branded page
+ * (no redirect away). The webhook remains the authoritative entitlement writer;
+ * on completion Stripe navigates the browser to `return_url`.
+ */
+export async function createCheckoutSession(plan: PlanId): Promise<EmbeddedCheckoutResult> {
+  if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
+  if (plan === "free") return { error: "The Free plan doesn’t require checkout." };
+
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return { error: "Sign in to subscribe." };
+
+  const priceId = priceIdForPlan(plan);
+  if (!priceId) return { error: `No Stripe price configured for the ${plan} plan.` };
+
+  try {
+    const customerId = await ensureCustomerId(userId, session?.user?.email);
+    const origin = await appOrigin();
+    const stripe = getStripe();
+    const checkout = await stripe.checkout.sessions.create({
+      ui_mode: "embedded",
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: userId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true,
+      metadata: { userId, plan },
+      subscription_data: { metadata: { userId, plan } },
+      return_url: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+    });
+    return checkout.client_secret
+      ? { clientSecret: checkout.client_secret }
+      : { error: "Stripe did not return a checkout secret." };
+  } catch (err) {
+    // Surface the provider message verbatim (req 12 spirit).
+    return { error: err instanceof Error ? err.message : "Could not start checkout." };
+  }
+}
+
+/** Read the status of a Checkout session (used by the return page). */
+export async function checkoutSessionStatus(sessionId: string): Promise<CheckoutSessionState> {
+  if (!isStripeConfigured() || !sessionId) return { status: null, paymentStatus: null };
+  try {
+    const stripe = getStripe();
+    const s = await stripe.checkout.sessions.retrieve(sessionId);
+    return { status: s.status ?? null, paymentStatus: s.payment_status ?? null };
+  } catch {
+    return { status: null, paymentStatus: null };
   }
 }
 

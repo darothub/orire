@@ -9,6 +9,8 @@ import { billingStatus, openBillingPortal, startCheckout, type BillingStatus } f
 import {
   subscriptionLine,
 } from "@/lib/billing/summary";
+import { canEmbedCheckout } from "@/lib/billing/stripe-client";
+import { CheckoutModal } from "@/components/CheckoutModal";
 import { PLANS, PLAN_ORDER, type PlanId } from "@/lib/plan/plan";
 
 /**
@@ -32,6 +34,7 @@ export function PlanPanel() {
   const [billing, setBilling] = useState<BillingStatus | null>(null);
   const [busy, setBusy] = useState<PlanId | "portal" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<PlanId | null>(null);
 
   const active = PLANS[plan];
   const cap = active.monthlyRefines;
@@ -103,6 +106,13 @@ export function PlanPanel() {
         return;
       }
       setBusy(id);
+      if (canEmbedCheckout()) {
+        // Embedded checkout — keep the user on an orire-branded page.
+        setCheckoutPlan(id);
+        setBusy(null);
+        return;
+      }
+      // No publishable key configured: fall back to hosted Checkout redirect.
       const r = await startCheckout(id);
       if (r.url) redirect(r.url);
       else {
@@ -175,6 +185,10 @@ export function PlanPanel() {
           </button>
         )}
       </div>
+
+      {checkoutPlan && (
+        <CheckoutModal plan={checkoutPlan} onClose={() => setCheckoutPlan(null)} />
+      )}
     </div>
   );
 }
