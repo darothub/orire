@@ -343,32 +343,6 @@ export function AuthOverlay() {
               </div>
             )}
 
-            <div className="auth-oauth">
-              {OAUTH.map((p) => {
-                const ready = configured?.includes(p.id) ?? false;
-                const loading = busy === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    className={`auth-oauth-btn ${p.id}`}
-                    onClick={() => ready && oauth(p.id)}
-                    disabled={!!busy || !ready}
-                    title={ready ? `Continue with ${p.label}` : `${p.label} sign-in isn't configured on this server`}
-                  >
-                    <span className="auth-oauth-mark">{p.mark}</span>
-                    <span>
-                      {loading ? "Redirecting…" : `${signup ? "Sign up" : "Continue"} with ${p.label}`}
-                    </span>
-                    {!ready && configured !== null && <span className="auth-oauth-soon">soon</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="auth-divider" hidden={!PASSWORD_AUTH_ENABLED}>
-              <span>or {signup ? "sign up" : "continue"} with email</span>
-            </div>
-
             {PASSWORD_AUTH_ENABLED && (
             <form className="auth-email" onSubmit={submitEmail}>
               <input
@@ -406,6 +380,32 @@ export function AuthOverlay() {
               )}
             </form>
             )}
+
+            <div className="auth-divider" hidden={!PASSWORD_AUTH_ENABLED}>
+              <span>or {signup ? "sign up" : "continue"} with Google</span>
+            </div>
+
+            <div className="auth-oauth">
+              {OAUTH.map((p) => {
+                const ready = configured?.includes(p.id) ?? false;
+                const loading = busy === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    className={`auth-oauth-btn ${p.id}`}
+                    onClick={() => ready && oauth(p.id)}
+                    disabled={!!busy || !ready}
+                    title={ready ? `Continue with ${p.label}` : `${p.label} sign-in isn't configured on this server`}
+                  >
+                    <span className="auth-oauth-mark">{p.mark}</span>
+                    <span>
+                      {loading ? "Redirecting…" : `${signup ? "Sign up" : "Continue"} with ${p.label}`}
+                    </span>
+                    {!ready && configured !== null && <span className="auth-oauth-soon">soon</span>}
+                  </button>
+                );
+              })}
+            </div>
 
             {authErr && <p className="auth-error" role="alert">{authErr}</p>}
 
