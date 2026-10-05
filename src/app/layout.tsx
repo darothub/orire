@@ -3,6 +3,7 @@ import "./globals.css";
 import "./templates.css";
 import "./resume.css";
 import "./ingest.css";
+import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { auth } from "@/lib/auth/auth";
 
@@ -31,6 +32,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full">
         <AuthProvider session={session}>{children}</AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
