@@ -32,6 +32,10 @@ definitions:
         script:
           - npm ci
           - npm run lint
+          # Generate Next's route/layout/page type defs (.next/types/**) that
+          # tsconfig includes — without them a fresh checkout fails on the
+          # generated globals (e.g. LayoutProps). Lighter than a full build.
+          - npx next typegen
           - npx tsc --noEmit
           - npm test
 
