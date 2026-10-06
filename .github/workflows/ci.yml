@@ -1,0 +1,95 @@
+# orire — GitHub Actions CI
+#
+# Runs on every pull request and on pushes to main:
+#   • checks  — eslint, tsc (typecheck) and vitest unit tests
+#   • build   — a full production `next build`
+#   • e2e     — Playwright smoke suite (hermetic: stubs /api/ai/*, no DB/SMTP)
+#
+# Deploys are NOT handled here. Production (main) and PR preview deploys run
+# through Vercel's native GitHub integration, which builds with
+# `prisma migrate deploy && next build` (see vercel.json / docs/deploy.md).
+#
+# The build/e2e steps never touch a real database; a dummy connection string is
+# enough for `prisma generate` and `next build`, which don't open a connection.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Dummy datasource — enough for `prisma generate` and `next build`, which
+  # never open a connection at build time.
+  DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+  DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+
+jobs:
+  checks:
+    name: Lint · Typecheck · Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # Generate Next's route/layout/page type defs (.next/types/**) that
+      # tsconfig includes — without them a fresh checkout fails on the
+      # generated globals (e.g. LayoutProps). Lighter than a full build.
+      - run: npx next typegen
+      - run: npx tsc --noEmit
+      - run: npm test
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  e2e:
+    name: E2E · Playwright
+    runs-on: ubuntu-latest
+    # Mirror the Bitbucket ordering: only run e2e once checks + build are green.
+    needs: [checks, build]
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/**
+            test-results/**
+          retention-days: 7

@@ -54,6 +54,12 @@ cd /path/to/orire
 vercel link          # creates .vercel/project.json (gitignored)
 ```
 
+Then connect the **GitHub** repo (`darotudeen/orire`) under Vercel → Project →
+Settings → Git. With the Git integration on, Vercel deploys automatically:
+every push to `main` ships production, and every pull request gets a preview
+URL. There is no deploy step in CI — GitHub Actions only lints, builds and
+tests (see "CI" below).
+
 ## 4. Sync config into Vercel, then deploy
 
 ```bash
@@ -68,6 +74,18 @@ correctly). It skips dev-only `MAIL_SMTP_*` for production. Re-run
 
 Database migrations run automatically: `vercel.json` sets the build command to
 `prisma migrate deploy && next build`.
+
+## CI (GitHub Actions)
+
+CI lives in `.github/workflows/ci.yml` and runs on every pull request and on
+pushes to `main`:
+
+- **checks** — `eslint`, `next typegen` + `tsc --noEmit`, and `vitest` unit tests
+- **build** — a full production `next build`
+- **e2e** — the Playwright smoke suite (runs after checks + build are green)
+
+Deploys are **not** done in CI. Production and preview deploys are owned by
+Vercel's GitHub integration (§3). CI therefore needs no `VERCEL_*` secrets.
 
 ## 5. Google OAuth for production
 
