@@ -52,6 +52,12 @@ export interface CheckoutSessionState {
   status: string | null;
   /** "paid" | "unpaid" | "no_payment_required", or null. */
   paymentStatus: string | null;
+  /** Plan the session was created for (from our metadata), or null. */
+  plan: string | null;
+  /** Amount actually charged, in major units (after discounts), or null. */
+  amount: number | null;
+  /** Lower-case ISO currency code, or null. */
+  currency: string | null;
 }
 
 /** Build the app origin from the incoming request (falls back to APP_URL/env). */
@@ -136,7 +142,7 @@ export async function startCheckout(plan: PlanId): Promise<RedirectResult> {
       allow_promotion_codes: true,
       metadata: { userId, plan },
       subscription_data: { metadata: { userId, plan } },
-      success_url: `${origin}/?billing=success`,
+      success_url: `${origin}/?billing=success&plan=${plan}&sid={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/?billing=cancelled`,
     });
     return checkout.url ? { url: checkout.url } : { error: "Stripe did not return a checkout URL." };
@@ -189,13 +195,26 @@ export async function createCheckoutSession(plan: PlanId): Promise<EmbeddedCheck
 
 /** Read the status of a Checkout session (used by the return page). */
 export async function checkoutSessionStatus(sessionId: string): Promise<CheckoutSessionState> {
-  if (!isStripeConfigured() || !sessionId) return { status: null, paymentStatus: null };
+  const none: CheckoutSessionState = {
+    status: null,
+    paymentStatus: null,
+    plan: null,
+    amount: null,
+    currency: null,
+  };
+  if (!isStripeConfigured() || !sessionId) return none;
   try {
     const stripe = getStripe();
     const s = await stripe.checkout.sessions.retrieve(sessionId);
-    return { status: s.status ?? null, paymentStatus: s.payment_status ?? null };
+    return {
+      status: s.status ?? null,
+      paymentStatus: s.payment_status ?? null,
+      plan: s.metadata?.plan ?? null,
+      amount: s.amount_total != null ? s.amount_total / 100 : null,
+      currency: s.currency ?? null,
+    };
   } catch {
-    return { status: null, paymentStatus: null };
+    return none;
   }
 }
 

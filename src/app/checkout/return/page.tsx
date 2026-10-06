@@ -18,9 +18,17 @@ export default async function CheckoutReturnPage({
   searchParams: Promise<{ session_id?: string }>;
 }) {
   const { session_id } = await searchParams;
-  const { status } = await checkoutSessionStatus(session_id ?? "");
+  const { status, plan, amount, currency } = await checkoutSessionStatus(session_id ?? "");
 
-  if (status === "complete") redirect("/?billing=success");
+  if (status === "complete") {
+    // Plan/value/sid let the client report a de-duplicated Purchase conversion.
+    const qs = new URLSearchParams({ billing: "success" });
+    if (plan) qs.set("plan", plan);
+    if (amount != null) qs.set("value", String(amount));
+    if (currency) qs.set("cur", currency);
+    if (session_id) qs.set("sid", session_id);
+    redirect(`/?${qs.toString()}`);
+  }
   // Open / expired / unknown — return home without claiming success.
   redirect("/?billing=cancelled");
 }

@@ -7,10 +7,26 @@ import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { VerifyBanner } from "@/components/auth/VerifyBanner";
 import { auth } from "@/lib/auth/auth";
+import { MetaPixel } from "@/components/analytics/MetaPixel";
+import { PurchaseTracker } from "@/components/analytics/PurchaseTracker";
+import { SignupTracker } from "@/components/analytics/SignupTracker";
+
+const SITE_URL = process.env.APP_URL ?? "https://orire.app";
+const TITLE = "Orire — CV studio";
+const DESCRIPTION = "Rebrand and refine your CV with elegant, animated templates.";
 
 export const metadata: Metadata = {
-  title: "Orire — CV studio",
-  description: "Rebrand and refine your CV with elegant, animated templates.",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Orire",
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+  },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {
@@ -35,8 +51,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <AuthProvider session={session}>
           <VerifyBanner />
           {children}
+          <SignupTracker isNewUser={session?.isNewUser === true} userId={session?.user?.id ?? null} />
         </AuthProvider>
         <Analytics />
+        <MetaPixel />
+        <PurchaseTracker />
       </body>
     </html>
   );

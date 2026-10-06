@@ -22,6 +22,8 @@ import { prisma } from "@/lib/db/prisma";
  * config uses `strategy: "jwt"` (not database sessions). The Prisma adapter is
  * still used to persist users/accounts and to link Google OAuth sign-ins.
  */
+const NEW_USER_WINDOW_MS = 2 * 60 * 1000;
+
 function buildProviders(): Provider[] {
   const providers: Provider[] = [
     Credentials({
@@ -81,13 +83,23 @@ export const authConfig: NextAuthConfig = {
       return true;
     },
     // Carry the DB user id on the JWT so server actions can scope data per user.
-    jwt({ token, user }) {
-      if (user?.id) token.id = user.id;
+    // On the sign-in that created the account (row < 2 min old) flag it so the
+    // client can report one sign-up conversion for email and OAuth alike.
+    async jwt({ token, user }) {
+      if (user?.id) {
+        token.id = user.id;
+        const row = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { createdAt: true },
+        });
+        token.isNewUser = row ? Date.now() - row.createdAt.getTime() < NEW_USER_WINDOW_MS : false;
+      }
       return token;
     },
     // Expose the user id on the session (read by server actions via auth()).
     session({ session, token }) {
       if (session.user && token.id) session.user.id = String(token.id);
+      if (token.isNewUser) session.isNewUser = true;
       return session;
     },
   },
