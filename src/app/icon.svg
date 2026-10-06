@@ -1,14 +1,41 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="og" x1="10" y1="56" x2="54" y2="8" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6ee7d0"/>
-      <stop offset="0.55" stop-color="#8b7cff"/>
-      <stop offset="1" stop-color="#f5a3c7"/>
+    <linearGradient id="orire-gradient" x1="10" y1="56" x2="54" y2="8" gradientUnits="userSpaceOnUse">
+      <stop stopColor="#6ee7d0" />
+      <stop offset="0.55" stopColor="#8b7cff" />
+      <stop offset="1" stopColor="#f5a3c7" />
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="16" fill="#0b0d12"/>
-  <rect x="1.25" y="1.25" width="61.5" height="61.5" rx="14.75" fill="none" stroke="url(#og)" stroke-opacity="0.35" stroke-width="1.5"/>
-  <path d="M36.8 22.84 A14 14 0 1 1 27.2 22.84" fill="none" stroke="url(#og)" stroke-width="5.2" stroke-linecap="round"/>
-  <path d="M32 27 L32 11" stroke="url(#og)" stroke-width="5.2" stroke-linecap="round"/>
-  <path d="M24.8 18.2 L32 10.4 L39.2 18.2" fill="none" stroke="url(#og)" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Background badge -->
+  <rect width="64" height="64" rx="16" fill="#0b0d12" />
+  <rect
+    x="1.25"
+    y="1.25"
+    width="61.5"
+    height="61.5"
+    rx="14.75"
+    fill="none"
+    stroke="url(#orire-gradient)"
+    strokeOpacity="0.35"
+    strokeWidth="1.5"
+  />
+  <!-- Four-leaf clover: heart-shaped leaves -->
+  <g fill="url(#orire-gradient)">
+    <!-- Leaf 1 (top) -->
+    <path d="M32 32 C 31 27 26.5 26 24 23 C 21 19.5 22.5 14.5 27 15 C 29.5 15.3 31 17.3 32 19.5 C 33 17.3 34.5 15.3 37 15 C 41.5 14.5 43 19.5 40 23 C 37.5 26 33 27 32 32 Z" />
+    <!-- Leaf 2 (right) -->
+    <path d="M32 32 C 31 27 26.5 26 24 23 C 21 19.5 22.5 14.5 27 15 C 29.5 15.3 31 17.3 32 19.5 C 33 17.3 34.5 15.3 37 15 C 41.5 14.5 43 19.5 40 23 C 37.5 26 33 27 32 32 Z" transform="rotate(90 32 32)" />
+    <!-- Leaf 3 (bottom) -->
+    <path d="M32 32 C 31 27 26.5 26 24 23 C 21 19.5 22.5 14.5 27 15 C 29.5 15.3 31 17.3 32 19.5 C 33 17.3 34.5 15.3 37 15 C 41.5 14.5 43 19.5 40 23 C 37.5 26 33 27 32 32 Z" transform="rotate(180 32 32)" />
+    <!-- Leaf 4 (left) -->
+    <path d="M32 32 C 31 27 26.5 26 24 23 C 21 19.5 22.5 14.5 27 15 C 29.5 15.3 31 17.3 32 19.5 C 33 17.3 34.5 15.3 37 15 C 41.5 14.5 43 19.5 40 23 C 37.5 26 33 27 32 32 Z" transform="rotate(270 32 32)" />
+  </g>
+  <!-- Stem -->
+  <path
+    d="M32 32 C 34 40 37 45 41 49"
+    fill="none"
+    stroke="url(#orire-gradient)"
+    strokeWidth="3"
+    strokeLinecap="round"
+  />
 </svg>
