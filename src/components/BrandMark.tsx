@@ -3,8 +3,9 @@
 import { useId } from "react";
 
 /**
- * orire brand mark — a "rising-O": an open ring with an ascending arrow,
- * signalling a CV lifted and re-branded upward. Distinct from the generic
+ * orire brand mark — a four-leaf clover, the universal emblem of good luck
+ * (fitting, since "orire" means good fortune). Four heart-shaped leaves meet at
+ * the centre, filled with orire's signature gradient. Distinct from the generic
  * sparkle/star patterns common to AI apps.
  */
 export function BrandMark({
@@ -18,6 +19,8 @@ export function BrandMark({
   className?: string;
 }) {
   const id = useId().replace(/:/g, "");
+  const leaf =
+    "M32 32 C 31 27 26.5 26 24 23 C 21 19.5 22.5 14.5 27 15 C 29.5 15.3 31 17.3 32 19.5 C 33 17.3 34.5 15.3 37 15 C 41.5 14.5 43 19.5 40 23 C 37.5 26 33 27 32 32 Z";
   return (
     <svg
       width={size}
@@ -51,21 +54,19 @@ export function BrandMark({
           />
         </>
       )}
+      <g fill={`url(#${id}-g)`}>
+        <path d={leaf} />
+        <path d={leaf} transform="rotate(90 32 32)" />
+        <path d={leaf} transform="rotate(180 32 32)" />
+        <path d={leaf} transform="rotate(270 32 32)" />
+      </g>
+      {/* Stem — a slim sprig trailing from the clover. */}
       <path
-        d="M36.8 22.84 A14 14 0 1 1 27.2 22.84"
+        d="M32 32 C 34 40 37 45 41 49"
         fill="none"
         stroke={`url(#${id}-g)`}
-        strokeWidth="5.2"
+        strokeWidth="3"
         strokeLinecap="round"
-      />
-      <path d="M32 27 L32 11" stroke={`url(#${id}-g)`} strokeWidth="5.2" strokeLinecap="round" />
-      <path
-        d="M24.8 18.2 L32 10.4 L39.2 18.2"
-        fill="none"
-        stroke={`url(#${id}-g)`}
-        strokeWidth="5.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
       />
     </svg>
   );

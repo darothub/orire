@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { useSession, signIn } from "next-auth/react";
 import { BrandMark } from "@/components/BrandMark";
 import { useUIStore } from "@/lib/store/uiStore";
-import { getTemplate } from "@/components/templates/registry";
-import { sampleVariants } from "@/lib/cv/samples";
-import type { CVData } from "@/lib/cv/schema";
+import { CvShowcase } from "@/components/landing/CvShowcase";
 import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/TurnstileWidget";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -45,13 +43,12 @@ const OAUTH = [
 const PASSWORD_AUTH_ENABLED = process.env.NEXT_PUBLIC_PASSWORD_AUTH === "true";
 
 /**
- * Full-screen login / sign-up page shown as a mandatory gate. The backdrop
- * is transparent + blurred so the app's animated ambient (plus the drifting
- * aurora orbs below) shows through, matching the lively feel of the Refine flow.
- * OAuth buttons light up only for providers configured on the server; email +
- * password sign-in and sign-up are always available. There is no "explore"
- * escape hatch — an account is required so the free quota can be enforced
- * server-side per user.
+ * Login / sign-up overlay, opened on demand from the public landing page (or
+ * the account menu). The backdrop reuses the drifting CV showcase + scrim so it
+ * matches the landing, and it is dismissable (close button or Esc) back to the
+ * landing. OAuth buttons light up only for providers configured on the server.
+ * An account is still required to use the workspace, so the free quota can be
+ * enforced server-side per user — the landing is the only public surface.
  */
 export function AuthOverlay() {
   const open = useUIStore((s) => s.authOpen);
@@ -117,18 +114,18 @@ export function AuthOverlay() {
     if (status === "authenticated" && open) close();
   }, [status, open, close]);
 
-  // Mandatory gate: keep the overlay open whenever the visitor isn't signed in.
-  // There is no "explore" bypass — the workspace stays hidden until auth.
-  // We trigger during the `loading` phase too (not just once `unauthenticated`
-  // resolves) so the overlay appears immediately and the landing page isn't
-  // briefly visible/interactive first.
+  // The overlay is opened on demand — by the landing page's CTAs, the account
+  // menu, or the "/?signin=1" link from the forgot/reset pages. It is no longer
+  // a mandatory gate: an unauthenticated visitor sees the public landing page
+  // and chooses to sign in, and can dismiss the overlay back to it.
   //
   // The "Back to sign in" links on the forgot/reset pages land on "/?signin=1";
-  // honour it by seeding the sign-in tab, then strip the param so a reload
+  // honour it by opening the sign-in tab, then strip the param so a reload
   // doesn't keep re-triggering it.
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (new URLSearchParams(window.location.search).get("signin") === null) return;
+    openAuth("signin");
     const params = new URLSearchParams(window.location.search);
     params.delete("signin");
     const qs = params.toString();
@@ -137,10 +134,7 @@ export function AuthOverlay() {
       "",
       window.location.pathname + (qs ? `?${qs}` : "") + window.location.hash,
     );
-  }, []);
-  useEffect(() => {
-    if (status !== "authenticated") openAuth("signin");
-  }, [status, openAuth]);
+  }, [openAuth]);
   // Reset transient state when the overlay closes (render-phase, no effect).
   const [prevOpen, setPrevOpen] = useState(open);
   if (open !== prevOpen) {
@@ -152,7 +146,15 @@ export function AuthOverlay() {
     }
   }
 
-  // Esc no longer dismisses — the gate is mandatory until the user signs in.
+  // Esc dismisses the overlay back to the landing page.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, close]);
 
   const signup = mode === "signup";
   const captchaOn = !!TURNSTILE_SITE_KEY;
@@ -249,10 +251,10 @@ export function AuthOverlay() {
           transition={{ duration: 0.28, ease: EASE }}
           role="dialog"
           aria-modal="true"
-          aria-label={signup ? "Create your orire account" : "Sign in to orire"}
+          aria-label={signup ? "Create your Orire account" : "Sign in to Orire"}
         >
           {/* Living template showcase — orire's own CVs drift behind the card. */}
-          <Showcase />
+          <CvShowcase />
           <div className="auth-scrim" aria-hidden />
 
           <div className="auth-stage">
@@ -263,11 +265,28 @@ export function AuthOverlay() {
             exit={{ opacity: 0, y: 16, scale: 0.97, filter: "blur(8px)" }}
             transition={{ duration: 0.5, ease: EASE }}
           >
+            <button
+              type="button"
+              className="auth-back"
+              onClick={close}
+              aria-label="Back to the landing page"
+            >
+              <span aria-hidden>←</span> Back
+            </button>
+            <button
+              type="button"
+              className="auth-close"
+              onClick={close}
+              aria-label="Close and return to the landing page"
+              title="Close"
+            >
+              ×
+            </button>
             <ThemeToggle className="auth-theme" />
 
             <div className="auth-brand">
               <span className="auth-brand-mark"><BrandMark size={30} /></span>
-              <span className="auth-brand-name">orire</span>
+              <span className="auth-brand-name">Orire</span>
             </div>
 
             <div className="auth-switch" role="tablist" aria-label="Sign in or create account">
@@ -404,11 +423,11 @@ export function AuthOverlay() {
             {authErr && <p className="auth-error" role="alert">{authErr}</p>}
 
             <p className="auth-fine">
-              By continuing you agree to use orire responsibly.
+              By continuing you agree to use Orire responsibly.
             </p>
           </motion.div>
 
-          <ul className="auth-usps" aria-label="What orire does">
+          <ul className="auth-usps" aria-label="What Orire does">
             <li><span aria-hidden>✎</span> Rebrand any CV into a clean, ATS-ready layout</li>
             <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
             <li><span aria-hidden>❖</span> 20 standout templates, live preview as you edit</li>
@@ -417,54 +436,6 @@ export function AuthOverlay() {
         </motion.div>
       )}
     </AnimatePresence>
-  );
-}
-
-/* Curated, visually distinct templates distributed across parallax columns. */
-const SHOWCASE_COLUMNS: { ids: string[]; dur: number; dir: 1 | -1 }[] = [
-  { ids: ["aurora", "imperial", "carbon", "sapphire"], dur: 52, dir: 1 },
-  { ids: ["noir", "oxford", "marigold", "plum"], dur: 66, dir: -1 },
-  { ids: ["vertex", "bordeaux", "crimson", "consul"], dur: 58, dir: 1 },
-];
-
-function Showcase() {
-  return (
-    <motion.div
-      className="auth-showcase"
-      aria-hidden
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.9, ease: EASE }}
-    >
-      <MotionConfig reducedMotion="always">
-        {SHOWCASE_COLUMNS.map((col, i) => (
-          <div
-            key={i}
-            className={`sc-col ${col.dir > 0 ? "sc-up" : "sc-down"}`}
-            style={{ ["--dur" as string]: `${col.dur}s` }}
-          >
-            {[...col.ids, ...col.ids].map((id, j) => (
-              <ShowcaseCard key={`${id}-${j}`} id={id} cv={sampleVariants[(i * 3 + j) % sampleVariants.length]} />
-            ))}
-          </div>
-        ))}
-      </MotionConfig>
-    </motion.div>
-  );
-}
-
-function ShowcaseCard({ id, cv }: { id: string; cv: CVData }) {
-  const t = getTemplate(id);
-  const Component = t.Component;
-  return (
-    <div className="sc-card">
-      <div className="sc-scale">
-        <div className="paper sc-paper">
-          <Component cv={cv} />
-        </div>
-      </div>
-    </div>
   );
 }
 

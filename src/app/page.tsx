@@ -15,13 +15,13 @@ import { RateView } from "@/components/ai/RatingPanel";
 import { TargetView } from "@/components/ai/TargetPanel";
 import { CoverLetterView } from "@/components/ai/CoverLetterView";
 import { HistoryView } from "@/components/HistoryView";
-import { AboutView } from "@/components/AboutView";
 import { ProfileView } from "@/components/ProfileView";
 import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
+import { Landing } from "@/components/landing/Landing";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CloudSync } from "@/components/auth/CloudSync";
 import { OnboardingTour } from "@/components/OnboardingTour";
@@ -78,7 +78,7 @@ function ConnectView() {
         <div>
           <h2>Connect AI</h2>
           <p>
-            Assistants are provided by orire. Pick your default assistant and
+            Assistants are provided by Orire. Pick your default assistant and
             the models to run; your plan sets which models are available.
           </p>
         </div>
@@ -130,7 +130,6 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "plans" && <PlansView />}
           {view === "connect" && <ConnectView />}
           {view === "profile" && <ProfileView />}
-          {view === "about" && <AboutView />}
         </motion.div>
       </AnimatePresence>
     </MotionConfig>
@@ -284,7 +283,7 @@ export default function Home() {
       <header className="app-bar">
         <div className="brand">
           <span className="brand-dot"><BrandMark size={26} /></span>
-          <span className="brand-name">orire</span>
+          <span className="brand-name">Orire</span>
           <span className="brand-tag">CV studio</span>
         </div>
         <div className="app-actions">
@@ -408,7 +407,7 @@ export default function Home() {
       <OnboardingTour />
         </div>
       ) : (
-        <div className="auth-gate-cover" aria-hidden />
+        <Landing />
       )}
       <AuthOverlay />
     </>

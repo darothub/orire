@@ -78,7 +78,7 @@ export function printCV(mode: PageMode, fileName: string): boolean {
 
   const prevTitle = document.title;
   const name = fileName.trim();
-  document.title = name || "orire — CV";
+  document.title = name || "Orire — CV";
   document.body.dataset.printMode = mode;
 
   const style = document.createElement("style");

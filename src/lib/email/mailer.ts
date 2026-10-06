@@ -19,7 +19,7 @@ export interface MailMessage {
 }
 
 /** The verified from-address. In prod this must be on your Resend domain. */
-export const EMAIL_FROM = process.env.EMAIL_FROM || "orire <noreply@orire.app>";
+export const EMAIL_FROM = process.env.EMAIL_FROM || "Orire <noreply@orire.app>";
 
 /** Absolute base URL used to build links inside emails. */
 export function appUrl(): string {

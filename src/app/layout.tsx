@@ -9,7 +9,7 @@ import { VerifyBanner } from "@/components/auth/VerifyBanner";
 import { auth } from "@/lib/auth/auth";
 
 export const metadata: Metadata = {
-  title: "orire — CV studio",
+  title: "Orire — CV studio",
   description: "Rebrand and refine your CV with elegant, animated templates.",
 };
 

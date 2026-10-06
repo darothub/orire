@@ -11,7 +11,7 @@ export function ConnectStep({ onNext }: { onNext: () => void }) {
     <div className="step-body">
       <p className="step-hint">
         Select <strong>one</strong> assistant for a single tailored pass, or <strong>two</strong> to run them in
-        parallel and compare. Assistants are provided by orire.
+        parallel and compare. Assistants are provided by Orire.
       </p>
       <ProviderSetup selectable />
       <div className="step-nav">

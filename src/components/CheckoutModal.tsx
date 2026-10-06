@@ -116,7 +116,7 @@ export function CheckoutModal({
           </div>
 
           <p className="checkout-foot">
-            Payments are processed by Stripe. orire never sees your card details.
+            Payments are processed by Stripe. Orire never sees your card details.
           </p>
         </motion.div>
       </motion.div>

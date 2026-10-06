@@ -14,7 +14,7 @@ export function passwordResetEmail(token: string): {
   text: string;
 } {
   const link = `${appUrl()}/reset?token=${encodeURIComponent(token)}`;
-  const subject = "Reset your orire password";
+  const subject = "Reset your Orire password";
 
   const html = `<!doctype html>
 <html>
@@ -24,13 +24,13 @@ export function passwordResetEmail(token: string): {
         <table role="presentation" width="440" cellpadding="0" cellspacing="0"
           style="background:#13161f;border:1px solid #242a38;border-radius:16px;padding:32px;">
           <tr><td style="font-size:20px;font-weight:700;color:#fff;padding-bottom:4px;">
-            <span style="color:${ACCENT};">✦</span> orire
+            <span style="color:${ACCENT};">✦</span> Orire
           </td></tr>
           <tr><td style="font-size:18px;font-weight:600;color:#fff;padding:14px 0 6px;">
             Reset your password
           </td></tr>
           <tr><td style="font-size:14px;line-height:1.6;color:#a6adbb;padding-bottom:22px;">
-            We received a request to reset your orire password. Click the button
+            We received a request to reset your Orire password. Click the button
             below to choose a new one. This link expires in 1 hour and can be
             used once.
           </td></tr>
@@ -52,9 +52,9 @@ export function passwordResetEmail(token: string): {
 </html>`;
 
   const text = [
-    "Reset your orire password",
+    "Reset your Orire password",
     "",
-    "We received a request to reset your orire password.",
+    "We received a request to reset your Orire password.",
     "Open this link to choose a new one (expires in 1 hour, single use):",
     link,
     "",
@@ -74,7 +74,7 @@ export function emailVerificationEmail(token: string): {
   text: string;
 } {
   const link = `${appUrl()}/api/auth/verify?token=${encodeURIComponent(token)}`;
-  const subject = "Verify your orire email";
+  const subject = "Verify your Orire email";
 
   const html = `<!doctype html>
 <html>
@@ -84,13 +84,13 @@ export function emailVerificationEmail(token: string): {
         <table role="presentation" width="440" cellpadding="0" cellspacing="0"
           style="background:#13161f;border:1px solid #242a38;border-radius:16px;padding:32px;">
           <tr><td style="font-size:20px;font-weight:700;color:#fff;padding-bottom:4px;">
-            <span style="color:${ACCENT};">✦</span> orire
+            <span style="color:${ACCENT};">✦</span> Orire
           </td></tr>
           <tr><td style="font-size:18px;font-weight:600;color:#fff;padding:14px 0 6px;">
             Confirm your email
           </td></tr>
           <tr><td style="font-size:14px;line-height:1.6;color:#a6adbb;padding-bottom:22px;">
-            Welcome to orire. Confirm this email address to activate your account
+            Welcome to Orire. Confirm this email address to activate your account
             and start your free runs. This link expires in 24 hours and can be
             used once.
           </td></tr>
@@ -101,7 +101,7 @@ export function emailVerificationEmail(token: string): {
             </a>
           </td></tr>
           <tr><td style="font-size:12px;line-height:1.6;color:#6b7280;">
-            If you didn't create an orire account, you can safely ignore this
+            If you didn't create an Orire account, you can safely ignore this
             email. Or paste this link into your browser:<br/>
             <a href="${link}" style="color:${ACCENT};word-break:break-all;">${link}</a>
           </td></tr>
@@ -114,11 +114,11 @@ export function emailVerificationEmail(token: string): {
   const text = [
     "Confirm your email",
     "",
-    "Welcome to orire. Confirm your email to activate your account and start",
+    "Welcome to Orire. Confirm your email to activate your account and start",
     "your free runs (link expires in 24 hours, single use):",
     link,
     "",
-    "If you didn't create an orire account, you can safely ignore this email.",
+    "If you didn't create an Orire account, you can safely ignore this email.",
   ].join("\n");
 
   return { subject, html, text };

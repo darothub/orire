@@ -32,5 +32,5 @@ export function providerConfigured(provider: ProviderId): boolean {
 
 /** User-facing message when a provider has no server key configured. */
 export function notConfiguredMessage(provider: ProviderId): string {
-  return `${PROVIDER_LABEL[provider]} isn’t available right now — the orire server has no API key configured for it. Please try the other assistant or contact support.`;
+  return `${PROVIDER_LABEL[provider]} isn’t available right now — the Orire server has no API key configured for it. Please try the other assistant or contact support.`;
 }

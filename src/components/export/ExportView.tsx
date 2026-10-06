@@ -37,7 +37,7 @@ export function ExportView() {
 
   const person = cv.basics.fullName.trim();
   const tpl = getTemplate(active);
-  const defaultName = useMemo(() => (person ? `${person} — CV` : "orire — CV"), [person]);
+  const defaultName = useMemo(() => (person ? `${person} — CV` : "Orire — CV"), [person]);
 
   const [fileName, setFileName] = useState(defaultName);
   const [company, setCompany] = useState(lastCompany);
