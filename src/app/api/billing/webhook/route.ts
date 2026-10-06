@@ -14,6 +14,8 @@ import {
   applyStripeSubscription,
   clearStripeSubscription,
 } from "@/lib/entitlement/entitlement";
+import { claimWebhookEvent, releaseWebhookEvent } from "@/lib/billing/webhookDedupe";
+import { logger } from "@/lib/obs/logger";
 
 export const runtime = "nodejs";
 // Never cache; every event must hit the handler.
@@ -62,6 +64,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: `Webhook signature failed: ${message}` }, { status: 400 });
   }
 
+  // Idempotency: claim the event id before handling. Stripe retries and
+  // at-least-once delivery mean the same event can arrive repeatedly; a losing
+  // claim is a duplicate we ack without re-applying.
+  const claim = await claimWebhookEvent(event.id, event.type);
+  if (!claim.claimed) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -104,8 +114,11 @@ export async function POST(req: Request) {
         break;
     }
   } catch (err) {
-    // A handler failure should 500 so Stripe retries later.
+    // A handler failure should 500 so Stripe retries later. Release the claim
+    // so the retry isn't swallowed as a duplicate.
+    await releaseWebhookEvent(event.id);
     const message = err instanceof Error ? err.message : "Handler error.";
+    logger.error("webhook.handler_failed", { eventId: event.id, type: event.type, message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 

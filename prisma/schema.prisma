@@ -176,6 +176,17 @@ model UsageCounter {
   @@unique([userId, month])
 }
 
+/// Idempotency ledger for Stripe webhooks. Stripe delivers events at-least-once,
+/// so a handler can be invoked repeatedly (and concurrently) for the same event.
+/// The webhook claims each event id here before handling; a duplicate claim is
+/// skipped and acked. A failed handler releases its claim so Stripe's retry can
+/// reprocess the event later.
+model ProcessedWebhookEvent {
+  id          String   @id // Stripe event id, e.g. "evt_..."
+  type        String
+  processedAt DateTime @default(now())
+}
+
 // ---------- Teams / seats (Phase B3) ----------
 
 /// A Teams/Coach workspace. Owned by a user whose personal entitlement is the
