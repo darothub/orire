@@ -16,6 +16,7 @@ import { TargetView } from "@/components/ai/TargetPanel";
 import { CoverLetterView } from "@/components/ai/CoverLetterView";
 import { HistoryView } from "@/components/HistoryView";
 import { AboutView } from "@/components/AboutView";
+import { ProfileView } from "@/components/ProfileView";
 import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
@@ -128,6 +129,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "export" && <ExportView />}
           {view === "plans" && <PlansView />}
           {view === "connect" && <ConnectView />}
+          {view === "profile" && <ProfileView />}
           {view === "about" && <AboutView />}
         </motion.div>
       </AnimatePresence>

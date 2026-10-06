@@ -2677,3 +2677,85 @@ html[data-theme="light"] .checkout-root {
 @media (prefers-reduced-motion: reduce) {
   .checkout-spinner { animation-duration: 1.6s; }
 }
+
+/* ── Profile workspace ─────────────────────────────────────────────── */
+.prof-view { max-width: 760px; }
+.prof-view .ws-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+
+.prof-id {
+  display: flex; align-items: center; gap: 16px;
+  padding: 18px; margin-top: 4px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel);
+}
+.prof-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+.prof-avatar-fallback {
+  display: grid; place-items: center;
+  font-weight: 700; font-size: 1.25rem; color: #0b0d12;
+  background: var(--grad);
+}
+.prof-id-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.prof-name { font-size: 1.15rem; }
+.prof-email { color: var(--muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.prof-verify { font-size: 0.72rem; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line-2); }
+.prof-verify.ok { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line-2)); }
+.prof-verify.warn { color: var(--accent-3); border-color: color-mix(in srgb, var(--accent-3) 45%, var(--line-2)); }
+.prof-since { color: var(--ink-soft); font-size: 0.8rem; }
+
+.prof-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px;
+}
+.prof-stat {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 16px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel); position: relative; overflow: hidden;
+}
+.prof-stat::before {
+  content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--grad); opacity: 0.8;
+}
+.prof-stat-icon { font-size: 1rem; color: var(--accent-2); }
+.prof-stat-value { font-size: 1.9rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+.prof-stat-label { color: var(--text); font-size: 0.85rem; }
+.prof-stat-sub { color: var(--muted); font-size: 0.75rem; }
+
+.prof-plan {
+  margin-top: 14px; padding: 18px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--panel-2);
+  display: grid; grid-template-columns: 1fr auto; gap: 16px 24px; align-items: center;
+}
+.prof-plan-head { display: flex; flex-direction: column; gap: 3px; }
+.prof-plan-eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.68rem; color: var(--muted); }
+.prof-plan-name { font-size: 1.35rem; background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.prof-plan-sub { color: var(--muted); font-size: 0.85rem; }
+.prof-plan-sub.ok { color: var(--accent); }
+.prof-plan-sub.warn { color: var(--accent-3); }
+.prof-plan-usage { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; min-width: 150px; }
+.prof-usage-figure { font-size: 1.25rem; font-weight: 700; }
+.prof-usage-cap { color: var(--muted); font-weight: 500; font-size: 0.95rem; }
+.prof-usage-label { color: var(--muted); font-size: 0.75rem; }
+.prof-usage-bar { width: 100%; height: 5px; border-radius: 999px; background: var(--surface-soft); overflow: hidden; margin-top: 3px; }
+.prof-usage-fill { display: block; height: 100%; background: var(--grad); border-radius: 999px; transition: width 0.5s ease; }
+.prof-plan-actions { grid-column: 1 / -1; display: flex; gap: 10px; }
+
+.prof-empty { display: grid; place-items: center; padding: 48px 0; }
+.prof-skeleton {
+  width: 100%; height: 120px; border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--surface-faint), var(--surface-soft), var(--surface-faint));
+  background-size: 200% 100%; animation: prof-shimmer 1.4s linear infinite;
+}
+@keyframes prof-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.prof-error {
+  margin-top: 12px; padding: 12px 14px; border-radius: 10px;
+  color: var(--accent-3); border: 1px solid color-mix(in srgb, var(--accent-3) 35%, var(--line-2));
+  background: color-mix(in srgb, var(--accent-3) 8%, transparent); font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .prof-stats { grid-template-columns: 1fr; }
+  .prof-plan { grid-template-columns: 1fr; }
+  .prof-plan-usage { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .prof-skeleton { animation-duration: 2.4s; }
+}

@@ -12,6 +12,7 @@ import {
 } from "@/lib/store/styleStore";
 import { getTemplate } from "@/components/templates/registry";
 import { exportCVtoPDF } from "@/lib/export/pdf";
+import { recordExport } from "@/app/actions/activity";
 import { useWriteGate } from "@/lib/store/accountStore";
 
 const ALIGNS: { id: CVAlign; label: string; icon: string }[] = [
@@ -67,6 +68,7 @@ export function ExportView() {
         mode,
         cv,
       });
+      void recordExport({ format: "pdf", template: active, company: company.trim() || null });
       setMsg({ kind: "ok", text: `Saved “${(fileName.trim() || defaultName)}.pdf” · filed under ${company.trim() || "Unfiled"} in History.` });
     } catch (e) {
       setMsg({ kind: "err", text: e instanceof Error ? e.message : String(e) });

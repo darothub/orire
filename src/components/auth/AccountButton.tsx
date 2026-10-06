@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
 import { useUIStore } from "@/lib/store/uiStore";
+import { useViewStore } from "@/lib/store/viewStore";
 import { clearExplored } from "@/components/auth/AuthOverlay";
 import { deleteAccount } from "@/app/actions/account";
 
@@ -15,6 +16,7 @@ import { deleteAccount } from "@/app/actions/account";
 export function AccountButton() {
   const { data: session, status } = useSession();
   const openAuth = useUIStore((s) => s.openAuth);
+  const setView = useViewStore((s) => s.setView);
   const [open, setOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -70,6 +72,15 @@ export function AccountButton() {
                 <span>{label}</span>
               </div>
               <div className="acct-pop-note">✓ Your CV auto-saves to the cloud.</div>
+              <button
+                className="flow-btn ghost sm"
+                onClick={() => {
+                  setOpen(false);
+                  setView("profile");
+                }}
+              >
+                View profile
+              </button>
               <button
                 className="flow-btn ghost sm"
                 onClick={() => {

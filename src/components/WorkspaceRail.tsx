@@ -28,6 +28,7 @@ const PRIMARY: RailItem[] = [
 ];
 
 const FOOTER: RailItem[] = [
+  { view: "profile", label: "Profile", hint: "Your activity, rating & plan", icon: "☻" },
   { view: "connect", label: "Connect AI", hint: "Assistants", icon: "⚙" },
   { view: "about", label: "About", hint: "About orire", icon: "ⓘ" },
 ];

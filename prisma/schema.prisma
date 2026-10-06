@@ -26,6 +26,7 @@ model User {
   sessions    Session[]
   documents   Document[]
   refineRuns  RefineRun[]
+  exportEvents ExportEvent[]
   entitlement Entitlement?
   usage       UsageCounter[]
   ownedTeams      Team[]       @relation("TeamOwner")
@@ -128,6 +129,21 @@ model RefineRun {
   ratingBefore   Int?
   ratingAfter    Int?
   createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// One row per successful CV export (PDF). Drives the profile "exports" stat
+/// so the count survives across devices (History is client-only).
+model ExportEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  format    String   @default("pdf")
+  template  String?
+  company   String?
+  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
