@@ -1,0 +1,85 @@
+# orire — Bitbucket Pipelines CI/CD
+#
+# CI runs on every pull request and on pushes to main:
+#   • checks  — eslint, tsc (typecheck) and vitest unit tests
+#   • build   — a full production `next build`
+#   • e2e     — Playwright smoke suite (hermetic: stubs /api/ai/*, no DB/SMTP)
+#
+# CD (main only): after the checks pass, deploy to Vercel production. The remote
+# Vercel build runs `prisma migrate deploy && next build`, so schema migrations
+# (e.g. ExportEvent) are applied automatically on deploy.
+#
+# Required repository variables (Repository settings ▸ Pipelines ▸ Variables):
+#   VERCEL_TOKEN       — Vercel access token (Secured)
+#   VERCEL_ORG_ID      — Vercel team id (team_cFlzFdOcO4aiEnfoYJYjnS6m)
+#   VERCEL_PROJECT_ID  — Vercel project id (prj_JidDjzXSoX1pgiBeab6K7r0ptR81)
+#
+# The build/e2e steps never touch a real database; a dummy connection string is
+# enough for `prisma generate` and `next build`, which don't open a connection.
+
+image: node:22
+
+definitions:
+  caches:
+    # Cache the Playwright browser download between e2e runs.
+    playwright: ~/.cache/ms-playwright
+
+  steps:
+    - step: &checks
+        name: Lint · Typecheck · Unit tests
+        caches:
+          - node
+        script:
+          - npm ci
+          - npm run lint
+          - npx tsc --noEmit
+          - npm test
+
+    - step: &build
+        name: Production build
+        caches:
+          - node
+        script:
+          - export DATABASE_URL="postgresql://ci:ci@localhost:5432/ci?schema=public"
+          - export DIRECT_URL="$DATABASE_URL"
+          - npm ci
+          - npm run build
+
+    - step: &e2e
+        name: E2E · Playwright
+        caches:
+          - node
+          - playwright
+        script:
+          - export CI=true
+          - export DATABASE_URL="postgresql://ci:ci@localhost:5432/ci?schema=public"
+          - export DIRECT_URL="$DATABASE_URL"
+          - npm ci
+          - npx playwright install --with-deps chromium
+          - npm run test:e2e
+        artifacts:
+          - playwright-report/**
+          - test-results/**
+
+    - step: &deploy-prod
+        name: Deploy · Vercel production
+        deployment: production
+        script:
+          - npx vercel@latest pull --yes --environment=production --token=$VERCEL_TOKEN
+          - npx vercel@latest --prod --yes --token=$VERCEL_TOKEN
+
+pipelines:
+  pull-requests:
+    '**':
+      - parallel:
+          - step: *checks
+          - step: *build
+      - step: *e2e
+
+  branches:
+    main:
+      - parallel:
+          - step: *checks
+          - step: *build
+      - step: *e2e
+      - step: *deploy-prod

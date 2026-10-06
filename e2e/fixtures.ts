@@ -1,27 +1,37 @@
 import { test as base, expect, type Page } from "@playwright/test";
+import { addSessionCookie } from "./session";
 
 /**
  * Shared E2E fixtures for orire.
  *
- * `appPage` opens the app with the auth overlay pre-dismissed (via the
- * `orire.auth.explored` localStorage flag the overlay itself sets once a user
- * explores), so tests land directly in the workspace with no database, email
- * or OAuth provider configured. Core CV flows are entirely client-side
- * (zustand), so this is enough for a hermetic smoke suite.
+ * `appPage` opens the app already signed in: a valid Auth.js session cookie is
+ * added to the browser context (see e2e/session.ts) so the server authenticates
+ * on first paint and the mandatory auth overlay never appears. The suite stays
+ * hermetic — the JWT session strategy decodes the cookie statelessly, so no
+ * database, email or OAuth provider is required. Core CV flows are entirely
+ * client-side (zustand).
  */
 
-/** Seed localStorage before any app script runs so the overlay never appears.
- *  Also marks the onboarding tour as seen so it doesn't auto-open and intercept
- *  clicks in the core-flow tests (the tour has its own dedicated spec). */
-async function seedExplored(page: Page) {
+/** Seed localStorage before any app script runs: mark onboarding as seen so the
+ *  guided tour doesn't auto-open and intercept clicks in the core-flow tests
+ *  (the tour has its own dedicated spec). */
+async function seedOnboarded(page: Page) {
   await page.addInitScript(() => {
     try {
-      window.localStorage.setItem("orire.auth.explored", "1");
       window.localStorage.setItem("orire-onboarded", "1");
     } catch {
-      /* storage unavailable — overlay can still be dismissed in-test */
+      /* storage unavailable */
     }
   });
+}
+
+/**
+ * Mark the app as authenticated for the current browser context by installing a
+ * valid Auth.js session cookie. Call before navigating. Exported so specs that
+ * build their own `page` (outside the `appPage` fixture) can opt in too.
+ */
+export async function signIn(page: Page) {
+  await addSessionCookie(page.context());
 }
 
 /**
@@ -46,7 +56,8 @@ export async function stubAI(page: Page) {
 
 export const test = base.extend<{ appPage: Page }>({
   appPage: async ({ page }, use) => {
-    await seedExplored(page);
+    await seedOnboarded(page);
+    await signIn(page);
     await page.goto("/");
     // The workspace rail is the shell anchor; wait for it before handing off.
     await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible();

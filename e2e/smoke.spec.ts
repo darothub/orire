@@ -1,4 +1,4 @@
-import { test, expect, stubAI } from "./fixtures";
+import { test, expect, stubAI, signIn } from "./fixtures";
 import { test as rawTest } from "@playwright/test";
 
 /**
@@ -69,15 +69,9 @@ rawTest.describe("onboarding tour", () => {
   rawTest("auto-opens for a new user, then skipping persists so it stays closed", async ({
     page,
   }) => {
-    // Seed only the "explored" flag (dismiss auth) — NOT the onboarded flag — so
-    // this behaves like a brand-new user who should get the guided tour.
-    await page.addInitScript(() => {
-      try {
-        window.localStorage.setItem("orire.auth.explored", "1");
-      } catch {
-        /* storage unavailable */
-      }
-    });
+    // Sign in (cookie) but DON'T seed the onboarded flag — so this behaves like
+    // a brand-new user who should get the guided tour.
+    await signIn(page);
     await page.goto("/");
 
     const dialog = page.getByRole("dialog", { name: "Getting started tour" });
