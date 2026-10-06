@@ -100,7 +100,7 @@ function UploadStep() {
       });
       const data = (await res.json()) as StructureResponse;
       if (data.ok && data.parsed) {
-        setDraft(cvDataFromParsed(data.parsed), r.name, `structured by ${providerLabel}`);
+        setDraft(cvDataFromParsed(data.parsed), r.name, `structured by ${providerLabel}`, cvDataFromParsed(r.parsed));
         analytics.rebrandStructured(provider, true);
       } else {
         // Surface the provider error verbatim (req 12), then fall back.
@@ -260,9 +260,10 @@ function BrandStep() {
   const templateId = useRebrandStore((s) => s.templateId);
   const resetRebrand = useRebrandStore((s) => s.reset);
   const workingCv = useCVStore((s) => s.cv);
+  const original = useRebrandStore((s) => s.original);
   const loadCV = useCVStore((s) => s.loadCV);
   const setTemplate = useCVStore((s) => s.setTemplate);
-  const captureBaseline = useCVStore((s) => s.captureBaseline);
+  const setBaseline = useCVStore((s) => s.setBaseline);
   const setView = useViewStore((s) => s.setView);
   const [applied, setApplied] = useState(false);
 
@@ -271,8 +272,9 @@ function BrandStep() {
   const projected = diffScores(workingCv, draft);
 
   const apply = () => {
-    // Snapshot where we started so the re-branded result can be rated (req 16).
-    captureBaseline();
+    // Rate the re-branded result against the user's uploaded original, not the
+    // sample/working CV that happened to be loaded (req 16).
+    setBaseline(original ?? draft);
     loadCV(draft);
     setTemplate(templateId);
     analytics.templateSelected(templateId);

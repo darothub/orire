@@ -106,6 +106,8 @@ interface CVState {
   hydrateFromCloud: (d: { cv: CVData; template: string; baseline: CVData | null }) => void;
   /** Manually snapshot the current CV as the initial baseline for rating. */
   captureBaseline: () => void;
+  /** Set the initial baseline explicitly (e.g. the uploaded original). */
+  setBaseline: (cv: CVData) => void;
   /** Forget the stored baseline. */
   clearBaseline: () => void;
   reset: () => void;
@@ -410,6 +412,7 @@ export const useCVStore = create<CVState>()(
         set({ cv, activeTemplate: template, baseline }),
 
       captureBaseline: () => set((s) => ({ baseline: s.cv })),
+      setBaseline: (cv) => set({ baseline: cv }),
       clearBaseline: () => set({ baseline: null }),
 
       reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, skillSuggestions: [], ignoredSkills: [] }),

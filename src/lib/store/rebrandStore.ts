@@ -12,21 +12,25 @@ import type { CVData } from "@/lib/cv/schema";
  */
 interface RebrandState {
   draft: CVData | null;
+  /** The user's uploaded CV as first parsed — the true "initial" for rating. */
+  original: CVData | null;
   sourceName: string | null;
   /** How the draft was produced, shown back to the user for transparency. */
   via: string | null;
   templateId: string;
-  setDraft: (draft: CVData, sourceName: string, via: string) => void;
+  setDraft: (draft: CVData, sourceName: string, via: string, original?: CVData) => void;
   setTemplate: (id: string) => void;
   reset: () => void;
 }
 
 export const useRebrandStore = create<RebrandState>((set) => ({
   draft: null,
+  original: null,
   sourceName: null,
   via: null,
   templateId: "aurora",
-  setDraft: (draft, sourceName, via) => set({ draft, sourceName, via }),
+  setDraft: (draft, sourceName, via, original) =>
+    set({ draft, original: original ?? draft, sourceName, via }),
   setTemplate: (templateId) => set({ templateId }),
-  reset: () => set({ draft: null, sourceName: null, via: null, templateId: "aurora" }),
+  reset: () => set({ draft: null, original: null, sourceName: null, via: null, templateId: "aurora" }),
 }));
