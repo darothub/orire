@@ -23,10 +23,12 @@ const PRIMARY: RailItem[] = [
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
   { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
   { view: "rate", label: "Rate", hint: "Score initial → final", icon: "★" },
+  { view: "plans", label: "Plans", hint: "Pricing & what each plan unlocks", icon: "◆" },
 ];
 
 const FOOTER: RailItem[] = [
   { view: "connect", label: "Connect AI", hint: "Assistants", icon: "⚙" },
+  { view: "about", label: "About", hint: "About orire", icon: "ⓘ" },
 ];
 
 function RailButton({ item, badge }: { item: RailItem; badge?: Badge }) {

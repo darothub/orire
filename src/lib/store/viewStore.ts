@@ -4,7 +4,7 @@ import { create } from "zustand";
 
 /** The workspaces the left rail can switch between. The right pane always shows
  *  the live CV preview, so every workspace edits the same document in context. */
-export type WorkspaceView = "edit" | "rebrand" | "refine" | "rate" | "target" | "cover" | "connect" | "history" | "export";
+export type WorkspaceView = "edit" | "rebrand" | "refine" | "rate" | "target" | "cover" | "connect" | "history" | "export" | "plans" | "about";
 
 interface ViewState {
   view: WorkspaceView;
@@ -13,7 +13,7 @@ interface ViewState {
   setView: (v: WorkspaceView) => void;
 }
 
-const ORDER: WorkspaceView[] = ["edit", "rebrand", "refine", "rate", "target", "cover", "export", "history", "connect"];
+const ORDER: WorkspaceView[] = ["edit", "rebrand", "refine", "rate", "target", "cover", "export", "history", "plans", "connect", "about"];
 
 export const useViewStore = create<ViewState>((set, get) => ({
   view: "edit",

@@ -14,6 +14,7 @@ import { RateView } from "@/components/ai/RatingPanel";
 import { TargetView } from "@/components/ai/TargetPanel";
 import { CoverLetterView } from "@/components/ai/CoverLetterView";
 import { HistoryView } from "@/components/HistoryView";
+import { AboutView } from "@/components/AboutView";
 import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
@@ -81,6 +82,28 @@ function ConnectView() {
         </div>
       </div>
       <ProviderSetup />
+    </motion.div>
+  );
+}
+
+/** Standalone pricing workspace — plans & checkout, promoted out of Connect. */
+function PlansView() {
+  return (
+    <motion.div
+      className="ws-view plans-view"
+      initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="ws-head">
+        <div>
+          <h2>Plans</h2>
+          <p>
+            Pick the plan that fits how you job-hunt. Upgrade, downgrade or cancel
+            anytime — your monthly usage and entitlement are tracked server-side.
+          </p>
+        </div>
+      </div>
       <PlanPanel />
     </motion.div>
   );
@@ -102,7 +125,9 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "rate" && <RateView />}
           {view === "history" && <HistoryView />}
           {view === "export" && <ExportView />}
+          {view === "plans" && <PlansView />}
           {view === "connect" && <ConnectView />}
+          {view === "about" && <AboutView />}
         </motion.div>
       </AnimatePresence>
     </MotionConfig>
