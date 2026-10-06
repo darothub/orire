@@ -41,7 +41,8 @@ export const FEATURE_GROUPS: ReadonlyArray<{ name: string; keys: readonly string
     keys: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET", "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"],
   },
   { name: "Turnstile", keys: ["NEXT_PUBLIC_TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"] },
-  { name: "SMTP mail", keys: ["MAIL_SMTP_HOST", "MAIL_SMTP_PORT", "MAIL_SMTP_USER", "MAIL_SMTP_PASS"] },
+  // SMTP host/port have defaults; auth is optional but must be supplied as a pair.
+  { name: "SMTP mail authentication", keys: ["MAIL_SMTP_USER", "MAIL_SMTP_PASS"] },
 ];
 
 function has(env: EnvRecord, key: string): boolean {

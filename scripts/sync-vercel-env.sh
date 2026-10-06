@@ -87,9 +87,20 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     skipped=$((skipped + 1)); continue
   fi
 
+  # Skip empty values — vercel env add requires a non-empty stdin.
+  if [[ -z "$value" ]]; then
+    skipped=$((skipped + 1)); continue
+  fi
+
   # Replace any existing value, then add the current one.
   vercel env rm "$key" "$TARGET" --yes >/dev/null 2>&1 || true
-  printf '%s' "$value" | vercel env add "$key" "$TARGET" >/dev/null 2>&1
+  # NEXT_PUBLIC_* variables must be explicitly marked as config (public).
+  type_flag=""
+  if [[ "$key" == NEXT_PUBLIC_* ]]; then
+    type_flag="--type config"
+  fi
+  # shellcheck disable=SC2086
+  printf '%s' "$value" | vercel env add "$key" "$TARGET" $type_flag --yes >/dev/null 2>&1
   echo "  ✓ $key"
   pushed=$((pushed + 1))
 done <"$TMP_ENV"

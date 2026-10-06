@@ -48,6 +48,16 @@ describe("checkEnv — feature-group warnings", () => {
     expect(r.warnings).toEqual([]);
   });
 
+  it("does not warn for unauthenticated SMTP", () => {
+    const r = checkEnv({ ...validEnv(), MAIL_SMTP_HOST: "localhost", MAIL_SMTP_PORT: "1025" });
+    expect(r.warnings).toEqual([]);
+  });
+
+  it("does not warn when both optional SMTP auth values are set", () => {
+    const r = checkEnv({ ...validEnv(), MAIL_SMTP_USER: "user", MAIL_SMTP_PASS: "pass" });
+    expect(r.warnings).toEqual([]);
+  });
+
   it("warns and names the absent keys when a group is partial", () => {
     const r = checkEnv({ ...validEnv(), AUTH_GOOGLE_ID: "id" });
     expect(r.ok).toBe(true); // feature config never blocks boot
@@ -57,10 +67,11 @@ describe("checkEnv — feature-group warnings", () => {
   });
 
   it("warns independently for multiple partial groups", () => {
-    const r = checkEnv({ ...validEnv(), STRIPE_SECRET_KEY: "sk", MAIL_SMTP_HOST: "smtp" });
+    const r = checkEnv({ ...validEnv(), STRIPE_SECRET_KEY: "sk", MAIL_SMTP_USER: "user" });
     expect(r.warnings).toHaveLength(2);
     expect(r.warnings.join("\n")).toContain("Stripe billing");
-    expect(r.warnings.join("\n")).toContain("SMTP mail");
+    expect(r.warnings.join("\n")).toContain("SMTP mail authentication");
+    expect(r.warnings.join("\n")).toContain("MAIL_SMTP_PASS");
   });
 
   it("covers every declared feature group with a partial config", () => {
