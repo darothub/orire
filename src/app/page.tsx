@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { EditorPanel } from "@/components/editor/EditorPanel";
+import { BrandMark } from "@/components/BrandMark";
 import { SectionOrder } from "@/components/editor/SectionOrder";
 import { TemplatePicker } from "@/components/templates/TemplatePicker";
 import { WorkspaceRail } from "@/components/WorkspaceRail";
@@ -280,7 +281,7 @@ export default function Home() {
         <div className="app has-rail">
       <header className="app-bar">
         <div className="brand">
-          <span className="brand-dot" />
+          <span className="brand-dot"><BrandMark size={26} /></span>
           <span className="brand-name">orire</span>
           <span className="brand-tag">CV studio</span>
         </div>

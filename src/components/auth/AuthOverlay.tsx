@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { useSession, signIn } from "next-auth/react";
+import { BrandMark } from "@/components/BrandMark";
 import { useUIStore } from "@/lib/store/uiStore";
 import { getTemplate } from "@/components/templates/registry";
 import { sampleCV } from "@/lib/cv/sample";
@@ -263,7 +264,7 @@ export function AuthOverlay() {
             <ThemeToggle className="auth-theme" />
 
             <div className="auth-brand">
-              <span className="auth-brand-mark">✦</span>
+              <span className="auth-brand-mark"><BrandMark size={30} /></span>
               <span className="auth-brand-name">orire</span>
             </div>
 

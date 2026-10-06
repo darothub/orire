@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { useRefineStore } from "@/lib/store/refineStore";
+import { BrandMark } from "@/components/BrandMark";
 import { useRunStore } from "@/lib/store/runStore";
 
 type Badge = "warn" | "busy" | null;
@@ -79,7 +80,7 @@ export function WorkspaceRail() {
 
   return (
     <nav className="rail" aria-label="Workspaces">
-      <div className="rail-brand" aria-hidden>o.</div>
+      <div className="rail-brand" aria-hidden><BrandMark size={26} /></div>
       <div className="rail-group">
         {PRIMARY.map((it) => (
           <RailButton key={it.view} item={it} badge={badgeFor(it.view)} />

@@ -151,12 +151,13 @@ body {
   gap: 10px;
 }
 .brand-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--grad);
-  box-shadow: 0 0 20px rgba(139, 124, 255, 0.6);
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(0 0 14px rgba(139, 124, 255, 0.45));
 }
+.brand-dot svg { display: block; }
 .brand-name {
   font-family: var(--font-serif);
   font-size: 20px;
@@ -874,16 +875,12 @@ body {
   backdrop-filter: blur(8px);
 }
 .rail-brand {
-  font-family: var(--font-serif);
-  font-size: 20px;
-  font-weight: 700;
-  background: var(--grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  display: grid;
+  place-items: center;
   margin-bottom: 10px;
   user-select: none;
 }
+.rail-brand svg { display: block; }
 .rail-group {
   display: flex;
   flex-direction: column;
@@ -2220,10 +2217,9 @@ body {
 }
 .auth-brand-mark {
   display: grid; place-items: center;
-  width: 30px; height: 30px; border-radius: 9px;
-  background: var(--grad); color: #0b0d12;
-  font-size: 16px; font-weight: 700;
+  width: 30px; height: 30px;
 }
+.auth-brand-mark svg { display: block; }
 .auth-brand-name { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
 
 .auth-switch {
