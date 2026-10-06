@@ -78,6 +78,9 @@ interface CVState {
   removeCertification: (id: string) => void;
 
   setTemplate: (id: string) => void;
+  /** Gallery preview: switch template AND swap in its showcase persona, without
+   *  marking the document as started (used before any real CV is loaded). */
+  previewTemplate: (id: string, cv: CVData) => void;
   setOrder: (order: CVData["order"]) => void;
   toggleSection: (key: SectionKey) => void;
   /** Drag-to-reorder within a section (req 17). */
@@ -258,6 +261,7 @@ export const useCVStore = create<CVState>()(
         })),
 
       setTemplate: (id) => set({ activeTemplate: id }),
+      previewTemplate: (id, cv) => set({ activeTemplate: id, cv }),
       setOrder: (order) => set((s) => ({ cv: { ...s.cv, order } })),
 
       setExperience: (next) => set((s) => ({ cv: { ...s.cv, experience: next } })),

@@ -35,6 +35,7 @@ export function TemplatePicker({
   const storeCV = useCVStore((s) => s.cv);
   const storeActive = useCVStore((s) => s.activeTemplate);
   const storeSetTemplate = useCVStore((s) => s.setTemplate);
+  const previewTemplate = useCVStore((s) => s.previewTemplate);
   const started = useCVStore((s) => s.started);
   const cv = cvOverride ?? storeCV;
   const active = activeOverride ?? storeActive;
@@ -49,15 +50,22 @@ export function TemplatePicker({
   return (
     <div className="picker">
       <div className="picker-track">
-        {TEMPLATES.map((t, i) => (
-          <PickCard
-            key={t.id}
-            t={t}
-            cv={gallery ? sampleVariants[i % sampleVariants.length] : cv}
-            isActive={t.id === active}
-            onSelect={() => setTemplate(t.id)}
-          />
-        ))}
+        {TEMPLATES.map((t, i) => {
+          const persona = sampleVariants[i % sampleVariants.length];
+          return (
+            <PickCard
+              key={t.id}
+              t={t}
+              cv={gallery ? persona : cv}
+              isActive={t.id === active}
+              // In gallery mode also push the persona into the working document
+              // so the live preview and editor stay in sync with the card.
+              onSelect={
+                gallery ? () => previewTemplate(t.id, persona) : () => setTemplate(t.id)
+              }
+            />
+          );
+        })}
       </div>
     </div>
   );
