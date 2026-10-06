@@ -54,13 +54,36 @@ export async function stubAI(page: Page) {
   });
 }
 
+/**
+ * How long to wait for the app shell to appear after a navigation. The default
+ * `expect` timeout (7s) is fine for in-app interactions but too tight for the
+ * *first* paint in CI, where `next start` serves a cold route and the client
+ * bundle must download and hydrate before the session-gated shell renders.
+ * This was the historical flake: the "Workspaces" rail is the shell anchor, and
+ * a cold first navigation occasionally crossed 7s. A generous, explicit budget
+ * removes the race without masking a genuine failure (an unauthenticated app
+ * renders the landing page and still fails, just later).
+ */
+export const SHELL_READY_TIMEOUT = 20_000;
+
+/**
+ * Wait for the authenticated app shell to be ready. Anchors on the workspace
+ * rail — the one element that only exists once the session-gated app has
+ * rendered. Use after any `goto("/")`/`reload()` that should land on the shell.
+ */
+export async function waitForShell(page: Page) {
+  await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible({
+    timeout: SHELL_READY_TIMEOUT,
+  });
+}
+
 export const test = base.extend<{ appPage: Page }>({
   appPage: async ({ page }, use) => {
     await seedOnboarded(page);
     await signIn(page);
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     // The workspace rail is the shell anchor; wait for it before handing off.
-    await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible();
+    await waitForShell(page);
     await use(page);
   },
 });

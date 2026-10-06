@@ -1,4 +1,4 @@
-import { test, expect, stubAI, signIn } from "./fixtures";
+import { test, expect, stubAI, signIn, waitForShell } from "./fixtures";
 import { test as rawTest } from "@playwright/test";
 
 /**
@@ -72,10 +72,10 @@ rawTest.describe("onboarding tour", () => {
     // Sign in (cookie) but DON'T seed the onboarded flag — so this behaves like
     // a brand-new user who should get the guided tour.
     await signIn(page);
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
 
     const dialog = page.getByRole("dialog", { name: "Getting started tour" });
-    await expect(dialog).toBeVisible(); // auto-opens shortly after reveal
+    await expect(dialog).toBeVisible({ timeout: 20_000 }); // auto-opens shortly after reveal
     await expect(dialog.getByText("Welcome to orire")).toBeVisible();
 
     // Advancing walks through the steps; the spotlight tracks each rail item.
@@ -90,7 +90,7 @@ rawTest.describe("onboarding tour", () => {
 
     // It does not re-open on the next visit.
     await page.reload();
-    await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible();
+    await waitForShell(page);
     await expect(
       page.getByRole("dialog", { name: "Getting started tour" }),
     ).toBeHidden();
