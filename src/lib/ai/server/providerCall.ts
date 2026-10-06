@@ -19,6 +19,13 @@
 
 import { type ProviderId } from "@/lib/ai/types";
 import { logger } from "@/lib/obs/logger";
+import {
+  cacheEnabled,
+  cacheKey,
+  getCached,
+  isCacheable,
+  setCached,
+} from "@/lib/ai/server/responseCache";
 
 export type ProviderCall =
   | { ok: true; content: string }
@@ -285,6 +292,25 @@ export async function runProvider(args: {
   deps?: ResilienceDeps;
 }): Promise<ProviderCall> {
   const { provider, apiKey, model, system, user, opts = {}, deps } = args;
-  if (provider === "openai") return callOpenAI(apiKey ?? "", model, system, user, opts, deps);
-  return callAnthropic(apiKey ?? "", model, system, user, opts, deps);
+
+  // Deterministic responses are cached to protect the managed-key budget from
+  // repeat spend (re-runs, double-clicks, client retries). The cache is skipped
+  // for injected-deps (test) calls so provider dispatch stays observable there.
+  const cacheable = !deps && cacheEnabled() && isCacheable(opts);
+  const key = cacheable ? cacheKey(provider, model, system, user, opts) : "";
+  if (cacheable) {
+    const cached = getCached(key);
+    if (cached !== null) {
+      logger.debug("ai.cache.hit", { provider, model });
+      return { ok: true, content: cached };
+    }
+  }
+
+  const out =
+    provider === "openai"
+      ? await callOpenAI(apiKey ?? "", model, system, user, opts, deps)
+      : await callAnthropic(apiKey ?? "", model, system, user, opts, deps);
+
+  if (cacheable && out.ok) setCached(key, out.content);
+  return out;
 }

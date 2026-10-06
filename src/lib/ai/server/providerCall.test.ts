@@ -5,6 +5,7 @@ import {
   type ResilienceConfig,
   type ResilienceDeps,
 } from "@/lib/ai/server/providerCall";
+import { __resetResponseCache } from "@/lib/ai/server/responseCache";
 
 const CFG: ResilienceConfig = { attempts: 3, timeoutMs: 1000, baseDelayMs: 10, maxDelayMs: 100 };
 
@@ -144,6 +145,36 @@ describe("runProvider", () => {
     });
     expect(out.ok).toBe(false);
     if (!out.ok) expect(out.body).toBe(raw);
+  });
+
+  it("caches deterministic results and serves the second call without a provider fetch", async () => {
+    __resetResponseCache();
+    let fetchCount = 0;
+    const stub = vi.fn(async () => {
+      fetchCount += 1;
+      return new Response(JSON.stringify({ choices: [{ message: { content: "cached-out" } }] }), {
+        status: 200,
+      });
+    });
+    vi.stubGlobal("fetch", stub);
+    try {
+      const args = {
+        provider: "openai" as const,
+        model: "m",
+        system: "cache-sys",
+        user: "cache-user",
+        apiKey: "k",
+        opts: { temperature: 0, seed: 1217 },
+      };
+      const first = await runProvider(args);
+      const second = await runProvider(args);
+      expect(first).toEqual({ ok: true, content: "cached-out" });
+      expect(second).toEqual({ ok: true, content: "cached-out" });
+      expect(fetchCount).toBe(1); // second call was a cache hit
+    } finally {
+      vi.unstubAllGlobals();
+      __resetResponseCache();
+    }
   });
 });
 
