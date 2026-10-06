@@ -5,6 +5,7 @@ import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CvShowcase } from "@/components/landing/CvShowcase";
+import { landingPlans } from "@/components/landing/pricing";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -202,6 +203,54 @@ export function Landing() {
                 <span className="landing-card-icon" aria-hidden>{p.icon}</span>
                 <h3 className="landing-card-title">{p.title}</h3>
                 <p className="landing-card-body">{p.body}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section className="landing-section landing-pricing" aria-label="Pricing">
+          <motion.div
+            className="landing-about-head"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5, ease: EASE }}
+          >
+            <span className="landing-eyebrow">Simple, honest pricing</span>
+            <h2 className="landing-h2">Start free. Upgrade when it lands you interviews.</h2>
+            <p className="landing-about-lead">
+              Every plan runs on Orire’s managed AI — no API keys to wrangle, no
+              surprise bills. Upgrade, downgrade or cancel anytime.
+            </p>
+          </motion.div>
+          <div className="landing-price-grid">
+            {landingPlans().map((p, i) => (
+              <motion.div
+                key={p.id}
+                className={`landing-price-card${p.highlighted ? " is-featured" : ""}`}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ delay: i * 0.08, duration: 0.5, ease: EASE }}
+              >
+                {p.highlighted && <span className="landing-price-badge">Most popular</span>}
+                <h3 className="landing-price-name">{p.label}</h3>
+                <div className="landing-price-amt">
+                  <span className="landing-price-num">{p.priceLabel}</span>
+                  <span className="landing-price-cad">{p.cadence}</span>
+                </div>
+                <p className="landing-price-blurb">{p.blurb}</p>
+                <ul className="landing-price-perks">
+                  {p.perks.map((perk) => (
+                    <li key={perk}><span aria-hidden>✓</span> {perk}</li>
+                  ))}
+                </ul>
+                <button
+                  className={p.highlighted ? "landing-cta" : "landing-ghost"}
+                  onClick={() => openAuth("signup")}
+                >
+                  {p.cta}
+                </button>
               </motion.div>
             ))}
           </div>

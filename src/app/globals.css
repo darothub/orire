@@ -2966,6 +2966,95 @@ html[data-theme="light"] .checkout-root {
   margin: 0;
 }
 
+/* ---- Pricing ---- */
+.landing-price-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(14px, 2vw, 22px);
+  align-items: start;
+}
+.landing-price-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(170deg, rgba(26, 30, 42, 0.72), rgba(14, 17, 24, 0.66));
+  box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+}
+.landing-price-card.is-featured {
+  border-color: rgba(138, 212, 255, 0.55);
+  background:
+    radial-gradient(130% 120% at 50% 0%, rgba(138, 212, 255, 0.16), transparent 60%),
+    linear-gradient(170deg, rgba(28, 34, 48, 0.86), rgba(15, 19, 27, 0.8));
+  box-shadow: 0 44px 100px -46px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(138, 212, 255, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.landing-price-badge {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0b0d12;
+  background: linear-gradient(120deg, #c9b6ff, #8ad4ff 60%, #a0ffe6);
+  white-space: nowrap;
+}
+.landing-price-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(244, 246, 251, 0.7);
+  margin: 0 0 10px;
+}
+.landing-price-amt { display: flex; align-items: baseline; gap: 7px; margin-bottom: 6px; }
+.landing-price-num {
+  font-size: clamp(30px, 4vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+.landing-price-cad { font-size: 13.5px; color: rgba(244, 246, 251, 0.6); }
+.landing-price-blurb {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: rgba(244, 246, 251, 0.72);
+  margin: 0 0 18px;
+  min-height: 2.6em;
+}
+.landing-price-perks {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+  display: grid;
+  gap: 9px;
+  flex: 1;
+}
+.landing-price-perks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(244, 246, 251, 0.82);
+}
+.landing-price-perks li span {
+  color: #8ad4ff;
+  font-weight: 700;
+  flex: none;
+}
+.landing-price-card .landing-cta,
+.landing-price-card .landing-ghost { width: 100%; justify-content: center; }
+
 /* ---- Final CTA ---- */
 .landing-final { padding-bottom: clamp(56px, 10vh, 120px); }
 .landing-final-card {
@@ -3012,6 +3101,7 @@ html[data-theme="light"] .checkout-root {
 
 @media (max-width: 900px) {
   .landing-grid { grid-template-columns: repeat(2, 1fr); }
+  .landing-price-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
 }
 @media (max-width: 640px) {
   .landing-grid,
