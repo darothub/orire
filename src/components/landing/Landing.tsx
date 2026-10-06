@@ -8,6 +8,8 @@ import { CvShowcase } from "@/components/landing/CvShowcase";
 import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { trustStats } from "@/components/landing/trust";
+import { beforeAfterLines } from "@/components/landing/beforeAfter";
+import { testimonials } from "@/components/landing/testimonials";
 import { LiveDemo } from "@/components/landing/LiveDemo";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -151,6 +153,45 @@ export function Landing() {
           </motion.div>
         </section>
 
+        <section className="landing-section landing-ba" aria-label="Before and after">
+          <motion.div
+            className="landing-about-head"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5, ease: EASE }}
+          >
+            <span className="landing-eyebrow">Same facts, sharper story</span>
+            <h2 className="landing-h2">Watch a flat duty become a hireable win.</h2>
+            <p className="landing-about-lead">
+              Orire never invents experience — it re-frames what you already did
+              into outcome-led lines a recruiter can&apos;t skim past.
+            </p>
+          </motion.div>
+          <ul className="landing-ba-list">
+            {beforeAfterLines().map((line, i) => (
+              <motion.li
+                key={line.after}
+                className="landing-ba-row"
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ delay: i * 0.08, duration: 0.5, ease: EASE }}
+              >
+                <span className="landing-ba-before">
+                  <span className="landing-ba-tag" aria-hidden>Before</span>
+                  {line.before}
+                </span>
+                <span className="landing-ba-arrow" aria-hidden>→</span>
+                <span className="landing-ba-after">
+                  <span className="landing-ba-tag" aria-hidden>After</span>
+                  {line.after}
+                </span>
+              </motion.li>
+            ))}
+          </ul>
+        </section>
+
         <section className="landing-trust" aria-label="Why Orire">
           <motion.ul
             className="landing-trust-row"
@@ -268,6 +309,40 @@ export function Landing() {
                 <h3 className="landing-card-title">{p.title}</h3>
                 <p className="landing-card-body">{p.body}</p>
               </motion.div>
+            ))}
+          </div>
+        </section>
+
+        <section className="landing-section landing-quotes" aria-label="What people say">
+          <motion.div
+            className="landing-about-head"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5, ease: EASE }}
+          >
+            <span className="landing-eyebrow">Shared good news</span>
+            <h2 className="landing-h2">People arrive with a CV and leave with interviews.</h2>
+          </motion.div>
+          <div className="landing-quote-grid">
+            {testimonials().map((t, i) => (
+              <motion.figure
+                key={t.name}
+                className="landing-quote-card"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ delay: (i % 2) * 0.08, duration: 0.5, ease: EASE }}
+              >
+                <blockquote className="landing-quote-text">“{t.quote}”</blockquote>
+                <figcaption className="landing-quote-by">
+                  <span className="landing-quote-avatar" aria-hidden>{t.initial}</span>
+                  <span className="landing-quote-meta">
+                    <span className="landing-quote-name">{t.name}</span>
+                    <span className="landing-quote-role">{t.role}</span>
+                  </span>
+                </figcaption>
+              </motion.figure>
             ))}
           </div>
         </section>
