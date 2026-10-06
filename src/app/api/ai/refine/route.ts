@@ -12,6 +12,7 @@ import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
 import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { routeTask } from "@/lib/ai/server/providerRouter";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
@@ -39,10 +40,11 @@ export async function POST(req: Request) {
     return NextResponse.json(fail("openai", "Invalid request body."), { status: 400 });
   }
 
-  const provider = body.provider;
-  if (!provider || !(provider in PROVIDERS)) {
-    return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
-  }
+  // Automatic provider routing: ignore client-provided provider/model
+  const route = routeTask("refine");
+  const provider = route.provider;
+  const model = route.model;
+
   const limited = aiRateLimit(req, provider);
   if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
@@ -51,10 +53,6 @@ export async function POST(req: Request) {
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
-  }
-  const model = (body.model ?? "").trim();
-  if (!model) {
-    return NextResponse.json(fail(provider, "No model selected."), { status: 400 });
   }
   if (!body.cv) {
     return NextResponse.json(fail(provider, "Missing CV data."), { status: 400 });
@@ -71,7 +69,7 @@ export async function POST(req: Request) {
   }
   if (!check.payload!.p.includes(provider)) {
     return NextResponse.json(
-      fail(provider, "This assistant wasn’t part of the authorized run.", 403),
+      fail(provider, "This assistant wasn't part of the authorized run.", 403),
       { status: 403 }
     );
   }
@@ -80,7 +78,7 @@ export async function POST(req: Request) {
   const modelGate = modelAllowedOnPlan(check.payload!.plan, provider, model);
   if (!modelGate.allowed) {
     return NextResponse.json(
-      fail(provider, modelGate.reason ?? "That model isn’t available on your plan.", 402),
+      fail(provider, modelGate.reason ?? "That model isn't available on your plan.", 402),
       { status: 200 }
     );
   }
