@@ -1,7 +1,18 @@
 import { TEMPLATES, getTemplate } from "@/components/templates/registry";
 
 /** Curated, visually distinct templates for the pre-signup live demo. */
-const DEMO_IDS = ["aurora", "noir", "imperial", "carbon", "marigold", "consul"] as const;
+const DEMO_IDS = [
+  "aurora",
+  "noir",
+  "imperial",
+  "carbon",
+  "marigold",
+  "consul",
+  "vertex",
+  "sapphire",
+  "bordeaux",
+  "oxford",
+] as const;
 
 export type DemoTemplate = {
   id: string;

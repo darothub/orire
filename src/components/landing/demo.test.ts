@@ -3,9 +3,9 @@ import { demoTemplates, demoTemplateIds, demoTemplatesAreValid } from "@/compone
 import { TEMPLATES } from "@/components/templates/registry";
 
 describe("demo templates", () => {
-  it("offers six curated options", () => {
-    expect(demoTemplateIds()).toHaveLength(6);
-    expect(demoTemplates()).toHaveLength(6);
+  it("offers ten curated options", () => {
+    expect(demoTemplateIds()).toHaveLength(10);
+    expect(demoTemplates()).toHaveLength(10);
   });
 
   it("only references real, distinct registry templates", () => {

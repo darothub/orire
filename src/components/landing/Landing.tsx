@@ -103,6 +103,11 @@ export function Landing() {
           <span className="landing-brand-tag">CV studio</span>
         </div>
         <div className="landing-nav-actions">
+          <nav className="landing-nav-links" aria-label="Sections">
+            <a href="#how">How it works</a>
+            <a href="#demo">Live demo</a>
+            <a href="#pricing">Pricing</a>
+          </nav>
           <ThemeToggle />
           <button className="landing-ghost" onClick={() => openAuth("signin")}>
             Sign in
@@ -198,7 +203,7 @@ export function Landing() {
           </div>
         </section>
 
-        <section className="landing-section landing-how" aria-label="How it works">
+        <section id="how" className="landing-section landing-how" aria-label="How it works">
           <motion.div
             className="landing-about-head"
             initial={{ opacity: 0, y: 16 }}
@@ -267,7 +272,7 @@ export function Landing() {
           </div>
         </section>
 
-        <section className="landing-section landing-pricing" aria-label="Pricing">
+        <section id="pricing" className="landing-section landing-pricing" aria-label="Pricing">
           <motion.div
             className="landing-about-head"
             initial={{ opacity: 0, y: 16 }}
