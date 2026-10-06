@@ -2966,6 +2966,62 @@ html[data-theme="light"] .checkout-root {
   margin: 0;
 }
 
+/* ---- How it works ---- */
+.landing-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(14px, 2vw, 24px);
+  counter-reset: step;
+}
+.landing-step {
+  position: relative;
+  padding: 30px 24px 26px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(170deg, rgba(26, 30, 42, 0.72), rgba(14, 17, 24, 0.66));
+  box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+}
+.landing-step-n {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  color: rgba(138, 212, 255, 0.22);
+}
+.landing-step-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 20px;
+  color: #0b0d12;
+  background: linear-gradient(120deg, #c9b6ff, #8ad4ff 60%, #a0ffe6);
+  margin-bottom: 16px;
+}
+.landing-step-title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #fff;
+  margin: 0 0 8px;
+}
+.landing-step-body {
+  font-size: 14px;
+  line-height: 1.58;
+  color: rgba(244, 246, 251, 0.74);
+  margin: 0;
+}
+
 /* ---- Pricing ---- */
 .landing-price-grid {
   display: grid;
@@ -3102,6 +3158,7 @@ html[data-theme="light"] .checkout-root {
 @media (max-width: 900px) {
   .landing-grid { grid-template-columns: repeat(2, 1fr); }
   .landing-price-grid { grid-template-columns: 1fr; max-width: 420px; margin: 0 auto; }
+  .landing-steps { grid-template-columns: 1fr; max-width: 460px; margin: 0 auto; }
 }
 @media (max-width: 640px) {
   .landing-grid,
