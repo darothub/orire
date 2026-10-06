@@ -4,13 +4,17 @@ import { prisma } from "@/lib/db/prisma";
 import { createEmailVerificationToken } from "@/lib/auth/verify";
 import { sendMail } from "@/lib/email/mailer";
 import { emailVerificationEmail } from "@/lib/email/templates";
+import { authRateLimit } from "@/lib/ratelimit/guard";
 
 /**
  * Re-sends the email-verification link for the signed-in user. No-ops (still
  * returns ok) when already verified or when the account has no email, so the
  * response never leaks account state. Delivery failures are surfaced verbatim.
  */
-export async function POST() {
+export async function POST(req: Request) {
+  const limited = authRateLimit(req, "resend");
+  if (limited) return limited;
+
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {

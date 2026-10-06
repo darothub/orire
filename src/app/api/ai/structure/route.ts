@@ -19,6 +19,7 @@ import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { auth } from "@/lib/auth/auth";
 import { isEmailVerified } from "@/lib/auth/verify";
+import { aiRateLimit } from "@/lib/ratelimit/guard";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,9 @@ export async function POST(req: Request) {
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
+
+  const limited = aiRateLimit(req, provider);
+  if (limited) return limited;
 
   // Email-verification gate: unverified accounts can't spend AI runs. Mirrors
   // the refine authorization gate so throwaway accounts can't farm free usage.

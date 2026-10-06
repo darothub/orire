@@ -14,6 +14,7 @@ import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan } from "@/lib/plan/plan";
+import { aiRateLimit } from "@/lib/ratelimit/guard";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,8 @@ export async function POST(req: Request) {
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
+  const limited = aiRateLimit(req, provider);
+  if (limited) return limited;
   // Managed key: orire holds the provider key server-side.
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {

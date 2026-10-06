@@ -4,6 +4,7 @@ import { isValidEmail } from "@/lib/auth/password";
 import { createPasswordResetToken } from "@/lib/auth/reset";
 import { sendMail } from "@/lib/email/mailer";
 import { passwordResetEmail } from "@/lib/email/templates";
+import { authRateLimit } from "@/lib/ratelimit/guard";
 
 /**
  * Starts the forgot-password flow. Per product decision, this tells the user
@@ -12,6 +13,9 @@ import { passwordResetEmail } from "@/lib/email/templates";
  * exist but only use Google sign-in (no password) are told to use Google.
  */
 export async function POST(req: Request) {
+  const limited = authRateLimit(req, "forgot");
+  if (limited) return limited;
+
   let email = "";
   try {
     const body = (await req.json()) as { email?: string };

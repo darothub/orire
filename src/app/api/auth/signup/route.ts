@@ -5,6 +5,7 @@ import { hashPassword, validateCredentials } from "@/lib/auth/password";
 import { createEmailVerificationToken } from "@/lib/auth/verify";
 import { sendMail } from "@/lib/email/mailer";
 import { emailVerificationEmail } from "@/lib/email/templates";
+import { authRateLimit } from "@/lib/ratelimit/guard";
 
 /**
  * Creates an email + password account. The account is created UNVERIFIED and a
@@ -15,6 +16,9 @@ import { emailVerificationEmail } from "@/lib/email/templates";
  * first, which sets the cookie this route checks.
  */
 export async function POST(req: Request) {
+  const limited = authRateLimit(req, "signup");
+  if (limited) return limited;
+
   let email = "";
   let password = "";
   let name: string | undefined;

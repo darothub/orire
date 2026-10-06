@@ -2,13 +2,23 @@
  * orire — server-side provider dispatch (Node runtime only).
  *
  * Single point where a system+user prompt is sent to a provider and a text
- * completion comes back over HTTPS to OpenAI / Anthropic with the user's BYO key.
+ * completion comes back over HTTPS to OpenAI / Anthropic with orire's managed
+ * key.
+ *
+ * Resilience (durability P0): every network call is bounded by a timeout
+ * (AbortController) and retried a small, fixed number of times on transient
+ * failures (network errors, timeouts, HTTP 408/409/425/429/5xx/529). Retries
+ * use exponential backoff with jitter and honor a `Retry-After` header when the
+ * provider sends one. Non-transient failures (4xx other than 429) return
+ * immediately. Without this, one slow or flapping provider stalls a whole run.
  *
  * Every failure path returns the provider's own message VERBATIM (req 12); we
- * never paraphrase provider errors.
+ * never paraphrase provider errors. Timeouts and network drops have no provider
+ * message, so we surface a clear, honest description instead.
  */
 
 import { type ProviderId } from "@/lib/ai/types";
+import { logger } from "@/lib/obs/logger";
 
 export type ProviderCall =
   | { ok: true; content: string }
@@ -29,34 +39,190 @@ export interface CallOpts {
  */
 export const DETERMINISTIC: CallOpts = { temperature: 0, seed: 1217 };
 
+// ── Resilience configuration ───────────────────────────────────────────────
+
+/** Injectable dependencies so the retry logic is deterministic under test. */
+export interface ResilienceDeps {
+  fetchImpl: typeof fetch;
+  sleep: (ms: number) => Promise<void>;
+  random: () => number;
+}
+
+export interface ResilienceConfig {
+  /** Total attempts including the first (so 3 = 1 try + 2 retries). */
+  attempts: number;
+  /** Per-attempt timeout in ms before the request is aborted. */
+  timeoutMs: number;
+  /** Base backoff in ms; grows exponentially per retry. */
+  baseDelayMs: number;
+  /** Upper bound on any single backoff in ms. */
+  maxDelayMs: number;
+}
+
+function envInt(name: string, fallback: number): number {
+  const n = Number(process.env[name]);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+export function defaultResilienceConfig(): ResilienceConfig {
+  return {
+    attempts: envInt("AI_CALL_MAX_ATTEMPTS", 3),
+    timeoutMs: envInt("AI_CALL_TIMEOUT_MS", 60_000),
+    baseDelayMs: envInt("AI_CALL_BASE_DELAY_MS", 500),
+    maxDelayMs: envInt("AI_CALL_MAX_DELAY_MS", 8_000),
+  };
+}
+
+const realDeps: ResilienceDeps = {
+  fetchImpl: (...args) => fetch(...args),
+  sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+  random: Math.random,
+};
+
+const RETRYABLE_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504, 529]);
+
+/** Outcome of a single resilient request: an HTTP response or a transport error. */
+export type FetchOutcome =
+  | { kind: "response"; status: number; text: string }
+  | { kind: "error"; message: string };
+
+/** Parse a `Retry-After` header (delta-seconds or HTTP-date) into ms. */
+function parseRetryAfter(value: string | null, now: number): number | null {
+  if (!value) return null;
+  const secs = Number(value);
+  if (Number.isFinite(secs)) return Math.max(0, secs * 1000);
+  const date = Date.parse(value);
+  if (Number.isFinite(date)) return Math.max(0, date - now);
+  return null;
+}
+
+function backoffMs(attempt: number, cfg: ResilienceConfig, random: () => number): number {
+  const exp = cfg.baseDelayMs * 2 ** (attempt - 1);
+  const capped = Math.min(exp, cfg.maxDelayMs);
+  // Full jitter: spread retries so concurrent failures don't thundering-herd.
+  return Math.floor(capped * (0.5 + random() * 0.5));
+}
+
+/**
+ * POST JSON with timeout + bounded retry. Returns a {@link FetchOutcome}; never
+ * throws. The body text is passed back verbatim so callers can honor req 12.
+ */
+export async function resilientJsonFetch(
+  url: string,
+  init: RequestInit,
+  cfg: ResilienceConfig = defaultResilienceConfig(),
+  deps: ResilienceDeps = realDeps,
+  meta: { provider?: string; model?: string } = {},
+): Promise<FetchOutcome> {
+  let lastError = "Request failed.";
+
+  for (let attempt = 1; attempt <= cfg.attempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), cfg.timeoutMs);
+    const started = Date.now();
+    try {
+      const res = await deps.fetchImpl(url, { ...init, signal: controller.signal });
+      const text = await res.text();
+      clearTimeout(timer);
+
+      if (res.ok) {
+        if (attempt > 1) {
+          logger.info("ai.call.recovered", { ...meta, attempt, status: res.status });
+        }
+        return { kind: "response", status: res.status, text };
+      }
+
+      // Non-OK HTTP. Retry only transient statuses, and only if attempts remain.
+      if (RETRYABLE_STATUS.has(res.status) && attempt < cfg.attempts) {
+        const retryAfter = parseRetryAfter(res.headers.get("retry-after"), Date.now());
+        const delay = retryAfter ?? backoffMs(attempt, cfg, deps.random);
+        logger.warn("ai.call.retry", {
+          ...meta,
+          attempt,
+          status: res.status,
+          delayMs: delay,
+          durationMs: Date.now() - started,
+        });
+        await deps.sleep(delay);
+        continue;
+      }
+
+      // Terminal HTTP error — hand the body back verbatim.
+      return { kind: "response", status: res.status, text };
+    } catch (err) {
+      clearTimeout(timer);
+      const aborted = err instanceof Error && err.name === "AbortError";
+      lastError = aborted
+        ? `The ${meta.provider ?? "assistant"} request timed out after ${Math.round(
+            cfg.timeoutMs / 1000,
+          )}s. Please try again.`
+        : err instanceof Error
+          ? err.message
+          : String(err);
+
+      if (attempt < cfg.attempts) {
+        const delay = backoffMs(attempt, cfg, deps.random);
+        logger.warn("ai.call.retry", {
+          ...meta,
+          attempt,
+          reason: aborted ? "timeout" : "network",
+          delayMs: delay,
+          durationMs: Date.now() - started,
+        });
+        await deps.sleep(delay);
+        continue;
+      }
+      logger.error("ai.call.failed", {
+        ...meta,
+        attempt,
+        reason: aborted ? "timeout" : "network",
+      });
+      return { kind: "error", message: lastError };
+    }
+  }
+
+  return { kind: "error", message: lastError };
+}
+
+// ── Providers ──────────────────────────────────────────────────────────────
+
 async function callOpenAI(
   key: string,
   model: string,
   system: string,
   user: string,
-  opts: CallOpts
+  opts: CallOpts,
+  deps?: ResilienceDeps,
 ): Promise<ProviderCall> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model,
-      temperature: opts.temperature ?? 0.2,
-      ...(opts.seed != null ? { seed: opts.seed } : {}),
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-    }),
-  });
-  const text = await res.text();
-  if (!res.ok) return { ok: false, status: res.status, body: text };
+  const outcome = await resilientJsonFetch(
+    "https://api.openai.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model,
+        temperature: opts.temperature ?? 0.2,
+        ...(opts.seed != null ? { seed: opts.seed } : {}),
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user },
+        ],
+      }),
+    },
+    defaultResilienceConfig(),
+    deps ?? realDeps,
+    { provider: "openai", model },
+  );
+  if (outcome.kind === "error") return { ok: false, body: outcome.message };
+  if (outcome.status < 200 || outcome.status >= 300) {
+    return { ok: false, status: outcome.status, body: outcome.text };
+  }
   let data: unknown;
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(outcome.text);
   } catch {
-    return { ok: false, status: res.status, body: text };
+    return { ok: false, status: outcome.status, body: outcome.text };
   }
   const content: string =
     (data as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content ?? "";
@@ -68,36 +234,44 @@ async function callAnthropic(
   model: string,
   system: string,
   user: string,
-  opts: CallOpts
+  opts: CallOpts,
+  deps?: ResilienceDeps,
 ): Promise<ProviderCall> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-api-key": key,
-      "anthropic-version": "2023-06-01",
+  const outcome = await resilientJsonFetch(
+    "https://api.anthropic.com/v1/messages",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: opts.maxTokens ?? 8000,
+        temperature: opts.temperature ?? 0.2,
+        system,
+        messages: [{ role: "user", content: user }],
+      }),
     },
-    body: JSON.stringify({
-      model,
-      max_tokens: opts.maxTokens ?? 8000,
-      temperature: opts.temperature ?? 0.2,
-      system,
-      messages: [{ role: "user", content: user }],
-    }),
-  });
-  const text = await res.text();
-  if (!res.ok) return { ok: false, status: res.status, body: text };
+    defaultResilienceConfig(),
+    deps ?? realDeps,
+    { provider: "anthropic", model },
+  );
+  if (outcome.kind === "error") return { ok: false, body: outcome.message };
+  if (outcome.status < 200 || outcome.status >= 300) {
+    return { ok: false, status: outcome.status, body: outcome.text };
+  }
   let data: unknown;
   try {
-    data = JSON.parse(text);
+    data = JSON.parse(outcome.text);
   } catch {
-    return { ok: false, status: res.status, body: text };
+    return { ok: false, status: outcome.status, body: outcome.text };
   }
   const blocks = (data as { content?: { text?: string }[] })?.content;
   const content: string = Array.isArray(blocks) ? blocks.map((b) => b?.text ?? "").join("") : "";
   return { ok: true, content };
 }
-
 
 /** Dispatch a prompt to the given provider, regardless of transport. */
 export async function runProvider(args: {
@@ -107,8 +281,10 @@ export async function runProvider(args: {
   system: string;
   user: string;
   opts?: CallOpts;
+  /** Test-only: inject fetch/sleep/random for deterministic retry tests. */
+  deps?: ResilienceDeps;
 }): Promise<ProviderCall> {
-  const { provider, apiKey, model, system, user, opts = {} } = args;
-  if (provider === "openai") return callOpenAI(apiKey ?? "", model, system, user, opts);
-  return callAnthropic(apiKey ?? "", model, system, user, opts);
+  const { provider, apiKey, model, system, user, opts = {}, deps } = args;
+  if (provider === "openai") return callOpenAI(apiKey ?? "", model, system, user, opts, deps);
+  return callAnthropic(apiKey ?? "", model, system, user, opts, deps);
 }

@@ -19,6 +19,7 @@ import type { CVData } from "@/lib/cv/schema";
 import { auth } from "@/lib/auth/auth";
 import { getPlanId } from "@/lib/entitlement/entitlement";
 import { allowCoverLetter } from "@/lib/plan/plan";
+import { aiRateLimit } from "@/lib/ratelimit/guard";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,9 @@ export async function POST(req: Request) {
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
+
+  const limited = aiRateLimit(req, provider);
+  if (limited) return limited;
 
   // Server-authoritative plan gate (Pro+). Free users get an upsell block.
   const session = await auth();

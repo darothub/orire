@@ -10,6 +10,7 @@ import { JUDGE_SYSTEM, buildJudgePrompt, type JudgeCandidate } from "@/lib/ai/ju
 import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { aiRateLimit } from "@/lib/ratelimit/guard";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,8 @@ export async function POST(req: Request) {
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
+  const limited = aiRateLimit(req, provider);
+  if (limited) return limited;
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
