@@ -8,6 +8,7 @@ import { CvShowcase } from "@/components/landing/CvShowcase";
 import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { trustStats } from "@/components/landing/trust";
+import { LiveDemo } from "@/components/landing/LiveDemo";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -226,6 +227,8 @@ export function Landing() {
             ))}
           </ol>
         </section>
+
+        <LiveDemo />
 
         <section className="landing-section landing-about" aria-label="About Orire">
           <motion.div
