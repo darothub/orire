@@ -13,6 +13,7 @@ import { RETONE_SYSTEM, buildRetonePrompt, type ToneProfile } from "@/lib/ai/ret
 import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { routeTask } from "@/lib/ai/server/providerRouter";
 import type { CVData } from "@/lib/cv/schema";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
@@ -38,10 +39,11 @@ export async function POST(req: Request) {
     return NextResponse.json(fail("openai", "Invalid request body."), { status: 400 });
   }
 
-  const provider = body.provider;
-  if (!provider || !(provider in PROVIDERS)) {
-    return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
-  }
+  // Automatic provider routing: ignore client-provided provider/model
+  const route = routeTask("retone");
+  const provider = route.provider;
+  const model = route.model;
+
   const limited = aiRateLimit(req, provider);
   if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
@@ -49,10 +51,6 @@ export async function POST(req: Request) {
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
-  }
-  const model = (body.model ?? "").trim();
-  if (!model) {
-    return NextResponse.json(fail(provider, "No model selected."), { status: 400 });
   }
   if (!body.cv || !Array.isArray(body.cv.experience)) {
     return NextResponse.json(fail(provider, "Missing source CV."), { status: 400 });
