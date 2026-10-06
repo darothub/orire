@@ -15,6 +15,7 @@ import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
 export const runtime = "nodejs";
 
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
   }
   const limited = aiRateLimit(req, provider);
   if (limited) return limited;
+  const oversize = bodyTooLarge(req) ?? validateInputSize(body);
+  if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
   // Managed key: orire holds the provider key server-side.
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {

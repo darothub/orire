@@ -20,6 +20,7 @@ import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { auth } from "@/lib/auth/auth";
 import { isEmailVerified } from "@/lib/auth/verify";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
 export const runtime = "nodejs";
 
@@ -56,6 +57,8 @@ export async function POST(req: Request) {
 
   const limited = aiRateLimit(req, provider);
   if (limited) return limited;
+  const oversize = bodyTooLarge(req) ?? validateInputSize(body);
+  if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
 
   // Email-verification gate: unverified accounts can't spend AI runs. Mirrors
   // the refine authorization gate so throwaway accounts can't farm free usage.

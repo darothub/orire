@@ -20,6 +20,7 @@ import { auth } from "@/lib/auth/auth";
 import { getPlanId } from "@/lib/entitlement/entitlement";
 import { allowCoverLetter } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
 export const runtime = "nodejs";
 
@@ -50,6 +51,8 @@ export async function POST(req: Request) {
 
   const limited = aiRateLimit(req, provider);
   if (limited) return limited;
+  const oversize = bodyTooLarge(req) ?? validateInputSize(body);
+  if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
 
   // Server-authoritative plan gate (Pro+). Free users get an upsell block.
   const session = await auth();

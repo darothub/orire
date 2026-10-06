@@ -11,6 +11,7 @@ import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types"
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
 export const runtime = "nodejs";
 
@@ -39,6 +40,8 @@ export async function POST(req: Request) {
   }
   const limited = aiRateLimit(req, provider);
   if (limited) return limited;
+  const oversize = bodyTooLarge(req) ?? validateInputSize(body);
+  if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
