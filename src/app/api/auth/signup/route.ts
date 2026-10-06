@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { CAPTCHA_COOKIE, captchaEnabled } from "@/lib/auth/turnstile";
 import { hashPassword, validateCredentials } from "@/lib/auth/password";
+import { createEmailVerificationToken } from "@/lib/auth/verify";
+import { sendMail } from "@/lib/email/mailer";
+import { emailVerificationEmail } from "@/lib/email/templates";
 
 /**
- * Creates an email + password account. On success the account can sign in
- * immediately (no email verification for now). Errors are returned verbatim so
- * the UI can show them. Captcha (when enabled) must already be solved — the
- * client posts the token to /api/auth/turnstile first, which sets the cookie
- * this route checks.
+ * Creates an email + password account. The account is created UNVERIFIED and a
+ * verification link is emailed; free runs stay locked until the user confirms
+ * their email (this is what stops free-quota farming via throwaway accounts).
+ * Errors are returned verbatim so the UI can show them. Captcha (when enabled)
+ * must already be solved — the client posts the token to /api/auth/turnstile
+ * first, which sets the cookie this route checks.
  */
 export async function POST(req: Request) {
   let email = "";
@@ -46,9 +50,19 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await hashPassword(password);
-  await prisma.user.create({
-    data: { email, name, passwordHash, emailVerified: new Date() },
+  const user = await prisma.user.create({
+    data: { email, name, passwordHash },
   });
 
-  return NextResponse.json({ ok: true });
+  // Email a single-use verification link. Delivery failures are surfaced
+  // verbatim so the user knows to retry rather than silently losing the email.
+  try {
+    const token = await createEmailVerificationToken(user.id);
+    const { subject, html, text } = emailVerificationEmail(token);
+    await sendMail({ to: email, subject, html, text });
+  } catch (e) {
+    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
+  }
+
+  return NextResponse.json({ ok: true, verify: true });
 }

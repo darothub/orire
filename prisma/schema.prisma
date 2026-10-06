@@ -31,6 +31,7 @@ model User {
   ownedTeams      Team[]       @relation("TeamOwner")
   teamMemberships TeamMember[]
   passwordResetTokens PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
 }
 
 model Account {
@@ -71,6 +72,20 @@ model VerificationToken {
 // Single-use, hashed tokens for the "forgot password" flow. The raw token is
 // emailed to the user; only its SHA-256 hash is stored here.
 model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Single-use, hashed tokens for email-address verification. Mirrors the reset
+// flow: the raw token is emailed; only its SHA-256 hash is stored here.
+model EmailVerificationToken {
   id        String   @id @default(cuid())
   userId    String
   tokenHash String   @unique

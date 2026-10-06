@@ -5,6 +5,7 @@ import "./resume.css";
 import "./ingest.css";
 import { Analytics } from "@vercel/analytics/next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { VerifyBanner } from "@/components/auth/VerifyBanner";
 import { auth } from "@/lib/auth/auth";
 
 export const metadata: Metadata = {
@@ -31,7 +32,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full">
-        <AuthProvider session={session}>{children}</AuthProvider>
+        <AuthProvider session={session}>
+          <VerifyBanner />
+          {children}
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

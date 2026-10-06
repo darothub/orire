@@ -17,6 +17,8 @@ import { parsedCVFromModelJSON, type ParsedCV } from "@/lib/ingest/parse";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { auth } from "@/lib/auth/auth";
+import { isEmailVerified } from "@/lib/auth/verify";
 
 export const runtime = "nodejs";
 
@@ -50,6 +52,17 @@ export async function POST(req: Request) {
   if (!provider || !(provider in PROVIDERS)) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
+
+  // Email-verification gate: unverified accounts can't spend AI runs. Mirrors
+  // the refine authorization gate so throwaway accounts can't farm free usage.
+  const session = await auth();
+  if (session?.user?.id && !(await isEmailVerified(session.user.id))) {
+    return NextResponse.json(
+      fail(provider, "Verify your email to run the assistant. Check your inbox for the verification link.", 403),
+      { status: 200 },
+    );
+  }
+
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });

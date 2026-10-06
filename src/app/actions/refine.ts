@@ -29,6 +29,7 @@ import {
   setPlanId,
 } from "@/lib/entitlement/entitlement";
 import { signRunToken } from "@/lib/plan/runToken";
+import { isEmailVerified } from "@/lib/auth/verify";
 
 export interface RunSelection {
   provider: ProviderId;
@@ -71,6 +72,15 @@ export async function authorizeRefineRun(selections: RunSelection[]): Promise<Au
     cap,
     block: { title, body },
   });
+
+  // Email-verification gate: an unverified account cannot spend the free quota.
+  // This is what stops throwaway accounts from resetting the free count.
+  if (userId && !(await isEmailVerified(userId))) {
+    return blocked(
+      "Verify your email",
+      "Check your inbox for the verification link we sent, then run again. You can resend it from your account menu.",
+    );
+  }
 
   if (providers.length === 0) {
     return blocked("Nothing selected", "Pick at least one assistant to run.");
