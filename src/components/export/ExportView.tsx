@@ -12,6 +12,7 @@ import {
 } from "@/lib/store/styleStore";
 import { getTemplate } from "@/components/templates/registry";
 import { exportCVtoPDF } from "@/lib/export/pdf";
+import { useWriteGate } from "@/lib/store/accountStore";
 
 const ALIGNS: { id: CVAlign; label: string; icon: string }[] = [
   { id: "left", label: "Left", icon: "⇤" },
@@ -42,8 +43,13 @@ export function ExportView() {
   const [mode, setMode] = useState<PageMode>("paged");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const gate = useWriteGate("download your CV");
 
   const doExport = async () => {
+    if (!gate.guard()) {
+      setMsg({ kind: "err", text: gate.reason ?? "Verify your email to download." });
+      return;
+    }
     setBusy(true);
     setMsg(null);
     try {
@@ -181,6 +187,9 @@ export function ExportView() {
       </section>
 
       {msg && <p className={`exp-msg ${msg.kind}`}>{msg.text}</p>}
+      {gate.ready && !gate.allowed && !msg && (
+        <p className="exp-msg err">{gate.reason}</p>
+      )}
 
       <div className="exp-actions wide">
         <button className="flow-btn primary lg" onClick={() => void doExport()} disabled={busy}>

@@ -10,6 +10,7 @@ import { getTemplate } from "@/components/templates/registry";
 import { AutoTextarea } from "@/components/editor/AutoTextarea";
 import { exportCoverLetterToPDF } from "@/lib/export/coverLetterPdf";
 import { allowCoverLetter, nextPlan } from "@/lib/plan/plan";
+import { useWriteGate } from "@/lib/store/accountStore";
 import { PROVIDERS } from "@/lib/ai/types";
 import type { CoverLetter } from "@/lib/cv/coverLetter";
 import type { CVData } from "@/lib/cv/schema";
@@ -46,9 +47,11 @@ export function CoverLetterView() {
   const [exporting, setExporting] = useState(false);
   const allowed = allowCoverLetter(plan);
   const running = phase === "running";
+  const gate = useWriteGate("download the cover letter");
 
   async function doExport() {
     if (!letter) return;
+    if (!gate.guard()) return;
     setExporting(true);
     try {
       await exportCoverLetterToPDF(

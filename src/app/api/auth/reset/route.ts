@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { hashPassword, MIN_PASSWORD_LENGTH } from "@/lib/auth/password";
+import { hashPassword, validatePassword } from "@/lib/auth/password";
 import { consumePasswordResetToken } from "@/lib/auth/reset";
 
 /**
@@ -21,11 +21,9 @@ export async function POST(req: Request) {
   if (!token) {
     return NextResponse.json({ error: "Missing reset token." }, { status: 400 });
   }
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return NextResponse.json(
-      { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` },
-      { status: 400 },
-    );
+  const weak = validatePassword(password);
+  if (weak) {
+    return NextResponse.json({ error: weak }, { status: 400 });
   }
 
   const userId = await consumePasswordResetToken(token);

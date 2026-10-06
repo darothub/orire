@@ -42,8 +42,8 @@ export default function ForgotPage() {
           <>
             <h1 className="authpage-title">Check your email</h1>
             <p className="authpage-sub">
-              If an account exists for <strong>{email}</strong>, we’ve sent a
-              link to reset your password. It expires in 1 hour.
+              We’ve sent a link to reset your password to <strong>{email}</strong>.
+              It expires in 1 hour.
             </p>
             <Link className="authpage-back" href="/?signin=1">
               ← Back to sign in
