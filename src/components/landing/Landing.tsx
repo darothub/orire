@@ -10,6 +10,8 @@ import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { trustStats } from "@/components/landing/trust";
 import { beforeAfterLines } from "@/components/landing/beforeAfter";
 import { testimonials } from "@/components/landing/testimonials";
+import { employerLogos } from "@/components/landing/logos";
+import { HeroPreview } from "@/components/landing/HeroPreview";
 import { LiveDemo } from "@/components/landing/LiveDemo";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -122,35 +124,61 @@ export function Landing() {
 
       <main className="landing-main">
         <section className="landing-hero">
-          <motion.div
-            className="landing-hero-inner"
-            initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.7, ease: EASE }}
+          <div className="landing-hero-grid">
+            <motion.div
+              className="landing-hero-inner"
+              initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              transition={{ duration: 0.7, ease: EASE }}
+            >
+              <span className="landing-eyebrow">Your CV, re-branded</span>
+              <h1 className="landing-title">
+                Turn the CV you have into the one the role wants.
+              </h1>
+              <p className="landing-sub">
+                Upload what you have. Orire re-brands it into an elegant template,
+                refines it against any job description, compares two AI assistants
+                and scores every draft — so you can see exactly how far it moved.
+              </p>
+              <div className="landing-hero-cta">
+                <button className="landing-cta lg" onClick={() => openAuth("signup")}>
+                  Get started free
+                </button>
+                <button className="landing-ghost lg" onClick={() => openAuth("signin")}>
+                  I already have an account
+                </button>
+              </div>
+              <ul className="landing-usps" aria-label="What Orire does">
+                <li><span aria-hidden>✎</span> Upload PDF &amp; DOCX</li>
+                <li><span aria-hidden>❖</span> 20 standout templates</li>
+                <li><span aria-hidden>⚖</span> Deterministic rating</li>
+              </ul>
+            </motion.div>
+            <HeroPreview />
+          </div>
+        </section>
+
+        <section className="landing-logos" aria-label="Target employers">
+          <motion.p
+            className="landing-logos-cap"
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.6 }}
+            transition={{ duration: 0.5, ease: EASE }}
           >
-            <span className="landing-eyebrow">Your CV, re-branded</span>
-            <h1 className="landing-title">
-              Turn the CV you have into the one the role wants.
-            </h1>
-            <p className="landing-sub">
-              Upload what you have. Orire re-brands it into an elegant template,
-              refines it against any job description, compares two AI assistants
-              and scores every draft — so you can see exactly how far it moved.
-            </p>
-            <div className="landing-hero-cta">
-              <button className="landing-cta lg" onClick={() => openAuth("signup")}>
-                Get started free
-              </button>
-              <button className="landing-ghost lg" onClick={() => openAuth("signin")}>
-                I already have an account
-              </button>
-            </div>
-            <ul className="landing-usps" aria-label="What Orire does">
-              <li><span aria-hidden>✎</span> Upload PDF &amp; DOCX</li>
-              <li><span aria-hidden>❖</span> 20 standout templates</li>
-              <li><span aria-hidden>⚖</span> Deterministic rating</li>
-            </ul>
-          </motion.div>
+            Build a CV ready for roles at teams like these
+          </motion.p>
+          <motion.ul
+            className="landing-logos-row"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.6, ease: EASE }}
+          >
+            {employerLogos().map((name) => (
+              <li key={name} className="landing-logo-mark">{name}</li>
+            ))}
+          </motion.ul>
         </section>
 
         <section className="landing-section landing-ba" aria-label="Before and after">
