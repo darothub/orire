@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CvShowcase } from "@/components/landing/CvShowcase";
 import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
+import { trustStats } from "@/components/landing/trust";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -142,6 +143,30 @@ export function Landing() {
               <li><span aria-hidden>⚖</span> Deterministic rating</li>
             </ul>
           </motion.div>
+        </section>
+
+        <section className="landing-trust" aria-label="Why Orire">
+          <motion.ul
+            className="landing-trust-row"
+            initial={{ opacity: 0, y: 14 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.5, ease: EASE }}
+          >
+            {trustStats().map((stat, i) => (
+              <motion.li
+                key={stat.label}
+                className="landing-trust-item"
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.5 }}
+                transition={{ delay: i * 0.08, duration: 0.45, ease: EASE }}
+              >
+                <span className="landing-trust-value">{stat.value}</span>
+                <span className="landing-trust-label">{stat.label}</span>
+              </motion.li>
+            ))}
+          </motion.ul>
         </section>
 
         <section className="landing-section landing-features" aria-label="Features">
