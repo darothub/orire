@@ -8,10 +8,6 @@ const DEMO_IDS = [
   "carbon",
   "marigold",
   "consul",
-  "vertex",
-  "sapphire",
-  "bordeaux",
-  "oxford",
 ] as const;
 
 export type DemoTemplate = {
