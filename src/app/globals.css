@@ -2314,6 +2314,36 @@ body {
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .auth-input:focus { border-color: var(--accent-2); box-shadow: 0 0 0 3px rgba(139,124,255,0.18); }
+
+/* Password field with reveal/hide toggle. The wrapper sits in the same flex
+   column as plain inputs; the toggle is absolutely positioned inside. */
+.pw-field { position: relative; display: flex; }
+.pw-field .pw-input { flex: 1; width: 100%; padding-right: 42px; }
+.pw-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim, #8b8ba0);
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+.pw-toggle:hover { color: var(--text); background: var(--surface-soft); }
+.pw-toggle:focus-visible {
+  outline: none;
+  color: var(--text);
+  box-shadow: 0 0 0 3px rgba(139,124,255,0.18);
+}
+.pw-toggle svg { display: block; }
 .auth-submit {
   padding: 11px 14px;
   border-radius: 11px; border: none;

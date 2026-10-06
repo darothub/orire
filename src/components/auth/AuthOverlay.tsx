@@ -9,6 +9,7 @@ import { getTemplate } from "@/components/templates/registry";
 import { sampleVariants } from "@/lib/cv/samples";
 import type { CVData } from "@/lib/cv/schema";
 import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/TurnstileWidget";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -323,8 +324,7 @@ export function AuthOverlay() {
                 autoComplete="email"
                 required
               />
-              <input
-                type="password"
+              <PasswordInput
                 className="auth-input"
                 placeholder={signup ? "Create a password (min 8 characters)" : "Password"}
                 value={password}

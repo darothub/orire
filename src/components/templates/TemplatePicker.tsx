@@ -11,6 +11,7 @@ import {
 } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { TEMPLATES, type TemplateMeta } from "./registry";
+import { sampleVariants } from "@/lib/cv/samples";
 import type { CVData } from "@/lib/cv/schema";
 
 /**
@@ -34,18 +35,25 @@ export function TemplatePicker({
   const storeCV = useCVStore((s) => s.cv);
   const storeActive = useCVStore((s) => s.activeTemplate);
   const storeSetTemplate = useCVStore((s) => s.setTemplate);
+  const started = useCVStore((s) => s.started);
   const cv = cvOverride ?? storeCV;
   const active = activeOverride ?? storeActive;
   const setTemplate = onSelect ?? storeSetTemplate;
 
+  // Gallery state: no real CV uploaded yet and not previewing a specific one.
+  // Show each template with a different persona (varied name, title, continent)
+  // so the gallery reads as a showcase instead of 20 identical "Ada Okonkwo"
+  // cards. Once the user has their own CV (`started`) every card renders it.
+  const gallery = !cvOverride && !started;
+
   return (
     <div className="picker">
       <div className="picker-track">
-        {TEMPLATES.map((t) => (
+        {TEMPLATES.map((t, i) => (
           <PickCard
             key={t.id}
             t={t}
-            cv={cv}
+            cv={gallery ? sampleVariants[i % sampleVariants.length] : cv}
             isActive={t.id === active}
             onSelect={() => setTemplate(t.id)}
           />

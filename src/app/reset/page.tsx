@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { PasswordInput } from "@/components/auth/PasswordInput";
 
 function ResetForm() {
   const params = useSearchParams();
@@ -74,8 +75,7 @@ function ResetForm() {
       <h1 className="authpage-title">Choose a new password</h1>
       <p className="authpage-sub">Enter a new password for your account.</p>
       <form className="authpage-form" onSubmit={submit}>
-        <input
-          type="password"
+        <PasswordInput
           className="auth-input"
           placeholder="New password (min 8 characters)"
           value={password}
@@ -84,8 +84,7 @@ function ResetForm() {
           minLength={8}
           required
         />
-        <input
-          type="password"
+        <PasswordInput
           className="auth-input"
           placeholder="Confirm new password"
           value={confirm}
