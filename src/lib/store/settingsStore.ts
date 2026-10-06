@@ -28,12 +28,24 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "orire-settings-v1",
-      version: 2,
+      version: 3,
       // v1 → v2: orire moved from BYO keys to managed server keys. Any
       // persisted per-provider `keys` are dropped — they are no longer read.
+      // v2 → v3: the model catalog was refreshed (GPT-5 / Claude 4.5 lineup).
+      // Any persisted model no longer in the catalog is dropped so `merge`
+      // backfills the current default instead of sending a retired model id.
       migrate: (persisted) => {
         const p = (persisted ?? {}) as Record<string, unknown>;
         delete p.keys;
+        const models = p.models as Record<string, unknown> | undefined;
+        if (models && typeof models === "object") {
+          for (const [provider, model] of Object.entries(models)) {
+            const meta = PROVIDERS[provider as ProviderId];
+            if (!meta || typeof model !== "string" || !meta.models.includes(model)) {
+              delete models[provider];
+            }
+          }
+        }
         return p as unknown as SettingsState;
       },
       // Deep-merge so providers added after a user first persisted are

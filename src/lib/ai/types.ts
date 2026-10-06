@@ -19,30 +19,30 @@ export interface ProviderMeta {
 export const PROVIDERS: Record<ProviderId, ProviderMeta> = {
   openai: {
     id: "openai",
+    // Default to the cheap, JSON-reliable budget tier (GPT-5 Mini). Nano is the
+    // rock-bottom option; gpt-5 is the mid upgrade; o3 is the premium reasoner.
     label: "OpenAI (ChatGPT)",
-    defaultModel: "gpt-4o",
+    defaultModel: "gpt-5-mini",
     models: [
-      "gpt-4o",
+      "gpt-5-nano",
+      "gpt-5-mini",
+      "gpt-5",
       "gpt-4o-mini",
-      "gpt-4.1",
-      "gpt-4.1-mini",
-      "gpt-4.1-nano",
       "o4-mini",
       "o3",
-      "gpt-4-turbo",
     ],
   },
   anthropic: {
     id: "anthropic",
+    // Default to Claude Haiku 4.5 — the cheapest Anthropic model and the
+    // strongest budget instruction/JSON follower, ideal for the refine patch.
     label: "Anthropic (Claude)",
-    defaultModel: "claude-3-7-sonnet-latest",
+    defaultModel: "claude-haiku-4-5",
     models: [
-      "claude-3-7-sonnet-latest",
-      "claude-3-5-sonnet-latest",
-      "claude-3-5-haiku-latest",
-      "claude-3-opus-latest",
-      "claude-sonnet-4-0",
-      "claude-opus-4-0",
+      "claude-haiku-4-5",
+      "claude-sonnet-4-5",
+      "claude-sonnet-5-5",
+      "claude-opus-5-5",
     ],
   },
 };
