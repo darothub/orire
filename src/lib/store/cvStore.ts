@@ -45,6 +45,9 @@ interface CVState {
   activeTemplate: string;
   /** Snapshot of the CV before the first AI refinement — the "initial" for rating (req 16). */
   baseline: CVData | null;
+  /** True once the user brings in a real CV (upload / rebrand / refine / cloud).
+   *  Rating stays at zero until this flips (req: no score before first upload). */
+  started: boolean;
 
   setBasics: (patch: BasicsPatch) => void;
 
@@ -119,6 +122,7 @@ export const useCVStore = create<CVState>()(
       cv: sampleCV,
       activeTemplate: "aurora",
       baseline: null,
+      started: false,
       skillSuggestions: [],
       ignoredSkills: [],
 
@@ -404,23 +408,23 @@ export const useCVStore = create<CVState>()(
       // Capture the pre-refine CV as the baseline the first time AI is applied,
       // so the final result can be rated against where the user started (req 16).
       applyRefinedCV: (next) =>
-        set((s) => ({ cv: next, baseline: s.baseline ?? s.cv })),
+        set((s) => ({ cv: next, baseline: s.baseline ?? s.cv, started: true })),
 
-      loadCV: (next) => set({ cv: next }),
+      loadCV: (next) => set({ cv: next, started: true }),
 
       hydrateFromCloud: ({ cv, template, baseline }) =>
-        set({ cv, activeTemplate: template, baseline }),
+        set({ cv, activeTemplate: template, baseline, started: true }),
 
-      captureBaseline: () => set((s) => ({ baseline: s.cv })),
-      setBaseline: (cv) => set({ baseline: cv }),
+      captureBaseline: () => set((s) => ({ baseline: s.cv, started: true })),
+      setBaseline: (cv) => set({ baseline: cv, started: true }),
       clearBaseline: () => set({ baseline: null }),
 
-      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, skillSuggestions: [], ignoredSkills: [] }),
+      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, started: false, skillSuggestions: [], ignoredSkills: [] }),
     }),
     {
       name: "orire-cv-v1",
       version: 2,
-      partialize: (s) => ({ cv: s.cv, activeTemplate: s.activeTemplate, baseline: s.baseline, ignoredSkills: s.ignoredSkills }),
+      partialize: (s) => ({ cv: s.cv, activeTemplate: s.activeTemplate, baseline: s.baseline, started: s.started, ignoredSkills: s.ignoredSkills }),
       migrate: (persisted, version) => {
         const st = persisted as { cv?: Partial<CVData> } | undefined;
         if (st?.cv && version < 2) {

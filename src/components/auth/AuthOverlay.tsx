@@ -6,7 +6,8 @@ import { useSession, signIn } from "next-auth/react";
 import { BrandMark } from "@/components/BrandMark";
 import { useUIStore } from "@/lib/store/uiStore";
 import { getTemplate } from "@/components/templates/registry";
-import { sampleCV } from "@/lib/cv/sample";
+import { sampleVariants } from "@/lib/cv/samples";
+import type { CVData } from "@/lib/cv/schema";
 import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/TurnstileWidget";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
@@ -444,7 +445,7 @@ function Showcase() {
             style={{ ["--dur" as string]: `${col.dur}s` }}
           >
             {[...col.ids, ...col.ids].map((id, j) => (
-              <ShowcaseCard key={`${id}-${j}`} id={id} />
+              <ShowcaseCard key={`${id}-${j}`} id={id} cv={sampleVariants[(i * 3 + j) % sampleVariants.length]} />
             ))}
           </div>
         ))}
@@ -453,14 +454,14 @@ function Showcase() {
   );
 }
 
-function ShowcaseCard({ id }: { id: string }) {
+function ShowcaseCard({ id, cv }: { id: string; cv: CVData }) {
   const t = getTemplate(id);
   const Component = t.Component;
   return (
     <div className="sc-card">
       <div className="sc-scale">
         <div className="paper sc-paper">
-          <Component cv={sampleCV} />
+          <Component cv={cv} />
         </div>
       </div>
     </div>

@@ -42,12 +42,13 @@ function Ring({ value, label, sub }: { value: number; label: string; sub?: strin
 export function RateView() {
   const cv = useCVStore((s) => s.cv);
   const baseline = useCVStore((s) => s.baseline);
+  const started = useCVStore((s) => s.started);
   const captureBaseline = useCVStore((s) => s.captureBaseline);
   const clearBaseline = useCVStore((s) => s.clearBaseline);
   const setView = useViewStore((s) => s.setView);
 
   const current = scoreCV(cv);
-  const diff = baseline ? diffScores(baseline, cv) : null;
+  const diff = started && baseline ? diffScores(baseline, cv) : null;
 
   return (
     <motion.div
@@ -63,7 +64,15 @@ export function RateView() {
         </div>
       </div>
 
-        {diff ? (
+        {!started ? (
+          <div className="rate-hero solo">
+            <Ring value={0} label="Rating" sub="—" />
+            <p className="rate-note">
+              No rating yet. Upload your first CV in <strong>Re-brand</strong> — your score is
+              measured against the CV you bring in, so it starts at zero until then.
+            </p>
+          </div>
+        ) : diff ? (
           <div className="rate-hero">
             <Ring value={diff.before} label="Initial" />
             <div className="rate-arrow">
@@ -85,7 +94,10 @@ export function RateView() {
         )}
 
         <div className="rate-metrics">
-          {(diff ? diff.metrics : current.metrics.map((m) => ({ key: m.key, label: m.label, before: m.value, after: m.value, diff: 0 }))).map((m) => {
+          {(diff
+            ? diff.metrics
+            : current.metrics.map((m) => ({ key: m.key, label: m.label, before: started ? m.value : 0, after: started ? m.value : 0, diff: 0 }))
+          ).map((m) => {
             const meta = current.metrics.find((x) => x.key === m.key)!;
             return (
               <div key={m.key} className="rate-metric">
@@ -125,7 +137,9 @@ export function RateView() {
         </div>
 
         <div className="imp-actions rate-actions">
-          {baseline ? (
+          {!started ? (
+            <button className="imp-btn primary" onClick={() => setView("rebrand")}>Upload a CV</button>
+          ) : baseline ? (
             <>
               <button className="imp-btn" onClick={clearBaseline}>Clear baseline</button>
               <button className="imp-btn" onClick={captureBaseline}>Reset baseline to current</button>

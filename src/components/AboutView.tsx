@@ -25,9 +25,9 @@ const PRINCIPLES: Principle[] = [
     body: "Run two assistants in parallel, see them side by side, and let an LLM-as-judge pick the strongest result — with the reasoning shown, never hidden.",
   },
   {
-    icon: "🔒",
-    title: "Keys stay on our server",
-    body: "Assistants are provided by orire. API keys live server-side and never touch the browser; errors from the assistants are surfaced to you verbatim.",
+    icon: "◎",
+    title: "Simulate the perfect match",
+    body: "Paste a job description and orire renders the CV that would match it 100% — a concrete target to aim for, then refines your real experience toward it without inventing anything.",
   },
 ];
 
