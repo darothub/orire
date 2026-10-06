@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useSession, signOut } from "next-auth/react";
 import { useUIStore } from "@/lib/store/uiStore";
 import { clearExplored } from "@/components/auth/AuthOverlay";
+import { deleteAccount } from "@/app/actions/account";
 
 /**
  * Account control in the app bar. Signed out → opens the full-screen login /
@@ -15,6 +16,22 @@ export function AccountButton() {
   const { data: session, status } = useSession();
   const openAuth = useUIStore((s) => s.openAuth);
   const [open, setOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+    const res = await deleteAccount();
+    if (res.error) {
+      setDeleting(false);
+      setDeleteError(res.error);
+      return;
+    }
+    clearExplored();
+    await signOut({ callbackUrl: "/" });
+  }
 
   if (status === "loading") {
     return <span className="acct-chip acct-loading" aria-hidden />;
@@ -27,7 +44,7 @@ export function AccountButton() {
       <div className="acct-wrap">
         <button
           className="acct-chip"
-          onClick={() => setOpen((o) => !o)}
+          onClick={() => setOpen((o) => { const next = !o; if (!next) { setConfirmDelete(false); setDeleteError(null); } return next; })}
           aria-expanded={open}
           title={label}
         >
@@ -63,6 +80,40 @@ export function AccountButton() {
               >
                 Sign out
               </button>
+
+              <div className="acct-pop-danger">
+                {!confirmDelete ? (
+                  <button
+                    className="acct-del-link"
+                    onClick={() => { setConfirmDelete(true); setDeleteError(null); }}
+                  >
+                    Delete account
+                  </button>
+                ) : (
+                  <div className="acct-del-confirm">
+                    <p className="acct-del-warn">
+                      This permanently deletes your account, CVs, history and subscription. This can’t be undone.
+                    </p>
+                    {deleteError && <p className="acct-del-error">{deleteError}</p>}
+                    <div className="acct-del-actions">
+                      <button
+                        className="flow-btn ghost sm"
+                        onClick={() => { setConfirmDelete(false); setDeleteError(null); }}
+                        disabled={deleting}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="acct-del-btn"
+                        onClick={() => void handleDelete()}
+                        disabled={deleting}
+                      >
+                        {deleting ? "Deleting…" : "Delete permanently"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
