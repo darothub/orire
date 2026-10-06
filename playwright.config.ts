@@ -21,6 +21,11 @@ const PORT = Number(process.env.E2E_PORT ?? 3100);
 const serverEnv: Record<string, string> = {
   ...(process.env as Record<string, string>),
   AUTH_SECRET: E2E_AUTH_SECRET,
+  // `next start` runs in production mode, where Auth.js rejects the request
+  // host as untrusted (returning a null session) unless it is told to trust it.
+  // Prod (Vercel) trusts its own host automatically; the e2e server must be
+  // told explicitly so this does not depend on a developer's shell/.env.
+  AUTH_TRUST_HOST: "true",
   DATABASE_URL:
     process.env.DATABASE_URL ?? "postgresql://ci:ci@localhost:5432/ci?schema=public",
   DIRECT_URL:
