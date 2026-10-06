@@ -274,27 +274,6 @@ export function Landing() {
 
         <LiveDemo />
 
-        <section className="landing-section landing-about" aria-label="About Orire">
-          <motion.div
-            className="landing-about-head"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
-          >
-            <span className="landing-eyebrow">Good fortune, shared</span>
-            <h2 className="landing-h2">Be the next to share the good news</h2>
-            <p className="landing-about-lead">
-              Orire means good fortune — and the good news travels fast. People
-              arrive with the CV they already have and leave with one that’s
-              structured, elegant and tailored to the role they want. Your story
-              stays honest and yours: Orire works from your facts, shows its
-              reasoning, and keeps a deterministic score so you can see exactly
-              how far a draft has moved. Land the role, then pass the luck on.
-            </p>
-          </motion.div>
-        </section>
-
         <section className="landing-section landing-quotes" aria-label="What people say">
           <motion.div
             className="landing-about-head"
@@ -393,6 +372,27 @@ export function Landing() {
             <button className="landing-cta lg" onClick={() => openAuth("signup")}>
               Get started free
             </button>
+          </motion.div>
+        </section>
+
+        <section className="landing-section landing-about" aria-label="About Orire">
+          <motion.div
+            className="landing-about-head"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5, ease: EASE }}
+          >
+            <span className="landing-eyebrow">Good fortune, shared</span>
+            <h2 className="landing-h2">Be the next to share the good news</h2>
+            <p className="landing-about-lead">
+              Orire means good fortune — and the good news travels fast. People
+              arrive with the CV they already have and leave with one that’s
+              structured, elegant and tailored to the role they want. Your story
+              stays honest and yours: Orire works from your facts, shows its
+              reasoning, and keeps a deterministic score so you can see exactly
+              how far a draft has moved. Land the role, then pass the luck on.
+            </p>
           </motion.div>
         </section>
       </main>
