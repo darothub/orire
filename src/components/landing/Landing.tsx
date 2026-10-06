@@ -56,36 +56,6 @@ const FEATURES: Feature[] = [
   },
 ];
 
-interface Principle {
-  icon: string;
-  title: string;
-  body: string;
-}
-
-/** Operating principles — lifted from the former in-app About view. */
-const PRINCIPLES: Principle[] = [
-  {
-    icon: "✦",
-    title: "Grounded in your facts",
-    body: "Every rewrite, refinement and cover letter is built from the facts in your CV. Orire restructures and sharpens — it never invents jobs, dates or numbers you didn't provide.",
-  },
-  {
-    icon: "⚖",
-    title: "Deterministic rating",
-    body: "Your CV is scored against a fixed rubric with no model call, so the same CV always earns the same score. You can measure a real improvement, not a mood.",
-  },
-  {
-    icon: "⟂",
-    title: "Compare, then judge",
-    body: "Run two assistants in parallel, see them side by side, and let an LLM-as-judge pick the strongest result — with the reasoning shown, never hidden.",
-  },
-  {
-    icon: "◎",
-    title: "Simulate the perfect match",
-    body: "Paste a job description and Orire renders the CV that would match it 100% — a concrete target to aim for, then refines your real experience toward it without inventing anything.",
-  },
-];
-
 /**
  * Public, pre-auth landing page. Advertises the product and routes visitors
  * into the sign-in / sign-up modal (AuthOverlay). Reuses the signature drifting
@@ -323,22 +293,6 @@ export function Landing() {
               how far a draft has moved. Land the role, then pass the luck on.
             </p>
           </motion.div>
-          <div className="landing-grid about">
-            {PRINCIPLES.map((p, i) => (
-              <motion.div
-                key={p.title}
-                className="landing-card"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: (i % 2) * 0.08, duration: 0.5, ease: EASE }}
-              >
-                <span className="landing-card-icon" aria-hidden>{p.icon}</span>
-                <h3 className="landing-card-title">{p.title}</h3>
-                <p className="landing-card-body">{p.body}</p>
-              </motion.div>
-            ))}
-          </div>
         </section>
 
         <section className="landing-section landing-quotes" aria-label="What people say">
