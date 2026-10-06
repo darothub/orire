@@ -628,9 +628,11 @@ body {
 }
 .au-header {
   position: relative;
-  padding-bottom: 22px;
-  margin-bottom: 26px;
+  padding: 24px;
+  margin: -24px -24px 26px -24px;
   border-bottom: 1px solid var(--paper-line);
+  background: var(--paper);
+  border-radius: 8px 8px 0 0;
 }
 .au-header::after {
   content: "";
@@ -648,6 +650,7 @@ body {
   line-height: 1.05;
   letter-spacing: -0.5px;
   color: var(--ink);
+  margin: 0;
 }
 .au-title {
   margin-top: 6px;
