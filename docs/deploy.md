@@ -73,7 +73,7 @@ correctly). It skips dev-only `MAIL_SMTP_*` for production. Re-run
 `npm run vercel:env` any time a value changes in SOPS, then redeploy.
 
 Database migrations run automatically: `vercel.json` sets the build command to
-`prisma migrate deploy && next build`.
+`prisma migrate deploy` (production only, so Preview builds never touch the prod DB) then `next build`.
 
 ## CI (GitHub Actions)
 
