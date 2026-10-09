@@ -50,7 +50,7 @@ export const PLANS: Record<PlanId, Plan> = {
   pro: {
     id: "pro",
     label: "Pro",
-    price: 9,
+    price: 2,
     blurb: "For an active job hunt.",
     maxProviders: 2,
     allowCompare: true,
@@ -61,7 +61,7 @@ export const PLANS: Record<PlanId, Plan> = {
   career: {
     id: "career",
     label: "Career",
-    price: 19,
+    price: 8,
     blurb: "For power switchers.",
     maxProviders: 3,
     allowCompare: true,
