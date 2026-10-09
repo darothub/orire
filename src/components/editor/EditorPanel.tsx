@@ -2,7 +2,10 @@
 
 import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
+import { useState } from "react";
 import { AutoTextarea } from "./AutoTextarea";
+import { EvidenceHelper } from "./EvidenceHelper";
+import { hasMeasurable } from "@/lib/ai/evidence";
 
 function Field({
   label,
@@ -192,6 +195,35 @@ function Highlights({
   );
 }
 
+/** Soft nudge + guided helper for adding measurable evidence to a role. */
+function EvidenceSection({
+  role,
+  company,
+  highlights,
+  onAdd,
+}: {
+  role: string;
+  company: string;
+  highlights: string[];
+  onAdd: (bullet: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const filled = highlights.filter((h) => h.trim());
+  const missing = filled.length > 0 && !filled.some(hasMeasurable);
+  return (
+    <div className="ed-evidence-wrap">
+      {open ? (
+        <EvidenceHelper role={role} company={company} onAdd={onAdd} onClose={() => setOpen(false)} />
+      ) : (
+        <button className="ed-evidence-btn" onClick={() => setOpen(true)}>
+          📈 Add numbers &amp; evidence
+          {missing && <span className="ed-evidence-nudge"> — none of your bullets show a measurable result yet</span>}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function EditorPanel() {
   const cv = useCVStore((s) => s.cv);
   const s = useCVStore();
@@ -236,6 +268,12 @@ export function EditorPanel() {
                     <span>Current role</span>
                   </label>
                 </div>
+                <EvidenceSection
+                  role={exp.role}
+                  company={exp.company}
+                  highlights={exp.highlights}
+                  onAdd={(b) => s.setHighlights(exp.id, [...exp.highlights.filter((h) => h.trim()), b])}
+                />
                 <Highlights
                   items={exp.highlights}
                   placeholder="Describe a concrete, factual achievement…"

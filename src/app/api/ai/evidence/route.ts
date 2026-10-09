@@ -1,0 +1,74 @@
+/**
+ * orire — evidence route (Node runtime). Drafts one measurable CV bullet from
+ * the user's own answers. Numbers are verified against the answers before the
+ * draft is returned, so a model-invented figure never reaches the CV.
+ */
+
+import { NextResponse } from "next/server";
+import {
+  EVIDENCE_SYSTEM,
+  buildEvidencePrompt,
+  numbersGrounded,
+  parseEvidenceBullet,
+  type EvidenceInput,
+} from "@/lib/ai/evidence";
+import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
+import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { routeTask } from "@/lib/ai/server/providerRouter";
+import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { bodyTooLarge } from "@/lib/ai/server/limits";
+
+export const runtime = "nodejs";
+
+const FIELD_MAX = 600;
+const clean = (v: unknown) => (typeof v === "string" ? v.trim().slice(0, FIELD_MAX) : "");
+
+const json = (error: string, status = 200) => NextResponse.json({ ok: false, error }, { status });
+
+export async function POST(req: Request) {
+  const { provider, model } = routeTask("evidence");
+
+  const limited = aiRateLimit(req, provider);
+  if (limited) return limited;
+  const oversize = bodyTooLarge(req);
+  if (oversize) return json(oversize, 413);
+
+  let raw: Partial<Record<keyof EvidenceInput, unknown>>;
+  try {
+    raw = await req.json();
+  } catch {
+    return json("Invalid request body.", 400);
+  }
+  const input: EvidenceInput = {
+    role: clean(raw.role),
+    company: clean(raw.company),
+    action: clean(raw.action),
+    scale: clean(raw.scale),
+    result: clean(raw.result),
+    timeframe: clean(raw.timeframe),
+  };
+  if (!input.action) return json("Tell us what you did first.", 400);
+
+  const apiKey = serverKeyFor(provider);
+  if (!apiKey) return json(notConfiguredMessage(provider));
+
+  try {
+    const out = await runProvider({
+      provider,
+      apiKey,
+      model,
+      system: EVIDENCE_SYSTEM,
+      user: buildEvidencePrompt(input),
+      opts: DETERMINISTIC,
+    });
+    if (!out.ok) return json(out.body);
+    const bullet = parseEvidenceBullet(out.content);
+    if (!bullet) return json("Couldn't draft a bullet. Try rewording your answers.");
+    if (!numbersGrounded(bullet, input)) {
+      return json("The draft used a figure you didn't provide, so we discarded it. Add the real numbers and try again.");
+    }
+    return NextResponse.json({ ok: true, bullet });
+  } catch (e) {
+    return json((e as Error).message);
+  }
+}

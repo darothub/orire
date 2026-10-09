@@ -3724,3 +3724,29 @@ html[data-theme="light"] .landing-scrim {
   .landing-demo-foot { gap: 10px; }
   .landing-demo-foot .landing-cta { width: 100%; }
 }
+
+/* ---------- Evidence helper ---------- */
+.ed-evidence-wrap { margin: 4px 0 10px; }
+.ed-evidence-btn {
+  border: 1px dashed var(--accent);
+  background: transparent;
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+.ed-evidence-btn:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.ed-evidence-nudge { color: var(--muted); }
+.ed-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+}
+.ed-evidence-intro { font-size: 12px; color: var(--muted); margin: 0; }
+.ed-evidence-error { font-size: 12px; color: var(--accent-3); margin: 0; }
+.ed-evidence-actions { display: flex; align-items: center; gap: 10px; }
