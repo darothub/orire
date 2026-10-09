@@ -4,6 +4,7 @@ import "./templates.css";
 import "./resume.css";
 import "./ingest.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { VerifyBanner } from "@/components/auth/VerifyBanner";
 import { auth } from "@/lib/auth/auth";
@@ -54,6 +55,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <SignupTracker isNewUser={session?.isNewUser === true} userId={session?.user?.id ?? null} />
         </AuthProvider>
         <Analytics />
+        <SpeedInsights />
         <MetaPixel />
         <PurchaseTracker />
       </body>
