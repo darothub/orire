@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
@@ -398,8 +399,10 @@ export function Landing() {
           © {new Date().getFullYear()} Orire · CV studio
         </span>
         <span className="landing-foot-links">
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
+          <Link href="/templates">Templates</Link>
+          <Link href="/guides">Guides</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
           <CookiePreferencesLink />
         </span>
       </footer>
