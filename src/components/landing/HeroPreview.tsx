@@ -175,7 +175,7 @@ export function HeroPreview() {
       </div>
 
       <span className="landing-hero-frame-label">
-        Plain text becomes a <strong>{featured.name}</strong> CV — same facts, elevated. Drag to compare.
+        Plain text becomes {/^[aeiou]/i.test(featured.name) ? "an" : "a"} <strong>{featured.name}</strong> CV — same facts, elevated. Drag to compare.
       </span>
     </motion.div>
   );
