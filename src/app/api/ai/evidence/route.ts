@@ -29,7 +29,7 @@ const json = (error: string, status = 200) => NextResponse.json({ ok: false, err
 export async function POST(req: Request) {
   const { provider, model } = routeTask("evidence");
 
-  const limited = aiRateLimit(req, provider);
+  const limited = await aiRateLimit(req, provider);
   if (limited) return limited;
   const oversize = bodyTooLarge(req);
   if (oversize) return json(oversize, 413);

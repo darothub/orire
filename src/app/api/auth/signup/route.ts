@@ -16,7 +16,7 @@ import { authRateLimit } from "@/lib/ratelimit/guard";
  * first, which sets the cookie this route checks.
  */
 export async function POST(req: Request) {
-  const limited = authRateLimit(req, "signup");
+  const limited = await authRateLimit(req, "signup");
   if (limited) return limited;
 
   let email = "";

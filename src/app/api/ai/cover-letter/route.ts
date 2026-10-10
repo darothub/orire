@@ -12,7 +12,7 @@
 
 import { NextResponse } from "next/server";
 import { COVER_LETTER_SYSTEM, buildCoverLetterPrompt, type CoverLetterTone } from "@/lib/ai/coverLetter";
-import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
+import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { routeTask } from "@/lib/ai/server/providerRouter";
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   const provider = route.provider;
   const model = route.model;
 
-  const limited = aiRateLimit(req, provider);
+  const limited = await aiRateLimit(req, provider);
   if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });

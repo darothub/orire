@@ -12,7 +12,7 @@ import { authRateLimit } from "@/lib/ratelimit/guard";
  * response never leaks account state. Delivery failures are surfaced verbatim.
  */
 export async function POST(req: Request) {
-  const limited = authRateLimit(req, "resend");
+  const limited = await authRateLimit(req, "resend");
   if (limited) return limited;
 
   const session = await auth();

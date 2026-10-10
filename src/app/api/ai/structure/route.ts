@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
 
-  const limited = aiRateLimit(req, provider);
+  const limited = await aiRateLimit(req, provider);
   if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
