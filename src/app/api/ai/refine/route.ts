@@ -12,7 +12,6 @@ import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
 import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
-import { routeTask } from "@/lib/ai/server/providerRouter";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
@@ -40,10 +39,15 @@ export async function POST(req: Request) {
     return NextResponse.json(fail("openai", "Invalid request body."), { status: 400 });
   }
 
-  // Automatic provider routing: ignore client-provided provider/model
-  const route = routeTask("refine");
-  const provider = route.provider;
-  const model = route.model;
+  // Honour the caller's selected assistant (validated below against the run
+  // token's authorized set) so a two-assistant comparison actually runs two
+  // different providers instead of being silently collapsed onto one. The model
+  // is plan-gated by modelAllowedOnPlan further down.
+  const provider = body.provider;
+  if (!provider || !(provider in PROVIDERS)) {
+    return NextResponse.json(fail("openai", "Unknown assistant."), { status: 400 });
+  }
+  const model = (body.model ?? "").trim();
 
   const limited = aiRateLimit(req, provider);
   if (limited) return limited;
@@ -72,6 +76,10 @@ export async function POST(req: Request) {
       fail(provider, "This assistant wasn't part of the authorized run.", 403),
       { status: 403 }
     );
+  }
+
+  if (!model) {
+    return NextResponse.json(fail(provider, "No model selected."), { status: 400 });
   }
 
   // Per-column model-tier enforcement, driven by the plan attested in the token.
