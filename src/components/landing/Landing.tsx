@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
+import { COMPANY } from "@/lib/legal/company";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -39,12 +40,12 @@ const FEATURES: Feature[] = [
   {
     icon: "⟂",
     title: "Compare, then judge",
-    body: "Run two assistants in parallel, see them side by side, and let an LLM-as-judge pick the strongest result with its reasoning shown.",
+    body: "Run two assistants in parallel, see them side by side, and see why one draft is stronger — the reasoning is shown.",
   },
   {
     icon: "⚖",
-    title: "Deterministic rating",
-    body: "A fixed rubric scores every draft with no model call, so the same CV always earns the same score — measure real progress.",
+    title: "A clear CV score",
+    body: "Every draft gets a clear score from a fixed rubric, so the same CV always scores the same — watch it climb as you tighten each line.",
   },
   {
     icon: "◎",
@@ -123,7 +124,7 @@ export function Landing() {
               <ul className="landing-usps" aria-label="What Orire does">
                 <li><span aria-hidden>✎</span> Upload PDF &amp; DOCX</li>
                 <li><span aria-hidden>❖</span> 25 standout templates</li>
-                <li><span aria-hidden>⚖</span> Deterministic rating</li>
+                <li><span aria-hidden>⚖</span> Clear CV score</li>
               </ul>
             </motion.div>
             <HeroPreview />
@@ -387,7 +388,7 @@ export function Landing() {
               arrive with the CV they already have and leave with one that’s
               structured, elegant and tailored to the role they want. Your story
               stays honest and yours: Orire works from your facts, shows its
-              reasoning, and keeps a deterministic score so you can see exactly
+              reasoning, and keeps a consistent CV score so you can see exactly
               how far a draft has moved. Land the role, then pass the luck on.
             </p>
           </motion.div>
@@ -404,6 +405,7 @@ export function Landing() {
           <Link href="/guides">Guides</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
+          <a href={`mailto:${COMPANY.supportEmail}`}>Support</a>
           <CookiePreferencesLink />
         </span>
       </footer>

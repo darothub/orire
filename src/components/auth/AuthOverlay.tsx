@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession, signIn } from "next-auth/react";
 import { BrandMark } from "@/components/BrandMark";
@@ -65,6 +65,8 @@ export function AuthOverlay() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaReset, setCaptchaReset] = useState(0);
   const [authErr, setAuthErr] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
 
   // Which OAuth providers are actually enabled on the server (env-driven).
   // Retry on an empty/failed response instead of caching it — otherwise a
@@ -155,6 +157,52 @@ export function AuthOverlay() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, close]);
+
+  // A11y: on open, move focus into the dialog (so the triggering CTA no longer
+  // keeps focus behind the modal); on close, restore focus to the opener.
+  useEffect(() => {
+    if (!open) return;
+    openerRef.current = (document.activeElement as HTMLElement) ?? null;
+    const t = setTimeout(() => {
+      const card = cardRef.current;
+      if (!card) return;
+      const focusable = card.querySelector<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      (focusable ?? card).focus();
+    }, 60);
+    return () => {
+      clearTimeout(t);
+      openerRef.current?.focus?.();
+    };
+  }, [open]);
+
+  // A11y: trap Tab focus within the dialog while it is open.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const card = cardRef.current;
+      if (!card) return;
+      const items = Array.from(
+        card.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [open]);
 
   const signup = mode === "signup";
   const captchaOn = !!TURNSTILE_SITE_KEY;
@@ -260,6 +308,8 @@ export function AuthOverlay() {
           <div className="auth-stage">
           <motion.div
             className="auth-card"
+            ref={cardRef}
+            tabIndex={-1}
             initial={{ opacity: 0, y: 24, scale: 0.96, filter: "blur(10px)" }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: 16, scale: 0.97, filter: "blur(8px)" }}
@@ -337,6 +387,7 @@ export function AuthOverlay() {
               <input
                 type="email"
                 className="auth-input"
+                aria-label="Email address"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -345,6 +396,7 @@ export function AuthOverlay() {
               />
               <PasswordInput
                 className="auth-input"
+                aria-label="Password"
                 placeholder={signup ? "Create a password (min 8 characters)" : "Password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
