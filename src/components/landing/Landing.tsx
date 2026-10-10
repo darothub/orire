@@ -10,7 +10,7 @@ import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { trustStats } from "@/components/landing/trust";
 import { beforeAfterLines } from "@/components/landing/beforeAfter";
-import { testimonials } from "@/components/landing/testimonials";
+import { promises } from "@/components/landing/promises";
 import { employerLogos } from "@/components/landing/logos";
 import { HeroPreview } from "@/components/landing/HeroPreview";
 import { LiveDemo } from "@/components/landing/LiveDemo";
@@ -275,7 +275,7 @@ export function Landing() {
 
         <LiveDemo />
 
-        <section className="landing-section landing-quotes" aria-label="What people say">
+        <section className="landing-section landing-quotes" aria-label="What to expect">
           <motion.div
             className="landing-about-head"
             initial={{ opacity: 0, y: 16 }}
@@ -283,28 +283,22 @@ export function Landing() {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.5, ease: EASE }}
           >
-            <span className="landing-eyebrow">Shared good news</span>
-            <h2 className="landing-h2">People arrive with a CV and leave with interviews.</h2>
+            <span className="landing-eyebrow">What to expect</span>
+            <h2 className="landing-h2">Built to move your real experience forward.</h2>
           </motion.div>
           <div className="landing-quote-grid">
-            {testimonials().map((t, i) => (
-              <motion.figure
-                key={t.name}
+            {promises().map((p, i) => (
+              <motion.div
+                key={p.title}
                 className="landing-quote-card"
                 initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ delay: (i % 2) * 0.08, duration: 0.5, ease: EASE }}
               >
-                <blockquote className="landing-quote-text">“{t.quote}”</blockquote>
-                <figcaption className="landing-quote-by">
-                  <span className="landing-quote-avatar" aria-hidden>{t.initial}</span>
-                  <span className="landing-quote-meta">
-                    <span className="landing-quote-name">{t.name}</span>
-                    <span className="landing-quote-role">{t.role}</span>
-                  </span>
-                </figcaption>
-              </motion.figure>
+                <span className="landing-promise-title">{p.title}</span>
+                <p className="landing-quote-text">{p.body}</p>
+              </motion.div>
             ))}
           </div>
         </section>

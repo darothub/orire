@@ -3629,6 +3629,13 @@ html[data-theme="light"] .landing-scrim {
   line-height: 1.55;
   color: rgba(244, 246, 251, 0.92);
 }
+.landing-promise-title {
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: rgba(244, 246, 251, 0.97);
+}
 .landing-quote-by {
   display: flex;
   align-items: center;
