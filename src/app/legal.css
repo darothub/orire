@@ -1,0 +1,52 @@
+/* Shared styling for the Privacy Policy and Terms of Service pages. */
+.legal {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 72px 20px 96px;
+  color: var(--text);
+}
+.legal-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+.legal-back:hover { color: var(--text); }
+.legal h1 {
+  font-size: clamp(28px, 5vw, 40px);
+  line-height: 1.1;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+.legal-updated { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+.legal-draft {
+  border: 1px solid var(--border, #2a2f3a);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 0 0 36px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.legal h2 {
+  font-size: 20px;
+  margin: 40px 0 12px;
+  letter-spacing: -0.01em;
+}
+.legal p, .legal li { line-height: 1.7; color: var(--text); }
+.legal p { margin: 0 0 14px; }
+.legal ul { margin: 0 0 14px; padding-left: 22px; }
+.legal li { margin: 0 0 8px; }
+.legal a { color: var(--accent-2); }
+.legal strong { color: var(--text); }
+.legal-foot {
+  margin-top: 48px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border, #2a2f3a);
+  color: var(--muted);
+  font-size: 14px;
+}

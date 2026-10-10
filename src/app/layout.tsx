@@ -1,15 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import "./globals.css";
 import "./templates.css";
 import "./resume.css";
 import "./ingest.css";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { VerifyBanner } from "@/components/auth/VerifyBanner";
 import { auth } from "@/lib/auth/auth";
-import { MetaPixel } from "@/components/analytics/MetaPixel";
+import { ConsentedAnalytics } from "@/components/analytics/ConsentedAnalytics";
+import { CookieBanner } from "@/components/analytics/CookieBanner";
 import { PurchaseTracker } from "@/components/analytics/PurchaseTracker";
 import { SignupTracker } from "@/components/analytics/SignupTracker";
 
@@ -21,6 +19,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: TITLE,
   description: DESCRIPTION,
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: "Orire",
@@ -55,15 +54,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           {children}
           <SignupTracker isNewUser={session?.isNewUser === true} userId={session?.user?.id ?? null} />
         </AuthProvider>
-        <Analytics />
-        <SpeedInsights />
-        <Script
-          src="https://static.cloudflareinsights.com/beacon.min.js"
-          strategy="afterInteractive"
-          data-cf-beacon='{"token":"7cc9c5b7f7ea4b2fba6d772b8fb06394"}'
-        />
-        <MetaPixel />
+        <ConsentedAnalytics />
         <PurchaseTracker />
+        <CookieBanner />
       </body>
     </html>
   );

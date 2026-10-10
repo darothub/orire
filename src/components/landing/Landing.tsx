@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -27,7 +28,7 @@ const FEATURES: Feature[] = [
   {
     icon: "⟳",
     title: "Re-brand any CV",
-    body: "Upload a PDF or DOCX and Orire restructures it into a clean, out-of-the-world template — your facts, elegantly re-laid.",
+    body: "Upload a PDF or DOCX and Orire restructures it into a clean, out-of-this-world template — your facts, elegantly re-laid.",
   },
   {
     icon: "✦",
@@ -51,7 +52,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: "❖",
-    title: "20 standout templates",
+    title: "25 standout templates",
     body: "Beautifully animated, ATS-ready layouts — live preview on the right while you edit on the left.",
   },
 ];
@@ -120,7 +121,7 @@ export function Landing() {
               </div>
               <ul className="landing-usps" aria-label="What Orire does">
                 <li><span aria-hidden>✎</span> Upload PDF &amp; DOCX</li>
-                <li><span aria-hidden>❖</span> 20 standout templates</li>
+                <li><span aria-hidden>❖</span> 25 standout templates</li>
                 <li><span aria-hidden>⚖</span> Deterministic rating</li>
               </ul>
             </motion.div>
@@ -401,6 +402,11 @@ export function Landing() {
         <span className="landing-foot-mark">Orire</span>
         <span className="landing-foot-copy">
           © {new Date().getFullYear()} Orire · CV studio
+        </span>
+        <span className="landing-foot-links">
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <CookiePreferencesLink />
         </span>
       </footer>
     </div>
