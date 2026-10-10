@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
-import { COMPANY } from "@/lib/legal/company";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -405,7 +404,7 @@ export function Landing() {
           <Link href="/guides">Guides</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
-          <a href={`mailto:${COMPANY.supportEmail}`}>Support</a>
+          <Link href="/support">Support</Link>
           <CookiePreferencesLink />
         </span>
       </footer>
