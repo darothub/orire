@@ -7,6 +7,7 @@ import { useHistoryStore } from "@/lib/store/historyStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useSyncStore } from "@/lib/store/syncStore";
 import { loadWorkingCV, saveWorkingCV } from "@/app/actions/cv";
+import { isSampleCV } from "@/lib/cv/sample";
 import { readEntitlement } from "@/app/actions/refine";
 
 /**
@@ -41,7 +42,12 @@ export function CloudSync() {
       const store = useCVStore.getState();
       if (remote) {
         store.hydrateFromCloud({ cv: remote.data, template: remote.template, baseline: remote.baseline });
-      } else {
+      } else if (!isSampleCV(store.cv)) {
+        // Seed the cloud only with a CV the user has actually made theirs. Never
+        // persist the untouched demo persona (Ada Okonkwo, @example.com) as a
+        // real signed-in document — the placeholder stays a local preview, and
+        // the user's first real edit or upload creates their cloud doc via
+        // autosave below.
         await saveWorkingCV({ data: store.cv, template: store.activeTemplate, baseline: store.baseline });
         if (cancelled) return;
       }
