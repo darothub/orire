@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "smoke": "sh scripts/smoke.sh",
     "postinstall": "prisma generate",
     "db:up": "sh scripts/db-up.sh",
     "mail:dev": "sh scripts/mail-up.sh",
