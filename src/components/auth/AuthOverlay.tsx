@@ -430,7 +430,7 @@ export function AuthOverlay() {
           <ul className="auth-usps" aria-label="What Orire does">
             <li><span aria-hidden>✎</span> Rebrand any CV into a clean, ATS-ready layout</li>
             <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
-            <li><span aria-hidden>❖</span> 20 standout templates, live preview as you edit</li>
+            <li><span aria-hidden>❖</span> 25 standout templates, live preview as you edit</li>
           </ul>
           </div>
         </motion.div>

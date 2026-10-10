@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -9,7 +11,7 @@ import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { trustStats } from "@/components/landing/trust";
 import { beforeAfterLines } from "@/components/landing/beforeAfter";
-import { testimonials } from "@/components/landing/testimonials";
+import { promises } from "@/components/landing/promises";
 import { employerLogos } from "@/components/landing/logos";
 import { HeroPreview } from "@/components/landing/HeroPreview";
 import { LiveDemo } from "@/components/landing/LiveDemo";
@@ -27,7 +29,7 @@ const FEATURES: Feature[] = [
   {
     icon: "⟳",
     title: "Re-brand any CV",
-    body: "Upload a PDF or DOCX and Orire restructures it into a clean, out-of-the-world template — your facts, elegantly re-laid.",
+    body: "Upload a PDF or DOCX and Orire restructures it into a clean, out-of-this-world template — your facts, elegantly re-laid.",
   },
   {
     icon: "✦",
@@ -51,7 +53,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: "❖",
-    title: "20 standout templates",
+    title: "25 standout templates",
     body: "Beautifully animated, ATS-ready layouts — live preview on the right while you edit on the left.",
   },
 ];
@@ -120,7 +122,7 @@ export function Landing() {
               </div>
               <ul className="landing-usps" aria-label="What Orire does">
                 <li><span aria-hidden>✎</span> Upload PDF &amp; DOCX</li>
-                <li><span aria-hidden>❖</span> 20 standout templates</li>
+                <li><span aria-hidden>❖</span> 25 standout templates</li>
                 <li><span aria-hidden>⚖</span> Deterministic rating</li>
               </ul>
             </motion.div>
@@ -274,7 +276,7 @@ export function Landing() {
 
         <LiveDemo />
 
-        <section className="landing-section landing-quotes" aria-label="What people say">
+        <section className="landing-section landing-quotes" aria-label="What to expect">
           <motion.div
             className="landing-about-head"
             initial={{ opacity: 0, y: 16 }}
@@ -282,28 +284,22 @@ export function Landing() {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.5, ease: EASE }}
           >
-            <span className="landing-eyebrow">Shared good news</span>
-            <h2 className="landing-h2">People arrive with a CV and leave with interviews.</h2>
+            <span className="landing-eyebrow">What to expect</span>
+            <h2 className="landing-h2">Built to move your real experience forward.</h2>
           </motion.div>
           <div className="landing-quote-grid">
-            {testimonials().map((t, i) => (
-              <motion.figure
-                key={t.name}
+            {promises().map((p, i) => (
+              <motion.div
+                key={p.title}
                 className="landing-quote-card"
                 initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ delay: (i % 2) * 0.08, duration: 0.5, ease: EASE }}
               >
-                <blockquote className="landing-quote-text">“{t.quote}”</blockquote>
-                <figcaption className="landing-quote-by">
-                  <span className="landing-quote-avatar" aria-hidden>{t.initial}</span>
-                  <span className="landing-quote-meta">
-                    <span className="landing-quote-name">{t.name}</span>
-                    <span className="landing-quote-role">{t.role}</span>
-                  </span>
-                </figcaption>
-              </motion.figure>
+                <span className="landing-promise-title">{p.title}</span>
+                <p className="landing-quote-text">{p.body}</p>
+              </motion.div>
             ))}
           </div>
         </section>
@@ -401,6 +397,13 @@ export function Landing() {
         <span className="landing-foot-mark">Orire</span>
         <span className="landing-foot-copy">
           © {new Date().getFullYear()} Orire · CV studio
+        </span>
+        <span className="landing-foot-links">
+          <Link href="/templates">Templates</Link>
+          <Link href="/guides">Guides</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <CookiePreferencesLink />
         </span>
       </footer>
     </div>
