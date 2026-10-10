@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import type { PlanId } from "@/lib/plan/plan";
 
 interface UIState {
   /** When true, text on the live preview (right pane) is directly editable (req 10/11). */
@@ -14,8 +15,12 @@ interface UIState {
   /** Full-screen login / sign-up overlay. `authMode` seeds which tab opens. */
   authOpen: boolean;
   authMode: "signin" | "signup";
-  openAuth: (mode?: "signin" | "signup") => void;
+  /** Plan the visitor chose on the pricing cards, carried through sign-up so the
+   *  app can land them on checkout for that plan. null = no specific intent. */
+  intendedPlan: PlanId | null;
+  openAuth: (mode?: "signin" | "signup", plan?: PlanId | null) => void;
   closeAuth: () => void;
+  clearIntendedPlan: () => void;
   /** User chose "Explore without an account" (mirrors the persisted localStorage
    *  flag). While false and not signed in, the main workspace stays gated behind
    *  the login page so the landing never flashes first. */
@@ -32,8 +37,10 @@ export const useUIStore = create<UIState>((set) => ({
   setMobilePane: (v) => set({ mobilePane: v }),
   authOpen: false,
   authMode: "signin",
-  openAuth: (mode = "signin") => set({ authOpen: true, authMode: mode }),
+  intendedPlan: null,
+  openAuth: (mode = "signin", plan = null) => set({ authOpen: true, authMode: mode, intendedPlan: plan }),
   closeAuth: () => set({ authOpen: false }),
+  clearIntendedPlan: () => set({ intendedPlan: null }),
   explored: false,
   setExplored: (v) => set({ explored: v }),
 }));

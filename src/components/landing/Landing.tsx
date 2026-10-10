@@ -165,7 +165,8 @@ export function Landing() {
             <h2 className="landing-h2">Watch a flat duty become a hireable win.</h2>
             <p className="landing-about-lead">
               Orire never invents experience — it re-frames what you already did
-              into outcome-led lines a recruiter can&apos;t skim past.
+              into outcome-led lines a recruiter can&apos;t skim past. The
+              before/after examples are illustrative; you provide the real figures.
             </p>
           </motion.div>
           <ul className="landing-ba-list">
@@ -343,7 +344,7 @@ export function Landing() {
                 </ul>
                 <button
                   className={p.highlighted ? "landing-cta" : "landing-ghost"}
-                  onClick={() => openAuth("signup")}
+                  onClick={() => openAuth("signup", p.id)}
                 >
                   {p.cta}
                 </button>
