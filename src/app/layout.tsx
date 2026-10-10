@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import "./templates.css";
 import "./resume.css";
@@ -56,6 +57,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </AuthProvider>
         <Analytics />
         <SpeedInsights />
+        <Script
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          strategy="afterInteractive"
+          data-cf-beacon='{"token":"7cc9c5b7f7ea4b2fba6d772b8fb06394"}'
+        />
         <MetaPixel />
         <PurchaseTracker />
       </body>
