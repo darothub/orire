@@ -10,6 +10,7 @@ import { ConsentedAnalytics } from "@/components/analytics/ConsentedAnalytics";
 import { CookieBanner } from "@/components/analytics/CookieBanner";
 import { PurchaseTracker } from "@/components/analytics/PurchaseTracker";
 import { SignupTracker } from "@/components/analytics/SignupTracker";
+import { buildStructuredData } from "@/lib/seo/structuredData";
 
 const SITE_URL = process.env.APP_URL ?? "https://orire.app";
 const TITLE = "Orire — CV studio";
@@ -47,6 +48,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className="h-full antialiased" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildStructuredData(SITE_URL)) }}
+        />
       </head>
       <body className="min-h-full">
         <AuthProvider session={session}>
