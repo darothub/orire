@@ -241,3 +241,38 @@ export async function openBillingPortal(): Promise<RedirectResult> {
     return { error: err instanceof Error ? err.message : "Could not open the billing portal." };
   }
 }
+
+export interface VerifiedPurchase {
+  ok: boolean;
+  plan?: PlanId;
+  /** Amount charged in major currency units (e.g. dollars), when known. */
+  amountTotal?: number;
+  currency?: string;
+}
+
+/**
+ * Server-side confirmation that a Checkout session was actually paid and
+ * belongs to the signed-in user. Used by the client PurchaseTracker before it
+ * fires a conversion event, so the success-URL params alone can't be forged
+ * into a fabricated "Purchase". Fails closed (ok:false) on any doubt.
+ */
+export async function verifyCheckoutSession(sid: string): Promise<VerifiedPurchase> {
+  if (!isStripeConfigured() || !sid || typeof sid !== "string") return { ok: false };
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return { ok: false };
+  try {
+    const cs = await getStripe().checkout.sessions.retrieve(sid);
+    const owner =
+      (cs.metadata?.userId as string | undefined) ??
+      (typeof cs.client_reference_id === "string" ? cs.client_reference_id : null);
+    const paid = cs.payment_status === "paid" || cs.status === "complete";
+    if (!paid || owner !== userId) return { ok: false };
+    const plan = cs.metadata?.plan as PlanId | undefined;
+    const amountTotal = typeof cs.amount_total === "number" ? cs.amount_total / 100 : undefined;
+    const currency = cs.currency ?? undefined;
+    return { ok: true, plan, amountTotal, currency };
+  } catch {
+    return { ok: false };
+  }
+}
