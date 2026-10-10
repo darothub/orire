@@ -76,7 +76,7 @@ export function Landing() {
         <div className="landing-brand">
           <span className="landing-brand-mark"><BrandMark size={28} /></span>
           <span className="landing-brand-name">Orire</span>
-          <span className="landing-brand-tag">CV studio</span>
+          <span className="landing-brand-tag">AI CV builder</span>
         </div>
         <div className="landing-nav-actions">
           <nav className="landing-nav-links" aria-label="Sections">
@@ -396,7 +396,7 @@ export function Landing() {
       <footer className="landing-foot">
         <span className="landing-foot-mark">Orire</span>
         <span className="landing-foot-copy">
-          © {new Date().getFullYear()} Orire · CV studio
+          © {new Date().getFullYear()} Orire · AI CV builder
         </span>
         <span className="landing-foot-links">
           <Link href="/templates">Templates</Link>

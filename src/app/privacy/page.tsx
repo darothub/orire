@@ -25,7 +25,7 @@ export default function PrivacyPage() {
       <h2>1. Who we are</h2>
       <p>
         Orire (&ldquo;Orire&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;,
-        &ldquo;our&rdquo;) is a CV studio operated by {COMPANY.legalName}, a
+        &ldquo;our&rdquo;) is an AI CV builder operated by {COMPANY.legalName}, a
         company registered in {COMPANY.jurisdiction} under number{" "}
         {COMPANY.registrationNumber}, with registered office at {COMPANY.address}.
         We are the <strong>data controller</strong> for the personal data

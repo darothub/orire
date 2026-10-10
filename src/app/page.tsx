@@ -284,7 +284,7 @@ export default function Home() {
         <div className="brand">
           <span className="brand-dot"><BrandMark size={26} /></span>
           <span className="brand-name">Orire</span>
-          <span className="brand-tag">CV studio</span>
+          <span className="brand-tag">AI CV builder</span>
         </div>
         <div className="app-actions">
           <button
