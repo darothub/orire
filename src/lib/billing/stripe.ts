@@ -50,3 +50,43 @@ export function planForPriceId(priceId: string | null | undefined): PlanId | nul
   }
   return null;
 }
+
+export interface CancelResult {
+  ok: boolean;
+  attempts: number;
+  error?: string;
+}
+
+/**
+ * Cancel a Stripe subscription with bounded retries so a transient failure
+ * (network blip, brief Stripe outage) doesn't leave a leaving customer billed.
+ * The canceller is injectable for tests. On persistent failure the caller is
+ * responsible for retaining the billing identifiers (see deleteAccount), since
+ * the subscription is still live.
+ */
+export async function cancelSubscriptionWithRetry(
+  subscriptionId: string,
+  opts: {
+    attempts?: number;
+    delaysMs?: number[];
+    cancelFn?: (id: string) => Promise<unknown>;
+  } = {},
+): Promise<CancelResult> {
+  const attempts = Math.max(1, opts.attempts ?? 3);
+  const delays = opts.delaysMs ?? [300, 800];
+  const cancel = opts.cancelFn ?? ((id: string) => getStripe().subscriptions.cancel(id));
+  let lastError = "";
+  for (let i = 0; i < attempts; i++) {
+    try {
+      await cancel(subscriptionId);
+      return { ok: true, attempts: i + 1 };
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : String(e);
+      if (i < attempts - 1) {
+        const wait = delays[i] ?? delays[delays.length - 1] ?? 0;
+        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      }
+    }
+  }
+  return { ok: false, attempts, error: lastError };
+}

@@ -13,8 +13,9 @@
 
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
-import { getStripe, isStripeConfigured } from "@/lib/billing/stripe";
+import { cancelSubscriptionWithRetry, isStripeConfigured } from "@/lib/billing/stripe";
 import { getEntitlementRow } from "@/lib/entitlement/entitlement";
+import { logger } from "@/lib/obs/logger";
 
 export interface DeleteAccountResult {
   ok?: true;
@@ -44,16 +45,26 @@ export async function deleteAccount(): Promise<DeleteAccountResult> {
     };
   }
 
-  // Best-effort: cancel any active Stripe subscription so billing stops. We
-  // don't block deletion if Stripe errors — the account must still be removable.
+  // Cancel any active Stripe subscription so billing stops for a leaving
+  // customer. We retry transient failures, but never block deletion — the
+  // account must stay removable. On a persistent failure the subscription is
+  // still live, so we log the billing identifiers at error level (they are
+  // about to be deleted with the user) so the orphaned subscription can be
+  // resolved. (A durable retry queue is a tracked follow-up.)
   if (isStripeConfigured()) {
-    try {
-      const row = await getEntitlementRow(userId);
-      if (row?.stripeSubscriptionId) {
-        await getStripe().subscriptions.cancel(row.stripeSubscriptionId);
+    const row = await getEntitlementRow(userId);
+    if (row?.stripeSubscriptionId) {
+      const res = await cancelSubscriptionWithRetry(row.stripeSubscriptionId);
+      if (!res.ok) {
+        logger.error("billing.cancel_failed", {
+          marker: "orphaned-subscription",
+          userId,
+          stripeSubscriptionId: row.stripeSubscriptionId,
+          stripeCustomerId: row.stripeCustomerId ?? null,
+          attempts: res.attempts,
+          error: res.error,
+        });
       }
-    } catch {
-      // Swallow — a billing hiccup must not trap the user in the account.
     }
   }
 
