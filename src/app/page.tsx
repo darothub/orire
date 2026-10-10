@@ -20,6 +20,7 @@ import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
+import { SyncStatus } from "@/components/auth/SyncStatus";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { Landing } from "@/components/landing/Landing";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -309,6 +310,7 @@ export default function Home() {
           </button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
           <button className="btn-primary" onClick={() => setView("export")}>Export PDF</button>
+          <SyncStatus />
           <ThemeToggle />
           <AccountButton />
         </div>
