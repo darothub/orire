@@ -24,10 +24,11 @@ export default function TermsPage() {
 
       <h2>1. Agreement to these terms</h2>
       <p>
-        These Terms of Service (&ldquo;Terms&rdquo;) govern your use of Orire,
-        operated by {COMPANY.legalName} (&ldquo;Orire&rdquo;, &ldquo;we&rdquo;,
-        &ldquo;us&rdquo;). By creating an account or using the Service, you agree
-        to these Terms. If you do not agree, do not use the Service.
+        These Terms of Service (&ldquo;Terms&rdquo;) govern your use of Orire
+        {COMPANY.legalEntity ? ` operated by ${COMPANY.legalEntity}` : ""}
+        (&ldquo;Orire&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). By creating an
+        account or using the Service, you agree to these Terms. If you do not
+        agree, do not use the Service.
       </p>
 
       <h2>2. Who can use Orire</h2>
@@ -151,7 +152,7 @@ export default function TermsPage() {
       <h2>16. Governing law and disputes</h2>
       <p>
         These Terms are governed by the laws of {COMPANY.jurisdiction}, and the
-        courts of {COMPANY.courts} have jurisdiction, without affecting any
+        courts of {COMPANY.jurisdiction} have jurisdiction, without affecting any
         mandatory consumer protections in your country of residence. EU consumers
         may also use the European Commission&rsquo;s Online Dispute Resolution
         platform at{" "}
@@ -159,7 +160,8 @@ export default function TermsPage() {
       </p>
 
       <p className="legal-foot">
-        {COMPANY.legalName} · {COMPANY.supportEmail} · {COMPANY.address}
+        {COMPANY.legalEntity || "Orire"} · {COMPANY.supportEmail}
+        {COMPANY.address ? ` · ${COMPANY.address}` : ""}
       </p>
     </main>
   );
