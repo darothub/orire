@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { CAPTCHA_COOKIE, captchaEnabled } from "@/lib/auth/turnstile";
+import { CAPTCHA_COOKIE, captchaEnabled, verifyCaptchaProof } from "@/lib/auth/turnstile";
 import { hashPassword, validateCredentials } from "@/lib/auth/password";
 import { createEmailVerificationToken } from "@/lib/auth/verify";
 import { sendMail } from "@/lib/email/mailer";
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   if (captchaEnabled()) {
     const { cookies } = await import("next/headers");
     const jar = await cookies();
-    if (jar.get(CAPTCHA_COOKIE)?.value !== "1") {
+    if (!verifyCaptchaProof(jar.get(CAPTCHA_COOKIE)?.value)) {
       return NextResponse.json(
         { error: "Please complete the security check and try again." },
         { status: 400 },

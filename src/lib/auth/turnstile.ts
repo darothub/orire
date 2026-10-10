@@ -8,6 +8,8 @@
  * sign-in link unless that cookie is present — blocking headless email-bombing.
  */
 
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 /** HttpOnly cookie set by the verify route once a token checks out. */
 export const CAPTCHA_COOKIE = "orire_captcha";
 /** How long a solved captcha stays valid (seconds). */
@@ -46,4 +48,51 @@ export async function verifyTurnstile(token: string, remoteIp?: string): Promise
   if (data.success) return { success: true };
   const codes = (data["error-codes"] ?? []).join(", ") || "unknown error";
   return { success: false, error: `Captcha verification failed (${codes}).` };
+}
+
+function b64url(buf: Buffer): string {
+  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function fromB64url(s: string): Buffer {
+  return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+}
+
+/**
+ * Mint a signed, expiring proof that a Turnstile challenge was solved.
+ *
+ * Replaces the old unsigned "1" cookie: HttpOnly stops browser JS from READING
+ * a cookie, but it does not prove the server ISSUED it — a forged request could
+ * simply send the cookie and bypass the gate. This proof is HMAC-signed with
+ * AUTH_SECRET and carries its own expiry, so only a value this server minted,
+ * within CAPTCHA_TTL, is accepted.
+ */
+export function signCaptchaProof(): string {
+  const s = process.env.AUTH_SECRET;
+  if (!s) throw new Error("AUTH_SECRET is not set; cannot sign a captcha proof.");
+  const exp = Date.now() + CAPTCHA_TTL * 1000;
+  const body = b64url(Buffer.from(String(exp), "utf8"));
+  const mac = b64url(createHmac("sha256", s).update(`captcha.${body}`).digest());
+  return `${body}.${mac}`;
+}
+
+/** Verify a captcha-proof cookie: authentic signature + not expired. Fails closed. */
+export function verifyCaptchaProof(value: string | undefined | null): boolean {
+  const s = process.env.AUTH_SECRET;
+  if (!s || !value || typeof value !== "string" || !value.includes(".")) return false;
+  const [body, mac] = value.split(".", 2);
+  let expected: Buffer;
+  try {
+    expected = createHmac("sha256", s).update(`captcha.${body}`).digest();
+  } catch {
+    return false;
+  }
+  const got = fromB64url(mac);
+  if (got.length !== expected.length || !timingSafeEqual(got, expected)) return false;
+  let exp: number;
+  try {
+    exp = Number(fromB64url(body).toString("utf8"));
+  } catch {
+    return false;
+  }
+  return Number.isFinite(exp) && Date.now() <= exp;
 }
