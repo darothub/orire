@@ -20,13 +20,13 @@ const PEOPLE: Omit<Testimonial, "initial">[] = [
   {
     quote:
       "I uploaded a messy five-page PDF and had an elegant, one-page CV in minutes. Two interviews that same week.",
-    name: "Amara N.",
+    name: "Clara J.",
     role: "Product Designer",
   },
   {
     quote:
       "Running two assistants side by side and letting the judge pick was the moment it clicked. I could see why one draft was stronger.",
-    name: "Daniel K.",
+    name: "Joao O.",
     role: "Backend Engineer",
   },
   {
