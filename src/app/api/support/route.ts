@@ -53,7 +53,7 @@ export async function POST(req: Request) {
   const html = `<p><strong>From:</strong> ${escapeHtml(who)}</p><p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`;
 
   try {
-    await sendMail({ to: inbox, subject, html, text });
+    await sendMail({ to: inbox, subject, html, text, replyTo: email });
   } catch (e) {
     return NextResponse.json({ error: (e as Error).message }, { status: 502 });
   }

@@ -16,6 +16,8 @@ export interface MailMessage {
   subject: string;
   html: string;
   text: string;
+  /** Optional Reply-To (e.g. a support submitter), so a reply reaches them. */
+  replyTo?: string;
 }
 
 /** The verified from-address. In prod this must be on your Resend domain. */
@@ -47,6 +49,7 @@ export async function sendMail(msg: MailMessage): Promise<void> {
       subject: msg.subject,
       html: msg.html,
       text: msg.text,
+      ...(msg.replyTo ? { replyTo: msg.replyTo } : {}),
     });
     if (error) {
       throw new Error(`Email send failed (Resend): ${error.message}`);
@@ -75,6 +78,7 @@ export async function sendMail(msg: MailMessage): Promise<void> {
       subject: msg.subject,
       html: msg.html,
       text: msg.text,
+      ...(msg.replyTo ? { replyTo: msg.replyTo } : {}),
     });
   } catch (e) {
     throw new Error(
