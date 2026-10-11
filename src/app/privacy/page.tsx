@@ -16,12 +16,6 @@ export default function PrivacyPage() {
       <h1>Privacy Policy</h1>
       <p className="legal-updated">Last updated: {COMPANY.lastUpdated}</p>
 
-      <div className="legal-draft">
-        <strong>Draft — not yet legal advice.</strong> This policy is pending
-        review. Some entity and contact details are placeholders and must be
-        completed before launch.
-      </div>
-
       <h2>1. Who we are</h2>
       <p>
         Orire (&ldquo;Orire&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;,

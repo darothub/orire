@@ -16,12 +16,6 @@ export default function TermsPage() {
       <h1>Terms of Service</h1>
       <p className="legal-updated">Last updated: {COMPANY.lastUpdated}</p>
 
-      <div className="legal-draft">
-        <strong>Draft — not yet legal advice.</strong> These terms are pending
-        review. Some entity and contact details are placeholders and must be
-        completed before launch.
-      </div>
-
       <h2>1. Agreement to these terms</h2>
       <p>
         These Terms of Service (&ldquo;Terms&rdquo;) govern your use of Orire
