@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CAPTCHA_COOKIE, CAPTCHA_TTL, captchaEnabled, verifyTurnstile } from "@/lib/auth/turnstile";
+import { CAPTCHA_COOKIE, CAPTCHA_TTL, captchaEnabled, signCaptchaProof, verifyTurnstile } from "@/lib/auth/turnstile";
 
 /**
  * Verifies a Cloudflare Turnstile token. On success, sets a short-lived
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(CAPTCHA_COOKIE, "1", {
+  res.cookies.set(CAPTCHA_COOKIE, signCaptchaProof(), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

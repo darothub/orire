@@ -2,7 +2,7 @@ import NextAuth, { type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
-import { CAPTCHA_COOKIE, captchaEnabled } from "@/lib/auth/turnstile";
+import { CAPTCHA_COOKIE, captchaEnabled, verifyCaptchaProof } from "@/lib/auth/turnstile";
 import { verifyPassword } from "@/lib/auth/password";
 // GitHub OAuth is disabled for now. Re-enable by restoring this import, the
 // provider block below, and the GitHub button in AuthOverlay.
@@ -43,7 +43,7 @@ function buildProviders(): Provider[] {
         // no sign-in — this blocks headless credential-stuffing.
         if (captchaEnabled()) {
           const jar = await cookies();
-          if (jar.get(CAPTCHA_COOKIE)?.value !== "1") {
+          if (!verifyCaptchaProof(jar.get(CAPTCHA_COOKIE)?.value)) {
             throw new Error("Captcha verification required before signing in.");
           }
         }
@@ -78,7 +78,7 @@ export const authConfig: NextAuthConfig = {
     async signIn({ account }) {
       if (account && account.provider !== "credentials" && captchaEnabled()) {
         const jar = await cookies();
-        if (jar.get(CAPTCHA_COOKIE)?.value !== "1") return false;
+        if (!verifyCaptchaProof(jar.get(CAPTCHA_COOKIE)?.value)) return false;
       }
       return true;
     },

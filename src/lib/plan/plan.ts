@@ -45,7 +45,7 @@ export const PLANS: Record<PlanId, Plan> = {
     allowCompare: false,
     monthlyRefines: 3,
     includedTiers: ["budget"],
-    perks: ["5 templates", "3 JD refines / mo", "Single assistant", "Watermarked export"],
+    perks: ["All 25 templates", "3 AI refines to try it", "Single assistant", "Clean PDF export"],
   },
   pro: {
     id: "pro",
@@ -67,7 +67,7 @@ export const PLANS: Record<PlanId, Plan> = {
     allowCompare: true,
     monthlyRefines: null,
     includedTiers: ["budget", "mid", "premium"],
-    perks: ["Unlimited refines (fair-use)", "Premium models included", "Parallel compare + judge", "JD simulation", "DOCX + company history"],
+    perks: ["Unlimited refines (fair-use)", "Premium models included", "Parallel compare + judge", "JD simulation", "Company history"],
   },
 };
 
@@ -150,7 +150,9 @@ export function withinMonthlyCap(planId: PlanId, usedThisMonth: number): RunAllo
   const cap = PLANS[planId].monthlyRefines;
   if (cap === null) return { allowed: true };
   if (usedThisMonth >= cap) {
-    return { allowed: false, reason: `You’ve used all ${cap} refines on ${PLANS[planId].label} this month. Upgrade for more.` };
+    const next = nextPlan(planId);
+    const upsell = next ? `Upgrade to ${next.label} for more.` : "Upgrade for more.";
+    return { allowed: false, reason: `You’ve used all ${cap} refines on ${PLANS[planId].label} this month. ${upsell}` };
   }
   return { allowed: true };
 }

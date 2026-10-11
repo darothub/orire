@@ -14,6 +14,7 @@
 "use server";
 
 import { auth } from "@/lib/auth/auth";
+import { devLoginEnabled } from "@/lib/dev/devAccess";
 import type { ProviderId } from "@/lib/ai/types";
 import type { PlanId } from "@/lib/plan/plan";
 import {
@@ -129,6 +130,9 @@ export async function readEntitlement(): Promise<AuthorizeResult | null> {
  * user move between plans locally so the gate can be exercised end-to-end.
  */
 export async function devSetPlan(plan: PlanId): Promise<AuthorizeResult | null> {
+  // Hard no-op in production: this dev-only plan switch must never grant paid
+  // entitlement to a real user. devLoginEnabled() is false when NODE_ENV=production.
+  if (!devLoginEnabled()) return null;
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (!userId) return null;

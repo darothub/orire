@@ -64,7 +64,7 @@ export function RunStep({ onBack }: { onBack: () => void }) {
             <div className="plan-block" role="alert">
               <strong>{planBlock.title}</strong>
               <span>{planBlock.body}</span>
-              <button className="flow-btn ghost sm" onClick={() => setView("connect")}>See plans</button>
+              <button className="flow-btn ghost sm" onClick={() => setView("plans")}>See plans</button>
             </div>
           )}
         </div>

@@ -1,24 +1,40 @@
 /**
- * Single source of truth for the legal entity + contact details rendered on the
- * Privacy Policy and Terms of Service pages.
+ * Single source of truth for the contact details + policy values rendered on
+ * the Privacy Policy, Terms of Service and Support pages.
  *
- * TODO (before launch): replace every value still wrapped in [BRACKETS] with the
- * real registered details, and have a lawyer review both pages. These are the
- * only places to edit — both /privacy and /terms read from here.
+ * Orire operates under the "Orire" trading name by default — no legal-entity
+ * placeholder is shown. If you later want to disclose the registered company
+ * (recommended once incorporated, for full EU trader-identification), fill
+ * `legalEntity` (and optionally `registrationNumber` / `address`); the legal
+ * pages then show it automatically. The retention periods and minimum age are
+ * sensible defaults — adjust them to your actual policy.
  */
 export const COMPANY = {
-  legalName: "[COMPANY LEGAL NAME], Sociedade Unipessoal, Lda.",
   shortName: "Orire",
-  registrationNumber: "[NIF / COMMERCIAL REGISTRATION NUMBER]",
-  address: "[REGISTERED ADDRESS, PORTUGAL]",
-  privacyEmail: "[privacy@orire.app]",
-  supportEmail: "[support@orire.app]",
+
+  /** Registered-entity disclosure. Blank = operate under the "Orire" name. */
+  legalEntity: "", // e.g. "Orire, Unipessoal, Lda."
+  registrationNumber: "", // NIF / commercial registration (shown only if set)
+  address: "", // registered office (shown only if set)
+
+  /** Working contact addresses on the orire.app domain. */
+  privacyEmail: "privacy@orire.app",
+  supportEmail: "support@orire.app",
+
   jurisdiction: "Portugal",
-  courts: "[Porto / JUDICIAL DISTRICT], Portugal",
-  minimumAge: "[16 / 18]",
-  // Providers that actually process data on Orire's behalf.
+  minimumAge: "16",
+
+  /** Providers that actually process data on Orire's behalf. */
   aiProviders: "OpenAI and Anthropic",
   paymentProvider: "Stripe",
-  // Keep in sync with the "Last updated" line shown to users.
-  lastUpdated: "10 October 2026",
+
+  /** Data-retention periods (sensible defaults — confirm against your policy). */
+  retention: {
+    account: "30 days",
+    billingYears: "10 years",
+    logs: "90 days",
+  },
+
+  /** Keep in sync with the "Last updated" line shown to users. */
+  lastUpdated: "11 October 2026",
 } as const;

@@ -16,18 +16,13 @@ export default function PrivacyPage() {
       <h1>Privacy Policy</h1>
       <p className="legal-updated">Last updated: {COMPANY.lastUpdated}</p>
 
-      <div className="legal-draft">
-        <strong>Draft — not yet legal advice.</strong> This policy is pending
-        review. Some entity and contact details are placeholders and must be
-        completed before launch.
-      </div>
-
       <h2>1. Who we are</h2>
       <p>
         Orire (&ldquo;Orire&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;,
-        &ldquo;our&rdquo;) is a CV studio operated by {COMPANY.legalName}, a
-        company registered in {COMPANY.jurisdiction} under number{" "}
-        {COMPANY.registrationNumber}, with registered office at {COMPANY.address}.
+        &ldquo;our&rdquo;) is an AI CV builder
+        {COMPANY.legalEntity ? ` operated by ${COMPANY.legalEntity}` : ""}
+        {COMPANY.legalEntity && COMPANY.registrationNumber ? `, registered in ${COMPANY.jurisdiction} under number ${COMPANY.registrationNumber}` : ""}
+        {COMPANY.legalEntity && COMPANY.address ? `, with registered office at ${COMPANY.address}` : ""}.
         We are the <strong>data controller</strong> for the personal data
         processed through this website (the &ldquo;Service&rdquo;). For any
         privacy question or to exercise your rights, contact us at{" "}
@@ -93,10 +88,10 @@ export default function PrivacyPage() {
 
       <h2>8. How long we keep your data</h2>
       <ul>
-        <li><strong>Account data:</strong> while your account is active, then deleted within [X days] of account closure.</li>
-        <li><strong>CV content:</strong> kept so you can access your drafts; deleted when you delete it, or within [X days] of account closure.</li>
-        <li><strong>Billing records:</strong> kept for [X years] to meet Portuguese tax and accounting obligations.</li>
-        <li><strong>Logs:</strong> kept for [X days / months].</li>
+        <li><strong>Account data:</strong> while your account is active, then deleted within {COMPANY.retention.account} of account closure.</li>
+        <li><strong>CV content:</strong> kept so you can access your drafts; deleted when you delete it, or within {COMPANY.retention.account} of account closure.</li>
+        <li><strong>Billing records:</strong> kept for {COMPANY.retention.billingYears} to meet Portuguese tax and accounting obligations.</li>
+        <li><strong>Logs:</strong> kept for {COMPANY.retention.logs}.</li>
       </ul>
 
       <h2>9. Your rights</h2>
@@ -139,7 +134,8 @@ export default function PrivacyPage() {
       </p>
 
       <p className="legal-foot">
-        {COMPANY.legalName} · {COMPANY.privacyEmail} · {COMPANY.address}
+        {COMPANY.legalEntity || "Orire"} · {COMPANY.privacyEmail}
+        {COMPANY.address ? ` · ${COMPANY.address}` : ""}
       </p>
     </main>
   );

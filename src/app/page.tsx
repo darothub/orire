@@ -20,6 +20,7 @@ import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
+import { SyncStatus } from "@/components/auth/SyncStatus";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { Landing } from "@/components/landing/Landing";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -204,12 +205,23 @@ export default function Home() {
   const togglePreviewEdit = useUIStore((s) => s.togglePreviewEdit);
   const mobilePane = useUIStore((s) => s.mobilePane);
   const setMobilePane = useUIStore((s) => s.setMobilePane);
+  const intendedPlan = useUIStore((s) => s.intendedPlan);
+  const clearIntendedPlan = useUIStore((s) => s.clearIntendedPlan);
 
   // During a 2-provider Refine comparison, widen the workspace pane so the
   // side-by-side columns breathe and de-emphasise the live preview.
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
   const refStep = useRefineStore((s) => s.step);
+
+  // Preserve pricing intent: a visitor who clicked "Choose Pro/Career" on the
+  // landing lands on the Plans view after signing up, so they can complete the
+  // plan they picked. Free (or no) intent just enters the app normally.
+  useEffect(() => {
+    if (!revealApp || !intendedPlan || intendedPlan === "free") return;
+    setView("plans");
+    clearIntendedPlan();
+  }, [revealApp, intendedPlan, setView, clearIntendedPlan]);
   const refStarted = useRefineStore((s) => s.started);
   const refCompare = useRefineStore((s) => s.runProviders.length === 2);
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
@@ -284,7 +296,7 @@ export default function Home() {
         <div className="brand">
           <span className="brand-dot"><BrandMark size={26} /></span>
           <span className="brand-name">Orire</span>
-          <span className="brand-tag">CV studio</span>
+          <span className="brand-tag">AI CV builder</span>
         </div>
         <div className="app-actions">
           <button
@@ -309,6 +321,7 @@ export default function Home() {
           </button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
           <button className="btn-primary" onClick={() => setView("export")}>Export PDF</button>
+          <SyncStatus />
           <ThemeToggle />
           <AccountButton />
         </div>

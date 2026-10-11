@@ -10,12 +10,13 @@
 
 import { NextResponse } from "next/server";
 import { RETONE_SYSTEM, buildRetonePrompt, type ToneProfile } from "@/lib/ai/retone";
-import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
+import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import type { CVData } from "@/lib/cv/schema";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
 export const runtime = "nodejs";
@@ -44,10 +45,12 @@ export async function POST(req: Request) {
   const provider = route.provider;
   const model = route.model;
 
-  const limited = aiRateLimit(req, provider);
+  const limited = await aiRateLimit(req, provider);
   if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
+  const gate = await requireVerifiedUser();
+  if (!gate.ok) return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });

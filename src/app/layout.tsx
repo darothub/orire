@@ -13,8 +13,8 @@ import { SignupTracker } from "@/components/analytics/SignupTracker";
 import { buildStructuredData } from "@/lib/seo/structuredData";
 
 const SITE_URL = process.env.APP_URL ?? "https://orire.app";
-const TITLE = "Orire — CV studio";
-const DESCRIPTION = "Rebrand and refine your CV with elegant, animated templates.";
+const TITLE = "Orire — AI CV Builder & Professional Resume Templates";
+const DESCRIPTION = "Upload your CV, re-brand it into a clean template, tailor it to any job, and export an ATS-ready PDF. 25 templates; AI that never invents experience.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

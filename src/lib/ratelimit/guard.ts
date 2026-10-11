@@ -8,7 +8,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { checkLimit, clientKey, type RateLimitResult } from "@/lib/ratelimit/rateLimit";
+import { clientKey, type RateLimitResult } from "@/lib/ratelimit/rateLimit";
+import { checkLimitShared } from "@/lib/ratelimit/shared";
 import { logger } from "@/lib/obs/logger";
 import type { ProviderId } from "@/lib/ai/types";
 
@@ -49,8 +50,8 @@ function headers(r: RateLimitResult): Record<string, string> {
   };
 }
 
-function apply(req: Request, cfg: LimitConfig, userId?: string | null): RateLimitResult {
-  const result = checkLimit(clientKey(cfg.scope, req.headers, userId), cfg.limit, cfg.windowMs);
+async function apply(req: Request, cfg: LimitConfig, userId?: string | null): Promise<RateLimitResult> {
+  const result = await checkLimitShared(clientKey(cfg.scope, req.headers, userId), cfg.limit, cfg.windowMs);
   if (!result.ok) logger.warn("ratelimit.block", { scope: cfg.scope, limit: cfg.limit });
   return result;
 }
@@ -60,8 +61,8 @@ function apply(req: Request, cfg: LimitConfig, userId?: string | null): RateLimi
  * `fail()` body so the client surfaces it verbatim) when the caller is over the
  * limit, or `null` when the request may proceed.
  */
-export function aiRateLimit(req: Request, provider: ProviderId, userId?: string | null): NextResponse | null {
-  const result = apply(req, aiLimitConfig(), userId);
+export async function aiRateLimit(req: Request, provider: ProviderId, userId?: string | null): Promise<NextResponse | null> {
+  const result = await apply(req, aiLimitConfig(), userId);
   if (result.ok) return null;
   const secs = Math.ceil(result.resetMs / 1000);
   const message = `You’re sending requests too quickly. Please wait ${secs}s and try again.`;
@@ -75,8 +76,8 @@ export function aiRateLimit(req: Request, provider: ProviderId, userId?: string 
  * Guard an auth email route. Returns a 429 `NextResponse` with an `{ error }`
  * body (matching signup/forgot) when over the limit, else `null`.
  */
-export function authRateLimit(req: Request, scope: string): NextResponse | null {
-  const result = apply(req, authLimitConfig(scope), null);
+export async function authRateLimit(req: Request, scope: string): Promise<NextResponse | null> {
+  const result = await apply(req, authLimitConfig(scope), null);
   if (result.ok) return null;
   const secs = Math.ceil(result.resetMs / 1000);
   return NextResponse.json(

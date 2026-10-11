@@ -39,12 +39,12 @@ const FEATURES: Feature[] = [
   {
     icon: "⟂",
     title: "Compare, then judge",
-    body: "Run two assistants in parallel, see them side by side, and let an LLM-as-judge pick the strongest result with its reasoning shown.",
+    body: "Run two assistants in parallel, see them side by side, and see why one draft is stronger — the reasoning is shown.",
   },
   {
     icon: "⚖",
-    title: "Deterministic rating",
-    body: "A fixed rubric scores every draft with no model call, so the same CV always earns the same score — measure real progress.",
+    title: "A clear CV score",
+    body: "Every draft gets a clear score from a fixed rubric, so the same CV always scores the same — watch it climb as you tighten each line.",
   },
   {
     icon: "◎",
@@ -76,7 +76,7 @@ export function Landing() {
         <div className="landing-brand">
           <span className="landing-brand-mark"><BrandMark size={28} /></span>
           <span className="landing-brand-name">Orire</span>
-          <span className="landing-brand-tag">CV studio</span>
+          <span className="landing-brand-tag">AI CV builder</span>
         </div>
         <div className="landing-nav-actions">
           <nav className="landing-nav-links" aria-label="Sections">
@@ -123,7 +123,7 @@ export function Landing() {
               <ul className="landing-usps" aria-label="What Orire does">
                 <li><span aria-hidden>✎</span> Upload PDF &amp; DOCX</li>
                 <li><span aria-hidden>❖</span> 25 standout templates</li>
-                <li><span aria-hidden>⚖</span> Deterministic rating</li>
+                <li><span aria-hidden>⚖</span> Clear CV score</li>
               </ul>
             </motion.div>
             <HeroPreview />
@@ -165,7 +165,8 @@ export function Landing() {
             <h2 className="landing-h2">Watch a flat duty become a hireable win.</h2>
             <p className="landing-about-lead">
               Orire never invents experience — it re-frames what you already did
-              into outcome-led lines a recruiter can&apos;t skim past.
+              into outcome-led lines a recruiter can&apos;t skim past. The
+              before/after examples are illustrative; you provide the real figures.
             </p>
           </motion.div>
           <ul className="landing-ba-list">
@@ -343,7 +344,7 @@ export function Landing() {
                 </ul>
                 <button
                   className={p.highlighted ? "landing-cta" : "landing-ghost"}
-                  onClick={() => openAuth("signup")}
+                  onClick={() => openAuth("signup", p.id)}
                 >
                   {p.cta}
                 </button>
@@ -386,7 +387,7 @@ export function Landing() {
               arrive with the CV they already have and leave with one that’s
               structured, elegant and tailored to the role they want. Your story
               stays honest and yours: Orire works from your facts, shows its
-              reasoning, and keeps a deterministic score so you can see exactly
+              reasoning, and keeps a consistent CV score so you can see exactly
               how far a draft has moved. Land the role, then pass the luck on.
             </p>
           </motion.div>
@@ -396,13 +397,14 @@ export function Landing() {
       <footer className="landing-foot">
         <span className="landing-foot-mark">Orire</span>
         <span className="landing-foot-copy">
-          © {new Date().getFullYear()} Orire · CV studio
+          © {new Date().getFullYear()} Orire · AI CV builder
         </span>
         <span className="landing-foot-links">
           <Link href="/templates">Templates</Link>
           <Link href="/guides">Guides</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
+          <Link href="/support">Support</Link>
           <CookiePreferencesLink />
         </span>
       </footer>

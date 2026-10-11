@@ -17,8 +17,7 @@ import { parsedCVFromModelJSON, type ParsedCV } from "@/lib/ingest/parse";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
-import { auth } from "@/lib/auth/auth";
-import { isEmailVerified } from "@/lib/auth/verify";
+import { requireVerifiedUser } from "@/lib/auth/guard";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
@@ -55,19 +54,15 @@ export async function POST(req: Request) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
 
-  const limited = aiRateLimit(req, provider);
+  const limited = await aiRateLimit(req, provider);
   if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
 
-  // Email-verification gate: unverified accounts can't spend AI runs. Mirrors
-  // the refine authorization gate so throwaway accounts can't farm free usage.
-  const session = await auth();
-  if (session?.user?.id && !(await isEmailVerified(session.user.id))) {
-    return NextResponse.json(
-      fail(provider, "Verify your email to run the assistant. Check your inbox for the verification link.", 403),
-      { status: 200 },
-    );
+  // Require a signed-in, verified user before spending managed AI keys.
+  const gate = await requireVerifiedUser();
+  if (!gate.ok) {
+    return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
   }
 
   const apiKey = serverKeyFor(provider);

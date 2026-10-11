@@ -13,7 +13,7 @@ import { authRateLimit } from "@/lib/ratelimit/guard";
  * exist but only use Google sign-in (no password) are told to use Google.
  */
 export async function POST(req: Request) {
-  const limited = authRateLimit(req, "forgot");
+  const limited = await authRateLimit(req, "forgot");
   if (limited) return limited;
 
   let email = "";

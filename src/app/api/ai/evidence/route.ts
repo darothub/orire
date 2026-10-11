@@ -16,6 +16,7 @@ import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge } from "@/lib/ai/server/limits";
 
 export const runtime = "nodejs";
@@ -28,10 +29,12 @@ const json = (error: string, status = 200) => NextResponse.json({ ok: false, err
 export async function POST(req: Request) {
   const { provider, model } = routeTask("evidence");
 
-  const limited = aiRateLimit(req, provider);
+  const limited = await aiRateLimit(req, provider);
   if (limited) return limited;
   const oversize = bodyTooLarge(req);
   if (oversize) return json(oversize, 413);
+  const gate = await requireVerifiedUser();
+  if (!gate.ok) return json(gate.message, gate.status);
 
   let raw: Partial<Record<keyof EvidenceInput, unknown>>;
   try {
