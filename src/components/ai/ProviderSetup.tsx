@@ -5,7 +5,7 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
-import { PLANS, providerCountAllowed, planQualityLabel } from "@/lib/plan/plan";
+import { PLANS, providerCountAllowed, providerAllowedOnPlan, planQualityLabel } from "@/lib/plan/plan";
 
 const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
 
@@ -38,7 +38,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
             <strong>{planMeta.label}</strong> —{" "}
             {planMeta.allowCompare
               ? `compare up to ${planMeta.maxProviders} assistants in parallel.`
-              : "single assistant only. Upgrade to Pro to compare two side by side."}
+              : "ChatGPT only on Free. Upgrade to Pro to add Claude and compare two side by side."}
           </span>
         </div>
       )}
@@ -54,16 +54,20 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
           <div className="conn-switch" role="tablist" aria-label="Default assistant">
             {PROVIDER_IDS.map((p) => {
               const active = p === defaultProvider;
+              const gate = providerAllowedOnPlan(plan, p);
               return (
                 <button
                   key={p}
                   role="tab"
                   aria-selected={active}
                   className={`conn-switch-opt${active ? " on" : ""}`}
-                  onClick={() => setProvider(p)}
+                  onClick={() => gate.allowed && setProvider(p)}
+                  disabled={!gate.allowed}
+                  title={gate.allowed ? undefined : gate.reason}
                 >
                   <span className={`conn-dot ${p}`} />
                   {PROVIDERS[p].label}
+                  {!gate.allowed && <span className="conn-tag pro">Pro</span>}
                 </button>
               );
             })}
@@ -92,17 +96,21 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
               </div>
               {selectable ? (
                 (() => {
-                  const gate = providerCountAllowed(plan, runProviders.length + 1);
-                  const atLimit = !selected && !gate.allowed;
+                  const provGate = providerAllowedOnPlan(plan, p);
+                  const countGate = providerCountAllowed(plan, runProviders.length + 1);
+                  const lockedByPlan = !provGate.allowed && !selected;
+                  const atLimit = !selected && !countGate.allowed;
+                  const disabled = lockedByPlan || atLimit;
+                  const reason = lockedByPlan ? provGate.reason : atLimit ? countGate.reason : undefined;
                   return (
                     <button
                       className={`conn-select${selected ? " on" : ""}`}
-                      onClick={() => !atLimit && toggleRunProvider(p)}
+                      onClick={() => !disabled && toggleRunProvider(p)}
                       aria-pressed={selected}
-                      disabled={atLimit}
-                      title={atLimit ? gate.reason : undefined}
+                      disabled={disabled}
+                      title={reason}
                     >
-                      {selected ? "Selected" : atLimit ? "Locked" : "Select"}
+                      {selected ? "Selected" : lockedByPlan ? "Pro" : atLimit ? "Locked" : "Select"}
                     </button>
                   );
                 })()

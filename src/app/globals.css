@@ -3848,3 +3848,16 @@ html[data-theme="light"] .landing-scrim {
 .sync-saved { color: var(--accent); }
 .sync-error { color: #f5a3c7; }
 @keyframes syncpulse { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+/* "Pro" lock tag on gated assistant controls. */
+.conn-tag.pro {
+  margin-left: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--grad);
+  color: #0b0d12;
+}

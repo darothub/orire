@@ -21,6 +21,7 @@ import {
   PLANS,
   providerCountAllowed,
   withinMonthlyCap,
+  providerAllowedOnPlan,
 } from "@/lib/plan/plan";
 import {
   consumeMonthlyRefine,
@@ -90,6 +91,14 @@ export async function authorizeRefineRun(selections: RunSelection[]): Promise<Au
   const countGate = providerCountAllowed(plan, providers.length);
   if (!countGate.allowed) {
     return blocked("Plan limit", countGate.reason ?? "Not allowed on your plan.");
+  }
+
+  // Provider gate: Free is OpenAI-only; Claude (Anthropic) needs Pro.
+  for (const p of providers) {
+    const provGate = providerAllowedOnPlan(plan, p);
+    if (!provGate.allowed) {
+      return blocked("Upgrade to compare with Claude", provGate.reason ?? "That assistant isn't on your plan.");
+    }
   }
 
   const capGate = withinMonthlyCap(plan, usedThisMonth);

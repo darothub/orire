@@ -145,6 +145,21 @@ export function providerCountAllowed(planId: PlanId, count: number): RunAllowanc
   return { allowed: true };
 }
 
+/**
+ * Which assistants a plan may run. Free is OpenAI (ChatGPT) only — Claude
+ * (Anthropic) is a Pro feature, so a free user is nudged to upgrade to compare
+ * with Claude. Pro and Career can run either assistant.
+ */
+export function providerAllowedOnPlan(planId: PlanId, provider: ProviderId): RunAllowance {
+  if (planId === "free" && provider === "anthropic") {
+    return {
+      allowed: false,
+      reason: "Claude (Anthropic) is a Pro feature. Upgrade to Pro to compare with Claude.",
+    };
+  }
+  return { allowed: true };
+}
+
 /** Whether another refine run is within the monthly cap. */
 export function withinMonthlyCap(planId: PlanId, usedThisMonth: number): RunAllowance {
   const cap = PLANS[planId].monthlyRefines;
