@@ -3,6 +3,7 @@ import {
   modelTier,
   modelAllowedOnPlan,
   providerCountAllowed,
+  providerAllowedOnPlan,
   withinMonthlyCap,
   nextPlan,
 } from "@/lib/plan/plan";
@@ -77,5 +78,22 @@ describe("nextPlan", () => {
     expect(nextPlan("free")?.id).toBe("pro");
     expect(nextPlan("pro")?.id).toBe("career");
     expect(nextPlan("career")).toBeNull();
+  });
+});
+
+describe("providerAllowedOnPlan", () => {
+  it("blocks Anthropic (Claude) on Free with an upgrade reason", () => {
+    const r = providerAllowedOnPlan("free", "anthropic");
+    expect(r.allowed).toBe(false);
+    expect(r.reason).toMatch(/Pro/);
+  });
+  it("allows OpenAI (ChatGPT) on Free", () => {
+    expect(providerAllowedOnPlan("free", "openai").allowed).toBe(true);
+  });
+  it("allows both assistants on Pro and Career", () => {
+    for (const plan of ["pro", "career"] as const) {
+      expect(providerAllowedOnPlan(plan, "openai").allowed).toBe(true);
+      expect(providerAllowedOnPlan(plan, "anthropic").allowed).toBe(true);
+    }
   });
 });
