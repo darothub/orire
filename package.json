@@ -20,6 +20,7 @@
     "db:studio": "prisma studio",
     "db:seed:test": "node --env-file=.env scripts/seed-testdata.mjs",
     "db:seed:test:clean": "node --env-file=.env scripts/seed-testdata.mjs --clean",
+    "plan:set": "node --env-file=.env scripts/set-plan.mjs",
     "dev:login": "open http://localhost:3001/api/dev/login",
     "stripe:verify": "node --env-file=.env scripts/verify-stripe.mjs",
     "stripe:prices": "node --env-file=.env scripts/create-stripe-prices.mjs",
