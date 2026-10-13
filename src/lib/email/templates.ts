@@ -1,7 +1,7 @@
 import { appUrl } from "@/lib/email/mailer";
 
 /** Shared brand colours (kept inline — email clients ignore external CSS). */
-const ACCENT = "#8b7cff";
+const ACCENT = "#17b892";
 const BG = "#0b0d12";
 
 /**

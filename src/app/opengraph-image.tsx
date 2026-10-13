@@ -12,9 +12,9 @@ function Clover({ px }: { px: number }) {
     <svg width={px} height={px} viewBox="13 13 38 40" fill="none">
       <defs>
         <linearGradient id="g" x1="17" y1="50" x2="47" y2="14" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#6ee7d0" />
-          <stop offset="0.55" stopColor="#8b7cff" />
-          <stop offset="1" stopColor="#f5a3c7" />
+          <stop offset="0" stopColor="#17b892" />
+          <stop offset="0.55" stopColor="#3ad9b4" />
+          <stop offset="1" stopColor="#17b892" />
         </linearGradient>
       </defs>
       <g fill="url(#g)">
@@ -42,7 +42,7 @@ export default function OpengraphImage() {
           color: "#f4f5f8",
           backgroundColor: "#0b0d12",
           backgroundImage:
-            "radial-gradient(circle at 12% 18%, rgba(110,231,208,0.22), rgba(11,13,18,0) 45%), radial-gradient(circle at 88% 85%, rgba(245,163,199,0.18), rgba(11,13,18,0) 45%), radial-gradient(circle at 60% 30%, rgba(139,124,255,0.18), rgba(11,13,18,0) 50%)",
+            "radial-gradient(circle at 12% 18%, rgba(23, 184, 146,0.22), rgba(11,13,18,0) 45%), radial-gradient(circle at 88% 85%, rgba(217, 164, 65,0.18), rgba(11,13,18,0) 45%), radial-gradient(circle at 60% 30%, rgba(58, 217, 180,0.18), rgba(11,13,18,0) 50%)",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", width: 640 }}>
@@ -52,7 +52,7 @@ export default function OpengraphImage() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", marginTop: 40, fontSize: 52, fontWeight: 600, lineHeight: 1.15 }}>
             <span>Turn the CV you have into</span>
-            <span style={{ color: "#a99bff" }}>the one the role wants.</span>
+            <span style={{ color: "#3ad9b4" }}>the one the role wants.</span>
           </div>
           <div
             style={{
@@ -64,7 +64,7 @@ export default function OpengraphImage() {
               fontSize: 28,
               fontWeight: 700,
               color: "#0b0d12",
-              backgroundImage: "linear-gradient(90deg, #a99bff, #6ee7d0)",
+              backgroundImage: "linear-gradient(90deg, #3ad9b4, #17b892)",
             }}
           >
             orire.app
@@ -101,7 +101,7 @@ export default function OpengraphImage() {
           >
             <div style={{ width: 200, height: 22, borderRadius: 6, backgroundColor: "#1c1d24" }} />
             <div style={{ width: 150, height: 14, borderRadius: 6, backgroundColor: "#4f46e5", marginTop: 14 }} />
-            <div style={{ width: 70, height: 5, borderRadius: 3, backgroundImage: "linear-gradient(90deg,#6ee7d0,#f5a3c7)", marginTop: 12 }} />
+            <div style={{ width: 70, height: 5, borderRadius: 3, backgroundImage: "linear-gradient(90deg,#17b892,#3ad9b4)", marginTop: 12 }} />
             <div style={{ width: 90, height: 12, borderRadius: 4, backgroundColor: "#4b5263", marginTop: 34 }} />
             <div style={{ width: 240, height: 8, borderRadius: 4, backgroundColor: "#e6e8ee", marginTop: 16 }} />
             <div style={{ width: 220, height: 8, borderRadius: 4, backgroundColor: "#e6e8ee", marginTop: 10 }} />
