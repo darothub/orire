@@ -118,7 +118,7 @@ export function VerifyBanner() {
           disabled={busy}
           style={{
             flexShrink: 0,
-            background: "#8b7cff",
+            background: "#8aa0ff",
             color: "#0b0d12",
             fontWeight: 600,
             fontSize: 13,
