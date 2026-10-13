@@ -17,7 +17,7 @@ import {
 } from "@/app/actions/billing";
 import { subscriptionLine, formatBillingDate } from "@/lib/billing/summary";
 import { canEmbedCheckout } from "@/lib/billing/stripe-client";
-import { SubscribeModal } from "@/components/billing/SubscribeModal";
+import { CheckoutModal } from "@/components/CheckoutModal";
 import { UpdateCardModal } from "@/components/billing/UpdateCardModal";
 import { PLANS, PLAN_ORDER, type PlanId } from "@/lib/plan/plan";
 
@@ -91,12 +91,6 @@ export function PlanPanel() {
 
   const redirect = (url: string) => {
     if (typeof window !== "undefined") window.location.assign(url);
-  };
-
-  const onSubscribed = async () => {
-    setCheckoutPlan(null);
-    setNotice("Subscription active — welcome aboard.");
-    await refresh();
   };
 
   const doCancel = async () => {
@@ -306,16 +300,7 @@ export function PlanPanel() {
       </div>
 
       {checkoutPlan && (
-        <SubscribeModal
-          plan={checkoutPlan}
-          onClose={() => setCheckoutPlan(null)}
-          onDone={() => void onSubscribed()}
-          onAlreadySubscribed={() => {
-            setCheckoutPlan(null);
-            setNotice("You already have an active subscription.");
-            void refresh();
-          }}
-        />
+        <CheckoutModal plan={checkoutPlan} onClose={() => setCheckoutPlan(null)} />
       )}
 
       {cardOpen && (
