@@ -81,6 +81,15 @@ export function AccountButton() {
               >
                 View profile
               </button>
+              <a
+                className="flow-btn ghost sm"
+                href="/support"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+              >
+                Support
+              </a>
               <button
                 className="flow-btn ghost sm"
                 onClick={() => {
