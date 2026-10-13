@@ -2,15 +2,17 @@
 
 /* ---------- Design tokens ---------- */
 :root {
-  --bg: #0b0d12;
-  --bg-2: #10131a;
-  --panel: #12151d;
-  --panel-2: #161a24;
-  --line: #232838;
-  --line-2: #2c3346;
-  --text: #e8ebf2;
-  --muted: #9aa3b5;
-  --faint: #6b7488;
+  /* Graphite — a de-blued, warm-neutral near-black that flatters emerald and
+     lets the pure-white CV page read as the hero. */
+  --bg: #0c0d0d;
+  --bg-2: #101211;
+  --panel: #151716;
+  --panel-2: #1b1e1c;
+  --line: #272b29;
+  --line-2: #333835;
+  --text: #e8ebe8;
+  --muted: #9aa29c;
+  --faint: #6b736d;
 
   --accent: #17b892;
   --accent-2: #3ad9b4;
@@ -34,8 +36,8 @@
   --surface-faint: rgba(255, 255, 255, 0.02);
   --surface-soft: rgba(255, 255, 255, 0.04);
   --surface-hover: rgba(255, 255, 255, 0.08);
-  --rail-grad: linear-gradient(180deg, rgba(18, 21, 29, 0.9), rgba(11, 13, 18, 0.9));
-  --deck-bg: rgba(12, 14, 20, 0.6);
+  --rail-grad: linear-gradient(180deg, rgba(23, 25, 24, 0.9), rgba(12, 13, 13, 0.9));
+  --deck-bg: rgba(13, 15, 14, 0.6);
 
   color-scheme: dark;
 }
@@ -45,15 +47,17 @@
    --paper-line, …) are intentionally left alone so the resume always renders as
    a white page in either theme. */
 html[data-theme="light"] {
-  --bg: #f5f7fb;
-  --bg-2: #eef1f8;
+  /* Warm ivory — a faintly warm off-white so the pure-white CV page pops as
+     the focal paper instead of blending into a cool, clinical grey. */
+  --bg: #faf9f6;
+  --bg-2: #f3f1ec;
   --panel: #ffffff;
-  --panel-2: #f3f5fb;
-  --line: #e4e8f1;
-  --line-2: #d4dae7;
-  --text: #171a22;
-  --muted: #515a6b;
-  --faint: #7a8494;
+  --panel-2: #f6f4ef;
+  --line: #e9e5dd;
+  --line-2: #dcd7cc;
+  --text: #1b1a17;
+  --muted: #5b564e;
+  --faint: #8a847a;
 
   --accent: #0c8f6e;
   --accent-2: #0ea47f;
@@ -65,8 +69,8 @@ html[data-theme="light"] {
   --surface-faint: rgba(23, 26, 34, 0.025);
   --surface-soft: rgba(23, 26, 34, 0.05);
   --surface-hover: rgba(23, 26, 34, 0.08);
-  --rail-grad: linear-gradient(180deg, #ffffff, #eef1f8);
-  --deck-bg: rgba(237, 240, 248, 0.72);
+  --rail-grad: linear-gradient(180deg, #ffffff, #f3f1ec);
+  --deck-bg: rgba(243, 241, 236, 0.72);
 
   color-scheme: light;
 }
