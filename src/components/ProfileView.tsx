@@ -217,10 +217,13 @@ export function ProfileView() {
               <button className="flow-btn primary sm" onClick={() => setView("plans")}>Change plan</button>
               {data.plan.canManage && (
                 <button className="flow-btn ghost sm" onClick={() => setView("plans")}>
-                  Manage billing
+                  Manage or cancel
                 </button>
               )}
             </div>
+            {data.plan.canManage && (
+              <p className="prof-plan-cancelnote">Cancel any time — no lock-in.</p>
+            )}
           </motion.section>
         </>
       )}

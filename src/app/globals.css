@@ -1664,6 +1664,31 @@ body {
   display: flex;
   gap: 8px;
 }
+.billing-actions-col {
+  flex-direction: column;
+  align-items: stretch;
+}
+.billing-fineprint {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.billing-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 120, 108, 0.32);
+  border-radius: 9px;
+  background: rgba(255, 120, 108, 0.06);
+}
+.billing-confirm-q {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text);
+}
 .billing-btn {
   flex: 1;
   padding: 8px 12px;
@@ -2831,6 +2856,7 @@ html[data-theme="light"] .checkout-root {
 .prof-usage-bar { width: 100%; height: 5px; border-radius: 999px; background: var(--surface-soft); overflow: hidden; margin-top: 3px; }
 .prof-usage-fill { display: block; height: 100%; background: var(--grad); border-radius: 999px; transition: width 0.5s ease; }
 .prof-plan-actions { grid-column: 1 / -1; display: flex; gap: 10px; }
+.prof-plan-cancelnote { grid-column: 1 / -1; margin: 6px 0 0; font-size: 0.72rem; color: var(--muted); }
 
 .prof-empty { display: grid; place-items: center; padding: 48px 0; }
 .prof-skeleton {

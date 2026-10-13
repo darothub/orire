@@ -45,6 +45,7 @@ export function PlanPanel() {
   const [notice, setNotice] = useState<string | null>(null);
   const [checkoutPlan, setCheckoutPlan] = useState<PlanId | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const active = PLANS[plan];
   const cap = active.monthlyRefines;
@@ -104,6 +105,7 @@ export function PlanPanel() {
     } else {
       setNotice(r.error ?? "Could not cancel.");
     }
+    setConfirmingCancel(false);
     setBusy(null);
   };
 
@@ -273,21 +275,52 @@ export function PlanPanel() {
               </button>
             </div>
 
-            <div className="billing-actions">
-              {billing.cancelAtPeriodEnd ? (
+            {billing.cancelAtPeriodEnd ? (
+              <div className="billing-actions">
                 <button className="billing-btn" onClick={() => void doResume()} disabled={busy === "resume"}>
                   {busy === "resume" ? "Resuming…" : "Resume subscription"}
                 </button>
-              ) : (
+              </div>
+            ) : confirmingCancel ? (
+              <div className="billing-confirm" role="group" aria-label="Confirm cancellation">
+                <p className="billing-confirm-q">
+                  {(() => {
+                    const end = formatBillingDate(billing.renewsAt);
+                    return end
+                      ? `Cancel your subscription? You’ll keep ${PLANS[plan].label} access until ${end}, then move to Free. No further charges.`
+                      : "Cancel your subscription? You’ll keep access until the end of the current period, then move to Free.";
+                  })()}
+                </p>
+                <div className="billing-actions">
+                  <button
+                    className="billing-btn"
+                    onClick={() => setConfirmingCancel(false)}
+                    disabled={busy === "cancel"}
+                  >
+                    Keep subscription
+                  </button>
+                  <button
+                    className="billing-btn is-danger"
+                    onClick={() => void doCancel()}
+                    disabled={busy === "cancel"}
+                  >
+                    {busy === "cancel" ? "Cancelling…" : "Yes, cancel"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="billing-actions billing-actions-col">
                 <button
                   className="billing-btn is-danger"
-                  onClick={() => void doCancel()}
-                  disabled={busy === "cancel"}
+                  onClick={() => setConfirmingCancel(true)}
                 >
-                  {busy === "cancel" ? "Cancelling…" : "Cancel subscription"}
+                  Cancel subscription
                 </button>
-              )}
-            </div>
+                <span className="billing-fineprint">
+                  Cancel any time — no lock-in. You keep access until the end of the period you’ve paid for.
+                </span>
+              </div>
+            )}
           </div>
         )}
 
