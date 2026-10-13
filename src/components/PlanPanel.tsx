@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useUIStore } from "@/lib/store/uiStore";
+import { useViewStore } from "@/lib/store/viewStore";
 import { analytics } from "@/lib/analytics/events";
 import { devSetPlan, readEntitlement } from "@/app/actions/refine";
 import {
@@ -45,6 +46,28 @@ export function PlanPanel() {
   const [notice, setNotice] = useState<string | null>(null);
   const [checkoutPlan, setCheckoutPlan] = useState<PlanId | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
+
+  // Deep-focus: the profile routes here with a hint of which section to show —
+  // "plans" (the tier cards) or "billing" (card on file / cancel / resume). We
+  // toggle the flash via the DOM node (not React state) so the scroll + brief
+  // highlight stay a pure side-effect.
+  const focus = useViewStore((s) => s.focus);
+  const clearFocus = useViewStore((s) => s.clearFocus);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const billingRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!focus) return;
+    const el = focus === "billing" ? billingRef.current : gridRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    clearFocus();
+    if (focus === "billing") {
+      el.classList.add("is-flash");
+      const t = setTimeout(() => el.classList.remove("is-flash"), 1600);
+      return () => clearTimeout(t);
+    }
+  }, [focus, clearFocus]);
 
   const active = PLANS[plan];
   const cap = active.monthlyRefines;
@@ -213,7 +236,7 @@ export function PlanPanel() {
         </span>
       </div>
 
-      <div className="plan-grid">
+      <div className="plan-grid" ref={gridRef}>
         {PLAN_ORDER.map((id, i) => (
           <PlanCard
             key={id}
@@ -230,7 +253,7 @@ export function PlanPanel() {
 
       {notice && <div className="plan-notice" role="status">{notice}</div>}
 
-      <div className="plan-usage">
+      <div className="plan-usage" ref={billingRef}>
         <div className="plan-usage-row">
           <span className="ed-label">This month</span>
           <span className="plan-usage-count">

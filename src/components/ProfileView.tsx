@@ -214,9 +214,9 @@ export function ProfileView() {
               )}
             </div>
             <div className="prof-plan-actions">
-              <button className="flow-btn primary sm" onClick={() => setView("plans")}>Change plan</button>
+              <button className="flow-btn primary sm" onClick={() => setView("plans", "plans")}>Change plan</button>
               {data.plan.canManage && (
-                <button className="flow-btn ghost sm" onClick={() => setView("plans")}>
+                <button className="flow-btn ghost sm" onClick={() => setView("plans", "billing")}>
                   Manage billing
                 </button>
               )}
