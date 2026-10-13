@@ -116,11 +116,22 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
                 })()
               ) : isDefault ? (
                 <span className="conn-ok">Ready</span>
-              ) : (
-                <button className="conn-setdefault" onClick={() => setProvider(p)} title="Use as default assistant">
-                  Set default
-                </button>
-              )}
+              ) : (() => {
+                // Setting a blocked assistant (e.g. Claude on Free) as the
+                // default is gated too — not just the Refine selector and the
+                // tab switch — so there's no back door to a Pro-only assistant.
+                const gate = providerAllowedOnPlan(plan, p);
+                return (
+                  <button
+                    className="conn-setdefault"
+                    onClick={() => gate.allowed && setProvider(p)}
+                    disabled={!gate.allowed}
+                    title={gate.allowed ? "Use as default assistant" : gate.reason}
+                  >
+                    {gate.allowed ? "Set default" : "Pro"}
+                  </button>
+                );
+              })()}
             </div>
 
             <div className="conn-field">
