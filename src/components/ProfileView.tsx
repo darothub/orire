@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useUIStore } from "@/lib/store/uiStore";
 import { getProfile, type ProfileData } from "@/app/actions/activity";
-import { openBillingPortal } from "@/app/actions/billing";
 import { subscriptionLine, formatBillingDate } from "@/lib/billing/summary";
 
 function initialsOf(label: string): string {
@@ -48,7 +47,6 @@ export function ProfileView() {
   const [data, setData] = useState<ProfileData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [portalBusy, setPortalBusy] = useState(false);
 
   const load = useCallback(async () => {
     const res = await getProfile();
@@ -84,12 +82,6 @@ export function ProfileView() {
     return () => window.removeEventListener("focus", onFocus);
   }, [status, load]);
 
-  async function manageBilling() {
-    setPortalBusy(true);
-    const r = await openBillingPortal();
-    setPortalBusy(false);
-    if (r.url) window.location.href = r.url;
-  }
 
   if (status === "unauthenticated") {
     return (
@@ -224,8 +216,8 @@ export function ProfileView() {
             <div className="prof-plan-actions">
               <button className="flow-btn primary sm" onClick={() => setView("plans")}>Change plan</button>
               {data.plan.canManage && (
-                <button className="flow-btn ghost sm" onClick={() => void manageBilling()} disabled={portalBusy}>
-                  {portalBusy ? "Opening…" : "Manage billing"}
+                <button className="flow-btn ghost sm" onClick={() => setView("plans")}>
+                  Manage billing
                 </button>
               )}
             </div>
