@@ -1,9 +1,9 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="orire-gradient" x1="10" y1="56" x2="54" y2="8" gradientUnits="userSpaceOnUse">
-      <stop stopColor="#6ee7d0" />
-      <stop offset="0.55" stopColor="#8b7cff" />
-      <stop offset="1" stopColor="#f5a3c7" />
+      <stop stopColor="#17b892" />
+      <stop offset="0.55" stopColor="#3ad9b4" />
+      <stop offset="1" stopColor="#17b892" />
     </linearGradient>
   </defs>
   <!-- Background badge -->

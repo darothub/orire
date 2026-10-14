@@ -133,4 +133,4 @@
 }
 .support-form .content-cta { align-self: flex-start; border: none; cursor: pointer; }
 .support-form .content-cta:disabled { opacity: 0.6; cursor: default; }
-.support-error { color: #f5a3c7; font-size: 14px; margin: 0; }
+.support-error { color: #d9a441; font-size: 14px; margin: 0; }
