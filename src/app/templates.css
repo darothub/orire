@@ -39,7 +39,7 @@
   inset: -1px;
   border-radius: 13px;
   border: 2px solid var(--accent-2);
-  box-shadow: 0 0 0 3px rgba(139, 124, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(58, 217, 180, 0.18);
   pointer-events: none;
 }
 .pick-swatch {
