@@ -176,6 +176,43 @@ describe("runProvider", () => {
       __resetResponseCache();
     }
   });
+
+  it("omits temperature/seed for GPT-5 / reasoning models (fixed sampling)", async () => {
+    __resetResponseCache();
+    let body: Record<string, unknown> = {};
+    const { deps } = makeDeps(async (_url, init) => {
+      body = JSON.parse(String(init?.body ?? "{}"));
+      return new Response(JSON.stringify({ choices: [{ message: { content: "{}" } }] }), { status: 200 });
+    });
+    await runProvider({
+      provider: "openai",
+      ...base,
+      model: "gpt-5-mini",
+      opts: { temperature: 0, seed: 1217 },
+      deps,
+    });
+    expect(body.model).toBe("gpt-5-mini");
+    expect("temperature" in body).toBe(false);
+    expect("seed" in body).toBe(false);
+  });
+
+  it("keeps temperature/seed for older chat models", async () => {
+    __resetResponseCache();
+    let body: Record<string, unknown> = {};
+    const { deps } = makeDeps(async (_url, init) => {
+      body = JSON.parse(String(init?.body ?? "{}"));
+      return new Response(JSON.stringify({ choices: [{ message: { content: "{}" } }] }), { status: 200 });
+    });
+    await runProvider({
+      provider: "openai",
+      ...base,
+      model: "gpt-4o",
+      opts: { temperature: 0, seed: 1217 },
+      deps,
+    });
+    expect(body.temperature).toBe(0);
+    expect(body.seed).toBe(1217);
+  });
 });
 
 // Keep the mocked timers tidy if any leaked.

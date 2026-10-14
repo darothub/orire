@@ -193,6 +193,16 @@ export async function resilientJsonFetch(
 
 // ── Providers ──────────────────────────────────────────────────────────────
 
+/**
+ * GPT-5 and the o-series reasoning models only run at their default sampling
+ * settings — they reject a custom `temperature` (and `seed`/`top_p`) with
+ * "Only the default (1) value is supported." For those models we omit the
+ * sampling params entirely; older chat models (gpt-4o, gpt-4.1…) keep them.
+ */
+function openAIFixedSampling(model: string): boolean {
+  return /^(gpt-5|o[1-9])/i.test(model);
+}
+
 async function callOpenAI(
   key: string,
   model: string,
@@ -201,6 +211,7 @@ async function callOpenAI(
   opts: CallOpts,
   deps?: ResilienceDeps,
 ): Promise<ProviderCall> {
+  const fixedSampling = openAIFixedSampling(model);
   const outcome = await resilientJsonFetch(
     "https://api.openai.com/v1/chat/completions",
     {
@@ -208,8 +219,14 @@ async function callOpenAI(
       headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
       body: JSON.stringify({
         model,
-        temperature: opts.temperature ?? 0.2,
-        ...(opts.seed != null ? { seed: opts.seed } : {}),
+        // Reasoning/GPT-5 models only accept the default temperature; sending
+        // one errors the whole call, so omit sampling params for them.
+        ...(fixedSampling
+          ? {}
+          : {
+              temperature: opts.temperature ?? 0.2,
+              ...(opts.seed != null ? { seed: opts.seed } : {}),
+            }),
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: system },
