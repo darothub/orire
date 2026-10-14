@@ -325,7 +325,7 @@ function BrandStep() {
             )}
           </div>
           <span className="rb-score-hint">
-            vs your current CV · open <strong>Rate</strong> after applying for the full six-metric breakdown.
+            vs your current CV · open <strong>Grade</strong> after applying for the full six-metric breakdown.
           </span>
         </div>
 

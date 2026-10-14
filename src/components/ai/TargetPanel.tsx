@@ -105,7 +105,7 @@ export function TargetView() {
       >
         <div className="ws-head">
           <div>
-            <h2>Target</h2>
+            <h2>Simulate</h2>
             <p>
               {recompose
                 ? "Rebuild the ideal CV from a new job description. Your current target stays until the new one is ready."
@@ -116,7 +116,7 @@ export function TargetView() {
 
         <div className="ai-runbar">
           <span className="ai-pill">{meta.label} · {planQualityLabel(plan)}</span>
-          <button className="ai-link" onClick={() => setView("connect")}>Connect AI</button>
+          <button className="ai-link" onClick={() => setView("connect")}>AI Settings</button>
         </div>
 
         {genPhase === "error" && genErr ? (
@@ -249,7 +249,7 @@ export function TargetView() {
     >
       <div className="ws-head">
         <div>
-          <h2>Target</h2>
+          <h2>Simulate</h2>
           <p>
             Your live CV beside the ideal for <strong>{label || "this role"}</strong>
             {dateLabel ? ` · locked ${dateLabel}` : ""}. The match updates as you edit.

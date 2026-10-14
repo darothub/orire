@@ -46,7 +46,7 @@ const STEPS: Step[] = [
   },
   {
     sel: '[data-tour="rail-target"]',
-    title: "Target a role",
+    title: "Simulate a role",
     body: "Simulate what a 100%-match CV for a job would look like, then edit yours toward it.",
     place: "right",
   },

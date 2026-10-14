@@ -22,12 +22,12 @@ interface Command {
 
 const VIEW_META: { view: WorkspaceView; label: string; hint: string; icon: string }[] = [
   { view: "edit", label: "Edit", hint: "Two-pane live editor", icon: "✎" },
-  { view: "refine", label: "Refine", hint: "Connect AI · import · tailor to a job", icon: "✦" },
-  { view: "target", label: "Target", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
+  { view: "refine", label: "Refine", hint: "Connect an assistant · import · tailor to a job", icon: "✦" },
+  { view: "target", label: "Simulate", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
   { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
-  { view: "rate", label: "Rate", hint: "Score initial → final", icon: "★" },
-  { view: "connect", label: "Connect AI", hint: "Providers", icon: "⚙" },
+  { view: "rate", label: "Grade", hint: "Score initial → final", icon: "★" },
+  { view: "connect", label: "AI Settings", hint: "Providers", icon: "⚙" },
 ];
 
 /** ⌘K / Ctrl-K command palette: jump to any workspace, switch template, or fire

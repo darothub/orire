@@ -77,7 +77,7 @@ function ConnectView() {
     >
       <div className="ws-head">
         <div>
-          <h2>Connect AI</h2>
+          <h2>AI Settings</h2>
           <p>
             Assistants are provided by Orire. Pick your default assistant and
             the models to run; your plan sets which models are available.
@@ -155,7 +155,7 @@ function TargetChip({ mounted }: { mounted: boolean }) {
     <button
       className="tgt-chip"
       onClick={() => setView("target")}
-      title="Open the Target page — edit your CV against the locked ideal"
+      title="Open the Simulate page — edit your CV against the locked ideal"
       style={{ ["--tgt-hue" as string]: String(hue) }}
     >
       <span className="tgt-chip-ic" aria-hidden>🎯</span>
