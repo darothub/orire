@@ -8,6 +8,7 @@ import { useTargetStore } from "@/lib/store/targetStore";
 import { sharedRun } from "@/lib/store/runStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { authorizeRefineRun } from "@/app/actions/refine";
+import { remainingNote } from "@/lib/plan/plan";
 import type { RefineResponse } from "@/lib/ai/types";
 import { parseModelJSON, factGround, RefineParseError, type GroundingResult } from "@/lib/ai/guardrails";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
@@ -79,6 +80,10 @@ interface RefineState {
   /** Plan-level block (cap reached / compare not allowed) shown as a banner. */
   planBlock: ColError | null;
 
+  /** "N free refines left" note shown after a run is authorized (point 9);
+   *  null for unlimited plans or anonymous/unmetered runs. */
+  usageNote: string | null;
+
   /** Which provider's result was last applied to the CV, for an "Applied" confirmation. */
   appliedProvider: ProviderId | null;
 
@@ -129,6 +134,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   idealErr: null,
 
   planBlock: null,
+  usageNote: null,
 
   appliedProvider: null,
 
@@ -181,9 +187,12 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       set({ planBlock: { title: "Couldn’t start run", body: e instanceof Error ? e.message : String(e) } });
       return;
     }
-    // Reconcile the client mirror with server truth (signed-in users only).
+    // Reconcile the client mirror with server truth (signed-in users only) and
+    // surface how many refines remain (point 9).
     if (authz.signedIn) {
       usePlanStore.getState().syncFromServer({ plan: authz.plan, usedThisMonth: authz.usedThisMonth });
+      // Only on an allowed run — a blocked run shows planBlock instead.
+      if (authz.ok) set({ usageNote: remainingNote("refine", authz.cap, authz.usedThisMonth) || null });
     }
     if (!authz.ok || !authz.token) {
       set({ planBlock: authz.block ?? { title: "Plan limit", body: "Not allowed on your plan." } });
@@ -319,7 +328,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   keepResults: () => set({ revisited: false }),
 
   resetRun: () =>
-    set({ started: false, runSig: null, revisited: false, planBlock: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, idealPhase: "idle", idealErr: null, appliedProvider: null }),
+    set({ started: false, runSig: null, revisited: false, planBlock: null, usageNote: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, idealPhase: "idle", idealErr: null, appliedProvider: null }),
 
   resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false }),
 
@@ -331,6 +340,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       runSig: null,
       revisited: false,
       planBlock: null,
+      usageNote: null,
       cols: idleCols(),
       baseMatch: null,
       baseCV: null,

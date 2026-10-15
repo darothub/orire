@@ -1017,6 +1017,18 @@ body {
   visibility: visible;
 }
 
+/* ---------- Usage "N free … left" note (freemium limits) ---------- */
+.usage-note {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface-soft);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+}
+
 /* ---------- Workspace pane (rail target) ---------- */
 .pane-work {
   position: relative;

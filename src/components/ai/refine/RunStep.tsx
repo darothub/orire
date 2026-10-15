@@ -24,6 +24,7 @@ export function RunStep({ onBack }: { onBack: () => void }) {
   const resetRun = useRefineStore((s) => s.resetRun);
   const keepResults = useRefineStore((s) => s.keepResults);
   const planBlock = useRefineStore((s) => s.planBlock);
+  const usageNote = useRefineStore((s) => s.usageNote);
   const cv = useCVStore((s) => s.cv);
   const jd = useTargetStore((s) => s.jd);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
@@ -77,6 +78,9 @@ export function RunStep({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="step-body">
+      {usageNote && (
+        <div className="usage-note" role="status">{usageNote}</div>
+      )}
       {stale && (
         <div className="run-stale" role="alert">
           <span className="run-stale-ico" aria-hidden>↻</span>
