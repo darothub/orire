@@ -5,6 +5,7 @@ import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { BrandMark } from "@/components/BrandMark";
+import { Tooltip } from "@/components/ui/Tooltip";
 import { useRunStore } from "@/lib/store/runStore";
 
 type Badge = "warn" | "busy" | null;
@@ -21,25 +22,26 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
   const meta = VIEW_META[item];
   const active = view === item;
   return (
-    <button
-      className={`rail-item ${active ? "is-active" : ""}`}
-      data-tour={`rail-${item}`}
-      onClick={() => setView(item)}
-      title={`${meta.label} — ${meta.hint}`}
-      aria-label={meta.label}
-      aria-current={active ? "page" : undefined}
-    >
-      {active && (
-        <motion.span
-          layoutId="rail-active"
-          className="rail-active"
-          transition={{ type: "spring", stiffness: 500, damping: 38 }}
-        />
-      )}
-      <span className="rail-icon" aria-hidden>{meta.icon}</span>
-      <span className="rail-label">{meta.label}</span>
-      {badge && <span className={`rail-badge ${badge}`} aria-hidden />}
-    </button>
+    <Tooltip title={meta.label} hint={meta.hint} placement="right">
+      <button
+        className={`rail-item ${active ? "is-active" : ""}`}
+        data-tour={`rail-${item}`}
+        onClick={() => setView(item)}
+        aria-label={meta.label}
+        aria-current={active ? "page" : undefined}
+      >
+        {active && (
+          <motion.span
+            layoutId="rail-active"
+            className="rail-active"
+            transition={{ type: "spring", stiffness: 500, damping: 38 }}
+          />
+        )}
+        <span className="rail-icon" aria-hidden>{meta.icon}</span>
+        <span className="rail-label">{meta.label}</span>
+        {badge && <span className={`rail-badge ${badge}`} aria-hidden />}
+      </button>
+    </Tooltip>
   );
 }
 
