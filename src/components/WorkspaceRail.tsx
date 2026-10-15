@@ -2,47 +2,31 @@
 
 import { motion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
+import { VIEW_META } from "@/lib/store/viewMeta";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { BrandMark } from "@/components/BrandMark";
 import { useRunStore } from "@/lib/store/runStore";
 
 type Badge = "warn" | "busy" | null;
 
-interface RailItem {
-  view: WorkspaceView;
-  label: string;
-  hint: string;
-  icon: string;
-}
+// Which workspaces the rail shows and in what order. Labels/hints/icons come
+// from VIEW_META (the single source of truth) — this list owns only ordering
+// and the primary/footer grouping.
+const PRIMARY: WorkspaceView[] = ["edit", "rebrand", "refine", "target", "cover", "export", "history", "rate", "plans"];
+const FOOTER: WorkspaceView[] = ["profile", "connect"];
 
-const PRIMARY: RailItem[] = [
-  { view: "edit", label: "Edit", hint: "Two-pane live editor", icon: "✎" },
-  { view: "rebrand", label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
-  { view: "refine", label: "Refine", hint: "Connect an assistant · import · tailor to a job", icon: "✦" },
-  { view: "target", label: "Simulate", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
-  { view: "cover", label: "Cover", hint: "Write, edit & export a cover letter", icon: "✉" },
-  { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
-  { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
-  { view: "rate", label: "Grade", hint: "Score initial → final", icon: "★" },
-  { view: "plans", label: "Plans", hint: "Pricing & what each plan unlocks", icon: "◆" },
-];
-
-const FOOTER: RailItem[] = [
-  { view: "profile", label: "Profile", hint: "Your activity, rating & plan", icon: "☻" },
-  { view: "connect", label: "AI Settings", hint: "Assistants", icon: "⚙" },
-];
-
-function RailButton({ item, badge }: { item: RailItem; badge?: Badge }) {
+function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
-  const active = view === item.view;
+  const meta = VIEW_META[item];
+  const active = view === item;
   return (
     <button
       className={`rail-item ${active ? "is-active" : ""}`}
-      data-tour={`rail-${item.view}`}
-      onClick={() => setView(item.view)}
-      title={`${item.label} — ${item.hint}`}
-      aria-label={item.label}
+      data-tour={`rail-${item}`}
+      onClick={() => setView(item)}
+      title={`${meta.label} — ${meta.hint}`}
+      aria-label={meta.label}
       aria-current={active ? "page" : undefined}
     >
       {active && (
@@ -52,8 +36,8 @@ function RailButton({ item, badge }: { item: RailItem; badge?: Badge }) {
           transition={{ type: "spring", stiffness: 500, damping: 38 }}
         />
       )}
-      <span className="rail-icon" aria-hidden>{item.icon}</span>
-      <span className="rail-label">{item.label}</span>
+      <span className="rail-icon" aria-hidden>{meta.icon}</span>
+      <span className="rail-label">{meta.label}</span>
       {badge && <span className={`rail-badge ${badge}`} aria-hidden />}
     </button>
   );
@@ -82,13 +66,13 @@ export function WorkspaceRail() {
     <nav className="rail" aria-label="Workspaces">
       <div className="rail-brand" aria-hidden><BrandMark size={26} /></div>
       <div className="rail-group">
-        {PRIMARY.map((it) => (
-          <RailButton key={it.view} item={it} badge={badgeFor(it.view)} />
+        {PRIMARY.map((v) => (
+          <RailButton key={v} item={v} badge={badgeFor(v)} />
         ))}
       </div>
       <div className="rail-group rail-foot">
-        {FOOTER.map((it) => (
-          <RailButton key={it.view} item={it} badge={badgeFor(it.view)} />
+        {FOOTER.map((v) => (
+          <RailButton key={v} item={v} badge={badgeFor(v)} />
         ))}
       </div>
     </nav>

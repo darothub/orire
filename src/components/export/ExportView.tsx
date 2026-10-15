@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
+import { VIEW_META } from "@/lib/store/viewMeta";
 import { useHistoryStore, PAGE_MODES, type PageMode } from "@/lib/store/historyStore";
 import {
   useStyleStore,
@@ -88,7 +89,7 @@ export function ExportView() {
     >
       <div className="ws-head">
         <div>
-          <h2>Export</h2>
+          <h2>{VIEW_META.export.label}</h2>
           <p>Style the CV, pick a page layout, and download a PDF straight from here — the live preview on the right updates as you go.</p>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
+import { VIEW_META } from "@/lib/store/viewMeta";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useOnboardingStore } from "@/lib/store/onboardingStore";
@@ -20,15 +21,9 @@ interface Command {
   run: () => void;
 }
 
-const VIEW_META: { view: WorkspaceView; label: string; hint: string; icon: string }[] = [
-  { view: "edit", label: "Edit", hint: "Two-pane live editor", icon: "✎" },
-  { view: "refine", label: "Refine", hint: "Connect an assistant · import · tailor to a job", icon: "✦" },
-  { view: "target", label: "Simulate", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
-  { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
-  { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
-  { view: "rate", label: "Grade", hint: "Score initial → final", icon: "★" },
-  { view: "connect", label: "AI Settings", hint: "Providers", icon: "⚙" },
-];
+// Which workspaces the palette's "Go to" group lists, and in what order.
+// Labels/hints/icons come from VIEW_META (the single source of truth).
+const NAV_VIEWS: WorkspaceView[] = ["edit", "refine", "target", "export", "history", "rate", "connect"];
 
 /** ⌘K / Ctrl-K command palette: jump to any workspace, switch template, or fire
  *  a quick action. Fully keyboard-driven, framer-animated, no new deps. */
@@ -79,16 +74,19 @@ export function CommandPalette() {
   };
 
   const commands = useMemo<Command[]>(() => {
-    const nav: Command[] = VIEW_META.map((v) => ({
-      id: `go:${v.view}`,
-      group: "Go to",
-      title: v.label,
-      hint: v.hint,
-      icon: v.icon,
-      keywords: `${v.label} ${v.hint} workspace view`,
-      active: currentView === v.view,
-      run: () => runAnd(() => setView(v.view)),
-    }));
+    const nav: Command[] = NAV_VIEWS.map((v) => {
+      const meta = VIEW_META[v];
+      return {
+        id: `go:${v}`,
+        group: "Go to",
+        title: meta.label,
+        hint: meta.hint,
+        icon: meta.icon,
+        keywords: `${meta.label} ${meta.hint} workspace view`,
+        active: currentView === v,
+        run: () => runAnd(() => setView(v)),
+      };
+    });
 
     const tpls: Command[] = TEMPLATES.map((t) => ({
       id: `tpl:${t.id}`,

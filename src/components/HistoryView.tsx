@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { VIEW_META } from "@/lib/store/viewMeta";
 import { useHistoryStore, groupByCompany, PAGE_MODES } from "@/lib/store/historyStore";
 
 const MODE_LABEL = Object.fromEntries(PAGE_MODES.map((m) => [m.id, m.label]));
@@ -46,7 +47,7 @@ export function HistoryView() {
     >
       <div className="ws-head">
         <div>
-          <h2>History</h2>
+          <h2>{VIEW_META.history.label}</h2>
           <p>Every CV you export is filed here under the company you saved it for.</p>
         </div>
         {entries.length > 0 && (
