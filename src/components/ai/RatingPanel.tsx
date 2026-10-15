@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { VIEW_META } from "@/lib/store/viewMeta";
 import { scoreCV, diffScores, grade } from "@/lib/cv/rating";
 
 /** Colour a 0–100 value from red → amber → green. */
@@ -59,7 +60,7 @@ export function RateView() {
     >
       <div className="ws-head">
         <div>
-          <h2>Grade</h2>
+          <h2>{VIEW_META.rate.label}</h2>
           <p>How your final CV scores against the initial — deterministic across six dimensions.</p>
         </div>
       </div>

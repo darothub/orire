@@ -31,6 +31,7 @@ import { useSession } from "next-auth/react";
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
+import { VIEW_META } from "@/lib/store/viewMeta";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { targetMatch } from "@/lib/ai/simulate";
@@ -50,7 +51,7 @@ function EditView({ mounted }: { mounted: boolean }) {
     >
       <div className="ws-head">
         <div>
-          <h2>Edit</h2>
+          <h2>{VIEW_META.edit.label}</h2>
           <p>Changes appear live on the right. Drag sections, cards and bullets to reorder.</p>
         </div>
       </div>
@@ -77,7 +78,7 @@ function ConnectView() {
     >
       <div className="ws-head">
         <div>
-          <h2>AI Settings</h2>
+          <h2>{VIEW_META.connect.label}</h2>
           <p>
             Assistants are provided by Orire. Pick your default assistant and
             the models to run; your plan sets which models are available.
@@ -100,7 +101,7 @@ function PlansView() {
     >
       <div className="ws-head">
         <div>
-          <h2>Plans</h2>
+          <h2>{VIEW_META.plans.label}</h2>
           <p>
             Pick the plan that fits how you job-hunt. Upgrade, downgrade or cancel
             anytime — your monthly usage and entitlement are tracked server-side.

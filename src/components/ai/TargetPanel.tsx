@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { VIEW_META } from "@/lib/store/viewMeta";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
@@ -105,7 +106,7 @@ export function TargetView() {
       >
         <div className="ws-head">
           <div>
-            <h2>Simulate</h2>
+            <h2>{VIEW_META.target.label}</h2>
             <p>
               {recompose
                 ? "Rebuild the ideal CV from a new job description. Your current target stays until the new one is ready."
@@ -249,7 +250,7 @@ export function TargetView() {
     >
       <div className="ws-head">
         <div>
-          <h2>Simulate</h2>
+          <h2>{VIEW_META.target.label}</h2>
           <p>
             Your live CV beside the ideal for <strong>{label || "this role"}</strong>
             {dateLabel ? ` · locked ${dateLabel}` : ""}. The match updates as you edit.
