@@ -966,6 +966,57 @@ body {
   50% { box-shadow: 0 0 0 5px rgba(23, 184, 146, 0); }
 }
 
+/* ---------- Tooltip (reusable; bubble is portaled to <body>) ---------- */
+.tt-wrap {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+}
+/* ⓘ affordance: only on touch (no hover). Desktop uses hover/focus. */
+.tt-info {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  z-index: 3;
+  display: none;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  color: var(--muted);
+  background: var(--surface-hover);
+  border: 1px solid var(--line-2);
+  border-radius: 50%;
+  cursor: pointer;
+}
+@media (hover: none) {
+  .tt-info { display: grid; }
+}
+.tt-bubble {
+  z-index: 60;
+  max-width: 220px;
+  padding: 7px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.14s ease, visibility 0.14s ease;
+}
+.tt-bubble.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* ---------- Workspace pane (rail target) ---------- */
 .pane-work {
   position: relative;
