@@ -17,9 +17,9 @@ describe("providerRouter", () => {
     expect(route).toEqual({ provider: "openai", model: "gpt-5-mini" });
   });
 
-  it("routes judge to Claude Haiku 4.5", () => {
+  it("routes judge (pick the best) to GPT-5-Mini on ChatGPT", () => {
     const route = routeTask("judge");
-    expect(route).toEqual({ provider: "anthropic", model: "claude-haiku-4-5" });
+    expect(route).toEqual({ provider: "openai", model: "gpt-5-mini" });
   });
 
   it("routes retone to GPT-5-Mini", () => {

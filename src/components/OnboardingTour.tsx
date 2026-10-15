@@ -41,7 +41,7 @@ const STEPS: Step[] = [
   {
     sel: '[data-tour="rail-refine"]',
     title: "Refine with AI",
-    body: "Tailor your CV to a job description. Compare two assistants side by side and let the judge merge the best of both.",
+    body: "Tailor your CV to a job description. Compare two assistants side by side and let Orire pick the best of the two.",
     place: "right",
   },
   {

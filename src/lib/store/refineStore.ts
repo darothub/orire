@@ -64,7 +64,6 @@ interface RefineState {
   /** Snapshot of the ORIGINAL CV at run time, for vs-ideal baseline gap. */
   baseCV: CVData | null;
 
-  judgeProvider: ProviderId;
   judgePhase: JudgePhase;
   verdict: JudgeVerdict | null;
   judgeErr: ColError | null;
@@ -83,7 +82,6 @@ interface RefineState {
 
   setStep: (s: RefineStep) => void;
   toggleRunProvider: (p: ProviderId) => void;
-  setJudgeProvider: (p: ProviderId) => void;
 
   runAll: () => Promise<void>;
   runJudge: (force?: boolean) => Promise<void>;
@@ -117,7 +115,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   baseMatch: null,
   baseCV: null,
 
-  judgeProvider: "openai",
   judgePhase: "idle",
   verdict: null,
   judgeErr: null,
@@ -137,7 +134,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
         ? s.runProviders.filter((x) => x !== p)
         : [...s.runProviders, p],
     })),
-  setJudgeProvider: (judgeProvider) => set({ judgeProvider }),
 
   runAll: async () => {
     const { runProviders } = get();
@@ -235,13 +231,15 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   },
 
   runJudge: async (force = false) => {
-    const { cols, judgeProvider } = get();
+    const { cols } = get();
     const jd = useTargetStore.getState().jd;
     const done = PROVIDER_IDS.filter((p) => cols[p].phase === "done" && cols[p].result);
     if (done.length < 2) return;
-    const { models } = useSettingsStore.getState();
     const candidates = done.map((p) => ({ id: p, label: PROVIDERS[p].label, cv: cols[p].result!.cv }));
-    const cacheKey = judgeCacheKey(judgeProvider, models[judgeProvider] ?? "", jd, candidates);
+    // The judge runs server-side on a fixed managed assistant (ChatGPT); its
+    // identity is hidden in the UI, so the determinism cache key uses a stable
+    // constant rather than a user-selected provider.
+    const cacheKey = judgeCacheKey("pick-best", "", jd, candidates);
 
     // Deterministic re-judge: identical inputs reuse the cached verdict instead
     // of re-sampling the model (unless the caller explicitly forces a fresh run).
@@ -254,19 +252,21 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     }
 
     set({ judgePhase: "running", judgeErr: null, verdict: null, judgeFromCache: false });
-    analytics.judgeRun(judgeProvider);
+    analytics.judgeRun("openai");
     try {
       const data = await sharedRun<RefineResponse>("judge", "Refine", () =>
         fetch("/api/ai/judge", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ provider: judgeProvider, model: models[judgeProvider], jobDescription: jd, candidates }),
+          // Provider/model are chosen server-side (hidden); sending them is
+          // unnecessary, but the route ignores them regardless.
+          body: JSON.stringify({ jobDescription: jd, candidates }),
         }).then((r) => r.json() as Promise<RefineResponse>),
       );
       if (!data.ok || !data.raw) {
         set({
           judgePhase: "error",
-          judgeErr: { title: `${PROVIDERS[judgeProvider].label} error`, body: data.error?.message ?? "Unknown error.", status: data.error?.status },
+          judgeErr: { title: "Couldn’t pick the best version", body: data.error?.message ?? "Unknown error.", status: data.error?.status },
         });
         return;
       }

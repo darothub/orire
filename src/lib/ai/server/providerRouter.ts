@@ -5,13 +5,12 @@
  * - CV refinement → Claude Haiku 4.5 (superior instruction-following, strict fact-grounding)
  * - Cover letter → GPT-5-Mini (creative writing)
  * - Interview simulate → GPT-5-Mini (ideal candidate profile generation)
- * - Judge → Claude Haiku 4.5 (deep CV comparison and analysis)
+ * - Judge ("Help me pick the best") → GPT-5-Mini (ChatGPT, provider hidden in UI)
  * - Retone/restructure → GPT-5-Mini (tone adjustment)
  *
  * This dual-provider approach optimizes for both cost and quality:
- * - Haiku: $0.0245/month for refinement + judge
- * - GPT-5-Mini: $0.0161/month for cover letter + simulate + retone
- * - Total: $0.0566/user/month (current: $0.0738/user/month on single provider)
+ * - Haiku: refinement
+ * - GPT-5-Mini: cover letter + simulate + retone + judge
  */
 
 import type { ProviderId } from "@/lib/ai/types";
@@ -41,7 +40,10 @@ export function routeTask(taskType: AiTaskType): RouteDecision {
       return { provider: "openai", model: "gpt-5-mini" };
 
     case "judge":
-      return { provider: "anthropic", model: "claude-haiku-4-5" };
+      // "Help me pick the best" runs on Orire's managed ChatGPT key by default
+      // (deterministic settings applied in the route), with the judge identity
+      // hidden from the UI.
+      return { provider: "openai", model: "gpt-5-mini" };
 
     case "retone":
     case "evidence":

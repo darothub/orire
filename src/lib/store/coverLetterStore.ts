@@ -84,9 +84,11 @@ export const useCoverLetterStore = create<CoverLetterState>((set) => ({
       return;
     }
     const { models } = useSettingsStore.getState();
-    const { runProviders, judgeProvider } = useRefineStore.getState();
-    // Prefer a provider already used in the compare; fall back to the judge provider.
-    const provider = runProviders[0] ?? judgeProvider;
+    const { runProviders } = useRefineStore.getState();
+    // Prefer a provider already used in the compare; otherwise default to
+    // OpenAI. (The cover-letter route picks the provider server-side anyway;
+    // this only labels the request.)
+    const provider = runProviders[0] ?? "openai";
 
     const cv = useCVStore.getState().cv;
     set({ phase: "running", error: null, provider });

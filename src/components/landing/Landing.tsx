@@ -38,8 +38,8 @@ const FEATURES: Feature[] = [
   },
   {
     icon: "⟂",
-    title: "Compare, then judge",
-    body: "Run two assistants in parallel, see them side by side, and see why one draft is stronger — the reasoning is shown.",
+    title: "Compare, then pick the best",
+    body: "Run two assistants in parallel, see them side by side, and let Orire pick the stronger draft — with the reasoning shown.",
   },
   {
     icon: "⚖",

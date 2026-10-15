@@ -81,7 +81,7 @@ export default function TermsPage() {
       <ul>
         <li>AI output may contain errors and must be reviewed and verified by you before you rely on or submit it;</li>
         <li>Orire is designed to re-frame your real experience and not to invent it, but you remain solely responsible for ensuring every statement in your final CV is truthful and accurate;</li>
-        <li>the deterministic score, match simulation and compare &amp; judge features are guidance tools only;</li>
+        <li>the deterministic score, match simulation and compare &amp; pick-the-best features are guidance tools only;</li>
         <li>we make no guarantee of any interview, job offer or other outcome.</li>
       </ul>
 
