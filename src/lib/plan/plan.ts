@@ -67,7 +67,7 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 2,
     allowCompare: true,
     includedTiers: ["budget", "mid"],
-    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + judge", "Cover letters", "Clean PDF, all page modes"],
+    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + pick the best", "Cover letters", "Full Grade breakdown", "Clean PDF, all page modes"],
   },
   career: {
     id: "career",
@@ -77,7 +77,7 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 3,
     allowCompare: true,
     includedTiers: ["budget", "mid", "premium"],
-    perks: ["Unlimited refines (fair-use)", "Premium models included", "Parallel compare + judge", "JD simulation", "Company history"],
+    perks: ["Unlimited refines (fair-use)", "Premium models included", "Parallel compare + pick the best", "JD simulation", "Company history"],
   },
 };
 
@@ -262,5 +262,14 @@ export function nextPlan(planId: PlanId): Plan | null {
  * Cover letters are a paid add-on: every plan except Free includes them.
  */
 export function allowCoverLetter(planId: PlanId): boolean {
+  return planId !== "free";
+}
+
+/**
+ * Whether the full six-metric Grade breakdown is shown. Grade is a free, local
+ * computation, so Free still sees the overall score — this gates the detailed
+ * per-dimension breakdown to Pro+ (a feature-depth gate, not a usage cap).
+ */
+export function allowGradeBreakdown(planId: PlanId): boolean {
   return planId !== "free";
 }

@@ -891,6 +891,21 @@
   gap: 14px;
   margin-top: 18px;
 }
+/* Free tier: overall score only — the per-dimension breakdown is Pro+. */
+.rate-metrics-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px dashed var(--line-2);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+.rate-metrics-locked strong { font-size: 14px; }
+.rate-metrics-locked span { font-size: 13px; color: var(--muted); line-height: 1.45; }
+.rate-metrics-locked .flow-btn { margin-top: 4px; }
 .rate-metric-head {
   display: flex;
   align-items: baseline;

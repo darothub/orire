@@ -29,7 +29,7 @@ const STEPS: Omit<HowStep, "n">[] = [
   {
     icon: "⇩",
     title: "Compare, score & export",
-    body: "Run two assistants side by side, let the judge pick the strongest, watch your CV score climb, then export a clean, ATS-ready PDF.",
+    body: "Run two assistants side by side, let Orire pick the strongest, watch your CV score climb, then export a clean, ATS-ready PDF.",
   },
 ];
 

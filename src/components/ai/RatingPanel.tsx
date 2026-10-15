@@ -3,7 +3,9 @@
 import { motion } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { usePlanStore } from "@/lib/store/planStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
+import { allowGradeBreakdown } from "@/lib/plan/plan";
 import { scoreCV, diffScores, grade } from "@/lib/cv/rating";
 
 /** Colour a 0–100 value from red → amber → green. */
@@ -47,6 +49,8 @@ export function RateView() {
   const captureBaseline = useCVStore((s) => s.captureBaseline);
   const clearBaseline = useCVStore((s) => s.clearBaseline);
   const setView = useViewStore((s) => s.setView);
+  const plan = usePlanStore((s) => s.plan);
+  const showBreakdown = allowGradeBreakdown(plan);
 
   const current = scoreCV(cv);
   const diff = started && baseline ? diffScores(baseline, cv) : null;
@@ -94,6 +98,17 @@ export function RateView() {
           </div>
         )}
 
+        {!showBreakdown ? (
+          <div className="rate-metrics-locked">
+            <strong>See the full six-metric breakdown</strong>
+            <span>
+              You&apos;re seeing your overall score. Pro and Career unlock the per-dimension
+              breakdown — relevance, impact, coverage, conciseness and more — so you can see
+              exactly where to improve.
+            </span>
+            <button className="flow-btn primary" onClick={() => setView("plans")}>Upgrade to Pro</button>
+          </div>
+        ) : (
         <div className="rate-metrics">
           {(diff
             ? diff.metrics
@@ -136,6 +151,7 @@ export function RateView() {
             );
           })}
         </div>
+        )}
 
         <div className="imp-actions rate-actions">
           {!started ? (

@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   }
   const candidates = Array.isArray(body.candidates) ? body.candidates : [];
   if (candidates.length < 2) {
-    return NextResponse.json(fail(provider, "Need at least two candidates to judge."), { status: 400 });
+    return NextResponse.json(fail(provider, "Need at least two versions to pick the best."), { status: 400 });
   }
   if (!(body.jobDescription ?? "").trim()) {
     return NextResponse.json(fail(provider, "Missing job description."), { status: 400 });

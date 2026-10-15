@@ -32,7 +32,7 @@ const ITEMS: Promise[] = [
   {
     title: "See which draft is stronger",
     body:
-      "Run two assistants side by side and let the judge pick the strongest result, with its reasoning shown — so you are never guessing.",
+      "Run two assistants side by side and let Orire pick the strongest result, with its reasoning shown — so you are never guessing.",
   },
   {
     title: "A score you can trust",
