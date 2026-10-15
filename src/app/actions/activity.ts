@@ -13,9 +13,16 @@
 
 import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
-import { getEntitlementSummary, getEntitlementRow } from "@/lib/entitlement/entitlement";
+import {
+  getEntitlementSummary,
+  getEntitlementRow,
+  getPlanId,
+  getUsed,
+  consume,
+} from "@/lib/entitlement/entitlement";
 import { isStripeConfigured } from "@/lib/billing/stripe";
-import { PLANS, type PlanId } from "@/lib/plan/plan";
+import { PLANS, meterFor, withinCap, type PlanId } from "@/lib/plan/plan";
+import { isEmailVerified } from "@/lib/auth/verify";
 import { ratingStats } from "@/lib/profile/activity";
 
 export interface ProfileUser {
@@ -112,6 +119,71 @@ export async function getProfile(): Promise<ProfileResult> {
       },
     },
   };
+}
+
+export interface ExportAuthz {
+  ok: boolean;
+  plan: PlanId;
+  /** Downloads used after this authorization (the consumed count). */
+  used: number;
+  /** Download cap for the plan (null = unlimited). */
+  cap: number | null;
+  block?: { title: string; body: string };
+}
+
+/**
+ * Authorize (and, for metered plans, consume) one download BEFORE the client
+ * builds the PDF. This is the enforceable download gate: Free gets a lifetime
+ * cap of 3, paid is unlimited. Server-authoritative (UsageCounter) so it can't
+ * be reset from the client (point 13).
+ *
+ * The PDF is produced client-side, so the server can't observe build success;
+ * the client pre-checks that the CV is present before calling this, which keeps
+ * the only realistic failure from ever spending a credit. Consumption is atomic
+ * here so the cap can't be bypassed.
+ */
+export async function authorizeExport(): Promise<ExportAuthz> {
+  const freeCap = meterFor("free", "download").cap;
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) {
+    return {
+      ok: false,
+      plan: "free",
+      used: 0,
+      cap: freeCap,
+      block: { title: "Sign in to download", body: "Create a free account to download your CV as a PDF." },
+    };
+  }
+  if (!(await isEmailVerified(userId))) {
+    return {
+      ok: false,
+      plan: "free",
+      used: 0,
+      cap: freeCap,
+      block: {
+        title: "Verify your email",
+        body: "Check your inbox for the verification link, then download. You can resend it from your account menu.",
+      },
+    };
+  }
+
+  const plan = await getPlanId(userId);
+  const used = await getUsed(userId, "download", plan);
+  const cap = meterFor(plan, "download").cap;
+  const gate = withinCap(plan, "download", used);
+  if (!gate.allowed) {
+    return {
+      ok: false,
+      plan,
+      used,
+      cap,
+      block: { title: "Download limit reached", body: gate.reason ?? "Upgrade to Pro for unlimited downloads." },
+    };
+  }
+
+  const newUsed = cap !== null ? await consume(userId, "download", plan) : used;
+  return { ok: true, plan, used: newUsed, cap };
 }
 
 export interface RecordExportInput {
