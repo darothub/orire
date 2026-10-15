@@ -7,8 +7,6 @@ import { useTargetStore } from "@/lib/store/targetStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useCoverLetterStore } from "@/lib/store/coverLetterStore";
 import { allowCoverLetter, nextPlan } from "@/lib/plan/plan";
-import { targetMatch } from "@/lib/ai/simulate";
-import { analyzeTone } from "@/lib/ai/retone";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { countFacts } from "./shared";
 import { Column } from "./Column";
@@ -130,91 +128,35 @@ export function RunStep({ onBack }: { onBack: () => void }) {
 }
 
 function PostCompare() {
-  const idealPhase = useRefineStore((s) => s.idealPhase);
-  const idealErr = useRefineStore((s) => s.idealErr);
-  const runSimulate = useRefineStore((s) => s.runSimulate);
   const cols = useRefineStore((s) => s.cols);
   const runProviders = useRefineStore((s) => s.runProviders);
-  const appliedProvider = useRefineStore((s) => s.appliedProvider);
-  const cv = useCVStore((s) => s.cv);
-  const target = useTargetStore((s) => s.ideal);
-  const jd = useTargetStore((s) => s.jd);
-  const targetLabel = useTargetStore((s) => s.label);
   const setView = useViewStore((s) => s.setView);
 
-  // Only meaningful once at least one refined result exists to benchmark.
+  // Only meaningful once at least one refined result exists to build on.
   const anyDone = runProviders.some((p) => cols[p].phase === "done" && cols[p].result);
   if (!anyDone) return null;
-
-  const running = idealPhase === "running";
-  const gap = target ? targetMatch(cv, target, jd) : null;
-  const voice = target ? analyzeTone(target).label : null;
 
   return (
     <div className="post-compare">
       <div className="post-compare-head">
         <span className="post-compare-step">Next</span>
-        <h3>Benchmark &amp; voice</h3>
-        <p>You&apos;ve compared and judged. Now see how close your CV is to the perfect candidate — and optionally match the target&apos;s writing voice.</p>
+        <h3>Go further in Simulate</h3>
+        <p>You&apos;ve compared and picked a version. To push it further, head to Simulate — it benchmarks your CV against a synthetic 100%-match candidate, shows exactly what&apos;s missing, and can rewrite your CV in the target&apos;s voice, all without touching your facts.</p>
       </div>
 
-      {/* 1 · Simulate the ideal candidate — a gap benchmark, not your facts. */}
+      {/* Advisory → Simulate (D1). The benchmark/voice work now lives entirely in
+          the Simulate workspace; it is no longer run inline here (D2). */}
       <div className="pc-card">
         <div className="pc-card-main">
-          <strong>How close are you to the ideal candidate?</strong>
+          <strong>Benchmark &amp; enhance in Simulate</strong>
           <span className="pc-card-sub">
-            Simulate builds a synthetic CV that would be a 100% match for this role, then measures the gap against your CV. It&apos;s a benchmark — never written into your facts.
+            See how close you are to the ideal candidate, close the gaps, and match the target&apos;s writing voice — all in the Simulate workspace.
           </span>
         </div>
-
-        {!target && idealPhase === "idle" && (
-          <button className="flow-btn primary" onClick={() => void runSimulate()}>Simulate the ideal</button>
-        )}
-        {running && <div className="cmp-loading"><span className="cmp-spinner" /> Building the ideal candidate…</div>}
-        {idealPhase === "error" && idealErr && (
-          <div className="imp-error">
-            <strong>{idealErr.title}{idealErr.status ? ` (HTTP ${idealErr.status})` : ""}</strong>
-            <pre>{idealErr.body}</pre>
-            <div className="imp-actions"><button className="flow-btn ghost" onClick={() => void runSimulate()}>Retry</button></div>
-          </div>
-        )}
-
-        {target && gap && !running && (
-          <div className="pc-gap">
-            <div className="pc-gap-score" title="How much of the ideal candidate your CV currently covers">
-              <strong>{gap.score}%</strong>
-              <span>to ideal{targetLabel ? ` · ${targetLabel}` : ""}</span>
-            </div>
-            <div className="pc-gap-stats">
-              <span className="tgt-stat match">{gap.gap.matchedSkills.length} skills matched</span>
-              <span className="tgt-stat miss">{gap.gap.missingSkills.length} to add</span>
-            </div>
-            <div className="pc-gap-cta">
-              <button className="flow-btn sm" onClick={() => setView("target")}>Open Simulate →</button>
-              <button className="flow-btn ghost sm" onClick={() => void runSimulate()}>Re-simulate</button>
-            </div>
-          </div>
-        )}
+        <button className="flow-btn primary" onClick={() => setView("target")}>Open Simulate →</button>
       </div>
 
-      {/* 2 · Rewrite the chosen CV in the target's voice (needs a target). */}
-      {target && (
-        <div className="pc-card">
-          <div className="pc-card-main">
-            <strong>Rewrite in the target&apos;s voice{voice ? ` · ${voice}` : ""}</strong>
-            <span className="pc-card-sub">
-              {appliedProvider
-                ? `Rewrite ${PROVIDERS[appliedProvider].label}'s version in the target's voice — your employers, dates, numbers and skills stay exactly as they are.`
-                : "Apply a winner (or any column above) to pick the CV you want, then rewrite it in the target's voice. Your facts always stay yours."}
-            </span>
-          </div>
-          <button className="flow-btn accent" onClick={() => setView("target")} title="Opens your CV beside the target, with the tone studio ready">
-            ✍️ Rewrite voice →
-          </button>
-        </div>
-      )}
-
-      {/* 3 · Optional cover letter companion (Pro+). Fact-grounded on the CV. */}
+      {/* Optional cover letter companion (Pro+). Fact-grounded on the CV. */}
       <CoverLetterCard />
     </div>
   );
