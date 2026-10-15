@@ -18,18 +18,18 @@ interface RailItem {
 const PRIMARY: RailItem[] = [
   { view: "edit", label: "Edit", hint: "Two-pane live editor", icon: "✎" },
   { view: "rebrand", label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
-  { view: "refine", label: "Refine", hint: "Connect AI · import · tailor to a job", icon: "✦" },
-  { view: "target", label: "Target", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
+  { view: "refine", label: "Refine", hint: "Connect an assistant · import · tailor to a job", icon: "✦" },
+  { view: "target", label: "Simulate", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
   { view: "cover", label: "Cover", hint: "Write, edit & export a cover letter", icon: "✉" },
   { view: "export", label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
   { view: "history", label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
-  { view: "rate", label: "Rate", hint: "Score initial → final", icon: "★" },
+  { view: "rate", label: "Grade", hint: "Score initial → final", icon: "★" },
   { view: "plans", label: "Plans", hint: "Pricing & what each plan unlocks", icon: "◆" },
 ];
 
 const FOOTER: RailItem[] = [
   { view: "profile", label: "Profile", hint: "Your activity, rating & plan", icon: "☻" },
-  { view: "connect", label: "Connect AI", hint: "Assistants", icon: "⚙" },
+  { view: "connect", label: "AI Settings", hint: "Assistants", icon: "⚙" },
 ];
 
 function RailButton({ item, badge }: { item: RailItem; badge?: Badge }) {

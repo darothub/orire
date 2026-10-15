@@ -186,7 +186,7 @@ function PostCompare() {
               <span className="tgt-stat miss">{gap.gap.missingSkills.length} to add</span>
             </div>
             <div className="pc-gap-cta">
-              <button className="flow-btn sm" onClick={() => setView("target")}>Open Target →</button>
+              <button className="flow-btn sm" onClick={() => setView("target")}>Open Simulate →</button>
               <button className="flow-btn ghost sm" onClick={() => void runSimulate()}>Re-simulate</button>
             </div>
           </div>

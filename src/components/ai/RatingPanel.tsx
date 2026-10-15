@@ -59,7 +59,7 @@ export function RateView() {
     >
       <div className="ws-head">
         <div>
-          <h2>Rate</h2>
+          <h2>Grade</h2>
           <p>How your final CV scores against the initial — deterministic across six dimensions.</p>
         </div>
       </div>

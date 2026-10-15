@@ -24,11 +24,11 @@ test.describe("app shell & navigation", () => {
     await nav.getByRole("button", { name: "Export" }).click();
     await expect(appPage.getByRole("heading", { name: "Export", exact: true })).toBeVisible();
 
-    await nav.getByRole("button", { name: "Rate" }).click();
-    await expect(appPage.getByRole("heading", { name: "Rate", exact: true })).toBeVisible();
+    await nav.getByRole("button", { name: "Grade" }).click();
+    await expect(appPage.getByRole("heading", { name: "Grade", exact: true })).toBeVisible();
 
-    await nav.getByRole("button", { name: "Connect AI" }).click();
-    await expect(appPage.getByRole("heading", { name: "Connect AI", exact: true })).toBeVisible();
+    await nav.getByRole("button", { name: "AI Settings" }).click();
+    await expect(appPage.getByRole("heading", { name: "AI Settings", exact: true })).toBeVisible();
 
     await nav.getByRole("button", { name: "Cover" }).click();
     await expect(appPage.getByRole("heading", { name: "Cover letter", exact: true })).toBeVisible();
@@ -127,8 +127,8 @@ test.describe("export", () => {
 test.describe("connect (AI providers)", () => {
   test("lists managed AI providers and no removed surfaces", async ({ appPage }) => {
     await stubAI(appPage);
-    await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Connect AI" }).click();
-    await expect(appPage.getByRole("heading", { name: "Connect AI", exact: true })).toBeVisible();
+    await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "AI Settings" }).click();
+    await expect(appPage.getByRole("heading", { name: "AI Settings", exact: true })).toBeVisible();
 
     // Cut features must not reappear in the rail.
     const nav = appPage.getByRole("navigation", { name: "Workspaces" });
