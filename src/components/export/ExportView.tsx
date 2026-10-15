@@ -15,6 +15,7 @@ import { getTemplate } from "@/components/templates/registry";
 import { exportCVtoPDF } from "@/lib/export/pdf";
 import { recordExport, authorizeExport } from "@/app/actions/activity";
 import { remainingNote } from "@/lib/plan/plan";
+import { useUsageStore } from "@/lib/store/usageStore";
 import { useWriteGate } from "@/lib/store/accountStore";
 
 const ALIGNS: { id: CVAlign; label: string; icon: string }[] = [
@@ -93,6 +94,8 @@ export function ExportView() {
         kind: "ok",
         text: `Saved “${(fileName.trim() || defaultName)}.pdf” · filed under ${company.trim() || "Unfiled"} in History.${left ? ` ${left}` : ""}`,
       });
+      // Keep the ambient usage mirror current so Export greys out on the last one.
+      void useUsageStore.getState().refresh();
     } catch (e) {
       setMsg({ kind: "err", text: e instanceof Error ? e.message : String(e) });
     } finally {

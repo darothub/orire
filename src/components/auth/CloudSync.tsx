@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useHistoryStore } from "@/lib/store/historyStore";
 import { usePlanStore } from "@/lib/store/planStore";
+import { useUsageStore } from "@/lib/store/usageStore";
 import { useSyncStore } from "@/lib/store/syncStore";
 import { loadWorkingCV, saveWorkingCV } from "@/app/actions/cv";
 import { isSampleCV } from "@/lib/cv/sample";
@@ -70,6 +71,7 @@ export function CloudSync() {
       hydratedFor.current = false;
       savesReady.current = false;
       usePlanStore.getState().clearServer();
+      useUsageStore.getState().setSummary(null);
       if (was === "authenticated") {
         useCVStore.getState().reset();
         useHistoryStore.getState().clear();
@@ -87,6 +89,8 @@ export function CloudSync() {
       const ent = await readEntitlement();
       if (cancelled || !ent) return;
       usePlanStore.getState().syncFromServer({ plan: ent.plan, usedThisMonth: ent.usedThisMonth });
+      // Hydrate the per-metric usage mirror that drives feature grey-out.
+      void useUsageStore.getState().refresh();
     })();
     return () => {
       cancelled = true;

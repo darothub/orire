@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
+import { useUsageStore } from "@/lib/store/usageStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { sharedRun } from "@/lib/store/runStore";
@@ -193,6 +194,8 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       usePlanStore.getState().syncFromServer({ plan: authz.plan, usedThisMonth: authz.usedThisMonth });
       // Only on an allowed run — a blocked run shows planBlock instead.
       if (authz.ok) set({ usageNote: remainingNote("refine", authz.cap, authz.usedThisMonth) || null });
+      // Keep the ambient usage mirror (feature grey-out) current.
+      void useUsageStore.getState().refresh();
     }
     if (!authz.ok || !authz.token) {
       set({ planBlock: authz.block ?? { title: "Plan limit", body: "Not allowed on your plan." } });

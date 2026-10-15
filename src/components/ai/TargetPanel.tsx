@@ -9,7 +9,7 @@ import { useTargetStore } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { planQualityLabel, remainingNote } from "@/lib/plan/plan";
-import { readUsage } from "@/app/actions/usage";
+import { useUsageStore } from "@/lib/store/usageStore";
 import { sharedRun, useIsRunning, useRunOrigin } from "@/lib/store/runStore";
 import { getTemplate } from "@/components/templates/registry";
 import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
@@ -88,8 +88,10 @@ export function TargetView() {
       setTarget(built, jd, targetMatch(cv, built, jd).score);
       setRecompose(false);
       setGenPhase("input");
-      // Surface how many simulations remain (point 9).
-      void readUsage().then((u) => {
+      // Refresh the usage mirror (feature grey-out) and surface how many
+      // simulations remain (point 9).
+      void useUsageStore.getState().refresh().then(() => {
+        const u = useUsageStore.getState().summary;
         if (u) setUsageNote(remainingNote("simulate", u.metrics.simulate.cap, u.metrics.simulate.used) || null);
       });
     } catch (e) {
