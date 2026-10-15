@@ -94,6 +94,37 @@ export async function getEntitlementSummary(userId: string): Promise<Entitlement
   return { plan, usedThisMonth, cap: refineCap(plan) };
 }
 
+/** Usage for one metric: how many used, the cap, and what's left. */
+export interface MetricUsage {
+  used: number;
+  cap: number | null;
+  /** cap - used, floored at 0; null when unlimited. */
+  remaining: number | null;
+  scope: "lifetime" | "monthly";
+}
+
+/** Per-metric usage snapshot for the signed-in user — drives the UI's
+ *  remaining-count alerts (E2) and grey-out (E3). */
+export interface UsageSummary {
+  plan: PlanId;
+  metrics: Record<Metric, MetricUsage>;
+}
+
+const METRICS: Metric[] = ["refine", "simulate", "download"];
+
+export async function getUsageSummary(userId: string): Promise<UsageSummary> {
+  const plan = await getPlanId(userId);
+  const entries = await Promise.all(
+    METRICS.map(async (metric) => {
+      const rule = meterFor(plan, metric);
+      const used = await getUsed(userId, metric, plan);
+      const remaining = rule.cap === null ? null : Math.max(0, rule.cap - used);
+      return [metric, { used, cap: rule.cap, remaining, scope: rule.scope }] as const;
+    }),
+  );
+  return { plan, metrics: Object.fromEntries(entries) as Record<Metric, MetricUsage> };
+}
+
 /** Dev-only plan change (until Stripe/B2 owns this). Validates the plan id. */
 export async function setPlanId(userId: string, plan: PlanId): Promise<void> {
   if (!PLAN_IDS.has(plan)) throw new Error(`Unknown plan: ${plan}`);

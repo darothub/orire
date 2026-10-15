@@ -8,7 +8,8 @@ import { VIEW_META } from "@/lib/store/viewMeta";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
-import { planQualityLabel } from "@/lib/plan/plan";
+import { planQualityLabel, remainingNote } from "@/lib/plan/plan";
+import { readUsage } from "@/app/actions/usage";
 import { sharedRun, useIsRunning, useRunOrigin } from "@/lib/store/runStore";
 import { getTemplate } from "@/components/templates/registry";
 import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
@@ -58,6 +59,7 @@ export function TargetView() {
   const [recompose, setRecompose] = useState(false);
   const [genPhase, setGenPhase] = useState<"input" | "running" | "error">("input");
   const [genErr, setGenErr] = useState<{ title: string; body: string; status?: number } | null>(null);
+  const [usageNote, setUsageNote] = useState<string | null>(null);
   const simRunning = useIsRunning("simulate");
   const simOrigin = useRunOrigin("simulate");
 
@@ -86,6 +88,10 @@ export function TargetView() {
       setTarget(built, jd, targetMatch(cv, built, jd).score);
       setRecompose(false);
       setGenPhase("input");
+      // Surface how many simulations remain (point 9).
+      void readUsage().then((u) => {
+        if (u) setUsageNote(remainingNote("simulate", u.metrics.simulate.cap, u.metrics.simulate.used) || null);
+      });
     } catch (e) {
       const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
       setGenErr({ title: "Could not build the simulation", body: msg });
@@ -257,6 +263,10 @@ export function TargetView() {
           </p>
         </div>
       </div>
+
+      {usageNote && (
+        <div className="usage-note" role="status">{usageNote}</div>
+      )}
 
       <div className="tgt-meter">
         <div className="sim-cov">

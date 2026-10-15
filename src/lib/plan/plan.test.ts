@@ -7,6 +7,7 @@ import {
   withinCap,
   refineCap,
   meterFor,
+  remainingNote,
   nextPlan,
 } from "@/lib/plan/plan";
 
@@ -85,6 +86,24 @@ describe("meterFor / plan meters", () => {
     expect(refineCap("free")).toBe(3);
     expect(refineCap("pro")).toBe(30);
     expect(refineCap("career")).toBeNull();
+  });
+});
+
+describe("remainingNote", () => {
+  it("counts down with correct pluralisation", () => {
+    expect(remainingNote("refine", 3, 1)).toBe("2 free refines left.");
+    expect(remainingNote("download", 3, 2)).toBe("1 free download left.");
+    expect(remainingNote("simulate", 1, 0)).toBe("1 free simulation left.");
+  });
+  it("warns + upsells on the last one", () => {
+    expect(remainingNote("simulate", 1, 1)).toContain("last free simulation");
+    expect(remainingNote("refine", 3, 3)).toContain("upgrade to Pro");
+  });
+  it("is empty for unlimited plans", () => {
+    expect(remainingNote("refine", null, 999)).toBe("");
+  });
+  it("never goes negative", () => {
+    expect(remainingNote("download", 3, 5)).toContain("last free download");
   });
 });
 

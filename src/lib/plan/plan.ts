@@ -206,9 +206,29 @@ export function providerAllowedOnPlan(planId: PlanId, provider: ProviderId): Run
   return { allowed: true };
 }
 
+/** Singular/plural nouns per metric — the single source for usage copy. */
+const METRIC_NOUNS: Record<Metric, { one: string; many: string }> = {
+  refine: { one: "refine", many: "refines" },
+  simulate: { one: "simulation", many: "simulations" },
+  download: { one: "download", many: "downloads" },
+};
+
 /** Plain-language plural for a metric, used in cap/upsell copy. */
 function metricNoun(metric: Metric): string {
-  return metric === "refine" ? "refines" : metric === "simulate" ? "simulations" : "downloads";
+  return METRIC_NOUNS[metric].many;
+}
+
+/**
+ * The "you have N left" note shown after a successful metered action (point 9).
+ * Returns "" for unlimited plans (no note). On the last one, warns + upsells.
+ */
+export function remainingNote(metric: Metric, cap: number | null, used: number): string {
+  if (cap === null) return "";
+  const remaining = Math.max(0, cap - used);
+  const n = METRIC_NOUNS[metric];
+  if (remaining === 0) return `That was your last free ${n.one} — upgrade to Pro for more.`;
+  if (remaining === 1) return `1 free ${n.one} left.`;
+  return `${remaining} free ${n.many} left.`;
 }
 
 /**
