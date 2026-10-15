@@ -164,16 +164,24 @@ model Entitlement {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-/// Server-side monthly refine counter — the enforceable version of planStore usage.
+/// Server-authoritative usage counter — the enforceable version of planStore
+/// usage. One row per (user, metric, period):
+///   - metric: "refine" | "simulate" | "download"
+///   - period: "lifetime" (never-resetting caps, e.g. Free) or "YYYY-MM"
+///             (monthly caps, e.g. Pro refine)
+/// Counts are monotonic and survive CV deletion / cache clears because the row
+/// is keyed by user, not by any document (req: limits must not reset).
 model UsageCounter {
-  id          String @id @default(cuid())
-  userId      String
-  month       String // "YYYY-MM"
-  refinesUsed Int    @default(0)
+  id     String @id @default(cuid())
+  userId String
+  metric String
+  period String
+  count  Int    @default(0)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, month])
+  @@unique([userId, metric, period])
+  @@index([userId])
 }
 
 /// Idempotency ledger for Stripe webhooks. Stripe delivers events at-least-once,
