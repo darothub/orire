@@ -174,11 +174,10 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     // Reconcile the client mirror with server truth (signed-in users only) and
     // surface how many refines remain (point 9).
     if (authz.signedIn) {
+      // Reflect the current plan immediately; the usage count + remaining note
+      // are refreshed from server truth once the run settles (the refine is
+      // consumed server-side only on a successful provider call).
       usePlanStore.getState().syncFromServer({ plan: authz.plan, usedThisMonth: authz.usedThisMonth });
-      // Only on an allowed run — a blocked run shows planBlock instead.
-      if (authz.ok) set({ usageNote: remainingNote("refine", authz.cap, authz.usedThisMonth) || null });
-      // Keep the ambient usage mirror (feature grey-out) current.
-      void useUsageStore.getState().refresh();
     }
     if (!authz.ok || !authz.token) {
       set({ planBlock: authz.block ?? { title: "Plan limit", body: "Not allowed on your plan." } });
@@ -191,9 +190,9 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     // Local trial counter (anonymous only; no-op when server-authoritative).
     usePlanStore.getState().recordRefine();
 
-    for (const provider of runProviders) {
+    const runs = runProviders.map((provider) => {
       set((s) => ({ cols: { ...s.cols, [provider]: { phase: "running" } } }));
-      void (async () => {
+      return (async () => {
         try {
           const res = await fetch("/api/ai/refine", {
             method: "POST",
@@ -227,7 +226,20 @@ export const useRefineStore = create<RefineState>((set, get) => ({
           }));
         }
       })();
-    }
+    });
+
+    // Once every column settles, reconcile usage from server truth: the refine
+    // was consumed only if a provider actually succeeded, so this is where the
+    // real "N refines left" note + feature grey-out get their numbers.
+    void Promise.allSettled(runs).then(async () => {
+      if (!authz.signedIn) return;
+      await useUsageStore.getState().refresh();
+      const u = useUsageStore.getState().summary;
+      if (u) {
+        usePlanStore.getState().syncFromServer({ plan: u.plan, usedThisMonth: u.metrics.refine.used });
+        set({ usageNote: remainingNote("refine", u.metrics.refine.cap, u.metrics.refine.used) || null });
+      }
+    });
   },
 
   runJudge: async (force = false) => {

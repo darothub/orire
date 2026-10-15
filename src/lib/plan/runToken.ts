@@ -14,7 +14,7 @@
  * the route can verify a single provider call belongs to an authorized run.
  */
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
 import type { ProviderId } from "@/lib/ai/types";
 import type { PlanId } from "@/lib/plan/plan";
 
@@ -27,6 +27,9 @@ export interface RunTokenPayload {
   plan: PlanId;
   /** Providers this run is allowed to invoke. */
   p: ProviderId[];
+  /** Unique run id — the idempotency key for consuming exactly one refine per
+   *  run (the first successful provider call claims it). */
+  r: string;
   /** Expiry (epoch ms). */
   exp: number;
 }
@@ -50,6 +53,7 @@ export function signRunToken(input: { userId: string | null; plan: PlanId; provi
     u: input.userId,
     plan: input.plan,
     p: input.providers,
+    r: randomUUID(),
     exp: Date.now() + TTL_MS,
   };
   const body = b64url(Buffer.from(JSON.stringify(payload), "utf8"));

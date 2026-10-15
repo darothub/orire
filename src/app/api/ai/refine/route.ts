@@ -13,9 +13,36 @@ import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types"
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { verifyRunToken } from "@/lib/plan/runToken";
-import { modelAllowedOnPlan } from "@/lib/plan/plan";
+import { modelAllowedOnPlan, meterFor, type PlanId } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
+import { prisma } from "@/lib/db/prisma";
+import { consume } from "@/lib/entitlement/entitlement";
+
+/**
+ * Consume one refine for this run — but only once, and only when a provider
+ * call actually succeeds. The run id (from the signed token) is claimed in an
+ * idempotency ledger; the first success claims it and spends the credit, so a
+ * two-column compare costs exactly one and a fully-failed run costs nothing.
+ * Best-effort: a counter write failure never blocks the user's result.
+ */
+async function consumeRefineOnce(payload: { u: string | null; plan: PlanId; r: string }) {
+  const { u: userId, plan, r: runId } = payload;
+  if (!userId || !runId) return; // anonymous/legacy token — not metered here
+  if (meterFor(plan, "refine").cap === null) return; // unlimited plan — not metered
+  try {
+    const claim = await prisma.consumedRefineRun.createMany({
+      data: [{ runId, userId }],
+      skipDuplicates: true,
+    });
+    if (claim.count === 1) {
+      await consume(userId, "refine", plan);
+    }
+  } catch {
+    // Swallow: under-counting on a transient DB error is acceptable; never fail
+    // the response the user already paid for with a successful model call.
+  }
+}
 
 export const runtime = "nodejs";
 
@@ -101,6 +128,8 @@ export async function POST(req: Request) {
         { status: 200 }
       );
     }
+    // Success: consume the refine (once per run, metered plans only).
+    await consumeRefineOnce(check.payload!);
     return NextResponse.json({ ok: true, provider, model, raw: out.content } as RefineResponse, { status: 200 });
   } catch (e) {
     return NextResponse.json(
