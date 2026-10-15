@@ -24,7 +24,6 @@ import {
   refineCap,
 } from "@/lib/plan/plan";
 import {
-  consume,
   getEntitlementSummary,
   getPlanId,
   getUsed,
@@ -106,15 +105,13 @@ export async function authorizeRefineRun(selections: RunSelection[]): Promise<Au
     return blocked("Refine limit reached", capGate.reason ?? "Upgrade for more refines.");
   }
 
-  // Consume one refine (signed-in users only, and only when the plan meters
-  // refines — unlimited plans aren't counted) then mint the run token.
-  let newUsed = usedThisMonth;
-  if (userId && cap !== null) {
-    newUsed = await consume(userId, "refine", plan);
-  }
-
+  // Note: the refine is NOT consumed here. The run token carries a unique run
+  // id, and /api/ai/refine consumes exactly one refine on the FIRST successful
+  // provider call for that run — so a run where every assistant errors costs
+  // nothing ("only successful actions decrement"). usedThisMonth is the pre-run
+  // count; the client refreshes it once the run settles.
   const token = signRunToken({ userId, plan, providers });
-  return { ok: true, token, signedIn, plan, usedThisMonth: newUsed, cap };
+  return { ok: true, token, signedIn, plan, usedThisMonth, cap };
 }
 
 /** Read the signed-in user's server-truth plan + usage (client mirror source). */

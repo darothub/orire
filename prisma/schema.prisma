@@ -29,6 +29,7 @@ model User {
   exportEvents ExportEvent[]
   entitlement Entitlement?
   usage       UsageCounter[]
+  consumedRefineRuns ConsumedRefineRun[]
   ownedTeams      Team[]       @relation("TeamOwner")
   teamMemberships TeamMember[]
   passwordResetTokens PasswordResetToken[]
@@ -181,6 +182,21 @@ model UsageCounter {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, metric, period])
+  @@index([userId])
+}
+
+/// Idempotency ledger for refine consumption. A run's credit is consumed by the
+/// FIRST successful provider call that claims the run id here, so a two-column
+/// compare costs exactly one refine and a fully-failed run (AI error) costs
+/// nothing — "only successful actions decrement". Keyed by the run nonce in the
+/// signed run token.
+model ConsumedRefineRun {
+  runId     String   @id
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
 }
 
