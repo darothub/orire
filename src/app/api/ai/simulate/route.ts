@@ -15,6 +15,8 @@ import { routeTask } from "@/lib/ai/server/providerRouter";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
+import { getPlanId, getUsed, consume, refund } from "@/lib/entitlement/entitlement";
+import { withinCap, meterFor } from "@/lib/plan/plan";
 
 export const runtime = "nodejs";
 
@@ -55,7 +57,26 @@ export async function POST(req: Request) {
     return NextResponse.json(fail(provider, "Missing job description."), { status: 400 });
   }
 
+  // Usage gate: Free gets a lifetime simulate; paid plans are unlimited. The
+  // count is server-authoritative (UsageCounter), so it can't be reset from the
+  // client. Enforced here because this route is the only path to the managed key.
+  const { userId } = gate;
+  const plan = await getPlanId(userId);
+  const used = await getUsed(userId, "simulate", plan);
+  const capGate = withinCap(plan, "simulate", used);
+  if (!capGate.allowed) {
+    return NextResponse.json(
+      fail(provider, capGate.reason ?? "You’ve used your free simulation. Upgrade to Pro to simulate more.", 402),
+      { status: 200 }
+    );
+  }
+  const metered = meterFor(plan, "simulate").cap !== null;
+
   const user = buildSimulatePrompt(body.jobDescription!);
+
+  // Consume up-front so concurrent requests can't both slip past the cap, then
+  // refund if the run fails — only a successful simulation spends the credit.
+  if (metered) await consume(userId, "simulate", plan);
 
   try {
     const out = await runProvider({
@@ -67,6 +88,7 @@ export async function POST(req: Request) {
       opts: DETERMINISTIC,
     });
     if (!out.ok) {
+      if (metered) await refund(userId, "simulate", plan);
       return NextResponse.json(
         { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,
         { status: 200 }
@@ -74,6 +96,7 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ ok: true, provider, model, raw: out.content } as RefineResponse, { status: 200 });
   } catch (e) {
+    if (metered) await refund(userId, "simulate", plan);
     return NextResponse.json(
       { ok: false, provider, model, error: { provider, message: (e as Error).message } } as RefineResponse,
       { status: 200 }
