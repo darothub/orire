@@ -956,6 +956,22 @@ body {
   z-index: 2;
   border: 1.5px solid var(--panel);
 }
+/* Exhausted free feature: greyed until upgrade (keeps the lock legible). */
+.rail-item.is-locked {
+  opacity: 0.5;
+}
+.rail-item.is-locked:hover {
+  opacity: 0.68;
+  transform: none;
+}
+.rail-lock {
+  position: absolute;
+  top: 6px;
+  right: 9px;
+  font-size: 9px;
+  line-height: 1;
+  z-index: 2;
+}
 .rail-badge.warn { background: var(--accent-3); }
 .rail-badge.busy {
   background: var(--accent);

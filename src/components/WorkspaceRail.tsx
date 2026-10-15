@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { useRefineStore } from "@/lib/store/refineStore";
+import { useUsageStore } from "@/lib/store/usageStore";
+import type { Metric } from "@/lib/plan/plan";
 import { BrandMark } from "@/components/BrandMark";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { useRunStore } from "@/lib/store/runStore";
@@ -16,18 +18,30 @@ type Badge = "warn" | "busy" | null;
 const PRIMARY: WorkspaceView[] = ["edit", "rebrand", "refine", "target", "cover", "export", "history", "rate", "plans"];
 const FOOTER: WorkspaceView[] = ["profile", "connect"];
 
+// Rail items backed by a metered action — greyed out when its free cap is spent.
+const METRIC_FOR_VIEW: Partial<Record<WorkspaceView, Metric>> = {
+  refine: "refine",
+  target: "simulate",
+  export: "download",
+};
+
 function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
+  const metric = METRIC_FOR_VIEW[item];
+  const locked = useUsageStore((s) => (metric ? s.exhausted(metric) : false));
   const meta = VIEW_META[item];
   const active = view === item;
+  const hint = locked ? "Free limit reached — upgrade to Pro to keep using this." : meta.hint;
   return (
-    <Tooltip title={meta.label} hint={meta.hint} placement="right">
+    <Tooltip title={meta.label} hint={hint} placement="right">
       <button
-        className={`rail-item ${active ? "is-active" : ""}`}
+        className={`rail-item ${active ? "is-active" : ""} ${locked ? "is-locked" : ""}`}
         data-tour={`rail-${item}`}
-        onClick={() => setView(item)}
-        aria-label={meta.label}
+        // When locked, the click routes to Plans (the upgrade path) rather than
+        // the spent feature.
+        onClick={() => setView(locked ? "plans" : item)}
+        aria-label={locked ? `${meta.label} — free limit reached, upgrade to continue` : meta.label}
         aria-current={active ? "page" : undefined}
       >
         {active && (
@@ -39,7 +53,8 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
         )}
         <span className="rail-icon" aria-hidden>{meta.icon}</span>
         <span className="rail-label">{meta.label}</span>
-        {badge && <span className={`rail-badge ${badge}`} aria-hidden />}
+        {locked && <span className="rail-lock" aria-hidden>🔒</span>}
+        {badge && !locked && <span className={`rail-badge ${badge}`} aria-hidden />}
       </button>
     </Tooltip>
   );
