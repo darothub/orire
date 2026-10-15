@@ -13,7 +13,7 @@ import {
 } from "@/lib/store/styleStore";
 import { getTemplate } from "@/components/templates/registry";
 import { exportCVtoPDF } from "@/lib/export/pdf";
-import { recordExport } from "@/app/actions/activity";
+import { recordExport, authorizeExport } from "@/app/actions/activity";
 import { useWriteGate } from "@/lib/store/accountStore";
 
 const ALIGNS: { id: CVAlign; label: string; icon: string }[] = [
@@ -52,9 +52,26 @@ export function ExportView() {
       setMsg({ kind: "err", text: gate.reason ?? "Verify your email to download." });
       return;
     }
+    // Pre-check before spending a download: the only realistic build failure is
+    // a missing live CV node, so catch it here rather than burn a credit on it.
+    if (typeof document !== "undefined" && !document.getElementById("cv-paper")) {
+      setMsg({ kind: "err", text: "Couldn’t find the live CV to export. Try again." });
+      return;
+    }
     setBusy(true);
     setMsg(null);
     try {
+      // Server-authorized download gate (Free is capped; paid unlimited). This
+      // consumes the credit atomically before we build, so the cap can't be
+      // bypassed; over the limit returns an upgrade prompt.
+      const authz = await authorizeExport();
+      if (!authz.ok) {
+        setMsg({
+          kind: "err",
+          text: authz.block ? `${authz.block.title} — ${authz.block.body}` : "Downloads aren’t available right now.",
+        });
+        return;
+      }
       const ok = await exportCVtoPDF(mode, fileName || defaultName, cv);
       if (!ok) {
         setMsg({ kind: "err", text: "Couldn’t find the live CV to export. Try again." });
