@@ -4,7 +4,9 @@ import {
   modelAllowedOnPlan,
   providerCountAllowed,
   providerAllowedOnPlan,
-  withinMonthlyCap,
+  withinCap,
+  refineCap,
+  meterFor,
   nextPlan,
 } from "@/lib/plan/plan";
 
@@ -63,13 +65,54 @@ describe("providerCountAllowed", () => {
   });
 });
 
-describe("withinMonthlyCap", () => {
-  it("enforces the free cap", () => {
-    expect(withinMonthlyCap("free", 2).allowed).toBe(true);
-    expect(withinMonthlyCap("free", 3).allowed).toBe(false);
+describe("meterFor / plan meters", () => {
+  it("free is lifetime-capped on every metric (3/1/3)", () => {
+    expect(meterFor("free", "refine")).toEqual({ cap: 3, scope: "lifetime" });
+    expect(meterFor("free", "simulate")).toEqual({ cap: 1, scope: "lifetime" });
+    expect(meterFor("free", "download")).toEqual({ cap: 3, scope: "lifetime" });
   });
-  it("treats null cap as unlimited", () => {
-    expect(withinMonthlyCap("career", 9999).allowed).toBe(true);
+  it("pro caps refine monthly at 30, unlimited elsewhere", () => {
+    expect(meterFor("pro", "refine")).toEqual({ cap: 30, scope: "monthly" });
+    expect(meterFor("pro", "simulate").cap).toBeNull();
+    expect(meterFor("pro", "download").cap).toBeNull();
+  });
+  it("career is unlimited across the board", () => {
+    expect(meterFor("career", "refine").cap).toBeNull();
+    expect(meterFor("career", "simulate").cap).toBeNull();
+    expect(meterFor("career", "download").cap).toBeNull();
+  });
+  it("refineCap reflects the refine cap", () => {
+    expect(refineCap("free")).toBe(3);
+    expect(refineCap("pro")).toBe(30);
+    expect(refineCap("career")).toBeNull();
+  });
+});
+
+describe("withinCap", () => {
+  it("enforces the free lifetime refine cap (3)", () => {
+    expect(withinCap("free", "refine", 2).allowed).toBe(true);
+    expect(withinCap("free", "refine", 3).allowed).toBe(false);
+  });
+  it("enforces the free simulate cap (1)", () => {
+    expect(withinCap("free", "simulate", 0).allowed).toBe(true);
+    expect(withinCap("free", "simulate", 1).allowed).toBe(false);
+  });
+  it("enforces the free download cap (3)", () => {
+    expect(withinCap("free", "download", 3).allowed).toBe(false);
+  });
+  it("enforces the pro monthly refine cap (30) and says 'this month'", () => {
+    expect(withinCap("pro", "refine", 29).allowed).toBe(true);
+    const gate = withinCap("pro", "refine", 30);
+    expect(gate.allowed).toBe(false);
+    expect(gate.reason).toContain("this month");
+  });
+  it("treats unlimited (null cap) as always allowed", () => {
+    expect(withinCap("career", "refine", 9999).allowed).toBe(true);
+    expect(withinCap("pro", "download", 9999).allowed).toBe(true);
+  });
+  it("lifetime cap copy does not say 'this month'", () => {
+    const gate = withinCap("free", "refine", 3);
+    expect(gate.reason).not.toContain("this month");
   });
 });
 

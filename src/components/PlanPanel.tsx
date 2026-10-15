@@ -20,7 +20,7 @@ import { subscriptionLine, formatBillingDate } from "@/lib/billing/summary";
 import { canEmbedCheckout } from "@/lib/billing/stripe-client";
 import { CheckoutModal } from "@/components/CheckoutModal";
 import { UpdateCardModal } from "@/components/billing/UpdateCardModal";
-import { PLANS, PLAN_ORDER, type PlanId } from "@/lib/plan/plan";
+import { PLANS, PLAN_ORDER, refineCap, type PlanId } from "@/lib/plan/plan";
 
 /**
  * Plan / subscription panel.
@@ -69,8 +69,7 @@ export function PlanPanel() {
     }
   }, [focus, clearFocus]);
 
-  const active = PLANS[plan];
-  const cap = active.monthlyRefines;
+  const cap = refineCap(plan);
   const pctUsed = cap ? Math.min(100, Math.round((used / cap) * 100)) : 0;
   const useStripe = signedIn && billing?.configured === true;
   const subLine = billing ? subscriptionLine(billing) : null;

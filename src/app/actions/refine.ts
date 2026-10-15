@@ -18,16 +18,16 @@ import { devLoginEnabled } from "@/lib/dev/devAccess";
 import type { ProviderId } from "@/lib/ai/types";
 import type { PlanId } from "@/lib/plan/plan";
 import {
-  PLANS,
   providerCountAllowed,
-  withinMonthlyCap,
+  withinCap,
   providerAllowedOnPlan,
+  refineCap,
 } from "@/lib/plan/plan";
 import {
-  consumeMonthlyRefine,
+  consume,
   getEntitlementSummary,
   getPlanId,
-  getUsedThisMonth,
+  getUsed,
   setPlanId,
 } from "@/lib/entitlement/entitlement";
 import { signRunToken } from "@/lib/plan/runToken";
@@ -62,8 +62,8 @@ export async function authorizeRefineRun(selections: RunSelection[]): Promise<Au
   const signedIn = Boolean(userId);
 
   const plan: PlanId = userId ? await getPlanId(userId) : "free";
-  const usedThisMonth = userId ? await getUsedThisMonth(userId) : 0;
-  const cap = PLANS[plan].monthlyRefines;
+  const usedThisMonth = userId ? await getUsed(userId, "refine", plan) : 0;
+  const cap = refineCap(plan);
 
   const providers = selections.map((s) => s.provider);
   const blocked = (title: string, body: string): AuthorizeResult => ({
@@ -101,15 +101,16 @@ export async function authorizeRefineRun(selections: RunSelection[]): Promise<Au
     }
   }
 
-  const capGate = withinMonthlyCap(plan, usedThisMonth);
+  const capGate = withinCap(plan, "refine", usedThisMonth);
   if (!capGate.allowed) {
-    return blocked("Monthly limit reached", capGate.reason ?? "Upgrade for more refines.");
+    return blocked("Refine limit reached", capGate.reason ?? "Upgrade for more refines.");
   }
 
-  // Consume one refine (signed-in users only) then mint the run token.
+  // Consume one refine (signed-in users only, and only when the plan meters
+  // refines — unlimited plans aren't counted) then mint the run token.
   let newUsed = usedThisMonth;
-  if (userId) {
-    newUsed = await consumeMonthlyRefine(userId);
+  if (userId && cap !== null) {
+    newUsed = await consume(userId, "refine", plan);
   }
 
   const token = signRunToken({ userId, plan, providers });
@@ -121,16 +122,14 @@ export async function readEntitlement(): Promise<AuthorizeResult | null> {
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (!userId) return null;
-  const [plan, usedThisMonth] = await Promise.all([
-    getPlanId(userId),
-    getUsedThisMonth(userId),
-  ]);
+  const plan = await getPlanId(userId);
+  const usedThisMonth = await getUsed(userId, "refine", plan);
   return {
     ok: true,
     signedIn: true,
     plan,
     usedThisMonth,
-    cap: PLANS[plan].monthlyRefines,
+    cap: refineCap(plan),
   };
 }
 

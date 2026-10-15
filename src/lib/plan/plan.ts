@@ -14,6 +14,21 @@ import type { ProviderId } from "@/lib/ai/types";
 
 export type PlanId = "free" | "pro" | "career";
 
+/** A metered action — one unit of spend/quota on orire's managed keys. */
+export type Metric = "refine" | "simulate" | "download";
+
+/**
+ * How a metric is capped for a plan.
+ * - `scope: "lifetime"` — the cap is a lifetime total that never resets
+ *   (the whole point of the Free tier; survives cache-clear / CV deletion).
+ * - `scope: "monthly"` — the cap refreshes each calendar month (Pro refine).
+ * - `cap: null` — unlimited; the action is not metered at all.
+ */
+export interface MeterRule {
+  cap: number | null;
+  scope: "lifetime" | "monthly";
+}
+
 /** Rough cost/quality tier of a model, used to gate premium usage per plan. */
 export type ModelTier = "budget" | "mid" | "premium";
 
@@ -27,8 +42,6 @@ export interface Plan {
   maxProviders: number;
   /** Whether the LLM-judge compare flow is available at all. */
   allowCompare: boolean;
-  /** Monthly refine/compare runs; null = effectively unlimited (fair-use). */
-  monthlyRefines: number | null;
   /** Model tiers this plan may run (on orire's managed keys). */
   includedTiers: ModelTier[];
   /** Headline entitlements for the plan card. */
@@ -43,7 +56,6 @@ export const PLANS: Record<PlanId, Plan> = {
     blurb: "Try the rebrand + a taste of matching.",
     maxProviders: 1,
     allowCompare: false,
-    monthlyRefines: 3,
     includedTiers: ["budget"],
     perks: ["All 25 templates", "3 AI refines to try it", "Single assistant", "Clean PDF export"],
   },
@@ -54,7 +66,6 @@ export const PLANS: Record<PlanId, Plan> = {
     blurb: "For an active job hunt.",
     maxProviders: 2,
     allowCompare: true,
-    monthlyRefines: 30,
     includedTiers: ["budget", "mid"],
     perks: ["All 25 templates", "30 refines / mo", "Compare 2 + judge", "Cover letters", "Clean PDF, all page modes"],
   },
@@ -65,11 +76,46 @@ export const PLANS: Record<PlanId, Plan> = {
     blurb: "For power switchers.",
     maxProviders: 3,
     allowCompare: true,
-    monthlyRefines: null,
     includedTiers: ["budget", "mid", "premium"],
     perks: ["Unlimited refines (fair-use)", "Premium models included", "Parallel compare + judge", "JD simulation", "Company history"],
   },
 };
+
+/**
+ * Per-(plan, metric) usage rules — the single source of truth for every cap.
+ *
+ * Free is capped lifetime (never resets) on all three actions. Pro keeps a
+ * monthly refine cap (cost control on managed keys) but is otherwise unlimited.
+ * Career is unlimited across the board. A `null` cap means the action is not
+ * metered for that plan.
+ */
+export const PLAN_METERS: Record<PlanId, Record<Metric, MeterRule>> = {
+  free: {
+    refine: { cap: 3, scope: "lifetime" },
+    simulate: { cap: 1, scope: "lifetime" },
+    download: { cap: 3, scope: "lifetime" },
+  },
+  pro: {
+    refine: { cap: 30, scope: "monthly" },
+    simulate: { cap: null, scope: "lifetime" },
+    download: { cap: null, scope: "lifetime" },
+  },
+  career: {
+    refine: { cap: null, scope: "lifetime" },
+    simulate: { cap: null, scope: "lifetime" },
+    download: { cap: null, scope: "lifetime" },
+  },
+};
+
+/** The usage rule for a plan + metric. */
+export function meterFor(planId: PlanId, metric: Metric): MeterRule {
+  return PLAN_METERS[planId][metric];
+}
+
+/** Convenience: the refine cap for a plan (null = unlimited). */
+export function refineCap(planId: PlanId): number | null {
+  return PLAN_METERS[planId].refine.cap;
+}
 
 export const PLAN_ORDER: PlanId[] = ["free", "pro", "career"];
 
@@ -160,14 +206,27 @@ export function providerAllowedOnPlan(planId: PlanId, provider: ProviderId): Run
   return { allowed: true };
 }
 
-/** Whether another refine run is within the monthly cap. */
-export function withinMonthlyCap(planId: PlanId, usedThisMonth: number): RunAllowance {
-  const cap = PLANS[planId].monthlyRefines;
+/** Plain-language plural for a metric, used in cap/upsell copy. */
+function metricNoun(metric: Metric): string {
+  return metric === "refine" ? "refines" : metric === "simulate" ? "simulations" : "downloads";
+}
+
+/**
+ * Whether another unit of `metric` is within the plan's cap, given how many are
+ * already used in the active period. Unlimited (cap null) is always allowed.
+ * The reason copy adapts to the scope ("…this month" for monthly caps).
+ */
+export function withinCap(planId: PlanId, metric: Metric, used: number): RunAllowance {
+  const { cap, scope } = meterFor(planId, metric);
   if (cap === null) return { allowed: true };
-  if (usedThisMonth >= cap) {
+  if (used >= cap) {
     const next = nextPlan(planId);
     const upsell = next ? `Upgrade to ${next.label} for more.` : "Upgrade for more.";
-    return { allowed: false, reason: `You’ve used all ${cap} refines on ${PLANS[planId].label} this month. ${upsell}` };
+    const when = scope === "monthly" ? " this month" : "";
+    return {
+      allowed: false,
+      reason: `You’ve used all ${cap} ${metricNoun(metric)}${when} on ${PLANS[planId].label}. ${upsell}`,
+    };
   }
   return { allowed: true };
 }

@@ -5,16 +5,17 @@
  * and monthly refine count, which meant devtools could unlock paid capability.
  * These helpers move that truth into Postgres:
  *
- *   - Entitlement.plan      → the user's plan (defaults to "free" when absent)
- *   - UsageCounter (month)  → the enforceable monthly refine count
+ *   - Entitlement.plan              → the user's plan (defaults to "free")
+ *   - UsageCounter (metric, period) → the enforceable usage count per action,
+ *     where period is "lifetime" (Free) or "YYYY-MM" (Pro refine)
  *
- * Consumption is atomic: `consumeMonthlyRefine` upserts + increments in one
- * round-trip so concurrent runs can't slip past the cap.
+ * Consumption is atomic: `consume` upserts + increments in one round-trip so
+ * concurrent runs can't slip past the cap.
  */
 
 import { prisma } from "@/lib/db/prisma";
-import type { PlanId } from "@/lib/plan/plan";
-import { PLANS } from "@/lib/plan/plan";
+import type { PlanId, Metric } from "@/lib/plan/plan";
+import { meterFor, refineCap } from "@/lib/plan/plan";
 
 const PLAN_IDS = new Set<string>(["free", "pro", "career"]);
 
@@ -30,14 +31,57 @@ export async function getPlanId(userId: string): Promise<PlanId> {
   return (PLAN_IDS.has(plan) ? plan : "free") as PlanId;
 }
 
-/** Read this month's refine count (0 when no counter row exists yet). */
-export async function getUsedThisMonth(userId: string): Promise<number> {
-  const row = await prisma.usageCounter.findUnique({
-    where: { userId_month: { userId, month: currentMonth() } },
-  });
-  return row?.refinesUsed ?? 0;
+/**
+ * The storage period for a (plan, metric): the current month for monthly-scoped
+ * caps (e.g. Pro refine), else the constant "lifetime" for never-resetting caps.
+ * This is what makes a lifetime cap survive forever and a monthly cap refresh.
+ */
+export function periodFor(plan: PlanId, metric: Metric, now: Date = new Date()): string {
+  return meterFor(plan, metric).scope === "monthly" ? currentMonth(now) : "lifetime";
 }
 
+/** Read how many of `metric` the user has used in the plan's active period. */
+export async function getUsed(userId: string, metric: Metric, plan: PlanId): Promise<number> {
+  const period = periodFor(plan, metric);
+  const row = await prisma.usageCounter.findUnique({
+    where: { userId_metric_period: { userId, metric, period } },
+  });
+  return row?.count ?? 0;
+}
+
+/**
+ * Atomically consume one unit of `metric` in the plan's active period and
+ * return the new count. The upsert makes the first use create the row, so
+ * concurrent runs can't slip past the cap.
+ */
+export async function consume(userId: string, metric: Metric, plan: PlanId): Promise<number> {
+  const period = periodFor(plan, metric);
+  const row = await prisma.usageCounter.upsert({
+    where: { userId_metric_period: { userId, metric, period } },
+    create: { userId, metric, period, count: 1 },
+    update: { count: { increment: 1 } },
+  });
+  return row.count;
+}
+
+/** Refund one unit of `metric` (floors at 0). For when a metered run fails. */
+export async function refund(userId: string, metric: Metric, plan: PlanId): Promise<void> {
+  const period = periodFor(plan, metric);
+  const row = await prisma.usageCounter.findUnique({
+    where: { userId_metric_period: { userId, metric, period } },
+  });
+  if (row && row.count > 0) {
+    await prisma.usageCounter.update({
+      where: { userId_metric_period: { userId, metric, period } },
+      data: { count: { decrement: 1 } },
+    });
+  }
+}
+
+/**
+ * Refine-shaped entitlement summary, kept for the client mirror / profile which
+ * currently surface the refine counter. (E2 widens this to all metrics.)
+ */
 export interface EntitlementSummary {
   plan: PlanId;
   usedThisMonth: number;
@@ -45,36 +89,9 @@ export interface EntitlementSummary {
 }
 
 export async function getEntitlementSummary(userId: string): Promise<EntitlementSummary> {
-  const [plan, usedThisMonth] = await Promise.all([getPlanId(userId), getUsedThisMonth(userId)]);
-  return { plan, usedThisMonth, cap: PLANS[plan].monthlyRefines };
-}
-
-/**
- * Atomically consume one refine for the current month and return the new count.
- * Uses an upsert so the first run of a month creates the row.
- */
-export async function consumeMonthlyRefine(userId: string): Promise<number> {
-  const month = currentMonth();
-  const row = await prisma.usageCounter.upsert({
-    where: { userId_month: { userId, month } },
-    create: { userId, month, refinesUsed: 1 },
-    update: { refinesUsed: { increment: 1 } },
-  });
-  return row.refinesUsed;
-}
-
-/** Refund one refine (e.g. when a run fails before any provider is called). */
-export async function refundMonthlyRefine(userId: string): Promise<void> {
-  const month = currentMonth();
-  const row = await prisma.usageCounter.findUnique({
-    where: { userId_month: { userId, month } },
-  });
-  if (row && row.refinesUsed > 0) {
-    await prisma.usageCounter.update({
-      where: { userId_month: { userId, month } },
-      data: { refinesUsed: { decrement: 1 } },
-    });
-  }
+  const plan = await getPlanId(userId);
+  const usedThisMonth = await getUsed(userId, "refine", plan);
+  return { plan, usedThisMonth, cap: refineCap(plan) };
 }
 
 /** Dev-only plan change (until Stripe/B2 owns this). Validates the plan id. */
