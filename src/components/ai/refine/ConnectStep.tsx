@@ -20,7 +20,7 @@ export function ConnectStep({ onNext }: { onNext: () => void }) {
             ? "Select at least one assistant to continue."
             : runProviders.length === 1
               ? "1 assistant — single tailored pass."
-              : "2 assistants — parallel compare + judge."}
+              : "2 assistants — parallel compare + pick the best."}
         </span>
         <button className="flow-btn primary" onClick={onNext} disabled={!ready}>Continue</button>
       </div>

@@ -14,6 +14,8 @@ import { routeTask } from "@/lib/ai/server/providerRouter";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
+import { getPlanId } from "@/lib/entitlement/entitlement";
+import { PLANS } from "@/lib/plan/plan";
 
 export const runtime = "nodejs";
 
@@ -47,6 +49,16 @@ export async function POST(req: Request) {
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
   const gate = await requireVerifiedUser();
   if (!gate.ok) return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
+  // "Help me pick the best" is a paid feature (it rides on the compare flow,
+  // which is Pro+). Enforce it here too so a direct call can't spend the
+  // managed key on a Free account.
+  const plan = await getPlanId(gate.userId);
+  if (!PLANS[plan].allowCompare) {
+    return NextResponse.json(
+      fail(provider, "Picking the best version is a Pro feature. Upgrade to Pro to compare and pick the best.", 402),
+      { status: 200 },
+    );
+  }
   const apiKey = serverKeyFor(provider);
   if (!apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });

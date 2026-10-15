@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 
+/**
+ * "Help me pick the best" — Orire evaluates the compared CV versions and picks
+ * the strongest for the job, with a plain-language reason. The assistant doing
+ * the evaluation runs server-side on a fixed managed key and is intentionally
+ * not surfaced in the UI; only the winning *version* (one of the user's own
+ * compared results) and the rationale are shown.
+ */
 export function JudgeBlock() {
   const cols = useRefineStore((s) => s.cols);
   const runProviders = useRefineStore((s) => s.runProviders);
-  const judgeProvider = useRefineStore((s) => s.judgeProvider);
-  const setJudgeProvider = useRefineStore((s) => s.setJudgeProvider);
   const judgePhase = useRefineStore((s) => s.judgePhase);
   const verdict = useRefineStore((s) => s.verdict);
   const judgeErr = useRefineStore((s) => s.judgeErr);
@@ -23,17 +27,6 @@ export function JudgeBlock() {
   const setView = useViewStore((s) => s.setView);
 
   const done = runProviders.filter((p) => cols[p].phase === "done" && cols[p].result);
-
-  const eligible = runProviders;
-  // Keep the stored judge provider in sync with what the dropdown can show:
-  // the default ("openai") may not be connected, which would make the first
-  // "Judge results" click fail even though a valid provider appears selected.
-  useEffect(() => {
-    if (eligible.length > 0 && !eligible.includes(judgeProvider)) {
-      setJudgeProvider(eligible[0]);
-    }
-  }, [eligible, judgeProvider, setJudgeProvider]);
-
   if (done.length < 2) return null;
 
   const applyWinner = () => {
@@ -47,18 +40,13 @@ export function JudgeBlock() {
     <div className="cmp-judge">
       {judgePhase === "idle" && (
         <div className="cmp-judge-bar">
-          <span className="cmp-judge-label">Let an LLM judge pick the best</span>
+          <span className="cmp-judge-label">Not sure which version is stronger? Let Orire pick the best for you.</span>
           <div className="cmp-judge-controls">
-            <select className="ed-input cmp-judge-sel" value={judgeProvider} onChange={(e) => setJudgeProvider(e.target.value as ProviderId)}>
-              {eligible.map((p) => (
-                <option key={p} value={p}>Judge: {PROVIDERS[p].label}</option>
-              ))}
-            </select>
-            <button className="flow-btn primary" onClick={() => void runJudge()}>Judge results</button>
+            <button className="flow-btn primary" onClick={() => void runJudge()}>Pick the best</button>
           </div>
         </div>
       )}
-      {judgePhase === "running" && <div className="cmp-loading"><span className="cmp-spinner" /> {PROVIDERS[judgeProvider].label} is judging…</div>}
+      {judgePhase === "running" && <div className="cmp-loading"><span className="cmp-spinner" /> Finding the best version…</div>}
       {judgePhase === "error" && judgeErr && (
         <div className="imp-error">
           <strong>{judgeErr.title}{judgeErr.status ? ` (HTTP ${judgeErr.status})` : ""}</strong>
@@ -71,14 +59,13 @@ export function JudgeBlock() {
           <div className="cmp-verdict-head">
             <span className="cmp-trophy" aria-hidden>🏆</span>
             <div>
-              <strong>Winner: {PROVIDERS[verdict.winner as ProviderId]?.label ?? verdict.winner}</strong>
-              <span className="cmp-judged-by">judged by {PROVIDERS[judgeProvider].label}</span>
+              <strong>Best version: {PROVIDERS[verdict.winner as ProviderId]?.label ?? verdict.winner}</strong>
             </div>
           </div>
           {verdict.reasoning && <p className="cmp-reasoning">{verdict.reasoning}</p>}
           {judgeFromCache && (
-            <p className="cmp-cache-note" title="Identical inputs return the same verdict. Use “Run fresh” to re-sample the assistant.">
-              ⦿ Deterministic result — reused from identical inputs.
+            <p className="cmp-cache-note" title="Identical inputs always give the same pick. Use “Run fresh” to re-evaluate.">
+              ⦿ Consistent result — the same inputs always pick the same winner.
             </p>
           )}
           {(() => {
@@ -91,7 +78,7 @@ export function JudgeBlock() {
               <div className={`cmp-verdict-match ${tone}`}>
                 <span className="cvm-icon" aria-hidden>{d > 0 ? "▲" : d < 0 ? "▼" : "="}</span>
                 <span className="cvm-text">
-                  Winner {d > 0 ? "improves" : d < 0 ? "lowers" : "keeps"} JD match{" "}
+                  Best version {d > 0 ? "improves" : d < 0 ? "lowers" : "keeps"} JD match{" "}
                   <b>{baseMatch.score}%</b> → <b>{wm.score}%</b>
                   <span className="cvm-delta"> ({d > 0 ? "+" : ""}{d} pts)</span>
                 </span>
@@ -114,9 +101,9 @@ export function JudgeBlock() {
             ))}
           </div>
           <div className="imp-actions">
-            <button className="flow-btn primary" onClick={applyWinner}>Apply winner</button>
-            <button className="flow-btn ghost" onClick={resetJudge}>Re-judge</button>
-            <button className="flow-btn ghost" onClick={() => void runJudge(true)} title="Re-sample the assistant, ignoring the deterministic cache">Run fresh</button>
+            <button className="flow-btn primary" onClick={applyWinner}>Use this version</button>
+            <button className="flow-btn ghost" onClick={resetJudge}>Pick again</button>
+            <button className="flow-btn ghost" onClick={() => void runJudge(true)} title="Re-evaluate, ignoring the deterministic cache">Run fresh</button>
           </div>
         </motion.div>
       )}
