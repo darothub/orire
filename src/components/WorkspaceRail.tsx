@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Reorder } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { useRefineStore } from "@/lib/store/refineStore";
@@ -75,6 +75,7 @@ export function WorkspaceRail() {
   };
 
   const sequence = useFlowStore((s) => s.sequence);
+  const setSequence = useFlowStore((s) => s.setSequence);
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
 
@@ -82,6 +83,7 @@ export function WorkspaceRail() {
     <nav className="rail" aria-label="Workspaces">
       <button
         className={`rail-brand rail-home${view === "spotlight" ? " is-active" : ""}`}
+        data-tour="rail-home"
         onClick={() => setView("spotlight")}
         title="Home — your building blocks"
         aria-label="Home"
@@ -89,10 +91,15 @@ export function WorkspaceRail() {
       >
         <BrandMark size={26} />
       </button>
-      <div className="rail-group">
+      {/* The flow sequence — drag to reorder (A2). */}
+      <Reorder.Group axis="y" values={sequence} onReorder={setSequence} className="rail-group" as="div">
         {sequence.map((v) => (
-          <RailButton key={v} item={v} badge={badgeFor(v)} />
+          <Reorder.Item key={v} value={v} as="div" className="rail-ritem">
+            <RailButton item={v} badge={badgeFor(v)} />
+          </Reorder.Item>
         ))}
+      </Reorder.Group>
+      <div className="rail-group">
         <Tooltip title="Add blocks" hint="Open your studio to add or remove blocks" placement="right">
           <button className="rail-item rail-add" onClick={() => setView("spotlight")} aria-label="Add blocks">
             <span className="rail-icon" aria-hidden>＋</span>

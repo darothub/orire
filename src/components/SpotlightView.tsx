@@ -55,6 +55,8 @@ function BlockCard({ view }: { view: WorkspaceView }) {
 
 export function SpotlightView() {
   const resetFlow = useFlowStore((s) => s.resetFlow);
+  const coachSeen = useFlowStore((s) => s.coachSeen);
+  const dismissCoach = useFlowStore((s) => s.dismissCoach);
 
   return (
     <motion.div
@@ -72,6 +74,16 @@ export function SpotlightView() {
           </p>
         </div>
       </div>
+
+      {!coachSeen && (
+        <div className="spot-coach" role="note">
+          <span className="spot-coach-text">
+            <strong>Make it yours.</strong> The left panel is your flow — drag blocks to reorder
+            them, and use the cards below (or the <b>＋</b> button) to add or remove blocks.
+          </span>
+          <button type="button" className="flow-btn sm" onClick={dismissCoach}>Got it</button>
+        </div>
+      )}
 
       <div className="spot-grid">
         {COMPOSABLE_BLOCKS.map((v) => (
