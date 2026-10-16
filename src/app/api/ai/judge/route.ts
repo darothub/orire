@@ -10,6 +10,7 @@ import { JUDGE_SYSTEM, buildJudgePrompt, type JudgeCandidate } from "@/lib/ai/ju
 import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { fakeAiEnabled, fakeJudgeVerdict } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { requireVerifiedUser } from "@/lib/auth/guard";
@@ -60,7 +61,7 @@ export async function POST(req: Request) {
     );
   }
   const apiKey = serverKeyFor(provider);
-  if (!apiKey) {
+  if (!fakeAiEnabled() && !apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   const candidates = Array.isArray(body.candidates) ? body.candidates : [];
@@ -74,14 +75,16 @@ export async function POST(req: Request) {
   const user = buildJudgePrompt(body.jobDescription!, candidates);
 
   try {
-    const out = await runProvider({
-      provider,
-      apiKey,
-      model,
-      system: JUDGE_SYSTEM,
-      user,
-      opts: { ...DETERMINISTIC, maxTokens: 2048 },
-    });
+    const out = fakeAiEnabled()
+      ? { ok: true as const, content: fakeJudgeVerdict(candidates) }
+      : await runProvider({
+          provider,
+          apiKey: apiKey ?? "",
+          model,
+          system: JUDGE_SYSTEM,
+          user,
+          opts: { ...DETERMINISTIC, maxTokens: 2048 },
+        });
     if (!out.ok) {
       return NextResponse.json(
         { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,
