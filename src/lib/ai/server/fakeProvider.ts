@@ -1,27 +1,38 @@
 /**
  * orire — DEV-ONLY mock AI provider.
  *
- * When ORIRE_FAKE_AI=1 (and NOT production), the AI routes skip the managed-key
- * HTTPS call and return deterministic, locally-synthesized JSON in the exact
- * shape each task's parser expects. This lets the whole refine → review →
- * library → grade loop — plus compare ("pick the best") and simulate — be
- * exercised in dev with no provider API key and no spend.
+ * Lets every AI feature run locally with no provider API key and no spend. In
+ * a non-production environment the mock serves a task when either:
+ *   - ORIRE_FAKE_AI=1 is set (force the mock even if a key exists — no spend), or
+ *   - the provider has no key configured (keyless dev "just works").
+ * It returns deterministic, locally-synthesized JSON in the exact shape each
+ * task's parser expects.
  *
- * It is NOT a quality model: outputs are obviously synthetic. Refine makes a
- * small, real change (a tailored summary + a rephrased first bullet) so the
- * review diff (#31) has something to show; that rephrase may trip a guardrail
- * note, which conveniently exercises the fact-grounding UI as well.
+ * It is NOT a quality model: outputs are obviously synthetic. Refine/retone make
+ * a small, real change so the review diff (#31) has something to show.
  *
- * Hard-guarded: `fakeAiEnabled()` is false in production regardless of the env
- * var, so this can never serve real traffic.
+ * Hard-guarded: in production the mock is NEVER served, regardless of the env
+ * var — a missing key there still returns the honest "not configured" error.
  */
 
 import type { CVData } from "@/lib/cv/schema";
 import type { JudgeCandidate } from "@/lib/ai/judge";
+import type { ProviderId } from "@/lib/ai/types";
+import { providerConfigured } from "@/lib/ai/server/serverKey";
 
-/** True only in a non-production environment with ORIRE_FAKE_AI=1. */
+/** The explicit force flag (also used to force the mock when keys DO exist). */
 export function fakeAiEnabled(): boolean {
   return process.env.ORIRE_FAKE_AI === "1" && process.env.NODE_ENV !== "production";
+}
+
+/**
+ * Whether to serve the mock for this provider. Never in production; otherwise
+ * when forced by the flag OR when no real key is configured — so a fresh dev
+ * checkout with no keys can exercise every AI flow with zero setup.
+ */
+export function fakeAiFor(provider: ProviderId): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  return process.env.ORIRE_FAKE_AI === "1" || !providerConfigured(provider);
 }
 
 /** A short, human label pulled from the job description for flavour. */
@@ -30,17 +41,10 @@ function roleWord(jd: string): string {
   return (m?.[0] ?? "the role").trim().replace(/\s+/g, " ");
 }
 
-/**
- * Refine patch (see refinePatch.ts): a tailored summary plus a lightly
- * rephrased first-experience bullet. Title is echoed unchanged (kept grounded),
- * so the review diff surfaces the summary and the one bullet.
- */
-export function fakeRefinePatch(cv: CVData, jd: string): string {
-  const role = roleWord(jd);
+/** Shared refine/retone patch builder: tailored summary + rephrased first bullet. */
+function patchJson(cv: CVData, summarySuffix: string): string {
   const patch: Record<string, unknown> = {
-    summary:
-      (cv.basics.summary?.trim() ? `${cv.basics.summary.trim()} ` : "") +
-      `Tailored for ${role}: foregrounding the most relevant experience and measurable impact.`,
+    summary: (cv.basics.summary?.trim() ? `${cv.basics.summary.trim()} ` : "") + summarySuffix,
   };
   if (cv.basics.title?.trim()) patch.title = cv.basics.title.trim();
   const exp0 = cv.experience[0];
@@ -57,7 +61,17 @@ export function fakeRefinePatch(cv: CVData, jd: string): string {
   return JSON.stringify(patch);
 }
 
-/** Judge verdict (see judge.ts): decisive winner = first candidate, descending scores. */
+/** Refine patch (refinePatch.ts). */
+export function fakeRefinePatch(cv: CVData, jd: string): string {
+  return patchJson(cv, `Tailored for ${roleWord(jd)}: foregrounding the most relevant experience and measurable impact.`);
+}
+
+/** Retone patch (retone.ts — same PATCH shape as refine). */
+export function fakeRetonePatch(cv: CVData, toneLabel: string): string {
+  return patchJson(cv, `Rewritten in a ${toneLabel || "clear, professional"} tone, keeping every fact intact.`);
+}
+
+/** Judge verdict (judge.ts): decisive winner = first candidate, descending scores. */
 export function fakeJudgeVerdict(candidates: JudgeCandidate[]): string {
   const scores = candidates.map((c, i) => {
     const base = Math.max(40, 80 - i * 7);
@@ -74,12 +88,11 @@ export function fakeJudgeVerdict(candidates: JudgeCandidate[]): string {
   return JSON.stringify({
     scores,
     winner: candidates[0]?.id ?? "",
-    reasoning:
-      "The versions are close; the first edges ahead on relevance and impact for this role. (Dev mock verdict — not a real model.)",
+    reasoning: "The versions are close; the first edges ahead on relevance and impact for this role. (Dev mock verdict — not a real model.)",
   });
 }
 
-/** Simulated ideal candidate (see simulate.ts coerceSimulatedCV): a small synthetic CV. */
+/** Simulated ideal candidate (simulate.ts coerceSimulatedCV). */
 export function fakeSimulatedCV(jd: string): string {
   const role = roleWord(jd);
   return JSON.stringify({
@@ -107,10 +120,50 @@ export function fakeSimulatedCV(jd: string): string {
         ],
       },
     ],
-    education: [
-      { institution: "State University", degree: "BSc", field: "Computer Science", startDate: "2014", endDate: "2018", details: "" },
-    ],
+    education: [{ institution: "State University", degree: "BSc", field: "Computer Science", startDate: "2014", endDate: "2018", details: "" }],
     skills: [{ category: "Core", items: ["Ownership", "Communication", "Delivery", "Collaboration"] }],
+    projects: [],
+    certifications: [],
+  });
+}
+
+/** Cover letter (coverLetter.ts coerceCoverLetter). */
+export function fakeCoverLetter(cv: CVData, jd: string): string {
+  const role = roleWord(jd);
+  const name = cv.basics.fullName?.trim() || "the candidate";
+  return JSON.stringify({
+    meta: { role, company: "", hiringManager: "" },
+    opening: `I'm writing to express my interest in the ${role} role.`,
+    body: [
+      `My background maps directly onto what this ${role} position needs — I've consistently delivered end-to-end and focused on measurable impact.`,
+      `I'd welcome the chance to bring that to your team. (Dev mock letter for ${name}.)`,
+    ],
+    closing: "Thank you for considering my application; I'd be glad to discuss further.",
+    signoff: "Sincerely,",
+  });
+}
+
+/** Evidence bullet (evidence.ts parseEvidenceBullet → {bullet}). */
+export function fakeEvidenceBullet(input: { action: string; result: string; scale: string; timeframe: string }): string {
+  const parts = [
+    input.action ? input.action.charAt(0).toUpperCase() + input.action.slice(1) : "Delivered the work",
+    input.scale ? `across ${input.scale}` : "",
+    input.result ? `achieving ${input.result}` : "",
+    input.timeframe ? `within ${input.timeframe}` : "",
+  ].filter(Boolean);
+  return JSON.stringify({ bullet: `${parts.join(" ")}.` });
+}
+
+/** Structured CV from raw text (prompt.ts STRUCTURE → parsedCVFromModelJSON). */
+export function fakeStructuredCV(text: string): string {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const fullName = lines[0] ?? "Imported Candidate";
+  const summary = lines.slice(1, 6).join(" ").slice(0, 400);
+  return JSON.stringify({
+    basics: { fullName, title: "", email: "", phone: "", location: "", summary, links: [] },
+    experience: [],
+    education: [],
+    skills: [],
     projects: [],
     certifications: [],
   });

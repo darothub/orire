@@ -10,7 +10,7 @@ import { JUDGE_SYSTEM, buildJudgePrompt, type JudgeCandidate } from "@/lib/ai/ju
 import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
-import { fakeAiEnabled, fakeJudgeVerdict } from "@/lib/ai/server/fakeProvider";
+import { fakeAiFor, fakeJudgeVerdict } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { requireVerifiedUser } from "@/lib/auth/guard";
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     );
   }
   const apiKey = serverKeyFor(provider);
-  if (!fakeAiEnabled() && !apiKey) {
+  if (!fakeAiFor(provider) && !apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   const candidates = Array.isArray(body.candidates) ? body.candidates : [];
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   const user = buildJudgePrompt(body.jobDescription!, candidates);
 
   try {
-    const out = fakeAiEnabled()
+    const out = fakeAiFor(provider)
       ? { ok: true as const, content: fakeJudgeVerdict(candidates) }
       : await runProvider({
           provider,

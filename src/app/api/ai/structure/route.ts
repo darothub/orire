@@ -17,6 +17,7 @@ import { parsedCVFromModelJSON, type ParsedCV } from "@/lib/ingest/parse";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { fakeAiFor, fakeStructuredCV } from "@/lib/ai/server/fakeProvider";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = serverKeyFor(provider);
-  if (!apiKey) {
+  if (!fakeAiFor(provider) && !apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   const model = (body.model ?? "").trim();
@@ -81,14 +82,16 @@ export async function POST(req: Request) {
   const user = buildStructurePrompt(text);
 
   try {
-    const out = await runProvider({
-      provider,
-      apiKey,
-      model,
-      system: STRUCTURE_SYSTEM,
-      user,
-      opts: DETERMINISTIC,
-    });
+    const out = fakeAiFor(provider)
+      ? { ok: true as const, content: fakeStructuredCV(text) }
+      : await runProvider({
+          provider,
+          apiKey: apiKey ?? "",
+          model,
+          system: STRUCTURE_SYSTEM,
+          user,
+          opts: DETERMINISTIC,
+        });
 
     if (!out.ok) {
       return NextResponse.json(

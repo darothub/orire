@@ -11,7 +11,7 @@ import { SIMULATE_SYSTEM, buildSimulatePrompt } from "@/lib/ai/simulate";
 import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
-import { fakeAiEnabled, fakeSimulatedCV } from "@/lib/ai/server/fakeProvider";
+import { fakeAiFor, fakeSimulatedCV } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { requireVerifiedUser } from "@/lib/auth/guard";
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
   const gate = await requireVerifiedUser();
   if (!gate.ok) return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
   const apiKey = serverKeyFor(provider);
-  if (!fakeAiEnabled() && !apiKey) {
+  if (!fakeAiFor(provider) && !apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   if (!(body.jobDescription ?? "").trim()) {
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
   if (metered) await consume(userId, "simulate", plan);
 
   try {
-    const out = fakeAiEnabled()
+    const out = fakeAiFor(provider)
       ? { ok: true as const, content: fakeSimulatedCV(body.jobDescription!) }
       : await runProvider({
           provider,

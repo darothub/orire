@@ -15,6 +15,7 @@ import { COVER_LETTER_SYSTEM, buildCoverLetterPrompt, type CoverLetterTone } fro
 import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { fakeAiFor, fakeCoverLetter } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import type { CVData } from "@/lib/cv/schema";
 import { auth } from "@/lib/auth/auth";
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
   }
 
   const apiKey = serverKeyFor(provider);
-  if (!apiKey) {
+  if (!fakeAiFor(provider) && !apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   if (!body.cv || typeof body.cv !== "object") {
@@ -80,14 +81,16 @@ export async function POST(req: Request) {
   const user = buildCoverLetterPrompt(body.cv, body.jobDescription!, { tone: body.tone });
 
   try {
-    const out = await runProvider({
-      provider,
-      apiKey,
-      model,
-      system: COVER_LETTER_SYSTEM,
-      user,
-      opts: DETERMINISTIC,
-    });
+    const out = fakeAiFor(provider)
+      ? { ok: true as const, content: fakeCoverLetter(body.cv, body.jobDescription!) }
+      : await runProvider({
+          provider,
+          apiKey: apiKey ?? "",
+          model,
+          system: COVER_LETTER_SYSTEM,
+          user,
+          opts: DETERMINISTIC,
+        });
     if (!out.ok) {
       return NextResponse.json(
         { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,
