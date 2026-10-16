@@ -5,18 +5,13 @@ import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useUsageStore } from "@/lib/store/usageStore";
+import { useFlowStore, PINNED_VIEWS } from "@/lib/store/flowStore";
 import type { Metric } from "@/lib/plan/plan";
 import { BrandMark } from "@/components/BrandMark";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { useRunStore } from "@/lib/store/runStore";
 
 type Badge = "warn" | "busy" | null;
-
-// Which workspaces the rail shows and in what order. Labels/hints/icons come
-// from VIEW_META (the single source of truth) — this list owns only ordering
-// and the primary/footer grouping.
-const PRIMARY: WorkspaceView[] = ["edit", "rebrand", "refine", "target", "cover", "export", "history", "rate", "plans"];
-const FOOTER: WorkspaceView[] = ["profile", "connect"];
 
 // Rail items backed by a metered action — greyed out when its free cap is spent.
 const METRIC_FOR_VIEW: Partial<Record<WorkspaceView, Metric>> = {
@@ -79,16 +74,34 @@ export function WorkspaceRail() {
     return null;
   };
 
+  const sequence = useFlowStore((s) => s.sequence);
+  const view = useViewStore((s) => s.view);
+  const setView = useViewStore((s) => s.setView);
+
   return (
     <nav className="rail" aria-label="Workspaces">
-      <div className="rail-brand" aria-hidden><BrandMark size={26} /></div>
+      <button
+        className={`rail-brand rail-home${view === "spotlight" ? " is-active" : ""}`}
+        onClick={() => setView("spotlight")}
+        title="Home — your building blocks"
+        aria-label="Home"
+        aria-current={view === "spotlight" ? "page" : undefined}
+      >
+        <BrandMark size={26} />
+      </button>
       <div className="rail-group">
-        {PRIMARY.map((v) => (
+        {sequence.map((v) => (
           <RailButton key={v} item={v} badge={badgeFor(v)} />
         ))}
+        <Tooltip title="Add blocks" hint="Open your studio to add or remove blocks" placement="right">
+          <button className="rail-item rail-add" onClick={() => setView("spotlight")} aria-label="Add blocks">
+            <span className="rail-icon" aria-hidden>＋</span>
+            <span className="rail-label">Add</span>
+          </button>
+        </Tooltip>
       </div>
       <div className="rail-group rail-foot">
-        {FOOTER.map((v) => (
+        {PINNED_VIEWS.map((v) => (
           <RailButton key={v} item={v} badge={badgeFor(v)} />
         ))}
       </div>

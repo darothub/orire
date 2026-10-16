@@ -9,8 +9,11 @@ import { test as rawTest } from "@playwright/test";
  */
 
 test.describe("app shell & navigation", () => {
-  test("loads the workspace with the live preview rendered", async ({ appPage }) => {
-    // Default view is the two-pane editor; the right pane renders #cv-paper.
+  test("lands on the spotlight, then opens the editor with the live preview", async ({ appPage }) => {
+    // Default view is the building-block spotlight (home).
+    await expect(appPage.getByRole("heading", { name: "Your CV studio", exact: true })).toBeVisible();
+    // Opening Edit shows the two-pane editor; the right pane renders #cv-paper.
+    await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Edit" }).click();
     await expect(appPage.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
     const paper = appPage.locator("#cv-paper");
     await expect(paper).toBeVisible();
@@ -37,6 +40,7 @@ test.describe("app shell & navigation", () => {
 
 test.describe("live editing", () => {
   test("editing a field updates the live preview", async ({ appPage }) => {
+    await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Edit" }).click();
     const paper = appPage.locator("#cv-paper");
     await expect(paper).toContainText("Ada Okonkwo");
 
