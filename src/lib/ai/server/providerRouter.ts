@@ -22,6 +22,29 @@ export interface RouteDecision {
   model: string;
 }
 
+/** Orire's managed default model per provider — the model used when a task is
+ *  routed (or failed over) to that provider on orire's keys. */
+export const MANAGED_MODEL: Record<ProviderId, string> = {
+  openai: "gpt-5-mini",
+  anthropic: "claude-haiku-4-5",
+};
+
+/** The other managed provider — the failover target. */
+export function otherProvider(p: ProviderId): ProviderId {
+  return p === "openai" ? "anthropic" : "openai";
+}
+
+/**
+ * The failover route for a task: the other provider with its managed default
+ * model. Used when the primary provider is unavailable (outage/transient). The
+ * provider is an internal, hidden implementation detail for these auto-routed
+ * tasks, so failing over does not change anything the user chose.
+ */
+export function routeFallback(taskType: AiTaskType): RouteDecision {
+  const to = otherProvider(routeTask(taskType).provider);
+  return { provider: to, model: MANAGED_MODEL[to] };
+}
+
 /**
  * Route an AI task to the optimal provider.
  *

@@ -8,7 +8,8 @@
 import { NextResponse } from "next/server";
 import { JUDGE_SYSTEM, buildJudgePrompt, type JudgeCandidate } from "@/lib/ai/judge";
 import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
-import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
+import { DETERMINISTIC, type ProviderCall } from "@/lib/ai/server/providerCall";
+import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { fakeAiFor, fakeJudgeVerdict } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
@@ -60,8 +61,7 @@ export async function POST(req: Request) {
       { status: 200 },
     );
   }
-  const apiKey = serverKeyFor(provider);
-  if (!fakeAiFor(provider) && !apiKey) {
+  if (!fakeAiFor(provider) && !serverKeyFor("openai") && !serverKeyFor("anthropic")) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   const candidates = Array.isArray(body.candidates) ? body.candidates : [];
@@ -75,23 +75,24 @@ export async function POST(req: Request) {
   const user = buildJudgePrompt(body.jobDescription!, candidates);
 
   try {
-    const out = fakeAiFor(provider)
-      ? { ok: true as const, content: fakeJudgeVerdict(candidates) }
-      : await runProvider({
-          provider,
-          apiKey: apiKey ?? "",
-          model,
-          system: JUDGE_SYSTEM,
-          user,
-          opts: { ...DETERMINISTIC, maxTokens: 2048 },
-        });
+    let out: ProviderCall;
+    let servedProvider = provider;
+    let servedModel = model;
+    if (fakeAiFor(provider)) {
+      out = { ok: true, content: fakeJudgeVerdict(candidates) };
+    } else {
+      const served = await runRoutedWithFailover("judge", { system: JUDGE_SYSTEM, user, opts: { ...DETERMINISTIC, maxTokens: 2048 } });
+      out = served.call;
+      servedProvider = served.provider;
+      servedModel = served.model;
+    }
     if (!out.ok) {
       return NextResponse.json(
-        { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,
+        { ok: false, provider: servedProvider, model: servedModel, error: { provider: servedProvider, status: out.status, message: out.body } } as RefineResponse,
         { status: 200 }
       );
     }
-    return NextResponse.json({ ok: true, provider, model, raw: out.content } as RefineResponse, { status: 200 });
+    return NextResponse.json({ ok: true, provider: servedProvider, model: servedModel, raw: out.content } as RefineResponse, { status: 200 });
   } catch (e) {
     return NextResponse.json(
       { ok: false, provider, model, error: { provider, message: (e as Error).message } } as RefineResponse,

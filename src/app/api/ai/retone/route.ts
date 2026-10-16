@@ -11,7 +11,8 @@
 import { NextResponse } from "next/server";
 import { RETONE_SYSTEM, buildRetonePrompt, type ToneProfile } from "@/lib/ai/retone";
 import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
-import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
+import { DETERMINISTIC, type ProviderCall } from "@/lib/ai/server/providerCall";
+import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { fakeAiFor, fakeRetonePatch } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
@@ -52,8 +53,7 @@ export async function POST(req: Request) {
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
   const gate = await requireVerifiedUser();
   if (!gate.ok) return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
-  const apiKey = serverKeyFor(provider);
-  if (!fakeAiFor(provider) && !apiKey) {
+  if (!fakeAiFor(provider) && !serverKeyFor("openai") && !serverKeyFor("anthropic")) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   if (!body.cv || !Array.isArray(body.cv.experience)) {
@@ -66,23 +66,24 @@ export async function POST(req: Request) {
   const user = buildRetonePrompt(body.cv, body.tone);
 
   try {
-    const out = fakeAiFor(provider)
-      ? { ok: true as const, content: fakeRetonePatch(body.cv, body.tone.label) }
-      : await runProvider({
-          provider,
-          apiKey: apiKey ?? "",
-          model,
-          system: RETONE_SYSTEM,
-          user,
-          opts: DETERMINISTIC,
-        });
+    let out: ProviderCall;
+    let servedProvider = provider;
+    let servedModel = model;
+    if (fakeAiFor(provider)) {
+      out = { ok: true, content: fakeRetonePatch(body.cv, body.tone.label) };
+    } else {
+      const served = await runRoutedWithFailover("retone", { system: RETONE_SYSTEM, user, opts: DETERMINISTIC });
+      out = served.call;
+      servedProvider = served.provider;
+      servedModel = served.model;
+    }
     if (!out.ok) {
       return NextResponse.json(
-        { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,
+        { ok: false, provider: servedProvider, model: servedModel, error: { provider: servedProvider, status: out.status, message: out.body } } as RefineResponse,
         { status: 200 }
       );
     }
-    return NextResponse.json({ ok: true, provider, model, raw: out.content } as RefineResponse, { status: 200 });
+    return NextResponse.json({ ok: true, provider: servedProvider, model: servedModel, raw: out.content } as RefineResponse, { status: 200 });
   } catch (e) {
     return NextResponse.json(
       { ok: false, provider, model, error: { provider, message: (e as Error).message } } as RefineResponse,
