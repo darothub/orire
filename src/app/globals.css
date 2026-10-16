@@ -1074,6 +1074,10 @@ body {
   flex-direction: column;
   gap: 10px;
   padding: 14px;
+  /* Fill the (stretched) grid cell + a baseline height so every card matches,
+     regardless of how many lines its hint wraps to. */
+  height: 100%;
+  min-height: 132px;
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--panel);
@@ -1106,6 +1110,8 @@ body {
 .spot-card-hint { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
 .spot-card-toggle {
   align-self: flex-start;
+  /* Always pin to the bottom so the toggles line up across all cards. */
+  margin-top: auto;
   font-size: 12px;
   font-weight: 600;
   padding: 5px 10px;
