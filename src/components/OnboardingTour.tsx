@@ -23,7 +23,7 @@ const STEPS: Step[] = [
   {
     sel: null,
     title: "Welcome to orire",
-    body: "A 30-second tour of your AI CV builder. Each tool is a building block you arrange into your own flow. You can replay this any time from ⌘K → “Take the tour”.",
+    body: "A 30-second tour of your AI CV studio. Each tool is a building block you arrange into your own flow. You can replay this any time from ⌘K → “Take the tour”.",
     place: "center",
   },
   {

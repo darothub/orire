@@ -19,7 +19,7 @@ export default function PrivacyPage() {
       <h2>1. Who we are</h2>
       <p>
         Orire (&ldquo;Orire&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;,
-        &ldquo;our&rdquo;) is an AI CV builder
+        &ldquo;our&rdquo;) is an AI CV studio
         {COMPANY.legalEntity ? ` operated by ${COMPANY.legalEntity}` : ""}
         {COMPANY.legalEntity && COMPANY.registrationNumber ? `, registered in ${COMPANY.jurisdiction} under number ${COMPANY.registrationNumber}` : ""}
         {COMPANY.legalEntity && COMPANY.address ? `, with registered office at ${COMPANY.address}` : ""}.
