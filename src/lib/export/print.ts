@@ -1,6 +1,6 @@
 "use client";
 
-import type { PageMode } from "@/lib/store/historyStore";
+import type { PageMode } from "@/lib/cv/page";
 
 /** A4 in millimetres. */
 const A4_W_MM = 210;

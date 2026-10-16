@@ -14,7 +14,7 @@ import { PlanPanel } from "@/components/PlanPanel";
 import { RateView } from "@/components/ai/RatingPanel";
 import { TargetView } from "@/components/ai/TargetPanel";
 import { CoverLetterView } from "@/components/ai/CoverLetterView";
-import { HistoryView } from "@/components/HistoryView";
+import { LibraryView } from "@/components/LibraryView";
 import { ProfileView } from "@/components/ProfileView";
 import { ExportView } from "@/components/export/ExportView";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -127,7 +127,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "target" && <TargetView />}
           {view === "cover" && <CoverLetterView />}
           {view === "rate" && <RateView />}
-          {view === "history" && <HistoryView />}
+          {view === "history" && <LibraryView />}
           {view === "export" && <ExportView />}
           {view === "plans" && <PlansView />}
           {view === "connect" && <ConnectView />}

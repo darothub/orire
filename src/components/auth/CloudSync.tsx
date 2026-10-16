@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useCVStore } from "@/lib/store/cvStore";
-import { useHistoryStore } from "@/lib/store/historyStore";
+import { useLibraryStore } from "@/lib/store/libraryStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useSyncStore } from "@/lib/store/syncStore";
@@ -74,7 +74,7 @@ export function CloudSync() {
       useUsageStore.getState().setSummary(null);
       if (was === "authenticated") {
         useCVStore.getState().reset();
-        useHistoryStore.getState().clear();
+        useLibraryStore.getState().clear();
         useSyncStore.getState().setStatus("idle");
       }
     }

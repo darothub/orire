@@ -26,7 +26,7 @@ export const VIEW_META: Record<WorkspaceView, ViewMeta> = {
   target: { label: "Simulate", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
   cover: { label: "Cover", hint: "Write, edit & export a cover letter", icon: "✉" },
   export: { label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },
-  history: { label: "History", hint: "Exported CVs, filed by company", icon: "🗂" },
+  history: { label: "Library", hint: "Your saved CV versions, filed by company", icon: "🗂" },
   rate: { label: "Grade", hint: "Score initial → final", icon: "★" },
   plans: { label: "Plans", hint: "Pricing & what each plan unlocks", icon: "◆" },
   profile: { label: "Profile", hint: "Your activity, rating & plan", icon: "☻" },

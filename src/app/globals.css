@@ -1294,6 +1294,57 @@ body {
 .hist-btn:hover { border-color: var(--accent-2); }
 .hist-btn.danger { padding: 6px 9px; color: var(--muted); }
 .hist-btn.danger:hover { color: var(--accent-3); border-color: var(--accent-3); }
+.hist-btn:disabled { opacity: 0.5; cursor: default; border-color: var(--line); }
+.hist-btn:disabled:hover { border-color: var(--line); }
+
+/* ---------- Version library ---------- */
+.lib-head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.lib-save {
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--surface-faint);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.lib-save-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.lib-save-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.lib-card.active {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface-faint));
+}
+.lib-active-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  vertical-align: middle;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+.lib-card-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.lib-card-edit .ed-input { flex: 1 1 180px; min-width: 0; }
+.lib-card-edit-actions { display: flex; gap: 7px; flex-shrink: 0; }
+@media (max-width: 640px) {
+  .lib-save-row { grid-template-columns: 1fr; }
+}
 
 /* ---------- Export view (typography · layout · save) ---------- */
 .export-view .exp-sec {
