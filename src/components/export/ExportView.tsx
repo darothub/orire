@@ -13,6 +13,7 @@ import {
 } from "@/lib/store/styleStore";
 import { getTemplate } from "@/components/templates/registry";
 import { exportCVtoPDF } from "@/lib/export/pdf";
+import { exportCVtoDocx } from "@/lib/export/docx";
 import { recordExport, authorizeExport } from "@/app/actions/activity";
 import { remainingNote } from "@/lib/plan/plan";
 import { useUsageStore } from "@/lib/store/usageStore";
@@ -45,22 +46,23 @@ export function ExportView() {
   const [fileName, setFileName] = useState(defaultName);
   const [company, setCompany] = useState(lastCompany);
   const [mode, setMode] = useState<PageMode>("paged");
-  const [busy, setBusy] = useState(false);
+  const [busyFormat, setBusyFormat] = useState<"pdf" | "docx" | null>(null);
+  const busy = busyFormat !== null;
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const gate = useWriteGate("download your CV");
 
-  const doExport = async () => {
+  const doExport = async (format: "pdf" | "docx") => {
     if (!gate.guard()) {
       setMsg({ kind: "err", text: gate.reason ?? "Verify your email to download." });
       return;
     }
-    // Pre-check before spending a download: the only realistic build failure is
-    // a missing live CV node, so catch it here rather than burn a credit on it.
-    if (typeof document !== "undefined" && !document.getElementById("cv-paper")) {
+    // PDF rasterises the live DOM, so pre-check it exists before spending a
+    // download. DOCX is built from data, so it has no such dependency.
+    if (format === "pdf" && typeof document !== "undefined" && !document.getElementById("cv-paper")) {
       setMsg({ kind: "err", text: "Couldn’t find the live CV to export. Try again." });
       return;
     }
-    setBusy(true);
+    setBusyFormat(format);
     setMsg(null);
     try {
       // Server-authorized download gate (Free is capped; paid unlimited). This
@@ -74,13 +76,17 @@ export function ExportView() {
         });
         return;
       }
-      const ok = await exportCVtoPDF(mode, fileName || defaultName, cv);
+      const name = fileName.trim() || defaultName;
+      const ok = format === "pdf" ? await exportCVtoPDF(mode, name, cv) : await exportCVtoDocx(name, cv);
       if (!ok) {
-        setMsg({ kind: "err", text: "Couldn’t find the live CV to export. Try again." });
+        setMsg({
+          kind: "err",
+          text: format === "pdf" ? "Couldn’t find the live CV to export. Try again." : "Couldn’t build the Word file. Try again.",
+        });
         return;
       }
       add({
-        fileName: (fileName.trim() || defaultName),
+        fileName: name,
         company: company.trim(),
         person,
         template: active,
@@ -88,18 +94,19 @@ export function ExportView() {
         mode,
         cv,
       });
-      void recordExport({ format: "pdf", template: active, company: company.trim() || null });
+      void recordExport({ format, template: active, company: company.trim() || null });
+      const ext = format === "pdf" ? "pdf" : "docx";
       const left = remainingNote("download", authz.cap, authz.used);
       setMsg({
         kind: "ok",
-        text: `Saved “${(fileName.trim() || defaultName)}.pdf” · filed under ${company.trim() || "Unfiled"} in History.${left ? ` ${left}` : ""}`,
+        text: `Saved “${name}.${ext}” · filed under ${company.trim() || "Unfiled"} in History.${left ? ` ${left}` : ""}`,
       });
       // Keep the ambient usage mirror current so Export greys out on the last one.
       void useUsageStore.getState().refresh();
     } catch (e) {
       setMsg({ kind: "err", text: e instanceof Error ? e.message : String(e) });
     } finally {
-      setBusy(false);
+      setBusyFormat(null);
     }
   };
 
@@ -115,7 +122,7 @@ export function ExportView() {
       <div className="ws-head">
         <div>
           <h2>{VIEW_META.export.label}</h2>
-          <p>Style the CV, pick a page layout, and download a PDF straight from here — the live preview on the right updates as you go.</p>
+          <p>Style the CV, pick a page layout, and download it as a PDF or a Word (.docx) file — the live preview on the right updates as you go. The Word file is a clean, ATS-friendly version built from your content.</p>
         </div>
       </div>
 
@@ -220,8 +227,11 @@ export function ExportView() {
       )}
 
       <div className="exp-actions wide">
-        <button className="flow-btn primary lg" onClick={() => void doExport()} disabled={busy}>
-          {busy ? <><span className="cmp-spinner" /> Building PDF…</> : "Download PDF"}
+        <button className="flow-btn primary lg" onClick={() => void doExport("pdf")} disabled={busy}>
+          {busyFormat === "pdf" ? <><span className="cmp-spinner" /> Building PDF…</> : "Download PDF"}
+        </button>
+        <button className="flow-btn lg" onClick={() => void doExport("docx")} disabled={busy}>
+          {busyFormat === "docx" ? <><span className="cmp-spinner" /> Building Word…</> : "Download Word (.docx)"}
         </button>
       </div>
     </motion.div>
