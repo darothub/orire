@@ -2,7 +2,7 @@
 
 import { toCanvas } from "html-to-image";
 import { jsPDF } from "jspdf";
-import type { PageMode } from "@/lib/store/historyStore";
+import type { PageMode } from "@/lib/cv/page";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToReadableText, encodeOrireKeywords } from "@/lib/export/orireEmbed";
 

@@ -4,14 +4,14 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
-import { useHistoryStore, PAGE_MODES, type PageMode } from "@/lib/store/historyStore";
+import { PAGE_MODES, type PageMode } from "@/lib/cv/page";
+import { useLibraryStore } from "@/lib/store/libraryStore";
 import {
   useStyleStore,
   FONT_OPTIONS,
   SIZE_STEPS,
   type CVAlign,
 } from "@/lib/store/styleStore";
-import { getTemplate } from "@/components/templates/registry";
 import { exportCVtoPDF } from "@/lib/export/pdf";
 import { exportCVtoDocx } from "@/lib/export/docx";
 import { recordExport, authorizeExport } from "@/app/actions/activity";
@@ -27,9 +27,10 @@ const ALIGNS: { id: CVAlign; label: string; icon: string }[] = [
 
 export function ExportView() {
   const cv = useCVStore((s) => s.cv);
+  const baseline = useCVStore((s) => s.baseline);
   const active = useCVStore((s) => s.activeTemplate);
-  const add = useHistoryStore((s) => s.add);
-  const lastCompany = useHistoryStore((s) => s.lastCompany);
+  const saveVersion = useLibraryStore((s) => s.saveVersion);
+  const lastCompany = useLibraryStore((s) => s.lastCompany);
 
   const fontId = useStyleStore((s) => s.fontId);
   const size = useStyleStore((s) => s.size);
@@ -40,7 +41,6 @@ export function ExportView() {
   const resetStyle = useStyleStore((s) => s.resetStyle);
 
   const person = cv.basics.fullName.trim();
-  const tpl = getTemplate(active);
   const defaultName = useMemo(() => (person ? `${person} — CV` : "Orire — CV"), [person]);
 
   const [fileName, setFileName] = useState(defaultName);
@@ -85,14 +85,16 @@ export function ExportView() {
         });
         return;
       }
-      add({
-        fileName: name,
+      // Each export files a version in the library so nothing exported is ever
+      // lost and the user can reopen exactly what they downloaded.
+      saveVersion({
+        name,
         company: company.trim(),
         person,
         template: active,
-        templateName: tpl.name,
-        mode,
         cv,
+        baseline,
+        exported: true,
       });
       void recordExport({ format, template: active, company: company.trim() || null });
       const ext = format === "pdf" ? "pdf" : "docx";
