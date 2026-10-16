@@ -604,8 +604,19 @@
 /* Themed: signature picks up the theme ink/accent naturally. */
 .cl-themed .cl-sign-name { color: var(--name-color, var(--ink)); }
 
+/* The bespoke cover letterheads (aurora / meridian / vertex) don't carry the
+   `.resume` base, so their letter body <p>s have no inherited text colour and
+   fall through to the app theme (invisible on the light page in dark mode).
+   Pin the body to a solid near-black on these light templates. Noir is a dark
+   template and keeps its own light body colour below. */
+.cl-aurora .cl-body,
+.cl-meridian .cl-body,
+.cl-vertex .cl-body {
+  color: #1a1d24;
+}
+
 /* Aurora — editorial light, gradient spine under the name (via .au-header::after). */
-.cl-aurora .cl-sign-name { color: var(--ink); }
+.cl-aurora .cl-sign-name { color: #1a1d24; }
 
 /* Noir — dark luxe; light body text with gold accents. */
 .cl-noir .cl-body { color: #e9e6dd; }
