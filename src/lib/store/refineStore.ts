@@ -80,6 +80,10 @@ interface RefineState {
   /** Which provider's result was last applied to the CV, for an "Applied" confirmation. */
   appliedProvider: ProviderId | null;
 
+  /** Provider whose changes are open in the review-before-apply panel (Story 2:
+   *  AI-edit transparency). null = no review open; the comparison grid shows. */
+  reviewProvider: ProviderId | null;
+
   setStep: (s: RefineStep) => void;
   toggleRunProvider: (p: ProviderId) => void;
 
@@ -87,6 +91,9 @@ interface RefineState {
   runJudge: (force?: boolean) => Promise<void>;
   /** Record that a provider's refined CV was applied to the editor. */
   markApplied: (p: ProviderId) => void;
+  /** Open / close the per-change review panel for a provider's refined CV. */
+  openReview: (p: ProviderId) => void;
+  closeReview: () => void;
   resetRun: () => void;
   /** Dismiss the stale-inputs prompt and keep the existing comparison as-is. */
   keepResults: () => void;
@@ -124,6 +131,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
   usageNote: null,
 
   appliedProvider: null,
+  reviewProvider: null,
 
   // Leaving the Compare step after a run started marks the session "revisited",
   // which is the only condition under which we later offer to re-run.
@@ -293,10 +301,13 @@ export const useRefineStore = create<RefineState>((set, get) => ({
 
   markApplied: (p) => set({ appliedProvider: p }),
 
+  openReview: (p) => set({ reviewProvider: p }),
+  closeReview: () => set({ reviewProvider: null }),
+
   keepResults: () => set({ revisited: false }),
 
   resetRun: () =>
-    set({ started: false, runSig: null, revisited: false, planBlock: null, usageNote: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, appliedProvider: null }),
+    set({ started: false, runSig: null, revisited: false, planBlock: null, usageNote: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, appliedProvider: null, reviewProvider: null }),
 
   resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false }),
 
@@ -317,5 +328,6 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       judgeErr: null,
       judgeFromCache: false,
       appliedProvider: null,
+      reviewProvider: null,
     }),
 }));

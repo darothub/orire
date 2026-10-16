@@ -11,6 +11,7 @@ import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { countFacts } from "./shared";
 import { Column } from "./Column";
 import { JudgeBlock } from "./JudgeBlock";
+import { ReviewChanges } from "./ReviewChanges";
 
 export function RunStep({ onBack }: { onBack: () => void }) {
   const runProviders = useRefineStore((s) => s.runProviders);
@@ -28,6 +29,8 @@ export function RunStep({ onBack }: { onBack: () => void }) {
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const markApplied = useRefineStore((s) => s.markApplied);
   const appliedProvider = useRefineStore((s) => s.appliedProvider);
+  const reviewProvider = useRefineStore((s) => s.reviewProvider);
+  const openReview = useRefineStore((s) => s.openReview);
   const setView = useViewStore((s) => s.setView);
 
   const before = countFacts(cv);
@@ -74,6 +77,17 @@ export function RunStep({ onBack }: { onBack: () => void }) {
     );
   }
 
+  // Story 2: once the user chooses to apply a version, we interpose a
+  // per-change review panel (before → after, accept/reject) in place of the
+  // comparison grid. Nothing touches the CV until they confirm there.
+  if (reviewProvider) {
+    return (
+      <div className="step-body">
+        <ReviewChanges provider={reviewProvider} />
+      </div>
+    );
+  }
+
   return (
     <div className="step-body">
       {usageNote && (
@@ -101,6 +115,7 @@ export function RunStep({ onBack }: { onBack: () => void }) {
             before={before}
             applied={appliedProvider === p}
             onApply={() => apply(p)}
+            onReview={() => openReview(p)}
           />
         ))}
       </div>
