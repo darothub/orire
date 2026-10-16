@@ -23,7 +23,7 @@ const STEPS: Step[] = [
   {
     sel: null,
     title: "Welcome to orire",
-    body: "A 30-second tour of your AI CV builder. You can replay it any time from ⌘K → “Take the tour”.",
+    body: "A 30-second tour of your AI CV builder. Each tool is a building block you arrange into your own flow. You can replay this any time from ⌘K → “Take the tour”.",
     place: "center",
   },
   {
@@ -51,10 +51,10 @@ const STEPS: Step[] = [
     place: "right",
   },
   {
-    sel: ".pane-preview",
-    title: "Your live CV",
-    body: "The real document — exactly what exports to PDF. Hit “Edit on preview” to type directly on the page.",
-    place: "left",
+    sel: '[data-tour="rail-home"]',
+    title: "Arrange your flow",
+    body: "This left panel is yours. Drag blocks to reorder them, and tap Home (or ＋) to add or remove blocks from your flow. Open any block to see your live CV beside it.",
+    place: "right",
   },
   {
     sel: ".theme-toggle",
