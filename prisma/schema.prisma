@@ -21,6 +21,8 @@ model User {
   image         String?
   passwordHash  String?
   createdAt     DateTime  @default(now())
+  /// The library version currently open in the editor (autosave target).
+  activeDocumentId String?
 
   accounts    Account[]
   sessions    Session[]
@@ -103,14 +105,18 @@ model EmailVerificationToken {
 
 /// A saved CV document. A user may keep several; the client tracks the active one.
 model Document {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String   @default("Untitled CV")
-  template  String   @default("aurora")
-  data      Json
-  baseline  Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String    @id @default(cuid())
+  userId         String
+  title          String    @default("Untitled CV")
+  /// Company/role this version targets — the library grouping key.
+  company        String?
+  template       String    @default("aurora")
+  data           Json
+  baseline       Json?
+  /// Last time this exact version was exported (PDF/Word), if ever.
+  lastExportedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
