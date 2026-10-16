@@ -12,7 +12,7 @@ import type { JDMatch } from "@/lib/ai/jdmatch";
 import { gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
 import { countFacts, type FactCounts } from "./shared";
 
-export function Column({ provider, state, before, applied, onApply }: { provider: ProviderId; state: ColState; before: FactCounts; applied: boolean; onApply: () => void }) {
+export function Column({ provider, state, before, applied, onApply, onReview }: { provider: ProviderId; state: ColState; before: FactCounts; applied: boolean; onApply: () => void; onReview: () => void }) {
   const ideal = useTargetStore((s) => s.ideal);
   const baseMatch = useRefineStore((s) => s.baseMatch);
   const meta = PROVIDERS[provider];
@@ -63,7 +63,7 @@ export function Column({ provider, state, before, applied, onApply }: { provider
                 ✓ Applied to your CV
               </button>
             ) : (
-              <button className="flow-btn primary" onClick={onApply}>Apply this</button>
+              <button className="flow-btn primary" onClick={onReview}>Review &amp; apply →</button>
             )}
           </div>
         </>
