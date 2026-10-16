@@ -1,9 +1,22 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { fakeAiEnabled, fakeRefinePatch, fakeJudgeVerdict, fakeSimulatedCV } from "./fakeProvider";
+import {
+  fakeAiEnabled,
+  fakeAiFor,
+  fakeRefinePatch,
+  fakeRetonePatch,
+  fakeJudgeVerdict,
+  fakeSimulatedCV,
+  fakeCoverLetter,
+  fakeEvidenceBullet,
+  fakeStructuredCV,
+} from "./fakeProvider";
 import { parseModelJSON } from "@/lib/ai/guardrails";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { parseVerdict } from "@/lib/ai/judge";
 import { coerceSimulatedCV } from "@/lib/ai/simulate";
+import { coerceCoverLetter } from "@/lib/ai/coverLetter";
+import { parseEvidenceBullet } from "@/lib/ai/evidence";
+import { parsedCVFromModelJSON } from "@/lib/ingest/parse";
 import type { CVData } from "@/lib/cv/schema";
 
 function cv(): CVData {
@@ -20,18 +33,29 @@ function cv(): CVData {
 
 afterEach(() => vi.unstubAllEnvs());
 
-describe("fakeAiEnabled", () => {
-  it("is on only with the flag and not in production", () => {
+describe("fakeAiEnabled / fakeAiFor", () => {
+  it("flag is on only with ORIRE_FAKE_AI=1 and not in production", () => {
     vi.stubEnv("ORIRE_FAKE_AI", "1");
     vi.stubEnv("NODE_ENV", "development");
     expect(fakeAiEnabled()).toBe(true);
-
     vi.stubEnv("NODE_ENV", "production");
     expect(fakeAiEnabled()).toBe(false);
+  });
 
+  it("auto-engages in dev when no key is configured, never in production", () => {
+    vi.stubEnv("ORIRE_FAKE_AI", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
     vi.stubEnv("NODE_ENV", "development");
-    vi.stubEnv("ORIRE_FAKE_AI", "0");
-    expect(fakeAiEnabled()).toBe(false);
+    expect(fakeAiFor("openai")).toBe(true); // keyless dev → mock
+
+    vi.stubEnv("OPENAI_API_KEY", "sk-real");
+    expect(fakeAiFor("openai")).toBe(false); // real key present → no mock
+
+    vi.stubEnv("ORIRE_FAKE_AI", "1");
+    expect(fakeAiFor("openai")).toBe(true); // flag forces mock even with a key
+
+    vi.stubEnv("NODE_ENV", "production");
+    expect(fakeAiFor("openai")).toBe(false); // never in production
   });
 });
 
@@ -67,5 +91,39 @@ describe("fakeSimulatedCV", () => {
     expect(ideal.basics.title).toContain("Platform Engineer");
     expect(ideal.experience.length).toBeGreaterThan(0);
     expect(Array.isArray(ideal.order)).toBe(true);
+  });
+});
+
+describe("fakeRetonePatch", () => {
+  it("round-trips through the patch parser and rewrites the summary", () => {
+    const source = cv();
+    const out = applyRefinePatch(source, parseModelJSON(fakeRetonePatch(source, "confident"))) as unknown as CVData;
+    expect(out.basics.summary).toContain("confident");
+  });
+});
+
+describe("fakeCoverLetter", () => {
+  it("coerces into a valid cover letter", () => {
+    const letter = coerceCoverLetter(fakeCoverLetter(cv(), "Staff Engineer"));
+    expect(letter.opening).toBeTruthy();
+    expect(letter.body.length).toBeGreaterThan(0);
+    expect(letter.meta.role).toContain("Staff Engineer");
+  });
+});
+
+describe("fakeEvidenceBullet", () => {
+  it("builds a grounded bullet from the inputs only", () => {
+    const bullet = parseEvidenceBullet(
+      fakeEvidenceBullet({ action: "migrated the billing service", result: "40% fewer errors", scale: "3 teams", timeframe: "2 quarters" }),
+    );
+    expect(bullet).toBeTruthy();
+    expect(bullet).toContain("40% fewer errors");
+  });
+});
+
+describe("fakeStructuredCV", () => {
+  it("parses into a CV carrying the first line as the name", () => {
+    const parsed = parsedCVFromModelJSON(parseModelJSON(fakeStructuredCV("Ada Lovelace\nSenior Engineer\nBuilt things.")));
+    expect(parsed.basics?.fullName).toBe("Ada Lovelace");
   });
 });

@@ -14,6 +14,7 @@ import {
 } from "@/lib/ai/evidence";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
+import { fakeAiFor, fakeEvidenceBullet } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { requireVerifiedUser } from "@/lib/auth/guard";
@@ -53,17 +54,19 @@ export async function POST(req: Request) {
   if (!input.action) return json("Tell us what you did first.", 400);
 
   const apiKey = serverKeyFor(provider);
-  if (!apiKey) return json(notConfiguredMessage(provider));
+  if (!fakeAiFor(provider) && !apiKey) return json(notConfiguredMessage(provider));
 
   try {
-    const out = await runProvider({
-      provider,
-      apiKey,
-      model,
-      system: EVIDENCE_SYSTEM,
-      user: buildEvidencePrompt(input),
-      opts: DETERMINISTIC,
-    });
+    const out = fakeAiFor(provider)
+      ? { ok: true as const, content: fakeEvidenceBullet(input) }
+      : await runProvider({
+          provider,
+          apiKey: apiKey ?? "",
+          model,
+          system: EVIDENCE_SYSTEM,
+          user: buildEvidencePrompt(input),
+          opts: DETERMINISTIC,
+        });
     if (!out.ok) return json(out.body);
     const bullet = parseEvidenceBullet(out.content);
     if (!bullet) return json("Couldn't draft a bullet. Try rewording your answers.");

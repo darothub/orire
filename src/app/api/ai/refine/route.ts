@@ -12,7 +12,7 @@ import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
 import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
-import { fakeAiEnabled, fakeRefinePatch } from "@/lib/ai/server/fakeProvider";
+import { fakeAiFor, fakeRefinePatch } from "@/lib/ai/server/fakeProvider";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan, meterFor, type PlanId } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
   // Managed key: orire holds the provider key server-side. In dev mock mode
   // (ORIRE_FAKE_AI=1, never production) we don't need one.
   const apiKey = serverKeyFor(provider);
-  if (!fakeAiEnabled() && !apiKey) {
+  if (!fakeAiFor(provider) && !apiKey) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   if (!body.cv) {
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
   const user = buildPatchPrompt(body.cv, body.jobDescription!);
 
   try {
-    const out = fakeAiEnabled()
+    const out = fakeAiFor(provider)
       ? { ok: true as const, content: fakeRefinePatch(body.cv!, body.jobDescription!) }
       : await runProvider({ provider, apiKey: apiKey ?? "", model, system: PATCH_SYSTEM, user, opts: DETERMINISTIC });
     if (!out.ok) {
