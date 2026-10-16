@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
@@ -22,9 +22,11 @@ function timeAgo(ts: number): string {
 
 export function LibraryView() {
   const versions = useLibraryStore((s) => s.versions);
-  const activeId = useLibraryStore((s) => s.activeId);
   const lastCompany = useLibraryStore((s) => s.lastCompany);
+  const cloud = useLibraryStore((s) => s.cloud);
+  const loading = useLibraryStore((s) => s.loading);
   const saveVersion = useLibraryStore((s) => s.saveVersion);
+  const refreshFromCloud = useLibraryStore((s) => s.refreshFromCloud);
   const clear = useLibraryStore((s) => s.clear);
 
   const cv = useCVStore((s) => s.cv);
@@ -36,6 +38,11 @@ export function LibraryView() {
   const [draftName, setDraftName] = useState("");
   const [draftCompany, setDraftCompany] = useState("");
 
+  // When signed in, pull the latest versions from the server on entry.
+  useEffect(() => {
+    if (cloud) void refreshFromCloud();
+  }, [cloud, refreshFromCloud]);
+
   const groups = groupByCompany(versions);
 
   const openSave = () => {
@@ -45,7 +52,7 @@ export function LibraryView() {
   };
 
   const confirmSave = () => {
-    saveVersion({ name: draftName, company: draftCompany, person, template: activeTemplate, cv, baseline });
+    void saveVersion({ name: draftName, company: draftCompany, person, template: activeTemplate, cv, baseline });
     setSaving(false);
   };
 
@@ -59,11 +66,11 @@ export function LibraryView() {
       <div className="ws-head">
         <div>
           <h2>{VIEW_META.history.label}</h2>
-          <p>Save the CV you’re working on as a named version, then switch between tailored variants per company. Each export is filed here too.</p>
+          <p>Save the CV you’re working on as a named version, then switch between tailored variants per company. Each export is filed here too.{cloud ? " Your versions are saved to your account." : ""}</p>
         </div>
         <div className="lib-head-actions">
           <button className="flow-btn primary" onClick={openSave}>＋ Save current CV</button>
-          {versions.length > 0 && <button className="flow-btn ghost" onClick={clear}>Clear all</button>}
+          {!cloud && versions.length > 0 && <button className="flow-btn ghost" onClick={clear}>Clear all</button>}
         </div>
       </div>
 
@@ -97,7 +104,7 @@ export function LibraryView() {
       {versions.length === 0 ? (
         <div className="hist-empty">
           <span className="hist-empty-ic" aria-hidden>🗂️</span>
-          <p>No saved versions yet. Save the CV you’re working on, or export one — both land here, grouped by company.</p>
+          <p>{loading ? "Loading your versions…" : "No saved versions yet. Save the CV you’re working on, or export one — both land here, grouped by company."}</p>
         </div>
       ) : (
         <div className="hist-groups">
@@ -111,7 +118,7 @@ export function LibraryView() {
               <div className="hist-list">
                 <AnimatePresence initial={false}>
                   {g.items.map((v) => (
-                    <VersionCard key={v.id} version={v} active={activeId === v.id} />
+                    <VersionCard key={v.id} version={v} />
                   ))}
                 </AnimatePresence>
               </div>
@@ -123,30 +130,30 @@ export function LibraryView() {
   );
 }
 
-function VersionCard({ version: v, active }: { version: CvVersion; active: boolean }) {
+function VersionCard({ version: v }: { version: CvVersion }) {
+  const activeId = useLibraryStore((s) => s.activeId);
   const rename = useLibraryStore((s) => s.rename);
   const refile = useLibraryStore((s) => s.refile);
   const duplicate = useLibraryStore((s) => s.duplicate);
   const remove = useLibraryStore((s) => s.remove);
-  const markActive = useLibraryStore((s) => s.markActive);
-  const hydrate = useCVStore((s) => s.hydrateFromCloud);
+  const activate = useLibraryStore((s) => s.activate);
   const setView = useViewStore((s) => s.setView);
 
+  const active = activeId === v.id;
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(v.name);
   const [company, setCompany] = useState(v.company);
 
   const tpl = getTemplate(v.template);
 
-  const makeActive = () => {
-    hydrate({ cv: v.cv, template: v.template, baseline: v.baseline });
-    markActive(v.id);
+  const makeActive = async () => {
+    await activate(v.id);
     setView("edit");
   };
 
-  const saveEdit = () => {
-    rename(v.id, name);
-    refile(v.id, company);
+  const saveEdit = async () => {
+    await rename(v.id, name);
+    await refile(v.id, company);
     setEditing(false);
   };
 
@@ -162,9 +169,9 @@ function VersionCard({ version: v, active }: { version: CvVersion; active: boole
       {editing ? (
         <div className="lib-card-edit">
           <input className="ed-input" value={name} autoFocus spellCheck={false} onChange={(e) => setName(e.target.value)} placeholder="Version name" />
-          <input className="ed-input" value={company} spellCheck={false} onChange={(e) => setCompany(e.target.value)} placeholder="Company" onKeyDown={(e) => e.key === "Enter" && saveEdit()} />
+          <input className="ed-input" value={company} spellCheck={false} onChange={(e) => setCompany(e.target.value)} placeholder="Company" onKeyDown={(e) => e.key === "Enter" && void saveEdit()} />
           <div className="lib-card-edit-actions">
-            <button className="hist-btn" onClick={saveEdit}>Save</button>
+            <button className="hist-btn" onClick={() => void saveEdit()}>Save</button>
             <button className="hist-btn" onClick={() => { setName(v.name); setCompany(v.company); setEditing(false); }}>Cancel</button>
           </div>
         </div>
@@ -183,12 +190,12 @@ function VersionCard({ version: v, active }: { version: CvVersion; active: boole
             </div>
           </div>
           <div className="hist-card-actions">
-            <button className="hist-btn" onClick={makeActive} title="Load this version into the editor" disabled={active}>
+            <button className="hist-btn" onClick={() => void makeActive()} title="Load this version into the editor" disabled={active}>
               {active ? "Editing" : "Make active"}
             </button>
             <button className="hist-btn" onClick={() => setEditing(true)} title="Rename / re-file">Edit</button>
-            <button className="hist-btn" onClick={() => duplicate(v.id)} title="Duplicate this version">Duplicate</button>
-            <button className="hist-btn danger" onClick={() => remove(v.id)} title="Delete this version" aria-label="Delete">✕</button>
+            <button className="hist-btn" onClick={() => void duplicate(v.id)} title="Duplicate this version">Duplicate</button>
+            <button className="hist-btn danger" onClick={() => void remove(v.id)} title="Delete this version" aria-label="Delete">✕</button>
           </div>
         </>
       )}

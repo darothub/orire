@@ -54,6 +54,8 @@ export function CloudSync() {
       }
       // Only now are edits allowed to flow back to the server.
       savesReady.current = true;
+      // Load the user's cloud version library (switches the store to cloud mode).
+      void useLibraryStore.getState().refreshFromCloud();
     })();
     return () => {
       cancelled = true;
