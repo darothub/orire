@@ -17,6 +17,7 @@ import { CoverLetterView } from "@/components/ai/CoverLetterView";
 import { HistoryView } from "@/components/HistoryView";
 import { ProfileView } from "@/components/ProfileView";
 import { ExportView } from "@/components/export/ExportView";
+import { SpotlightView } from "@/components/SpotlightView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
@@ -121,6 +122,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
     <MotionConfig reducedMotion="user">
       <AnimatePresence mode="wait" custom={dir} initial={false}>
         <motion.div key={view} className="ws-swap" custom={dir}>
+          {view === "spotlight" && <SpotlightView />}
           {view === "edit" && <EditView mounted={mounted} />}
           {view === "rebrand" && <RebrandFlow />}
           {view === "refine" && <RefineFlow />}
@@ -228,7 +230,7 @@ export default function Home() {
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
   // The Target page renders its own side-by-side split, so it also takes the
   // full workspace width and hides the single live-preview pane.
-  const wide = compareWide || view === "target" || view === "cover";
+  const wide = compareWide || view === "target" || view === "cover" || view === "spotlight";
 
   // Re-brand (req 3): while in the re-brand workspace with a draft, the right
   // pane previews the restructured draft in the auditioned template so the user
