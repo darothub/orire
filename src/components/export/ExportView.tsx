@@ -29,7 +29,7 @@ export function ExportView() {
   const cv = useCVStore((s) => s.cv);
   const baseline = useCVStore((s) => s.baseline);
   const active = useCVStore((s) => s.activeTemplate);
-  const saveVersion = useLibraryStore((s) => s.saveVersion);
+  const fileExport = useLibraryStore((s) => s.recordExport);
   const lastCompany = useLibraryStore((s) => s.lastCompany);
 
   const fontId = useStyleStore((s) => s.fontId);
@@ -85,17 +85,10 @@ export function ExportView() {
         });
         return;
       }
-      // Each export files a version in the library so nothing exported is ever
-      // lost and the user can reopen exactly what they downloaded.
-      saveVersion({
-        name,
-        company: company.trim(),
-        person,
-        template: active,
-        cv,
-        baseline,
-        exported: true,
-      });
+      // File the export in the library: stamps the active version exported, or
+      // snapshots a new one if nothing is active yet — so nothing downloaded is
+      // ever lost and the user can reopen exactly what they saved.
+      void fileExport({ name, company: company.trim(), person, template: active, cv, baseline });
       void recordExport({ format, template: active, company: company.trim() || null });
       const ext = format === "pdf" ? "pdf" : "docx";
       const left = remainingNote("download", authz.cap, authz.used);

@@ -1,6 +1,19 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { useLibraryStore, groupByCompany, UNFILED, type CvVersion, type SaveVersionInput } from "./libraryStore";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { CVData } from "@/lib/cv/schema";
+
+// Mock the server actions so cloud-mode routing can be asserted without a DB.
+vi.mock("@/app/actions/library", () => ({
+  listVersions: vi.fn(async () => ({ versions: [], activeId: null })),
+  createVersion: vi.fn(async () => ({ ok: true, id: "srv_1" })),
+  updateVersionMeta: vi.fn(async () => ({ ok: true })),
+  duplicateVersion: vi.fn(async () => ({ ok: true, id: "srv_copy" })),
+  deleteVersion: vi.fn(async () => ({ ok: true, activeId: null })),
+  setActiveVersion: vi.fn(async () => ({ ok: true })),
+  markVersionExported: vi.fn(async () => ({ ok: true })),
+}));
+
+import { useLibraryStore, groupByCompany, UNFILED, type CvVersion, type SaveVersionInput } from "./libraryStore";
+import * as server from "@/app/actions/library";
 
 function cv(name = "Ada"): CVData {
   return {
@@ -25,55 +38,91 @@ const save = (over: Partial<SaveVersionInput> = {}) =>
     ...over,
   });
 
-describe("libraryStore", () => {
-  beforeEach(() => useLibraryStore.setState({ versions: [], activeId: null, lastCompany: "" }));
+describe("libraryStore — local mode", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useLibraryStore.setState({ versions: [], activeId: null, lastCompany: "", cloud: false, loading: false });
+  });
 
-  it("saves a version, makes it active, and remembers the company", () => {
-    const id = save({ company: "Stripe" });
+  it("saves a version, makes it active, remembers the company, hits no server", async () => {
+    const id = await save({ company: "Stripe" });
     const s = useLibraryStore.getState();
     expect(s.versions).toHaveLength(1);
     expect(s.activeId).toBe(id);
     expect(s.lastCompany).toBe("Stripe");
-    expect(s.versions[0].lastExportedAt).toBeUndefined(); // not exported unless flagged
+    expect(s.versions[0].lastExportedAt).toBeUndefined();
+    expect(server.createVersion).not.toHaveBeenCalled();
   });
 
-  it("marks exported versions with a timestamp", () => {
-    save({ exported: true });
-    expect(useLibraryStore.getState().versions[0].lastExportedAt).toBeTypeOf("number");
-  });
-
-  it("prepends newest first", () => {
-    save({ name: "first" });
-    save({ name: "second" });
+  it("prepends newest first", async () => {
+    await save({ name: "first" });
+    await save({ name: "second" });
     expect(useLibraryStore.getState().versions.map((v) => v.name)).toEqual(["second", "first"]);
   });
 
-  it("duplicates a version with a new id and (copy) suffix, not exported", () => {
-    const id = save({ name: "Base", exported: true });
-    const copyId = useLibraryStore.getState().duplicate(id);
-    const s = useLibraryStore.getState();
+  it("duplicates with a new id, (copy) suffix, not exported", async () => {
+    const id = await save({ name: "Base", exported: true });
+    const copyId = await useLibraryStore.getState().duplicate(id!);
+    const copy = useLibraryStore.getState().versions.find((v) => v.id === copyId)!;
     expect(copyId).not.toBe(id);
-    expect(s.versions).toHaveLength(2);
-    const copy = s.versions.find((v) => v.id === copyId)!;
     expect(copy.name).toBe("Base (copy)");
     expect(copy.lastExportedAt).toBeUndefined();
   });
 
-  it("renames and re-files", () => {
-    const id = save();
-    useLibraryStore.getState().rename(id, "  Renamed  ");
-    useLibraryStore.getState().refile(id, "  Globex  ");
+  it("renames and re-files (trimmed)", async () => {
+    const id = await save();
+    await useLibraryStore.getState().rename(id!, "  Renamed  ");
+    await useLibraryStore.getState().refile(id!, "  Globex  ");
     const v = useLibraryStore.getState().versions[0];
     expect(v.name).toBe("Renamed");
     expect(v.company).toBe("Globex");
   });
 
-  it("removing the active version clears activeId", () => {
-    const id = save();
-    expect(useLibraryStore.getState().activeId).toBe(id);
-    useLibraryStore.getState().remove(id);
+  it("removing the active version clears activeId", async () => {
+    const id = await save();
+    await useLibraryStore.getState().remove(id!);
     expect(useLibraryStore.getState().activeId).toBeNull();
     expect(useLibraryStore.getState().versions).toHaveLength(0);
+  });
+
+  it("recordExport with no active version files a new exported snapshot", async () => {
+    useLibraryStore.setState({ activeId: null });
+    await useLibraryStore.getState().recordExport({ name: "Export", company: "Acme", person: "Ada", template: "aurora", cv: cv(), baseline: null });
+    const v = useLibraryStore.getState().versions[0];
+    expect(v.lastExportedAt).toBeTypeOf("number");
+    expect(server.markVersionExported).not.toHaveBeenCalled();
+  });
+});
+
+describe("libraryStore — cloud mode", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useLibraryStore.setState({ versions: [], activeId: null, lastCompany: "", cloud: true, loading: false });
+  });
+
+  it("saveVersion routes to createVersion then refreshes from the server", async () => {
+    await save({ name: "Cloud V", company: "Stripe" });
+    expect(server.createVersion).toHaveBeenCalledOnce();
+    expect(server.listVersions).toHaveBeenCalled(); // refreshFromCloud
+    expect(useLibraryStore.getState().cloud).toBe(true);
+  });
+
+  it("remove routes to deleteVersion", async () => {
+    await useLibraryStore.getState().remove("srv_1");
+    expect(server.deleteVersion).toHaveBeenCalledWith("srv_1");
+  });
+
+  it("recordExport with an active version stamps it exported, no new row", async () => {
+    useLibraryStore.setState({ activeId: "srv_1" });
+    await useLibraryStore.getState().recordExport({ name: "x", company: "", person: "", template: "aurora", cv: cv(), baseline: null });
+    expect(server.markVersionExported).toHaveBeenCalledWith("srv_1");
+    expect(server.createVersion).not.toHaveBeenCalled();
+  });
+
+  it("clear returns to local mode", () => {
+    useLibraryStore.getState().clear();
+    expect(useLibraryStore.getState().cloud).toBe(false);
+    expect(useLibraryStore.getState().versions).toEqual([]);
   });
 });
 
@@ -91,12 +140,7 @@ describe("groupByCompany", () => {
   });
 
   it("groups by company, newest-updated first within a group, Unfiled last", () => {
-    const groups = groupByCompany([
-      mk("Acme", 10),
-      mk("", 50), // Unfiled, most recent overall
-      mk("Acme", 30),
-      mk("Globex", 20),
-    ]);
+    const groups = groupByCompany([mk("Acme", 10), mk("", 50), mk("Acme", 30), mk("Globex", 20)]);
     expect(groups.map((g) => g.company)).toEqual(["Acme", "Globex", UNFILED]);
     expect(groups[0].items.map((i) => i.updatedAt)).toEqual([30, 10]);
   });
