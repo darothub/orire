@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useUIStore } from "@/lib/store/uiStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { clearExplored } from "@/components/auth/AuthOverlay";
-import { deleteAccount } from "@/app/actions/account";
+import { deleteAccount, exportAccountData } from "@/app/actions/account";
 
 /**
  * Account control in the app bar. Signed out → opens the full-screen login /
@@ -21,6 +21,33 @@ export function AccountButton() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  async function handleExport() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const res = await exportAccountData();
+      if (!res.ok) {
+        setExportError(res.error);
+        return;
+      }
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `orire-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : "Couldn’t export your data.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true);
@@ -46,7 +73,7 @@ export function AccountButton() {
       <div className="acct-wrap">
         <button
           className="acct-chip"
-          onClick={() => setOpen((o) => { const next = !o; if (!next) { setConfirmDelete(false); setDeleteError(null); } return next; })}
+          onClick={() => setOpen((o) => { const next = !o; if (!next) { setConfirmDelete(false); setDeleteError(null); setExportError(null); } return next; })}
           aria-expanded={open}
           title={label}
         >
@@ -90,6 +117,15 @@ export function AccountButton() {
               >
                 Support
               </a>
+              <button
+                className="flow-btn ghost sm"
+                onClick={() => void handleExport()}
+                disabled={exporting}
+                title="Download everything Orire holds about you as a JSON file"
+              >
+                {exporting ? "Preparing…" : "Export my data"}
+              </button>
+              {exportError && <p className="acct-del-error">{exportError}</p>}
               <button
                 className="flow-btn ghost sm"
                 onClick={() => {

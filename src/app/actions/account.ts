@@ -22,6 +22,59 @@ export interface DeleteAccountResult {
   error?: string;
 }
 
+export type ExportAccountResult = { ok: true; data: unknown } | { ok: false; error: string };
+
+/**
+ * GDPR data-portability export: gather everything orire holds about the
+ * signed-in user into a single JSON structure the client downloads. Secrets are
+ * deliberately excluded — password hash, OAuth access/refresh tokens, session
+ * tokens and single-use email/reset tokens never leave the server. Dates
+ * serialize to ISO via the caller's JSON.stringify.
+ */
+export async function exportAccountData(): Promise<ExportAccountResult> {
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) return { ok: false, error: "You’re not signed in." };
+
+  const [user, accounts, entitlement, documents, refineRuns, exportEvents, usage, memberships, ownedTeams] =
+    await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, name: true, email: true, emailVerified: true, image: true, createdAt: true, activeDocumentId: true },
+      }),
+      // OAuth links: provider identity only — never the stored tokens.
+      prisma.account.findMany({ where: { userId }, select: { provider: true, type: true, providerAccountId: true } }),
+      prisma.entitlement.findUnique({
+        where: { userId },
+        select: { plan: true, status: true, stripeCustomerId: true, stripeSubscriptionId: true, currentPeriodEnd: true, updatedAt: true },
+      }),
+      prisma.document.findMany({ where: { userId }, orderBy: { updatedAt: "desc" } }),
+      prisma.refineRun.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
+      prisma.exportEvent.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
+      prisma.usageCounter.findMany({ where: { userId }, select: { metric: true, period: true, count: true } }),
+      prisma.teamMember.findMany({ where: { userId }, select: { teamId: true, role: true, createdAt: true } }),
+      prisma.team.findMany({ where: { ownerId: userId }, select: { id: true, name: true, plan: true, seatLimit: true, createdAt: true } }),
+    ]);
+
+  if (!user) return { ok: false, error: "Account not found." };
+
+  return {
+    ok: true,
+    data: {
+      format: "orire-account-export-v1",
+      exportedAt: new Date().toISOString(),
+      account: user,
+      authProviders: accounts,
+      plan: entitlement,
+      usage,
+      documents,
+      refineRuns,
+      exportEvents,
+      teams: { memberships, owned: ownedTeams },
+    },
+  };
+}
+
 /**
  * Permanently delete the signed-in user's account and all associated data.
  * Returns `{ ok: true }` on success; the caller is responsible for signing the
