@@ -32,6 +32,11 @@ export interface RunTokenPayload {
   r: string;
   /** Expiry (epoch ms). */
   exp: number;
+  /** Pre-authorized managed failover: the other provider + model to try if the
+   *  single selected provider is unavailable. Absent for compare runs and for
+   *  plans that can't use the other provider (see refineFallbackFor). The route
+   *  trusts this because the token is signed — it needs no plan re-check. */
+  f?: { provider: ProviderId; model: string };
 }
 
 function secret(): string {
@@ -48,13 +53,19 @@ function fromB64url(s: string): Buffer {
   return Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64");
 }
 
-export function signRunToken(input: { userId: string | null; plan: PlanId; providers: ProviderId[] }): string {
+export function signRunToken(input: {
+  userId: string | null;
+  plan: PlanId;
+  providers: ProviderId[];
+  fallback?: { provider: ProviderId; model: string } | null;
+}): string {
   const payload: RunTokenPayload = {
     u: input.userId,
     plan: input.plan,
     p: input.providers,
     r: randomUUID(),
     exp: Date.now() + TTL_MS,
+    ...(input.fallback ? { f: input.fallback } : {}),
   };
   const body = b64url(Buffer.from(JSON.stringify(payload), "utf8"));
   const mac = b64url(createHmac("sha256", secret()).update(body).digest());

@@ -69,8 +69,14 @@ export interface RefineResponse {
   ok: boolean;
   /** Raw model text (expected to be JSON). Present when ok. */
   raw?: string;
-  /** Model + provider echo for display. */
+  /** The provider the caller asked for — the client correlates each column by
+   *  this (the one it sent), so it stays the requested provider even on a
+   *  failover. */
   provider: ProviderId;
+  /** Model that actually produced the result (the failover model on a failover). */
   model: string;
+  /** Set only when the chosen provider was unavailable and a managed backup
+   *  served this result instead — the provider that actually served. */
+  servedBy?: ProviderId;
   error?: AiError;
 }

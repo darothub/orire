@@ -10,9 +10,10 @@ import { NextResponse } from "next/server";
 import type { CVData } from "@/lib/cv/schema";
 import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
 import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
-import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
+import { runProvider, DETERMINISTIC, type ProviderCall } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { fakeAiFor, fakeRefinePatch } from "@/lib/ai/server/fakeProvider";
+import { isAvailabilityFailure } from "@/lib/ai/server/failover";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan, meterFor, type PlanId } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
@@ -122,19 +123,64 @@ export async function POST(req: Request) {
 
   const user = buildPatchPrompt(body.cv, body.jobDescription!);
 
+  // One provider attempt on orire's managed key (or the dev mock). The prompt
+  // is provider-agnostic and deterministic, so a failover produces a comparable,
+  // identically fact-grounded patch.
+  const callOnce = async (p: ProviderId, m: string): Promise<ProviderCall> => {
+    if (fakeAiFor(p)) return { ok: true, content: fakeRefinePatch(body.cv!, body.jobDescription!) };
+    const key = serverKeyFor(p);
+    if (!key) return { ok: false, status: 503, body: notConfiguredMessage(p) };
+    return runProvider({ provider: p, apiKey: key, model: m, system: PATCH_SYSTEM, user, opts: DETERMINISTIC });
+  };
+
   try {
-    const out = fakeAiFor(provider)
-      ? { ok: true as const, content: fakeRefinePatch(body.cv!, body.jobDescription!) }
-      : await runProvider({ provider, apiKey: apiKey ?? "", model, system: PATCH_SYSTEM, user, opts: DETERMINISTIC });
-    if (!out.ok) {
+    const primary = await callOnce(provider, model);
+    let served: { provider: ProviderId; model: string; call: ProviderCall } = { provider, model, call: primary };
+
+    // Transparent failover: if the chosen assistant is UNAVAILABLE (5xx/429/
+    // timeout — a deterministic 4xx is returned as-is) and the run token carries
+    // a pre-authorized, plan-permitted fallback, serve from the other managed
+    // provider instead of surfacing an outage. Authorized only for single-
+    // provider runs (a compare already runs both), so this never duplicates a
+    // column the user is also comparing.
+    const fb = check.payload!.f;
+    if (
+      !primary.ok &&
+      isAvailabilityFailure(primary) &&
+      fb != null &&
+      fb.provider !== provider &&
+      (fakeAiFor(fb.provider) || serverKeyFor(fb.provider) != null)
+    ) {
+      const fbCall = await callOnce(fb.provider, fb.model);
+      if (fbCall.ok) served = { provider: fb.provider, model: fb.model, call: fbCall };
+      // If the fallback also fails, keep the PRIMARY error below — the user
+      // chose that assistant, so that's the verbatim error they should see.
+    }
+
+    if (!served.call.ok) {
+      // Report the chosen assistant's verbatim error (req 12), not the backup's.
+      // served.call not-ok implies the primary failed too (a successful fallback
+      // would have replaced it), so `primary` is the error variant here.
+      const err = !primary.ok ? { status: primary.status, message: primary.body } : { message: "Refine failed." };
       return NextResponse.json(
-        { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,
+        { ok: false, provider, model, error: { provider, ...err } } as RefineResponse,
         { status: 200 }
       );
     }
-    // Success: consume the refine (once per run, metered plans only).
+    // Success: consume the refine (once per run, metered plans only) regardless
+    // of which managed provider ultimately served it.
     await consumeRefineOnce(check.payload!);
-    return NextResponse.json({ ok: true, provider, model, raw: out.content } as RefineResponse, { status: 200 });
+    const fellBack = served.provider !== provider;
+    return NextResponse.json(
+      {
+        ok: true,
+        provider,
+        model: served.model,
+        raw: served.call.content,
+        ...(fellBack ? { servedBy: served.provider } : {}),
+      } as RefineResponse,
+      { status: 200 }
+    );
   } catch (e) {
     return NextResponse.json(
       { ok: false, provider, model, error: { provider, message: (e as Error).message } } as RefineResponse,

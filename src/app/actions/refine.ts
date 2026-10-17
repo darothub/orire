@@ -30,6 +30,7 @@ import {
   setPlanId,
 } from "@/lib/entitlement/entitlement";
 import { signRunToken } from "@/lib/plan/runToken";
+import { refineFallbackFor } from "@/lib/ai/refineFallback";
 import { isEmailVerified } from "@/lib/auth/verify";
 
 export interface RunSelection {
@@ -110,7 +111,13 @@ export async function authorizeRefineRun(selections: RunSelection[]): Promise<Au
   // provider call for that run — so a run where every assistant errors costs
   // nothing ("only successful actions decrement"). usedThisMonth is the pre-run
   // count; the client refreshes it once the run settles.
-  const token = signRunToken({ userId, plan, providers });
+  //
+  // Also authorize a plan-permitted managed failover (single-provider runs
+  // only) and bake it into the token, so if the chosen assistant is down the
+  // route can transparently serve from the other managed provider instead of
+  // surfacing an outage. The plan check lives here, where plan truth lives.
+  const fallback = refineFallbackFor(plan, providers);
+  const token = signRunToken({ userId, plan, providers, fallback });
   return { ok: true, token, signedIn, plan, usedThisMonth, cap };
 }
 
