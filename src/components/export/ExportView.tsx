@@ -14,10 +14,26 @@ import {
 } from "@/lib/store/styleStore";
 import { exportCVtoPDF } from "@/lib/export/pdf";
 import { exportCVtoDocx } from "@/lib/export/docx";
+import { cvToPlainText } from "@/lib/export/plaintext";
 import { recordExport, authorizeExport } from "@/app/actions/activity";
 import { remainingNote } from "@/lib/plan/plan";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useWriteGate } from "@/lib/store/accountStore";
+
+/** Trigger a client-side download of plain text as a .txt file. Returns true. */
+function downloadTextFile(fileName: string, text: string): boolean {
+  const safe = fileName.trim().replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ") || "cv";
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${safe}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
 
 const ALIGNS: { id: CVAlign; label: string; icon: string }[] = [
   { id: "left", label: "Left", icon: "⇤" },
@@ -46,12 +62,24 @@ export function ExportView() {
   const [fileName, setFileName] = useState(defaultName);
   const [company, setCompany] = useState(lastCompany);
   const [mode, setMode] = useState<PageMode>("paged");
-  const [busyFormat, setBusyFormat] = useState<"pdf" | "docx" | null>(null);
+  const [busyFormat, setBusyFormat] = useState<"pdf" | "docx" | "txt" | null>(null);
   const busy = busyFormat !== null;
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const gate = useWriteGate("download your CV");
 
-  const doExport = async (format: "pdf" | "docx") => {
+  // Copy the CV as plain text for pasting into an application form. Free and
+  // ungated: the content is already on screen, so this is a convenience, not a
+  // new export — it never spends a download credit.
+  const copyPlainText = async () => {
+    try {
+      await navigator.clipboard.writeText(cvToPlainText(cv));
+      setMsg({ kind: "ok", text: "Plain text copied — paste it into any application form." });
+    } catch {
+      setMsg({ kind: "err", text: "Couldn’t copy. Your browser may be blocking clipboard access." });
+    }
+  };
+
+  const doExport = async (format: "pdf" | "docx" | "txt") => {
     if (!gate.guard()) {
       setMsg({ kind: "err", text: gate.reason ?? "Verify your email to download." });
       return;
@@ -77,11 +105,21 @@ export function ExportView() {
         return;
       }
       const name = fileName.trim() || defaultName;
-      const ok = format === "pdf" ? await exportCVtoPDF(mode, name, cv) : await exportCVtoDocx(name, cv);
+      const ok =
+        format === "pdf"
+          ? await exportCVtoPDF(mode, name, cv)
+          : format === "docx"
+            ? await exportCVtoDocx(name, cv)
+            : downloadTextFile(name, cvToPlainText(cv));
       if (!ok) {
         setMsg({
           kind: "err",
-          text: format === "pdf" ? "Couldn’t find the live CV to export. Try again." : "Couldn’t build the Word file. Try again.",
+          text:
+            format === "pdf"
+              ? "Couldn’t find the live CV to export. Try again."
+              : format === "docx"
+                ? "Couldn’t build the Word file. Try again."
+                : "Couldn’t build the text file. Try again.",
         });
         return;
       }
@@ -90,7 +128,7 @@ export function ExportView() {
       // ever lost and the user can reopen exactly what they saved.
       void fileExport({ name, company: company.trim(), person, template: active, cv, baseline });
       void recordExport({ format, template: active, company: company.trim() || null });
-      const ext = format === "pdf" ? "pdf" : "docx";
+      const ext = format;
       const left = remainingNote("download", authz.cap, authz.used);
       setMsg({
         kind: "ok",
@@ -228,6 +266,15 @@ export function ExportView() {
         <button className="flow-btn lg" onClick={() => void doExport("docx")} disabled={busy}>
           {busyFormat === "docx" ? <><span className="cmp-spinner" /> Building Word…</> : "Download Word (.docx)"}
         </button>
+        <button className="flow-btn lg" onClick={() => void doExport("txt")} disabled={busy}>
+          {busyFormat === "txt" ? <><span className="cmp-spinner" /> Building text…</> : "Download .txt"}
+        </button>
+      </div>
+      <div className="exp-plaintext">
+        <button className="exp-copy-btn" onClick={() => void copyPlainText()} disabled={busy}>
+          ⧉ Copy as plain text
+        </button>
+        <span className="exp-plaintext-note">For pasting into an application form (Workday, Greenhouse…). Free — doesn’t use a download.</span>
       </div>
     </motion.div>
   );
