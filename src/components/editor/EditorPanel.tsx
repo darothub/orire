@@ -7,6 +7,7 @@ import { AutoTextarea } from "./AutoTextarea";
 import { EvidenceHelper } from "./EvidenceHelper";
 import { hasMeasurable } from "@/lib/ai/evidence";
 import { analyzeBullet } from "@/lib/cv/coach";
+import type { BulletReview } from "@/lib/ai/bulletReview";
 
 function Field({
   label,
@@ -120,6 +121,32 @@ function HighlightItem({
 }) {
   const controls = useDragControls();
   const flags = analyzeBullet(value);
+  const [busy, setBusy] = useState(false);
+  const [review, setReview] = useState<BulletReview | null>(null);
+  const [err, setErr] = useState("");
+
+  async function improve() {
+    setBusy(true);
+    setErr("");
+    setReview(null);
+    try {
+      const res = await fetch("/api/ai/bullet-check", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: value }),
+      });
+      const data = (await res.json()) as { ok: boolean; review?: BulletReview; error?: string };
+      if (data.ok && data.review) setReview(data.review);
+      else setErr(data.error || "Couldn’t review this bullet.");
+    } catch {
+      setErr("Network error. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const canReview = value.trim().length > 0;
+
   return (
     <Reorder.Item
       value={index}
@@ -147,10 +174,21 @@ function HighlightItem({
           placeholder={placeholder}
           onChange={(e) => onChange(e.target.value)}
         />
-        <button className="ed-mini" onClick={onRemove} aria-label="Remove highlight">
-          ✕
-        </button>
+        <div className="ed-bullet-btns">
+          <button
+            className="ed-improve"
+            onClick={() => void improve()}
+            disabled={busy || !canReview}
+            title="Ask AI to check this bullet's wording and impact"
+          >
+            {busy ? "…" : "✨ Improve"}
+          </button>
+          <button className="ed-mini" onClick={onRemove} aria-label="Remove highlight">
+            ✕
+          </button>
+        </div>
       </div>
+
       {flags.length > 0 && (
         <div className="ed-coach" role="note">
           {flags.map((f) => (
@@ -159,6 +197,39 @@ function HighlightItem({
               <span className="ed-coach-hint">{f.hint}</span>
             </span>
           ))}
+        </div>
+      )}
+
+      {err && <div className="ed-coach"><span className="ed-coach-flag warn"><span className="ed-coach-hint">{err}</span></span></div>}
+
+      {review && (
+        <div className={`ed-review ${review.verdict}`} role="note">
+          <div className="ed-review-head">
+            <span className={`ed-review-verdict ${review.verdict}`}>
+              {review.verdict === "strong" ? "Strong bullet" : review.verdict === "ok" ? "Could be stronger" : "Needs work"}
+            </span>
+            <button className="ed-review-x" onClick={() => setReview(null)} aria-label="Dismiss">✕</button>
+          </div>
+          {review.issues.length > 0 && (
+            <ul className="ed-review-issues">
+              {review.issues.map((i, k) => <li key={k}>{i.message}</li>)}
+            </ul>
+          )}
+          {review.suggestion && (
+            <div className="ed-review-suggestion">
+              <span className="ed-review-sug-label">Suggested</span>
+              <p>{review.suggestion}</p>
+              <button
+                className="ed-review-use"
+                onClick={() => { onChange(review.suggestion); setReview(null); }}
+              >
+                Use this
+              </button>
+            </div>
+          )}
+          {review.issues.length === 0 && !review.suggestion && (
+            <p className="ed-review-clean">Nothing to change — this reads well.</p>
+          )}
         </div>
       )}
     </Reorder.Item>
