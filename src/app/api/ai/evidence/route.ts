@@ -12,7 +12,8 @@ import {
   parseEvidenceBullet,
   type EvidenceInput,
 } from "@/lib/ai/evidence";
-import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
+import { DETERMINISTIC, type ProviderCall } from "@/lib/ai/server/providerCall";
+import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { fakeAiFor, fakeEvidenceBullet } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
@@ -28,7 +29,7 @@ const clean = (v: unknown) => (typeof v === "string" ? v.trim().slice(0, FIELD_M
 const json = (error: string, status = 200) => NextResponse.json({ ok: false, error }, { status });
 
 export async function POST(req: Request) {
-  const { provider, model } = routeTask("evidence");
+  const { provider } = routeTask("evidence");
 
   const limited = await aiRateLimit(req, provider);
   if (limited) return limited;
@@ -53,20 +54,15 @@ export async function POST(req: Request) {
   };
   if (!input.action) return json("Tell us what you did first.", 400);
 
-  const apiKey = serverKeyFor(provider);
-  if (!fakeAiFor(provider) && !apiKey) return json(notConfiguredMessage(provider));
+  if (!fakeAiFor(provider) && !serverKeyFor("openai") && !serverKeyFor("anthropic")) return json(notConfiguredMessage(provider));
 
   try {
-    const out = fakeAiFor(provider)
-      ? { ok: true as const, content: fakeEvidenceBullet(input) }
-      : await runProvider({
-          provider,
-          apiKey: apiKey ?? "",
-          model,
-          system: EVIDENCE_SYSTEM,
-          user: buildEvidencePrompt(input),
-          opts: DETERMINISTIC,
-        });
+    let out: ProviderCall;
+    if (fakeAiFor(provider)) {
+      out = { ok: true, content: fakeEvidenceBullet(input) };
+    } else {
+      out = (await runRoutedWithFailover("evidence", { system: EVIDENCE_SYSTEM, user: buildEvidencePrompt(input), opts: DETERMINISTIC })).call;
+    }
     if (!out.ok) return json(out.body);
     const bullet = parseEvidenceBullet(out.content);
     if (!bullet) return json("Couldn't draft a bullet. Try rewording your answers.");

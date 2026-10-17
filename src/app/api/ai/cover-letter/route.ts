@@ -13,10 +13,11 @@
 import { NextResponse } from "next/server";
 import { COVER_LETTER_SYSTEM, buildCoverLetterPrompt, type CoverLetterTone } from "@/lib/ai/coverLetter";
 import { type ProviderId, type RefineResponse } from "@/lib/ai/types";
-import { runProvider, DETERMINISTIC } from "@/lib/ai/server/providerCall";
+import { DETERMINISTIC, type ProviderCall } from "@/lib/ai/server/providerCall";
 import { serverKeyFor, notConfiguredMessage } from "@/lib/ai/server/serverKey";
 import { fakeAiFor, fakeCoverLetter } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
+import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import type { CVData } from "@/lib/cv/schema";
 import { auth } from "@/lib/auth/auth";
 import { getPlanId } from "@/lib/entitlement/entitlement";
@@ -67,8 +68,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const apiKey = serverKeyFor(provider);
-  if (!fakeAiFor(provider) && !apiKey) {
+  if (!fakeAiFor(provider) && !serverKeyFor("openai") && !serverKeyFor("anthropic")) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });
   }
   if (!body.cv || typeof body.cv !== "object") {
@@ -81,23 +81,24 @@ export async function POST(req: Request) {
   const user = buildCoverLetterPrompt(body.cv, body.jobDescription!, { tone: body.tone });
 
   try {
-    const out = fakeAiFor(provider)
-      ? { ok: true as const, content: fakeCoverLetter(body.cv, body.jobDescription!) }
-      : await runProvider({
-          provider,
-          apiKey: apiKey ?? "",
-          model,
-          system: COVER_LETTER_SYSTEM,
-          user,
-          opts: DETERMINISTIC,
-        });
+    let out: ProviderCall;
+    let servedProvider = provider;
+    let servedModel = model;
+    if (fakeAiFor(provider)) {
+      out = { ok: true, content: fakeCoverLetter(body.cv, body.jobDescription!) };
+    } else {
+      const served = await runRoutedWithFailover("cover-letter", { system: COVER_LETTER_SYSTEM, user, opts: DETERMINISTIC });
+      out = served.call;
+      servedProvider = served.provider;
+      servedModel = served.model;
+    }
     if (!out.ok) {
       return NextResponse.json(
-        { ok: false, provider, model, error: { provider, status: out.status, message: out.body } } as RefineResponse,
+        { ok: false, provider: servedProvider, model: servedModel, error: { provider: servedProvider, status: out.status, message: out.body } } as RefineResponse,
         { status: 200 }
       );
     }
-    return NextResponse.json({ ok: true, provider, model, raw: out.content } as RefineResponse, { status: 200 });
+    return NextResponse.json({ ok: true, provider: servedProvider, model: servedModel, raw: out.content } as RefineResponse, { status: 200 });
   } catch (e) {
     return NextResponse.json(
       { ok: false, provider, model, error: { provider, message: (e as Error).message } } as RefineResponse,
