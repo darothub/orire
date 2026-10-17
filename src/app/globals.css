@@ -509,12 +509,38 @@ body {
 }
 .ed-bullet {
   display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.ed-bullet-row {
+  display: flex;
   align-items: flex-start;
   gap: 8px;
 }
 .ed-bullet .ed-area {
   flex: 1;
 }
+/* Inline content-quality coach — per-bullet nudges under the input. */
+.ed-coach {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0 0 2px 26px;
+}
+.ed-coach-flag {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.ed-coach-label {
+  flex: none;
+  font-weight: 600;
+}
+.ed-coach-flag.warn .ed-coach-label { color: #c8891a; }
+.ed-coach-flag.info .ed-coach-label { color: var(--accent); }
+.ed-coach-hint { color: var(--muted); }
 .ed-dot {
   width: 6px;
   height: 6px;

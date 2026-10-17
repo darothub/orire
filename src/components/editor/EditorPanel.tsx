@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AutoTextarea } from "./AutoTextarea";
 import { EvidenceHelper } from "./EvidenceHelper";
 import { hasMeasurable } from "@/lib/ai/evidence";
+import { analyzeBullet } from "@/lib/cv/coach";
 
 function Field({
   label,
@@ -118,6 +119,7 @@ function HighlightItem({
   onRemove: () => void;
 }) {
   const controls = useDragControls();
+  const flags = analyzeBullet(value);
   return (
     <Reorder.Item
       value={index}
@@ -130,23 +132,35 @@ function HighlightItem({
       className="ed-bullet"
       whileDrag={{ scale: 1.01 }}
     >
-      <button
-        className="ed-grip ed-grip-sm"
-        onPointerDown={(e) => controls.start(e)}
-        aria-label="Drag highlight"
-        title="Drag to reorder"
-      >
-        ⋮⋮
-      </button>
-      <AutoTextarea
-        className="ed-input ed-area"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-      />
-      <button className="ed-mini" onClick={onRemove} aria-label="Remove highlight">
-        ✕
-      </button>
+      <div className="ed-bullet-row">
+        <button
+          className="ed-grip ed-grip-sm"
+          onPointerDown={(e) => controls.start(e)}
+          aria-label="Drag highlight"
+          title="Drag to reorder"
+        >
+          ⋮⋮
+        </button>
+        <AutoTextarea
+          className="ed-input ed-area"
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <button className="ed-mini" onClick={onRemove} aria-label="Remove highlight">
+          ✕
+        </button>
+      </div>
+      {flags.length > 0 && (
+        <div className="ed-coach" role="note">
+          {flags.map((f) => (
+            <span key={f.id} className={`ed-coach-flag ${f.severity}`} title={f.hint}>
+              <span className="ed-coach-label">{f.label}</span>
+              <span className="ed-coach-hint">{f.hint}</span>
+            </span>
+          ))}
+        </div>
+      )}
     </Reorder.Item>
   );
 }
