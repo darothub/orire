@@ -115,6 +115,10 @@ model Document {
   baseline       Json?
   /// Last time this exact version was exported (PDF/Word), if ever.
   lastExportedAt DateTime?
+  /// Opt-in public share: a random, revocable token. When set, the CV is
+  /// readable at /cv/<shareToken> by anyone with the link; null = private.
+  shareToken     String?   @unique
+  sharedAt       DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

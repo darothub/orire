@@ -38,28 +38,39 @@ export function CloudSync() {
     hydratedFor.current = true;
     let cancelled = false;
     (async () => {
-      const remote = await loadWorkingCV();
-      if (cancelled) return;
-      const store = useCVStore.getState();
-      if (remote) {
-        store.hydrateFromCloud({ cv: remote.data, template: remote.template, baseline: remote.baseline });
-      } else if (!isSampleCV(store.cv)) {
-        // Seed the cloud only with a CV the user has actually made theirs. Never
-        // persist the untouched demo persona (Ada Okonkwo, @example.com) as a
-        // real signed-in document — the placeholder stays a local preview, and
-        // the user's first real edit or upload creates their cloud doc via
-        // autosave below.
-        await saveWorkingCV({ data: store.cv, template: store.activeTemplate, baseline: store.baseline });
+      try {
+        const remote = await loadWorkingCV();
         if (cancelled) return;
+        const store = useCVStore.getState();
+        if (remote) {
+          store.hydrateFromCloud({ cv: remote.data, template: remote.template, baseline: remote.baseline });
+        } else if (!isSampleCV(store.cv)) {
+          // Seed the cloud only with a CV the user has actually made theirs. Never
+          // persist the untouched demo persona (Ada Okonkwo, @example.com) as a
+          // real signed-in document — the placeholder stays a local preview, and
+          // the user's first real edit or upload creates their cloud doc via
+          // autosave below.
+          await saveWorkingCV({ data: store.cv, template: store.activeTemplate, baseline: store.baseline });
+          if (cancelled) return;
+        }
+      } catch {
+        // A hiccup adopting/seeding the working CV must not wedge the session —
+        // autosave still arms, and cloud mode is flipped by the effect below.
+      } finally {
+        if (!cancelled) savesReady.current = true;
       }
-      // Only now are edits allowed to flow back to the server.
-      savesReady.current = true;
-      // Load the user's cloud version library (switches the store to cloud mode).
-      void useLibraryStore.getState().refreshFromCloud();
     })();
     return () => {
       cancelled = true;
     };
+  }, [status]);
+
+  // Enter cloud mode as soon as we're authenticated — independent of the
+  // adopt/seed path above — so the library's cloud features (share, server CRUD)
+  // are available even if the initial working-CV load hiccups. refreshFromCloud
+  // sets cloud=true up front and tolerates a failed list internally.
+  useEffect(() => {
+    if (status === "authenticated") void useLibraryStore.getState().refreshFromCloud();
   }, [status]);
 
   // Track sign-out. On the authenticated -> unauthenticated transition (a real

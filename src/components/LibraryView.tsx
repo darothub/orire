@@ -137,12 +137,42 @@ function VersionCard({ version: v }: { version: CvVersion }) {
   const duplicate = useLibraryStore((s) => s.duplicate);
   const remove = useLibraryStore((s) => s.remove);
   const activate = useLibraryStore((s) => s.activate);
+  const cloud = useLibraryStore((s) => s.cloud);
+  const share = useLibraryStore((s) => s.share);
+  const unshare = useLibraryStore((s) => s.unshare);
   const setView = useViewStore((s) => s.setView);
 
   const active = activeId === v.id;
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(v.name);
   const [company, setCompany] = useState(v.company);
+  const [shareBusy, setShareBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [shareErr, setShareErr] = useState("");
+
+  const shareLink = v.shareToken ? `${typeof window !== "undefined" ? window.location.origin : ""}/cv/${v.shareToken}` : "";
+
+  const copyShare = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard blocked — the link is still shown for manual copy */
+    }
+  };
+
+  const doShare = async () => {
+    setShareBusy(true);
+    setShareErr("");
+    try {
+      const token = await share(v.id);
+      if (token) await copyShare(`${window.location.origin}/cv/${token}`);
+      else setShareErr("Couldn’t create a share link. Make sure you’re signed in, then try again.");
+    } finally {
+      setShareBusy(false);
+    }
+  };
 
   const tpl = getTemplate(v.template);
 
@@ -195,9 +225,31 @@ function VersionCard({ version: v }: { version: CvVersion }) {
             </button>
             <button className="hist-btn" onClick={() => setEditing(true)} title="Rename / re-file">Edit</button>
             <button className="hist-btn" onClick={() => void duplicate(v.id)} title="Duplicate this version">Duplicate</button>
+            {cloud ? (
+              !v.shareToken && (
+                <button className="hist-btn" onClick={() => void doShare()} disabled={shareBusy} title="Create a public link to this CV">
+                  {shareBusy ? "…" : "Share"}
+                </button>
+              )
+            ) : (
+              <button className="hist-btn" disabled title="Sign in to share your CV as a public link">Share</button>
+            )}
             <button className="hist-btn danger" onClick={() => void remove(v.id)} title="Delete this version" aria-label="Delete">✕</button>
           </div>
         </>
+      )}
+
+      {!editing && shareErr && (
+        <div className="lib-share"><span className="lib-share-err">{shareErr}</span></div>
+      )}
+
+      {!editing && cloud && v.shareToken && (
+        <div className="lib-share">
+          <span className="lib-share-badge" title="Anyone with this link can view this CV">🔗 Public link</span>
+          <input className="lib-share-url" value={shareLink} readOnly onFocus={(e) => e.currentTarget.select()} />
+          <button className="hist-btn" onClick={() => void copyShare(shareLink)}>{copied ? "Copied!" : "Copy"}</button>
+          <button className="hist-btn danger" onClick={() => void unshare(v.id)} title="Stop sharing — the link stops working">Unshare</button>
+        </div>
       )}
     </motion.div>
   );
