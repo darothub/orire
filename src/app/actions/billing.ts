@@ -16,7 +16,7 @@ import { headers } from "next/headers";
 import type Stripe from "stripe";
 import { auth } from "@/lib/auth/auth";
 import type { PlanId } from "@/lib/plan/plan";
-import { getStripe, isStripeConfigured, priceIdForPlan } from "@/lib/billing/stripe";
+import { getStripe, isStripeConfigured, priceIdForPlan, CHECKOUT_TAX_OPTS } from "@/lib/billing/stripe";
 import {
   getEntitlementRow,
   getEntitlementSummary,
@@ -141,6 +141,7 @@ export async function startCheckout(plan: PlanId): Promise<RedirectResult> {
       client_reference_id: userId,
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
+      ...CHECKOUT_TAX_OPTS,
       metadata: { userId, plan },
       subscription_data: { metadata: { userId, plan } },
       success_url: `${origin}/?billing=success&plan=${plan}&sid={CHECKOUT_SESSION_ID}`,
@@ -181,6 +182,7 @@ export async function createCheckoutSession(plan: PlanId): Promise<EmbeddedCheck
       client_reference_id: userId,
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
+      ...CHECKOUT_TAX_OPTS,
       metadata: { userId, plan },
       subscription_data: { metadata: { userId, plan } },
       return_url: `${origin}/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
@@ -458,6 +460,14 @@ export async function billingDetail(): Promise<BillingDetail> {
  * Create (or reuse) an incomplete subscription for a paid plan and return the
  * client secret the browser's Payment Element confirms. The webhook flips the
  * entitlement to active once payment succeeds.
+ *
+ * NOTE: superseded by the Checkout flows (startCheckout / createCheckoutSession),
+ * which are what the current UI uses — those carry Stripe Tax (EU VAT). This
+ * raw Payment-Element path is NOT wired into the UI and intentionally does not
+ * enable `automatic_tax`: doing so requires the Customer to already have a saved
+ * tax location (billing address via the Address Element), which this flow does
+ * not collect. Before reviving it, add address collection + `automatic_tax` so
+ * it stays VAT-compliant.
  */
 export async function createSubscription(plan: PlanId): Promise<SubscriptionIntent> {
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
