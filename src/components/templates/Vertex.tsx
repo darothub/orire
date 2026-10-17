@@ -206,9 +206,17 @@ export function Vertex({ cv }: { cv: CVData }) {
     }
   };
 
+  const hasSkills = cv.skills.length > 0 && cv.order.includes("skills");
+
+  // The DOM order here is deliberately Identity -> Main -> Skills — a linear
+  // reader (ATS text extraction, Ctrl-F, a screen reader) meets name/contact,
+  // then the substantive Experience/Education content, then Skills last,
+  // instead of Skills before Experience just because it's visually a sidebar.
+  // CSS grid placement (templates.css) re-pins both sidebar pieces to column 1
+  // so the visual full-height gradient rail is unchanged.
   return (
     <motion.article variants={container} initial="hidden" animate="show" className="vertex" aria-label="CV preview">
-      <aside className="vx-side">
+      <aside className={`vx-side vx-side-top${hasSkills ? "" : " vx-side-full"}`}>
         <motion.div variants={item} className="vx-avatar">{initials}</motion.div>
         <EditableText
           as="h1"
@@ -240,8 +248,12 @@ export function Vertex({ cv }: { cv: CVData }) {
             ))}
           </div>
         </motion.div>
+      </aside>
 
-        {cv.skills.length > 0 && cv.order.includes("skills") && (
+      <div className="vx-main">{cv.order.filter((k) => k !== "skills").map(section)}</div>
+
+      {hasSkills && (
+        <aside className="vx-side vx-side-bottom">
           <motion.div variants={item} className="vx-side-block">
             <h3 className="vx-side-h">Skills</h3>
             {cv.skills.map((g) => (
@@ -261,10 +273,8 @@ export function Vertex({ cv }: { cv: CVData }) {
               </div>
             ))}
           </motion.div>
-        )}
-      </aside>
-
-      <div className="vx-main">{cv.order.filter((k) => k !== "skills").map(section)}</div>
+        </aside>
+      )}
     </motion.article>
   );
 }

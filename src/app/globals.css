@@ -1159,6 +1159,34 @@ body {
 }
 .spot-coach-text { font-size: 13px; line-height: 1.45; color: var(--text); flex: 1; }
 .spot-coach .flow-btn { flex: 0 0 auto; }
+.spot-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding: 20px 22px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line-2));
+  border-radius: 16px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--panel)), var(--panel));
+}
+.spot-hero-main { display: flex; flex-direction: column; gap: 4px; max-width: 56ch; }
+.spot-hero-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.spot-hero-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.spot-hero-sub { font-size: 13px; line-height: 1.5; color: var(--muted); }
+.spot-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
 .spot-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

@@ -134,7 +134,19 @@ function PickCard({
         <PickSheen x={sheenX} y={sheenY} />
       </div>
       <div className="pick-meta">
-        <span className="pick-name">{t.name}</span>
+        <span className="pick-name">
+          {t.name}
+          <span
+            className={`pick-ats ${t.ats ? "safe" : "design"}`}
+            title={
+              t.ats
+                ? "Single-column layout — the safest bet for ATS parsers that read by visible column."
+                : "Multi-column layout. Still machine-readable (every export carries a hidden, linearly-ordered text layer), but pick a single-column template if an ATS is a known risk."
+            }
+          >
+            {t.ats ? "ATS-safe" : "Design"}
+          </span>
+        </span>
         <span className="pick-blurb">{t.blurb}</span>
       </div>
       {isActive && (

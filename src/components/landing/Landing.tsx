@@ -24,8 +24,14 @@ interface Feature {
   body: string;
 }
 
-/** Product differentiators — the real capabilities, not filler. */
+/** Product differentiators — the real capabilities, not filler. Simulate leads:
+ *  it's what nothing else does. */
 const FEATURES: Feature[] = [
+  {
+    icon: "◎",
+    title: "Simulate the ideal candidate",
+    body: "See the CV that would match a role 100%, and exactly where yours falls short — then move your real experience toward that concrete target. Nothing else shows you the gap.",
+  },
   {
     icon: "⟳",
     title: "Re-brand any CV",
@@ -45,11 +51,6 @@ const FEATURES: Feature[] = [
     icon: "⚖",
     title: "A clear CV score",
     body: "Every draft gets a clear score from a fixed rubric, so the same CV always scores the same — watch it climb as you tighten each line.",
-  },
-  {
-    icon: "◎",
-    title: "Simulate the perfect match",
-    body: "See the CV that would match a role 100%, then move your real experience toward that concrete target.",
   },
   {
     icon: "❖",
@@ -103,14 +104,15 @@ export function Landing() {
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.7, ease: EASE }}
             >
-              <span className="landing-eyebrow">Your CV, re-branded</span>
+              <span className="landing-eyebrow">The ideal candidate, revealed</span>
               <h1 className="landing-title">
-                Turn the CV you have into the one the role wants.
+                See the perfect CV for any job — then close the gap to yours.
               </h1>
               <p className="landing-sub">
-                Upload what you have. Orire re-brands it into an elegant template,
-                refines it against any job description, compares two AI assistants
-                and scores every draft — so you can see exactly how far it moved.
+                Orire simulates the candidate who&apos;d match the role 100%, shows
+                exactly where you fall short, and moves your real experience toward
+                that target — then re-brands, refines and scores the result. Never
+                inventing anything you didn&apos;t do.
               </p>
               <div className="landing-hero-cta">
                 <button className="landing-cta lg" onClick={() => openAuth("signup")}>
@@ -121,9 +123,9 @@ export function Landing() {
                 </button>
               </div>
               <ul className="landing-usps" aria-label="What Orire does">
-                <li><span aria-hidden>✎</span> Upload PDF &amp; DOCX</li>
-                <li><span aria-hidden>❖</span> 25 standout templates</li>
+                <li><span aria-hidden>◎</span> Simulate the ideal match</li>
                 <li><span aria-hidden>⚖</span> Clear CV score</li>
+                <li><span aria-hidden>❖</span> 25 standout templates</li>
               </ul>
             </motion.div>
             <HeroPreview />

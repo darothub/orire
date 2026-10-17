@@ -82,6 +82,11 @@
   flex-direction: column;
   gap: 22px;
 }
+/* Visual placement only — DOM order is always main-then-aside (see Resume.tsx).
+ * aside-right needs no override (source order already matches); aside-left
+ * swaps which grid column each lands in via `order`, not markup. */
+.lay-aside-left .r-main { order: 2; }
+.lay-aside-left .r-aside { order: 1; }
 
 .r-h2 {
   font-size: var(--h2-size);

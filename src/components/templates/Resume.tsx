@@ -293,18 +293,14 @@ export function Resume({
     >
       {header}
       {showAside ? (
+        // DOM order is always main-then-aside — a linear reader (ATS text
+        // extraction, Ctrl-F, a screen reader) meets Summary/Experience/
+        // Education before the Skills sidebar regardless of which side it's
+        // drawn on. Visual left/right placement is CSS-only (`order` in
+        // resume.css, keyed off `.lay-aside-left`/`.lay-aside-right`).
         <div className="r-grid">
-          {layout === "aside-left" ? (
-            <>
-              {aside}
-              {main}
-            </>
-          ) : (
-            <>
-              {main}
-              {aside}
-            </>
-          )}
+          {main}
+          {aside}
         </div>
       ) : (
         main
