@@ -9,6 +9,26 @@ import { Resume, type Layout } from "./Resume";
 
 export interface TemplateMeta extends TemplateInfo {
   Component: ComponentType<{ cv: CVData }>;
+  /** True for single-column layouts — the safest for ATS that parse the visible
+   *  columns. Multi-column ("Design") templates still carry Orire's logical
+   *  invisible text layer, so they remain machine-readable; this flag is a
+   *  user-facing recommendation, not a hard guarantee. */
+  ats: boolean;
+}
+
+/**
+ * Single-column (ATS-safe) templates. Everything else uses an aside/sidebar
+ * (multi-column) layout and is labelled "Design". Keep in sync with the layouts
+ * below — the registry test cross-checks that every catalog id is classified.
+ */
+const ATS_SAFE_IDS = new Set<string>([
+  "noir", "meridian", // bespoke single-column
+  "slate", "ivory", "onyx", "sapphire", "marigold", "crimson", "nordic", "mono", "aqua", "oxford", "sterling", "imperial",
+]);
+
+/** Whether a template is single-column / ATS-safe. */
+export function isAtsSafe(id: string): boolean {
+  return ATS_SAFE_IDS.has(id);
 }
 
 /** Build a themed template component from the shared Resume engine. */
@@ -53,6 +73,7 @@ const COMPONENTS: Record<string, ComponentType<{ cv: CVData }>> = {
 export const TEMPLATES: TemplateMeta[] = TEMPLATE_CATALOG.map((info) => ({
   ...info,
   Component: COMPONENTS[info.id] ?? Aurora,
+  ats: isAtsSafe(info.id),
 }));
 
 export function getTemplate(id: string): TemplateMeta {

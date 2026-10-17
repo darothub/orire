@@ -53,6 +53,44 @@ function BlockCard({ view }: { view: WorkspaceView }) {
   );
 }
 
+/** Featured hero for Simulate — the differentiator, spotlighted above the grid
+ *  (critique §3: spotlight the next best action, not an equal grid). */
+function SimulateHero() {
+  const setView = useViewStore((s) => s.setView);
+  const inFlow = useFlowStore((s) => s.sequence.includes("target"));
+  const addBlock = useFlowStore((s) => s.addBlock);
+  const removeBlock = useFlowStore((s) => s.removeBlock);
+  const locked = useUsageStore((s) => s.exhausted("simulate"));
+
+  return (
+    <div className="spot-hero">
+      <div className="spot-hero-main">
+        <span className="spot-hero-eyebrow">Start here · the Orire difference</span>
+        <strong className="spot-hero-title">
+          <span aria-hidden>{VIEW_META.target.icon}</span> {VIEW_META.target.label} the ideal candidate
+        </strong>
+        <span className="spot-hero-sub">
+          See the CV that would match any job 100% — and exactly where yours falls short. Then close the gap, in your own words, without inventing anything.
+        </span>
+      </div>
+      <div className="spot-hero-actions">
+        <button type="button" className="flow-btn primary" onClick={() => setView(locked ? "plans" : "target")}>
+          {locked ? "Upgrade to simulate" : "Open Simulate →"}
+        </button>
+        <button
+          type="button"
+          className={`spot-card-toggle${inFlow ? " in" : ""}`}
+          aria-pressed={inFlow}
+          onClick={() => (inFlow ? removeBlock("target") : addBlock("target"))}
+          title={inFlow ? "Remove from your flow" : "Add to your flow"}
+        >
+          {inFlow ? "In your flow ✓" : "Add +"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function SpotlightView() {
   const resetFlow = useFlowStore((s) => s.resetFlow);
   const coachSeen = useFlowStore((s) => s.coachSeen);
@@ -85,8 +123,10 @@ export function SpotlightView() {
         </div>
       )}
 
+      <SimulateHero />
+
       <div className="spot-grid">
-        {COMPOSABLE_BLOCKS.map((v) => (
+        {COMPOSABLE_BLOCKS.filter((v) => v !== "target").map((v) => (
           <BlockCard key={v} view={v} />
         ))}
       </div>
