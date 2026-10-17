@@ -98,8 +98,9 @@ export default function PrivacyPage() {
       <p>
         Under the GDPR you have the right to access, rectification, erasure,
         restriction, data portability, and to object to certain processing, as
-        well as to withdraw consent at any time. You can delete your account and
-        all associated data from your account settings, or email{" "}
+        well as to withdraw consent at any time. You can download all your data
+        as a JSON file (&ldquo;Export my data&rdquo;), and delete your account
+        and all associated data, directly from your account settings — or email{" "}
         {COMPANY.privacyEmail}; we respond within one month. You may also lodge a
         complaint with the Portuguese supervisory authority, the Comissão
         Nacional de Proteção de Dados (CNPD) —{" "}
