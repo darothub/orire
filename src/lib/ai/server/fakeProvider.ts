@@ -163,12 +163,17 @@ export function fakeEvidenceBullet(input: { action: string; result: string; scal
 export function fakeBulletReview(text: string): string {
   const flags = analyzeBullet(text);
   const issues = flags.map((f) => ({ type: f.id, message: f.hint }));
-  // A trivial "rewrite": swap a weak/duty opener for a strong verb; never add a
-  // number (keeps the grounding guard happy).
+  // A trivial "rewrite" — never add a number (keeps the grounding guard happy):
+  //  - a typo: fix the opener to the suggested spelling;
+  //  - a weak/duty/unusual opener: swap it for a strong verb.
   let suggestion = "";
-  if (flags.some((f) => f.id === "weak-verb" || f.id === "duty")) {
-    const body = text.trim().replace(/^[-–—•*\s]+/, "").replace(/^\w+\s+/, "");
-    suggestion = `Led ${body.charAt(0).toLowerCase()}${body.slice(1)}`;
+  const typo = flags.find((f) => f.id === "typo" && f.suggest);
+  const body = text.trim().replace(/^[-–—•*\s]+/, "").replace(/^\S+\s*/, "");
+  if (typo) {
+    const fixed = typo.suggest!.charAt(0).toUpperCase() + typo.suggest!.slice(1);
+    suggestion = body ? `${fixed} ${body}` : fixed;
+  } else if (flags.some((f) => f.id === "weak-verb" || f.id === "duty" || f.id === "odd-verb")) {
+    suggestion = body ? `Led ${body.charAt(0).toLowerCase()}${body.slice(1)}` : "Led the work";
   }
   const verdict = flags.some((f) => f.severity === "warn") ? "weak" : flags.length ? "ok" : "strong";
   return JSON.stringify({ verdict, issues, suggestion });

@@ -136,6 +136,18 @@ describe("fakeBulletReview", () => {
     expect(r.verdict).toBe("strong");
     expect(r.issues).toEqual([]);
   });
+
+  it("catches a misspelled opener and suggests the corrected bullet", () => {
+    const r = parseBulletReview(fakeBulletReview("Comtributed to everything"));
+    expect(r.verdict).toBe("weak");
+    expect(r.issues.some((i) => i.type === "typo")).toBe(true);
+    expect(r.suggestion.startsWith("Contributed")).toBe(true);
+  });
+
+  it("flags a real-but-unusual opener", () => {
+    const r = parseBulletReview(fakeBulletReview("Colonised everything"));
+    expect(r.issues.some((i) => i.type === "odd-verb")).toBe(true);
+  });
 });
 
 describe("fakeStructuredCV", () => {
