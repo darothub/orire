@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { analyzeBullet, coachWarningCount } from "./coach";
+import { analyzeBullet, coachWarningCount, editDistance } from "./coach";
 
 const ids = (text: string) => analyzeBullet(text).map((f) => f.id).sort();
+const flag = (text: string, id: string) => analyzeBullet(text).find((f) => f.id === id);
 
 describe("analyzeBullet", () => {
   it("returns no flags for a strong, quantified bullet", () => {
@@ -49,6 +50,43 @@ describe("analyzeBullet", () => {
 
   it("ignores leading bullet glyphs when matching the opener", () => {
     expect(ids("• Assisted with quarterly planning across the org")).toContain("weak-verb");
+  });
+});
+
+describe("opener verb strength + spelling", () => {
+  it("flags a misspelled opening verb with the correction", () => {
+    const f = flag("Comtributed to everything", "typo");
+    expect(f).toBeTruthy();
+    expect(f!.suggest).toBe("contributed");
+    expect(f!.hint).toContain("Contributed");
+  });
+
+  it("flags a real word that isn't a CV action verb as an unusual opener", () => {
+    const got = ids("Colonised everything");
+    expect(got).toContain("odd-verb");
+    expect(got).not.toContain("typo");
+  });
+
+  it("accepts a recognized strong action verb", () => {
+    expect(ids("Led the platform rebuild")).not.toContain("odd-verb");
+    expect(ids("Led the platform rebuild")).not.toContain("typo");
+  });
+
+  it("prefers the weak/duty phrase flag over a verb-spelling flag", () => {
+    expect(ids("Contributed to the design system")).toContain("weak-verb");
+    expect(ids("Contributed to the design system")).not.toContain("odd-verb");
+  });
+
+  it("does not analyze hyphenated or short openers", () => {
+    expect(ids("Co-led the migration across teams")).not.toContain("odd-verb");
+  });
+});
+
+describe("editDistance", () => {
+  it("computes Levenshtein distance", () => {
+    expect(editDistance("comtributed", "contributed")).toBe(1);
+    expect(editDistance("led", "led")).toBe(0);
+    expect(editDistance("", "abc")).toBe(3);
   });
 });
 
