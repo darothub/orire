@@ -42,6 +42,29 @@ export function priceIdForPlan(plan: PlanId): string | null {
   return process.env[PRICE_ENV[plan]] ?? null;
 }
 
+/**
+ * Stripe Tax (EU VAT) options shared by both Checkout flows — one source of
+ * truth so the two sessions can't drift:
+ *  - `automatic_tax` — Stripe computes and adds VAT from the customer's location.
+ *  - `billing_address_collection: "required"` — automatic_tax needs a location
+ *    to tax against, so Checkout must capture a billing address.
+ *  - `customer_update` — persist the address (and name) Checkout collects back
+ *    onto the Customer; required when a `customer` is preset and automatic_tax
+ *    is on, and it keeps the tax location for renewals.
+ *  - `tax_id_collection` — let business customers enter a VAT ID for B2B
+ *    reverse-charge.
+ *
+ * OPS: Stripe Tax must be activated in the Stripe Dashboard (origin address +
+ * registrations) for `automatic_tax` to succeed; until then these sessions
+ * error with a tax-not-active message.
+ */
+export const CHECKOUT_TAX_OPTS = {
+  automatic_tax: { enabled: true },
+  billing_address_collection: "required",
+  customer_update: { address: "auto", name: "auto" },
+  tax_id_collection: { enabled: true },
+} as const satisfies Partial<Stripe.Checkout.SessionCreateParams>;
+
 /** Reverse map a Stripe price id back to a plan id (for webhook handling). */
 export function planForPriceId(priceId: string | null | undefined): PlanId | null {
   if (!priceId) return null;
