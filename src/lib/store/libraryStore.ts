@@ -12,6 +12,8 @@ import {
   deleteVersion,
   setActiveVersion,
   markVersionExported,
+  shareVersion,
+  unshareVersion,
   type LibraryVersion,
 } from "@/app/actions/library";
 
@@ -41,6 +43,8 @@ export interface CvVersion {
   createdAt: number;
   updatedAt: number;
   lastExportedAt?: number;
+  /** Public share token when shared (cloud only); undefined = private. */
+  shareToken?: string;
 }
 
 /** Fallback grouping label when no company was given. */
@@ -79,6 +83,10 @@ interface LibraryState {
   /** Called from the export flow: mark the active version exported, or file a
    *  new one when there's no active version yet. */
   recordExport: (input: SaveVersionInput) => Promise<void>;
+  /** Create/reuse a public share link for a version (cloud only). Returns the token. */
+  share: (id: string) => Promise<string | null>;
+  /** Revoke a version's public share link (cloud only). */
+  unshare: (id: string) => Promise<void>;
   /** Wipe in-memory state (sign-out). Never deletes server rows. */
   clear: () => void;
 }
@@ -99,6 +107,7 @@ function fromServer(v: LibraryVersion): CvVersion {
     createdAt: new Date(v.createdAt).getTime(),
     updatedAt: new Date(v.updatedAt).getTime(),
     lastExportedAt: v.lastExportedAt ? new Date(v.lastExportedAt).getTime() : undefined,
+    shareToken: v.shareToken ?? undefined,
   };
 }
 
@@ -238,6 +247,19 @@ export const useLibraryStore = create<LibraryState>()(
           return;
         }
         await get().saveVersion({ ...input, exported: true });
+      },
+
+      share: async (id) => {
+        if (!get().cloud) return null; // sharing requires a cloud-backed version
+        const res = await shareVersion(id);
+        await get().refreshFromCloud();
+        return res.ok ? res.token : null;
+      },
+
+      unshare: async (id) => {
+        if (!get().cloud) return;
+        await unshareVersion(id);
+        await get().refreshFromCloud();
       },
 
       clear: () => set({ versions: [], activeId: null, cloud: false }),

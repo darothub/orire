@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
 import type { CVData } from "@/lib/cv/schema";
 import type { Prisma } from "@prisma/client";
+import { newShareToken } from "@/lib/share/token";
 
 /**
  * Server actions for the cloud-backed CV version library (Story 2). Each
@@ -21,6 +22,8 @@ export interface LibraryVersion {
   data: CVData;
   baseline: CVData | null;
   lastExportedAt: string | null;
+  /** Public share token when the version is shared; null = private. */
+  shareToken: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -38,6 +41,7 @@ type DocRow = {
   data: unknown;
   baseline: unknown;
   lastExportedAt: Date | null;
+  shareToken: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -51,6 +55,7 @@ function toVersion(doc: DocRow): LibraryVersion {
     data: doc.data as CVData,
     baseline: (doc.baseline ?? null) as CVData | null,
     lastExportedAt: doc.lastExportedAt ? doc.lastExportedAt.toISOString() : null,
+    shareToken: doc.shareToken ?? null,
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };
@@ -174,5 +179,30 @@ export async function markVersionExported(id: string): Promise<{ ok: boolean }> 
   const userId = await requireUserId();
   if (!userId) return { ok: false };
   const res = await prisma.document.updateMany({ where: { id, userId }, data: { lastExportedAt: new Date() } });
+  return { ok: res.count > 0 };
+}
+
+/**
+ * Turn on (or reuse) the public share link for a version. Opt-in and
+ * ownership-scoped; returns the token so the client can build the URL.
+ */
+export async function shareVersion(id: string): Promise<{ ok: true; token: string } | { ok: false; reason: string }> {
+  const userId = await requireUserId();
+  if (!userId) return { ok: false, reason: "not-signed-in" };
+
+  const owned = await prisma.document.findFirst({ where: { id, userId }, select: { shareToken: true } });
+  if (!owned) return { ok: false, reason: "not-found" };
+  if (owned.shareToken) return { ok: true, token: owned.shareToken };
+
+  const token = newShareToken();
+  await prisma.document.updateMany({ where: { id, userId }, data: { shareToken: token, sharedAt: new Date() } });
+  return { ok: true, token };
+}
+
+/** Revoke the public share link for a version (link stops working immediately). */
+export async function unshareVersion(id: string): Promise<{ ok: boolean }> {
+  const userId = await requireUserId();
+  if (!userId) return { ok: false };
+  const res = await prisma.document.updateMany({ where: { id, userId }, data: { shareToken: null, sharedAt: null } });
   return { ok: res.count > 0 };
 }
