@@ -9,7 +9,9 @@ import {
   fakeCoverLetter,
   fakeEvidenceBullet,
   fakeStructuredCV,
+  fakeBulletReview,
 } from "./fakeProvider";
+import { parseBulletReview } from "@/lib/ai/bulletReview";
 import { parseModelJSON } from "@/lib/ai/guardrails";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { parseVerdict } from "@/lib/ai/judge";
@@ -118,6 +120,21 @@ describe("fakeEvidenceBullet", () => {
     );
     expect(bullet).toBeTruthy();
     expect(bullet).toContain("40% fewer errors");
+  });
+});
+
+describe("fakeBulletReview", () => {
+  it("round-trips through parseBulletReview and flags a weak opener with a strong-verb rewrite", () => {
+    const r = parseBulletReview(fakeBulletReview("Helped build the onboarding flow for new engineers"));
+    expect(r.verdict).toBe("weak");
+    expect(r.issues.length).toBeGreaterThan(0);
+    expect(r.suggestion.startsWith("Led ")).toBe(true);
+  });
+
+  it("returns a strong verdict with no issues for a clean bullet", () => {
+    const r = parseBulletReview(fakeBulletReview("Led migration to Stripe, cutting failed payments 38%."));
+    expect(r.verdict).toBe("strong");
+    expect(r.issues).toEqual([]);
   });
 });
 

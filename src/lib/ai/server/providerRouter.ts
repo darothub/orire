@@ -15,7 +15,7 @@
 
 import type { ProviderId } from "@/lib/ai/types";
 
-export type AiTaskType = "refine" | "cover-letter" | "simulate" | "judge" | "retone" | "evidence";
+export type AiTaskType = "refine" | "cover-letter" | "simulate" | "judge" | "retone" | "evidence" | "bullet-review";
 
 export interface RouteDecision {
   provider: ProviderId;
@@ -70,6 +70,7 @@ export function routeTask(taskType: AiTaskType): RouteDecision {
 
     case "retone":
     case "evidence":
+    case "bullet-review":
       return { provider: "openai", model: "gpt-5-mini" };
 
     default:
