@@ -11,6 +11,8 @@ import {
   meterFor,
   remainingNote,
   nextPlan,
+  allowCoverLetter,
+  allowContextualBulletReview,
 } from "@/lib/plan/plan";
 import { TEMPLATE_COUNT, allTemplatesPerk } from "@/lib/templates/catalog";
 
@@ -192,5 +194,24 @@ describe("plan template perks", () => {
       expect(PLANS[id].perks[0]).toBe(expected);
       expect(PLANS[id].perks.some((p) => /template/i.test(p))).toBe(true);
     }
+  });
+});
+
+
+describe("allowContextualBulletReview", () => {
+  it("is Pro/Career only (needs AI sentence context)", () => {
+    expect(allowContextualBulletReview("free")).toBe(false);
+    expect(allowContextualBulletReview("pro")).toBe(true);
+    expect(allowContextualBulletReview("career")).toBe(true);
+  });
+  it("matches cover-letter paid gate shape", () => {
+    expect(allowContextualBulletReview("free")).toBe(allowCoverLetter("free"));
+    expect(allowContextualBulletReview("pro")).toBe(allowCoverLetter("pro"));
+  });
+  it("lists the perk on paid plans only", () => {
+    const needle = /AI bullet review/i;
+    expect(PLANS.free.perks.some((p) => needle.test(p))).toBe(false);
+    expect(PLANS.pro.perks.some((p) => needle.test(p))).toBe(true);
+    expect(PLANS.career.perks.some((p) => needle.test(p))).toBe(true);
   });
 });

@@ -79,6 +79,7 @@ export const PLANS: Record<PlanId, Plan> = {
       allTemplatesPerk(),
       "30 refines / mo",
       "Compare 2 + pick the best",
+      "AI bullet review (context spelling)",
       "Cover letters",
       "Full Grade breakdown",
       "PDF (page layouts) & Word · unlimited downloads",
@@ -98,6 +99,7 @@ export const PLANS: Record<PlanId, Plan> = {
       "Unlimited refines (fair-use)",
       "Premium models included",
       "Parallel compare + pick the best",
+      "AI bullet review (context spelling)",
       "JD simulation",
       "Company history",
       "PDF (page layouts) & Word · unlimited downloads",
@@ -286,6 +288,15 @@ export function nextPlan(planId: PlanId): Plan | null {
  * Cover letters are a paid add-on: every plan except Free includes them.
  */
 export function allowCoverLetter(planId: PlanId): boolean {
+  return planId !== "free";
+}
+
+/**
+ * AI bullet Improve — full-sentence spelling, grammar, and impact review.
+ * Needs model context (not a local word list), so it is Pro/Career only.
+ * Free keeps the deterministic opener coach + browser spellcheck.
+ */
+export function allowContextualBulletReview(planId: PlanId): boolean {
   return planId !== "free";
 }
 

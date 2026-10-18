@@ -23,9 +23,6 @@ const PROVIDER_IDS = Object.keys(PROVIDERS) as ProviderId[];
 export function ProviderSetup({ selectable = false }: { selectable?: boolean }) {
   const defaultProvider = useSettingsStore((s) => s.provider);
   const setProvider = useSettingsStore((s) => s.setProvider);
-  const deepSpellcheck = useSettingsStore((s) => s.deepSpellcheck);
-  const setDeepSpellcheck = useSettingsStore((s) => s.setDeepSpellcheck);
-
   const runProviders = useRefineStore((s) => s.runProviders);
   const toggleRunProvider = useRefineStore((s) => s.toggleRunProvider);
   const plan = usePlanStore((s) => s.plan);
@@ -33,30 +30,6 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
 
   return (
     <div className="conn-wrap">
-      {!selectable && (
-        <div className="conn-default" style={{ marginBottom: 16 }}>
-          <div className="conn-default-head">
-            <span className="ed-label">Editor coach</span>
-            <span className="conn-hint">
-              Opening-verb checks always run. Optional dictionary spellcheck is non-contextual: it
-              only flags single-letter typos against a compact English + tech list (not grammar or
-              full dictionary coverage). Prefer the browser/OS spellcheck for prose.
-            </span>
-          </div>
-          <label className="conn-switch-opt" style={{ display: "inline-flex", gap: 8, alignItems: "center", cursor: "pointer" }}>
-            <input
-              type="checkbox"
-              checked={deepSpellcheck}
-              onChange={(e) => setDeepSpellcheck(e.target.checked)}
-              aria-describedby="deep-spell-hint"
-            />
-            <span>Dictionary spellcheck on bullets</span>
-          </label>
-          <p id="deep-spell-hint" className="conn-hint" style={{ marginTop: 6 }}>
-            Off by default. Conservative on purpose — unknown words with no clear 1-edit fix stay silent.
-          </p>
-        </div>
-      )}
       {selectable && (
         <div className="conn-planhint">
           <span className="conn-dot openai" aria-hidden />
