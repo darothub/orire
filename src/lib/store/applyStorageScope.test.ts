@@ -100,12 +100,16 @@ const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
     order: ["summary", "experience", "education", "skills", "projects", "certifications"],
   };
 
+  /**
+   * Mimic real zustand persist: empty-key rehydrate does NOT clear memory.
+   * applyStorageScope must reset explicitly — that is what these tests prove.
+   */
   function makePersistStoreHoisted<T extends object>(initial: T, name: string) {
     let state = { ...initial };
     let persistName = name;
     const storage = () => globalThis.localStorage;
-    return {
-      getState: () => state as T,
+    const api = {
+      getState: () => state as T & Record<string, unknown>,
       setState: (partial: Partial<T>) => {
         state = { ...state, ...partial };
         try {
@@ -122,22 +126,27 @@ const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
         rehydrate: async () => {
           const raw = storage()?.getItem(persistName) ?? null;
           if (!raw) {
-            state = { ...initial };
+            // Real zustand: leave in-memory state as-is when key is missing.
             return;
           }
           try {
             const parsed = JSON.parse(raw) as { state?: T };
             if (parsed?.state) state = { ...initial, ...parsed.state };
-            else state = { ...initial };
           } catch {
-            state = { ...initial };
+            /* keep memory */
           }
         },
       },
+      /** Test helpers matching production store APIs */
+      _replace(next: T) {
+        state = { ...next };
+      },
+      _initial: initial,
     };
+    return api;
   }
 
-  const cvStore = makePersistStoreHoisted<CvBucket>(
+  const cvInner = makePersistStoreHoisted<CvBucket>(
     {
       cv: sample,
       activeTemplate: "aurora",
@@ -147,18 +156,57 @@ const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
     },
     "orire-cv:anon:v1",
   );
+  const cvStore = {
+    ...cvInner,
+    getState: () => ({
+      ...cvInner.getState(),
+      reset: () => {
+        cvInner._replace({ ...cvInner._initial });
+        try {
+          globalThis.localStorage?.setItem(
+            cvInner.persist.getOptions().name!,
+            JSON.stringify({ state: cvInner._initial }),
+          );
+        } catch {
+          /* ignore */
+        }
+      },
+    }),
+    setState: cvInner.setState,
+    persist: cvInner.persist,
+  };
 
-  const libraryStore = makePersistStoreHoisted(
+  const libInner = makePersistStoreHoisted(
     {
-      versions: [] as { id: string }[],
+      versions: [] as { id: string; name?: string; cv?: LooseCv }[],
       activeId: null as string | null,
       lastCompany: "",
       cloud: false,
     },
     "orire-library:anon:v1",
   );
+  const libraryStore = {
+    ...libInner,
+    getState: () => ({
+      ...libInner.getState(),
+      clear: () => {
+        const empty = { versions: [], activeId: null, lastCompany: "", cloud: false };
+        libInner._replace(empty);
+        try {
+          globalThis.localStorage?.setItem(
+            libInner.persist.getOptions().name!,
+            JSON.stringify({ state: empty }),
+          );
+        } catch {
+          /* ignore */
+        }
+      },
+    }),
+    setState: libInner.setState,
+    persist: libInner.persist,
+  };
 
-  const targetStore = makePersistStoreHoisted(
+  const targetInner = makePersistStoreHoisted(
     {
       ideal: null as unknown,
       jd: "",
@@ -168,6 +216,26 @@ const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
     },
     "orire-target:anon:v1",
   );
+  const targetStore = {
+    ...targetInner,
+    getState: () => ({
+      ...targetInner.getState(),
+      clearTarget: () => {
+        const empty = { ideal: null, jd: "", label: "", createdAt: null, baseScore: 0 };
+        targetInner._replace(empty);
+        try {
+          globalThis.localStorage?.setItem(
+            targetInner.persist.getOptions().name!,
+            JSON.stringify({ state: empty }),
+          );
+        } catch {
+          /* ignore */
+        }
+      },
+    }),
+    setState: targetInner.setState,
+    persist: targetInner.persist,
+  };
 
   const planInner = makePersistStoreHoisted(
     {
@@ -221,15 +289,9 @@ describe("applyStorageScope", () => {
     targetStore.persist.setOptions({ name: scopedNameFor("target", null) });
     planStore.persist.setOptions({ name: scopedNameFor("plan", null) });
     await applyStorageScope(null);
-    cvStore.setState({
-      cv: realCv("Guest"),
-      activeTemplate: "aurora",
-      baseline: null,
-      started: true,
-      ignoredSkills: [],
-    });
-    libraryStore.setState({ versions: [], activeId: null, lastCompany: "", cloud: false });
-    targetStore.setState({ ideal: null, jd: "", label: "", createdAt: null, baseScore: 0 });
+    cvStore.getState().reset();
+    libraryStore.getState().clear();
+    targetStore.getState().clearTarget();
     planStore.setState({
       plan: "free",
       usageMonth: "2026-04",
@@ -310,7 +372,7 @@ describe("applyStorageScope", () => {
     expect(cvStore.getState().cv.basics.fullName).toBe("Account B");
   });
 
-  it("keeps separate buckets for two accounts", async () => {
+  it("does not carry Account A CV into empty Account B (direct switch)", async () => {
     cvStore.setState({
       cv: realCv("Alice"),
       activeTemplate: "aurora",
@@ -318,7 +380,14 @@ describe("applyStorageScope", () => {
       started: true,
       ignoredSkills: [],
     });
+    libraryStore.setState({
+      versions: [{ id: "v1", name: "Alice v1", cv: realCv("Alice") }],
+      activeId: "v1",
+      lastCompany: "Acme",
+      cloud: false,
+    });
     await applyStorageScope("alice");
+    // Persist Alice into her key
     cvStore.setState({
       cv: realCv("Alice Saved"),
       activeTemplate: "aurora",
@@ -326,10 +395,43 @@ describe("applyStorageScope", () => {
       started: true,
       ignoredSkills: [],
     });
+
     await applyStorageScope("bob");
     expect(cvStore.persist.getOptions().name).toBe(scopedNameFor("cv", "bob"));
+    // Empty bob bucket + zustand-style empty rehydrate must still yield sample, not Alice
     expect(cvStore.getState().cv.basics.email).toContain("@example.com");
+    expect(cvStore.getState().started).toBe(false);
+    expect(libraryStore.getState().versions).toEqual([]);
+
     await applyStorageScope("alice");
     expect(cvStore.getState().cv.basics.fullName).toBe("Alice Saved");
+  });
+
+  it("wipes guest bucket on sign-out so next account cannot inherit", async () => {
+    cvStore.setState({
+      cv: realCv("Account A Work"),
+      activeTemplate: "aurora",
+      baseline: null,
+      started: true,
+      ignoredSkills: [],
+    });
+    await applyStorageScope("user_a");
+    cvStore.setState({
+      cv: realCv("Account A Work"),
+      activeTemplate: "aurora",
+      baseline: null,
+      started: true,
+      ignoredSkills: [],
+    });
+
+    await applyStorageScope(null);
+    expect(getStorageScopeState().userId).toBeNull();
+    expect(cvStore.getState().cv.basics.email).toContain("@example.com");
+    expect(cvStore.getState().started).toBe(false);
+    expect(libraryStore.getState().versions).toEqual([]);
+
+    await applyStorageScope("user_b");
+    expect(cvStore.getState().cv.basics.email).toContain("@example.com");
+    expect(cvStore.getState().cv.basics.fullName).not.toBe("Account A Work");
   });
 });
