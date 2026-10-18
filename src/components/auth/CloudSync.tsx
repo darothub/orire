@@ -7,8 +7,8 @@ import { useLibraryStore } from "@/lib/store/libraryStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useSyncStore } from "@/lib/store/syncStore";
+import { useFlowStore } from "@/lib/store/flowStore";
 import { loadWorkingCV, saveWorkingCV } from "@/app/actions/cv";
-import { isSampleCV } from "@/lib/cv/sample";
 import { readEntitlement } from "@/app/actions/refine";
 import { useStorageScope } from "@/components/auth/StorageScope";
 import { useTargetStore } from "@/lib/store/targetStore";
@@ -16,14 +16,14 @@ import { useTargetStore } from "@/lib/store/targetStore";
 /**
  * Bridges the local CV (Zustand + localStorage) with the signed-in user's cloud
  * copy. Renders nothing.
- *  - On first authentication: adopt the server copy if one exists, otherwise
- *    push the current local CV up so it becomes the user's cloud document
- *    (only when the CV is a real started non-sample draft — never leftover
- *    memory from another account).
+ *  - On first authentication: adopt the server copy if one exists.
+ *    Never auto-create a cloud document from whatever happens to be in local
+ *    memory — that is how Account B inherited Account A's CV on shared
+ *    browsers. First real edit while signed in still autosaves.
  *  - While signed in: debounce-save edits to the server, with a status
  *    indicator + one retry.
- *  - On sign-out: clear the local CV + history once storage is on the anon
- *    key (deferred wipe), so a different account never inherits data.
+ *  - On sign-out: clear local CV / history / flow once storage is on the anon
+ *    key (deferred wipe).
  *
  * Waits for StorageScope so adopt/migrate always run against the bucket for
  * the current user id (never a previous account's localStorage key).
@@ -32,7 +32,6 @@ export function CloudSync() {
   const { data, status } = useSession();
   const sessionUserId = data?.user?.id ?? null;
   const scope = useStorageScope();
-  // Storage keys must match the session before we touch cloud or wipe local.
   const scopeReady =
     scope.ready &&
     ((status === "authenticated" && !!sessionUserId && scope.userId === sessionUserId) ||
@@ -40,40 +39,35 @@ export function CloudSync() {
 
   const hydratedFor = useRef<string | null>(null);
   const migratedFor = useRef<string | null>(null);
-  // Saves stay OFF until the initial adopt/seed has fully completed, so an edit
-  // (or the hydrate itself) during the async load can't overwrite the cloud
-  // copy with stale local state.
   const savesReady = useRef(false);
   const prevStatus = useRef<typeof status | null>(null);
-  /** Sign-out requested; wipe runs when anon scope is ready (not same-tick race). */
   const pendingWipe = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Adopt-or-seed once per authenticated user id (after storage is bound).
+  // Adopt cloud working CV once per user id (after storage is bound).
+  // No local→cloud seed on empty accounts.
   useEffect(() => {
     if (status !== "authenticated" || !scopeReady || !sessionUserId) return;
     if (hydratedFor.current === sessionUserId) return;
     hydratedFor.current = sessionUserId;
-    // Block autosave until this account's adopt/seed finishes (also on account switch).
     savesReady.current = false;
     let cancelled = false;
     (async () => {
       try {
         const remote = await loadWorkingCV();
         if (cancelled) return;
-        const store = useCVStore.getState();
         if (remote) {
-          store.hydrateFromCloud({ cv: remote.data, template: remote.template, baseline: remote.baseline });
-        } else if (store.started && !isSampleCV(store.cv)) {
-          // Seed only a real draft that survived StorageScope guest-preserve
-          // into *this* empty user bucket. Sample / unstarted never become
-          // cloud docs; empty buckets after account switch are reset to sample.
-          await saveWorkingCV({ data: store.cv, template: store.activeTemplate, baseline: store.baseline });
-          if (cancelled) return;
+          useCVStore.getState().hydrateFromCloud({
+            cv: remote.data,
+            template: remote.template,
+            baseline: remote.baseline,
+          });
         }
+        // Empty cloud: leave whatever StorageScope put in the bucket (sample
+        // after account switch, or a true first-time guest draft). Autosave
+        // creates the first Document on the next real edit.
       } catch {
-        // A hiccup adopting/seeding the working CV must not wedge the session —
-        // autosave still arms, and cloud mode is flipped by the effect below.
+        // Adopt hiccup must not wedge the session — autosave still arms.
       } finally {
         if (!cancelled) savesReady.current = true;
       }
@@ -83,15 +77,9 @@ export function CloudSync() {
     };
   }, [status, scopeReady, sessionUserId, scope.generation]);
 
-  // Enter cloud mode as soon as we're authenticated — independent of the
-  // adopt/seed path above — so the library's cloud features (share, server CRUD)
-  // are available even if the initial working-CV load hiccups. migrateLocalToCloud
-  // moves any versions saved anonymously in this browser into the account first
-  // (each as its own Document row, never touching activeDocumentId — that stays
-  // owned by the adopt/seed effect above), then enters cloud mode exactly as
-  // refreshFromCloud alone used to. Guarded so it fires once per user id.
-  // After account-scoped reset, leftover A versions are gone; only true guest
-  // library rows (or empty → refreshFromCloud) remain.
+  // Library: migrate only leftover *local* versions (guest first-run), else
+  // refresh from cloud. After StorageScope wipe/reset, versions are empty so
+  // this is a pure refresh for account B.
   useEffect(() => {
     if (status !== "authenticated" || !scopeReady || !sessionUserId) return;
     if (migratedFor.current === sessionUserId) return;
@@ -99,11 +87,7 @@ export function CloudSync() {
     void useLibraryStore.getState().migrateLocalToCloud();
   }, [status, scopeReady, sessionUserId, scope.generation]);
 
-  // Track sign-out with a deferred wipe: when status flips authenticated →
-  // unauthenticated, scope often still has the old user id for a tick, so
-  // scopeReady is false and a same-tick wipe would no-op forever. Arm
-  // pendingWipe and run reset once anon scope is ready. Cancel if the user
-  // signs in again before wipe.
+  // Deferred sign-out wipe (scope often lags status by a tick).
   useEffect(() => {
     const was = prevStatus.current;
     prevStatus.current = status;
@@ -128,12 +112,11 @@ export function CloudSync() {
       useCVStore.getState().reset();
       useLibraryStore.getState().clear();
       useTargetStore.getState().clearTarget();
+      useFlowStore.getState().resetFlow();
       useSyncStore.getState().setStatus("idle");
     }
   }, [status, scopeReady, scope.generation, scope.userId]);
 
-  // Mirror the server-truth plan + usage whenever we become authenticated, so
-  // the plan UI shows the enforceable numbers (not the local trial counter).
   useEffect(() => {
     if (status !== "authenticated" || !scopeReady) return;
     let cancelled = false;
@@ -141,7 +124,6 @@ export function CloudSync() {
       const ent = await readEntitlement();
       if (cancelled || !ent) return;
       usePlanStore.getState().syncFromServer({ plan: ent.plan, usedThisMonth: ent.usedThisMonth });
-      // Hydrate the per-metric usage mirror that drives feature grey-out.
       void useUsageStore.getState().refresh();
     })();
     return () => {
@@ -149,7 +131,6 @@ export function CloudSync() {
     };
   }, [status, scopeReady, sessionUserId, scope.generation]);
 
-  // Debounced autosave of edits while signed in, with status + a single retry.
   useEffect(() => {
     if (status !== "authenticated" || !scopeReady || !sessionUserId) return;
 
@@ -161,8 +142,6 @@ export function CloudSync() {
       };
       let res = await saveWorkingCV(snapshot());
       if (!res.ok) {
-        // One retry after a short backoff for a transient failure, re-reading
-        // the latest state so we never persist an older snapshot.
         await new Promise((r) => setTimeout(r, 1200));
         res = await saveWorkingCV(snapshot());
       }
@@ -173,7 +152,9 @@ export function CloudSync() {
       if (s.cv === prev.cv && s.activeTemplate === prev.activeTemplate && s.baseline === prev.baseline) {
         return;
       }
-      if (!savesReady.current) return; // don't save before the initial adopt/seed finishes
+      if (!savesReady.current) return;
+      // Never autosave the untouched demo persona into a new account.
+      if (!s.started) return;
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => void runSave(), 1500);
     });

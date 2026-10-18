@@ -1,12 +1,16 @@
 /**
  * Bind sensitive Zustand persist stores to the current account (or anonymous).
  * Called from the client StorageScope component whenever the session user id
- * settles. Preserves in-flight anonymous CV / library work across sign-in so
- * CloudSync can still seed the new account from what the user just built.
+ * settles.
  *
  * Critical: Zustand persist rehydrate() on an *empty* key leaves prior
  * in-memory state untouched. We always reset empty buckets after rebind so
- * Account B cannot inherit Account A's CV from memory (or seed it to cloud).
+ * Account B cannot inherit Account A's CV / flow from memory.
+ *
+ * Guest → first account may keep a true guest draft in *local* state only.
+ * After any authenticated session in this tab, guest-preserve is disabled so
+ * a later signup cannot pick up the previous account's leftover draft.
+ * CloudSync must not auto-seed cloud from local (see CloudSync.tsx).
  */
 
 "use client";
@@ -15,6 +19,7 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useLibraryStore } from "@/lib/store/libraryStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useTargetStore } from "@/lib/store/targetStore";
+import { useFlowStore } from "@/lib/store/flowStore";
 import { isSampleCV } from "@/lib/cv/sample";
 import {
   migrateAllLegacyKeys,
@@ -39,12 +44,18 @@ let state: StorageScopeState = { ready: false, userId: null, generation: 0 };
 const listeners = new Set<Listener>();
 let bindQueue: Promise<void> = Promise.resolve();
 let lastBound: StorageAccountId | undefined = undefined;
+/**
+ * Once any real account has been bound in this tab, do not carry guest/local
+ * drafts into the next empty account (stops A → sign-out → B inheritance).
+ */
+let sawAuthenticatedAccount = false;
 
 /** Test-only: reset module bind state between cases. */
 export function __resetStorageScopeForTests(): void {
   state = { ready: false, userId: null, generation: 0 };
   bindQueue = Promise.resolve();
   lastBound = undefined;
+  sawAuthenticatedAccount = false;
 }
 
 function emit(next: StorageScopeState) {
@@ -73,16 +84,17 @@ function browserStorage(): Storage | null {
   }
 }
 
-/** Default empty workspace (sample CV, no library/target). */
+/** Default empty workspace (sample CV, no library/target, recommended flow). */
 function resetSensitiveStores(): void {
   useCVStore.getState().reset();
   useLibraryStore.getState().clear();
   useTargetStore.getState().clearTarget();
   usePlanStore.getState().clearServer();
+  useFlowStore.getState().resetFlow();
 }
 
 /**
- * Rebind cv / library / target / plan persist keys to `userId`.
+ * Rebind cv / library / target / plan / flow persist keys to `userId`.
  * Serialised: overlapping session transitions wait their turn.
  */
 export function applyStorageScope(userId: StorageAccountId): Promise<void> {
@@ -102,19 +114,21 @@ async function runBind(userId: StorageAccountId): Promise<void> {
     return;
   }
 
-  // Snapshot anonymous working state BEFORE rehydrate can replace memory.
-  // Only when leaving a true guest (anon) session — never when switching
-  // Account A → Account B (that would copy A into B's empty bucket).
   const prevId = lastBound;
   const fromGuest = (prevId === null || prevId === undefined) && !!userId;
   const leavingAccount = !!prevId && !userId;
   const switchingAccounts = !!prevId && !!userId && prevId !== userId;
+  // Carry a guest draft only for the first account ever in this tab — never
+  // after a prior sign-in (that draft is usually the previous user's work).
+  const allowGuestPreserve = fromGuest && !sawAuthenticatedAccount;
 
   const cvSnap = useCVStore.getState();
   const libSnap = useLibraryStore.getState();
   const targetSnap = useTargetStore.getState();
+  const flowSnap = useFlowStore.getState();
+
   const keepCv =
-    fromGuest && cvSnap.started && !isSampleCV(cvSnap.cv)
+    allowGuestPreserve && cvSnap.started && !isSampleCV(cvSnap.cv)
       ? {
           cv: cvSnap.cv,
           activeTemplate: cvSnap.activeTemplate,
@@ -124,11 +138,11 @@ async function runBind(userId: StorageAccountId): Promise<void> {
         }
       : null;
   const keepLib =
-    fromGuest && !libSnap.cloud && libSnap.versions.length > 0
+    allowGuestPreserve && !libSnap.cloud && libSnap.versions.length > 0
       ? { versions: libSnap.versions, activeId: libSnap.activeId, lastCompany: libSnap.lastCompany }
       : null;
   const keepTarget =
-    fromGuest && targetSnap.ideal
+    allowGuestPreserve && targetSnap.ideal
       ? {
           ideal: targetSnap.ideal,
           jd: targetSnap.jd,
@@ -137,28 +151,31 @@ async function runBind(userId: StorageAccountId): Promise<void> {
           baseScore: targetSnap.baseScore,
         }
       : null;
+  const keepFlow =
+    allowGuestPreserve
+      ? { sequence: flowSnap.sequence, coachSeen: flowSnap.coachSeen }
+      : null;
 
   const cvName = scopedNameFor("cv", userId);
   const libName = scopedNameFor("library", userId);
   const targetName = scopedNameFor("target", userId);
   const planName = scopedNameFor("plan", userId);
+  const flowName = scopedNameFor("flow", userId);
 
   const hadUserCv = !!(storage && storageHasPayload(storage, cvName));
   const hadUserLib = !!(storage && storageHasPayload(storage, libName));
   const hadUserTarget = !!(storage && storageHasPayload(storage, targetName));
+  const hadUserFlow = !!(storage && storageHasPayload(storage, flowName));
 
   await rebindPersistName(useCVStore, cvName);
   await rebindPersistName(useLibraryStore, libName);
   await rebindPersistName(useTargetStore, targetName);
   await rebindPersistName(usePlanStore, planName);
+  await rebindPersistName(useFlowStore, flowName);
 
-  // Sign-out: always wipe the anon bucket so the next account cannot pick up
-  // leftover memory or a dirty guest key (CloudSync also wipes; this is the
-  // durable path that does not race on scopeReady).
   if (leavingAccount) {
     resetSensitiveStores();
   } else if (switchingAccounts || fromGuest || lastBound === undefined) {
-    // Empty target keys must not keep prior in-memory CV (zustand leaves it).
     if (!hadUserCv) {
       if (keepCv) useCVStore.setState(keepCv);
       else useCVStore.getState().reset();
@@ -179,11 +196,16 @@ async function runBind(userId: StorageAccountId): Promise<void> {
       if (keepTarget) useTargetStore.setState(keepTarget);
       else useTargetStore.getState().clearTarget();
     }
-    // Plan server mirror is per-session; drop it on any account change / empty bind.
+    if (!hadUserFlow) {
+      if (keepFlow) useFlowStore.setState(keepFlow);
+      else useFlowStore.getState().resetFlow();
+    }
     if (!userId || switchingAccounts || fromGuest) {
       usePlanStore.getState().clearServer();
     }
   }
+
+  if (userId) sawAuthenticatedAccount = true;
 
   lastBound = userId;
   emit({

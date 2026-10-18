@@ -81,7 +81,7 @@ type CvBucket = {
   ignoredSkills: string[];
 };
 
-const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
+const { cvStore, libraryStore, targetStore, planStore, flowStore } = vi.hoisted(() => {
   const sample: LooseCv = {
     basics: {
       fullName: "Sample",
@@ -260,7 +260,36 @@ const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
     persist: planInner.persist,
   };
 
-  return { cvStore, libraryStore, targetStore, planStore };
+
+  const flowInner = makePersistStoreHoisted(
+    {
+      sequence: ["rebrand", "edit"] as string[],
+      coachSeen: false,
+    },
+    "orire-flow:anon:v1",
+  );
+  const flowStore = {
+    ...flowInner,
+    getState: () => ({
+      ...flowInner.getState(),
+      resetFlow: () => {
+        const empty = { sequence: ["rebrand", "edit", "refine"], coachSeen: false };
+        flowInner._replace(empty);
+        try {
+          globalThis.localStorage?.setItem(
+            flowInner.persist.getOptions().name!,
+            JSON.stringify({ state: empty }),
+          );
+        } catch {
+          /* ignore */
+        }
+      },
+    }),
+    setState: flowInner.setState,
+    persist: flowInner.persist,
+  };
+
+  return { cvStore, libraryStore, targetStore, planStore, flowStore };
 });
 
 vi.mock("@/lib/cv/sample", () => ({
@@ -272,6 +301,7 @@ vi.mock("./cvStore", () => ({ useCVStore: cvStore }));
 vi.mock("./libraryStore", () => ({ useLibraryStore: libraryStore }));
 vi.mock("./targetStore", () => ({ useTargetStore: targetStore }));
 vi.mock("./planStore", () => ({ usePlanStore: planStore }));
+vi.mock("./flowStore", () => ({ useFlowStore: flowStore }));
 
 import {
   __resetStorageScopeForTests,
@@ -288,6 +318,7 @@ describe("applyStorageScope", () => {
     libraryStore.persist.setOptions({ name: scopedNameFor("library", null) });
     targetStore.persist.setOptions({ name: scopedNameFor("target", null) });
     planStore.persist.setOptions({ name: scopedNameFor("plan", null) });
+    flowStore.persist.setOptions({ name: scopedNameFor("flow", null) });
     await applyStorageScope(null);
     cvStore.getState().reset();
     libraryStore.getState().clear();
@@ -434,4 +465,37 @@ describe("applyStorageScope", () => {
     expect(cvStore.getState().cv.basics.email).toContain("@example.com");
     expect(cvStore.getState().cv.basics.fullName).not.toBe("Account A Work");
   });
+
+  it("does not preserve guest draft into a second account after one sign-in", async () => {
+    // First account may keep guest work
+    cvStore.setState({
+      cv: realCv("Guest First"),
+      activeTemplate: "aurora",
+      baseline: null,
+      started: true,
+      ignoredSkills: [],
+    });
+    await applyStorageScope("user_first");
+    expect(cvStore.getState().cv.basics.fullName).toBe("Guest First");
+
+    await applyStorageScope(null);
+    expect(cvStore.getState().started).toBe(false);
+
+    // Dirty the guest bucket as if wipe failed or user pasted leftover
+    cvStore.setState({
+      cv: realCv("Should Not Reach B"),
+      activeTemplate: "slate",
+      baseline: null,
+      started: true,
+      ignoredSkills: [],
+    });
+    flowStore.setState({ sequence: ["export", "history"], coachSeen: true });
+
+    await applyStorageScope("user_second");
+    expect(cvStore.getState().cv.basics.fullName).not.toBe("Should Not Reach B");
+    expect(cvStore.getState().cv.basics.email).toContain("@example.com");
+    expect(cvStore.getState().started).toBe(false);
+    expect(flowStore.getState().sequence).not.toEqual(["export", "history"]);
+  });
+
 });

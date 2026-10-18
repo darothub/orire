@@ -73,12 +73,15 @@ describe("migrateLegacyKey", () => {
     storage.setItem("orire-library-v1", "b");
     storage.setItem("orire-target-v1", "c");
     storage.setItem("orire-plan-v1", "d");
+    storage.setItem("orire-flow-v1", "e");
     migrateAllLegacyKeys(storage);
     expect(storageHasPayload(storage, "orire-cv:anon:v1")).toBe(true);
     expect(storageHasPayload(storage, "orire-library:anon:v1")).toBe(true);
     expect(storageHasPayload(storage, "orire-target:anon:v1")).toBe(true);
     expect(storageHasPayload(storage, "orire-plan:anon:v1")).toBe(true);
+    expect(storageHasPayload(storage, "orire-flow:anon:v1")).toBe(true);
     expect(storage.getItem("orire-cv-v1")).toBeNull();
+    expect(storage.getItem("orire-flow-v1")).toBeNull();
   });
 });
 

@@ -89,7 +89,8 @@ export const useFlowStore = create<FlowState>()(
       dismissCoach: () => set({ coachSeen: true }),
     }),
     {
-      name: "orire-flow-v1",
+      // Anonymous default; StorageScope rebinds per signed-in user id.
+      name: "orire-flow:anon:v1",
       version: 1,
       partialize: (s) => ({ sequence: s.sequence, coachSeen: s.coachSeen }),
       // Drop any stale/unknown blocks a persisted order might carry (e.g. after
