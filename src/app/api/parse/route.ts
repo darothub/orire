@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mammoth from "mammoth";
 import { extractText, getDocumentProxy } from "unpdf";
 import { parseCVText, type ParsedCV } from "@/lib/ingest/parse";
+import { parseLinkedInZip } from "@/lib/ingest/linkedin";
 import { decodeOrireKeywords, parsedFromCVData } from "@/lib/export/orireEmbed";
 import type { CVData } from "@/lib/cv/schema";
 
@@ -30,6 +31,7 @@ function detectKind(name: string, type: string): ParsedFileResult["kind"] {
     lower.endsWith(".docx")
   )
     return "docx";
+  if (lower.endsWith(".zip") || lower.includes("linkedin") || type.includes("zip")) return "pdf";
   return "unsupported";
 }
 
@@ -81,7 +83,7 @@ export async function POST(req: Request) {
     };
 
     if (kind === "unsupported") {
-      base.error = `Unsupported file type "${file.type || "unknown"}". Only PDF and DOCX are supported.`;
+      base.error = `Unsupported file type "${file.type || "unknown"}". Only PDF, DOCX, and LinkedIn ZIP exports are supported.`;
       results.push(base);
       continue;
     }
@@ -97,22 +99,38 @@ export async function POST(req: Request) {
       // metadata — prefer it for a perfect round-trip; otherwise parse the text.
       let embedded: CVData | null = null;
       let raw: string;
-      if (kind === "pdf") {
+      if (file.name.toLowerCase().endsWith(".zip") || /linkedin/i.test(file.name) || file.type.includes("zip")) {
+        const parsed = await parseLinkedInZip(buf);
+        if (!parsed) {
+          base.error = "No readable LinkedIn export data was found in the ZIP.";
+        } else {
+          base.parsed = parsed;
+          base.text = JSON.stringify(parsed, null, 2);
+        }
+      } else if (kind === "pdf") {
         const out = await extractPdf(buf);
         raw = out.text;
         embedded = out.embedded;
+        const text = raw.trim();
+        base.text = text;
+        if (embedded) {
+          base.parsed = parsedFromCVData(embedded);
+        } else if (!text) {
+          base.error =
+            "No text could be extracted. The file may be a scanned image or contain no selectable text.";
+        } else {
+          base.parsed = parseCVText(text);
+        }
       } else {
         raw = await extractDocx(buf);
-      }
-      const text = raw.trim();
-      base.text = text;
-      if (embedded) {
-        base.parsed = parsedFromCVData(embedded);
-      } else if (!text) {
-        base.error =
-          "No text could be extracted. The file may be a scanned image or contain no selectable text.";
-      } else {
-        base.parsed = parseCVText(text);
+        const text = raw.trim();
+        base.text = text;
+        if (!text) {
+          base.error =
+            "No text could be extracted. The file may be a scanned image or contain no selectable text.";
+        } else {
+          base.parsed = parseCVText(text);
+        }
       }
     } catch (e) {
       // Capture the underlying extractor error verbatim for the user.
