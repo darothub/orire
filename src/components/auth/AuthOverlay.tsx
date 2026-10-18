@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession, signIn } from "next-auth/react";
 import { BrandMark } from "@/components/BrandMark";
@@ -9,6 +9,7 @@ import { CvShowcase } from "@/components/landing/CvShowcase";
 import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/TurnstileWidget";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { listFocusable, pickInitialFocus } from "@/components/auth/authFocus";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -55,7 +56,10 @@ export function AuthOverlay() {
   const mode = useUIStore((s) => s.authMode);
   const close = useUIStore((s) => s.closeAuth);
   const openAuth = useUIStore((s) => s.openAuth);
-  const setMode = openAuth;
+  /** Switch tabs without clearing `intendedPlan` (openAuth defaults plan to null). */
+  const setMode = (next: "signin" | "signup") => {
+    useUIStore.setState({ authMode: next });
+  };
   const { status } = useSession();
 
   const [configured, setConfigured] = useState<string[] | null>(null);
@@ -67,6 +71,11 @@ export function AuthOverlay() {
   const [authErr, setAuthErr] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const emailId = useId();
+  const passwordId = useId();
+  const errorId = useId();
+  const panelId = useId();
 
   // Which OAuth providers are actually enabled on the server (env-driven).
   // Retry on an empty/failed response instead of caching it — otherwise a
@@ -152,28 +161,49 @@ export function AuthOverlay() {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        close();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, close]);
 
-  // A11y: on open, move focus into the dialog (so the triggering CTA no longer
-  // keeps focus behind the modal); on close, restore focus to the opener.
+  // Lock background scroll while the modal owns the viewport.
   useEffect(() => {
     if (!open) return;
-    openerRef.current = (document.activeElement as HTMLElement) ?? null;
-    const t = setTimeout(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  // A11y: on open, move focus into the dialog (primary field / OAuth — not the
+  // landing CTA and not Back/Close chrome); on close, restore the opener.
+  useEffect(() => {
+    if (!open) return;
+    const active = document.activeElement;
+    openerRef.current =
+      active instanceof HTMLElement && active !== document.body ? active : null;
+    const t = window.setTimeout(() => {
       const card = cardRef.current;
       if (!card) return;
-      const focusable = card.querySelector<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
-      );
-      (focusable ?? card).focus();
+      pickInitialFocus(card).focus();
     }, 60);
     return () => {
-      clearTimeout(t);
-      openerRef.current?.focus?.();
+      window.clearTimeout(t);
+      const opener = openerRef.current;
+      openerRef.current = null;
+      // Only restore if the node is still mounted (route changes may remove it).
+      if (opener && document.contains(opener)) {
+        try {
+          opener.focus();
+        } catch {
+          /* ignore */
+        }
+      }
     };
   }, [open]);
 
@@ -184,18 +214,21 @@ export function AuthOverlay() {
       if (e.key !== "Tab") return;
       const card = cardRef.current;
       if (!card) return;
-      const items = Array.from(
-        card.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])',
-        ),
-      ).filter((el) => el.offsetParent !== null);
+      const items = listFocusable(card);
       if (items.length === 0) return;
       const first = items[0];
       const last = items[items.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
+      const active = document.activeElement;
+      const inside = active instanceof Node && card.contains(active);
+      if (!inside) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
+      if (e.shiftKey && active === first) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
+      } else if (!e.shiftKey && active === last) {
         e.preventDefault();
         first.focus();
       }
@@ -299,7 +332,8 @@ export function AuthOverlay() {
           transition={{ duration: 0.28, ease: EASE }}
           role="dialog"
           aria-modal="true"
-          aria-label={signup ? "Create your Orire account" : "Sign in to Orire"}
+          aria-labelledby={titleId}
+          aria-describedby={authErr ? errorId : undefined}
         >
           {/* Living template showcase — orire's own CVs drift behind the card. */}
           <CvShowcase />
@@ -339,18 +373,43 @@ export function AuthOverlay() {
               <span className="auth-brand-name">Orire</span>
             </div>
 
-            <div className="auth-switch" role="tablist" aria-label="Sign in or create account">
+            <div
+              className="auth-switch"
+              role="tablist"
+              aria-label="Sign in or create account"
+              onKeyDown={(e) => {
+                if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") {
+                  return;
+                }
+                e.preventDefault();
+                const next =
+                  e.key === "Home" || e.key === "ArrowLeft"
+                    ? "signin"
+                    : e.key === "End" || e.key === "ArrowRight"
+                      ? "signup"
+                      : mode;
+                if (next !== mode) setMode(next);
+              }}
+            >
               <button
+                type="button"
+                id={`${panelId}-tab-signin`}
                 role="tab"
                 aria-selected={!signup}
+                aria-controls={panelId}
+                tabIndex={signup ? -1 : 0}
                 className={`auth-switch-btn ${!signup ? "is-on" : ""}`}
                 onClick={() => setMode("signin")}
               >
                 Sign in
               </button>
               <button
+                type="button"
+                id={`${panelId}-tab-signup`}
                 role="tab"
                 aria-selected={signup}
+                aria-controls={panelId}
+                tabIndex={signup ? 0 : -1}
                 className={`auth-switch-btn ${signup ? "is-on" : ""}`}
                 onClick={() => setMode("signup")}
               >
@@ -361,9 +420,11 @@ export function AuthOverlay() {
                 initial={false}
                 animate={{ x: signup ? "100%" : "0%" }}
                 transition={{ duration: 0.32, ease: EASE }}
+                aria-hidden
               />
             </div>
 
+            <div id={panelId} role="tabpanel" aria-labelledby={signup ? `${panelId}-tab-signup` : `${panelId}-tab-signin`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={signup ? "up" : "in"}
@@ -373,7 +434,7 @@ export function AuthOverlay() {
                 transition={{ duration: 0.26, ease: EASE }}
                 className="auth-head"
               >
-                <h1>{signup ? "Create your account" : "Welcome back"}</h1>
+                <h1 id={titleId}>{signup ? "Create your account" : "Welcome back"}</h1>
                 <p>
                   {signup
                     ? "Save your CVs to the cloud, compare assistants and unlock plan features."
@@ -384,29 +445,48 @@ export function AuthOverlay() {
 
             {PASSWORD_AUTH_ENABLED && (
             <form className="auth-email" onSubmit={submitEmail}>
-              <input
-                type="email"
-                className="auth-input"
-                aria-label="Email address"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-              <PasswordInput
-                className="auth-input"
-                aria-label="Password"
-                placeholder={signup ? "Create a password (min 8 characters)" : "Password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={signup ? "new-password" : "current-password"}
-                minLength={signup ? 8 : undefined}
-                required
-              />
+              <div className="auth-field">
+                <label className="auth-label" htmlFor={emailId}>
+                  Email
+                </label>
+                <input
+                  id={emailId}
+                  type="email"
+                  className="auth-input"
+                  name="email"
+                  data-auth-initial-focus
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  required
+                  aria-invalid={authErr ? true : undefined}
+                  aria-describedby={authErr ? errorId : undefined}
+                />
+              </div>
+              <div className="auth-field">
+                <label className="auth-label" htmlFor={passwordId}>
+                  Password
+                </label>
+                <PasswordInput
+                  id={passwordId}
+                  className="auth-input"
+                  name="password"
+                  placeholder={signup ? "At least 8 characters" : "Your password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={signup ? "new-password" : "current-password"}
+                  minLength={signup ? 8 : undefined}
+                  required
+                  aria-invalid={authErr ? true : undefined}
+                  aria-describedby={authErr ? errorId : undefined}
+                />
+              </div>
               {captchaOn && (
                 <div className="auth-captcha-frame">
-                  <span className="auth-captcha-label">
+                  <span className="auth-captcha-label" id={`${panelId}-captcha`}>
                     <span aria-hidden>🛡</span> Quick security check
                   </span>
                   <TurnstileWidget
@@ -457,26 +537,46 @@ export function AuthOverlay() {
                 return (
                   <button
                     key={p.id}
+                    type="button"
                     className={`auth-oauth-btn ${p.id}`}
                     onClick={() => ready && oauth(p.id)}
                     disabled={!!busy || !ready}
+                    data-auth-initial-focus={
+                      !PASSWORD_AUTH_ENABLED && ready ? true : undefined
+                    }
                     title={ready ? `Continue with ${p.label}` : `${p.label} sign-in isn't configured on this server`}
+                    aria-label={
+                      loading
+                        ? `Redirecting to ${p.label}`
+                        : `${signup ? "Sign up" : "Continue"} with ${p.label}${ready ? "" : " (not configured)"}`
+                    }
                   >
-                    <span className="auth-oauth-mark">{p.mark}</span>
-                    <span>
+                    <span className="auth-oauth-mark" aria-hidden>
+                      {p.mark}
+                    </span>
+                    <span aria-hidden>
                       {loading ? "Redirecting…" : `${signup ? "Sign up" : "Continue"} with ${p.label}`}
                     </span>
-                    {!ready && configured !== null && <span className="auth-oauth-soon">soon</span>}
+                    {!ready && configured !== null && (
+                      <span className="auth-oauth-soon" aria-hidden>
+                        soon
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
 
-            {authErr && <p className="auth-error" role="alert">{authErr}</p>}
+            {authErr && (
+              <p id={errorId} className="auth-error" role="alert">
+                {authErr}
+              </p>
+            )}
 
             <p className="auth-fine">
               By continuing you agree to use Orire responsibly.
             </p>
+            </div>
           </motion.div>
 
           <ul className="auth-usps" aria-label="What Orire does">
