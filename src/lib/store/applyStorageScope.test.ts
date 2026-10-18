@@ -55,8 +55,34 @@ function realCv(name: string, email = `${name.replace(/\s+/g, ".").toLowerCase()
   };
 }
 
+type LooseCv = {
+  basics: {
+    fullName: string;
+    title: string;
+    email: string;
+    phone: string;
+    location: string;
+    summary: string;
+    links: unknown[];
+  };
+  experience: unknown[];
+  education: unknown[];
+  skills: unknown[];
+  projects: unknown[];
+  certifications: unknown[];
+  order: string[];
+};
+
+type CvBucket = {
+  cv: LooseCv;
+  activeTemplate: string;
+  baseline: null;
+  started: boolean;
+  ignoredSkills: string[];
+};
+
 const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
-  const sample = {
+  const sample: LooseCv = {
     basics: {
       fullName: "Sample",
       title: "Engineer",
@@ -64,13 +90,13 @@ const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
       phone: "",
       location: "",
       summary: "",
-      links: [] as [],
+      links: [],
     },
-    experience: [] as [],
-    education: [] as [],
-    skills: [] as [],
-    projects: [] as [],
-    certifications: [] as [],
+    experience: [],
+    education: [],
+    skills: [],
+    projects: [],
+    certifications: [],
     order: ["summary", "experience", "education", "skills", "projects", "certifications"],
   };
 
@@ -111,13 +137,13 @@ const { cvStore, libraryStore, targetStore, planStore } = vi.hoisted(() => {
     };
   }
 
-  const cvStore = makePersistStoreHoisted(
+  const cvStore = makePersistStoreHoisted<CvBucket>(
     {
       cv: sample,
       activeTemplate: "aurora",
-      baseline: null as null,
+      baseline: null,
       started: false,
-      ignoredSkills: [] as string[],
+      ignoredSkills: [],
     },
     "orire-cv:anon:v1",
   );
