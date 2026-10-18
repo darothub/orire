@@ -43,11 +43,24 @@ export const FEATURE_GROUPS: ReadonlyArray<{ name: string; keys: readonly string
   { name: "Turnstile", keys: ["NEXT_PUBLIC_TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"] },
   // SMTP host/port have defaults; auth is optional but must be supplied as a pair.
   { name: "SMTP mail authentication", keys: ["MAIL_SMTP_USER", "MAIL_SMTP_PASS"] },
+  // Shared rate-limit store (Upstash Redis REST). Both halves are required.
+  {
+    name: "Upstash Redis rate limiting",
+    keys: ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"],
+  },
 ];
 
 function has(env: EnvRecord, key: string): boolean {
   const v = env[key];
   return typeof v === "string" && v.trim().length > 0;
+}
+
+function hasManagedAi(env: EnvRecord): boolean {
+  return has(env, "OPENAI_API_KEY") || has(env, "ANTHROPIC_API_KEY");
+}
+
+function hasSharedRateLimit(env: EnvRecord): boolean {
+  return has(env, "UPSTASH_REDIS_REST_URL") && has(env, "UPSTASH_REDIS_REST_TOKEN");
 }
 
 /**
@@ -65,6 +78,15 @@ export function checkEnv(env: EnvRecord = process.env): EnvCheckResult {
       const absent = group.keys.filter((k) => !has(env, k));
       warnings.push(`${group.name} is partially configured; missing: ${absent.join(", ")}`);
     }
+  }
+
+  // Production with live managed AI keys but no shared limiter: each serverless
+  // instance enforces its own window, so a caller can multiply the effective
+  // budget across instances. Warn so the deploy is fixed before ad spend.
+  if (env.NODE_ENV === "production" && hasManagedAi(env) && !hasSharedRateLimit(env)) {
+    warnings.push(
+      "Shared rate limiting is not configured while managed AI keys are live; AI route limits are per-instance only. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN (Upstash Redis REST).",
+    );
   }
 
   return { ok: missing.length === 0, missing: [...missing], warnings };

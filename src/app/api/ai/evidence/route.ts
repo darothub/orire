@@ -31,11 +31,11 @@ const json = (error: string, status = 200) => NextResponse.json({ ok: false, err
 export async function POST(req: Request) {
   const { provider } = routeTask("evidence");
 
-  const limited = await aiRateLimit(req, provider);
-  if (limited) return limited;
   const oversize = bodyTooLarge(req);
   if (oversize) return json(oversize, 413);
   const gate = await requireVerifiedUser();
+  const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
+  if (limited) return limited;
   if (!gate.ok) return json(gate.message, gate.status);
 
   let raw: Partial<Record<keyof EvidenceInput, unknown>>;

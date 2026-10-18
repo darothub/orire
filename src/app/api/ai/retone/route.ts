@@ -47,11 +47,11 @@ export async function POST(req: Request) {
   const provider = route.provider;
   const model = route.model;
 
-  const limited = await aiRateLimit(req, provider);
-  if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
   const gate = await requireVerifiedUser();
+  const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
+  if (limited) return limited;
   if (!gate.ok) return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
   if (!fakeAiFor(provider) && !serverKeyFor("openai") && !serverKeyFor("anthropic")) {
     return NextResponse.json(fail(provider, notConfiguredMessage(provider), 503), { status: 200 });

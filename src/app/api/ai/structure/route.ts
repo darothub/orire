@@ -55,13 +55,13 @@ export async function POST(req: Request) {
     return NextResponse.json(fail("openai", "Unknown provider."), { status: 400 });
   }
 
-  const limited = await aiRateLimit(req, provider);
-  if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
 
   // Require a signed-in, verified user before spending managed AI keys.
   const gate = await requireVerifiedUser();
+  const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
+  if (limited) return limited;
   if (!gate.ok) {
     return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
   }

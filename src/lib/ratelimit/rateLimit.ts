@@ -3,15 +3,17 @@
  *
  * Protects the managed-key AI routes and the email-sending auth routes from
  * bursts and cost abuse. The AI routes run on orire's own provider keys, so an
- * unthrottled caller spends real money; several of them (structure / simulate /
- * judge / retone) have no auth gate, which makes a limiter essential.
+ * unthrottled caller spends real money. AI routes also require a verified
+ * session (or a signed refine run token); the limiter is the second line of
+ * defense against burst spend and credential stuffing on auth email routes.
  *
- * This is an IN-MEMORY, per-instance limiter. On a single instance (local dev,
- * a warm serverless container) it is exact; across many serverless instances it
- * is best-effort — each instance enforces its own window. That is a deliberate
- * P0 trade-off: zero new infrastructure, meaningful protection today, and a
- * clean seam (`checkLimit`) to swap for a shared store (Upstash/Vercel KV)
- * later without touching call sites.
+ * This module is the IN-MEMORY, per-instance backend. Call sites go through
+ * `checkLimitShared` in `shared.ts`, which uses Upstash Redis REST when
+ * `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` are set (one shared
+ * counter across every serverless instance) and falls back here otherwise.
+ * Bucket keys prefer a stable user id over client IP (`clientKey`) so a single
+ * signed-in account cannot multiply its budget by rotating IPs, and so users
+ * behind the same NAT do not share one bucket.
  */
 
 export interface RateLimitResult {
