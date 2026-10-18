@@ -8,6 +8,7 @@ import { EvidenceHelper } from "./EvidenceHelper";
 import { hasMeasurable } from "@/lib/ai/evidence";
 import { analyzeBullet } from "@/lib/cv/coach";
 import type { BulletReview } from "@/lib/ai/bulletReview";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 
 function Field({
   label,
@@ -120,7 +121,8 @@ function HighlightItem({
   onRemove: () => void;
 }) {
   const controls = useDragControls();
-  const flags = analyzeBullet(value);
+  const deepSpellcheck = useSettingsStore((s) => s.deepSpellcheck);
+  const flags = analyzeBullet(value, { deepSpell: deepSpellcheck });
   const [busy, setBusy] = useState(false);
   const [review, setReview] = useState<BulletReview | null>(null);
   const [err, setErr] = useState("");

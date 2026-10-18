@@ -101,3 +101,45 @@ describe("coachWarningCount", () => {
     expect(coachWarningCount(bullets)).toBe(2);
   });
 });
+
+describe("optional deepSpell dictionary check", () => {
+  it("stays silent on body typos when deepSpell is off (default)", () => {
+    const got = analyzeBullet("Led migraton of billing to Stripe, cutting failed payments 38%.");
+    expect(got.map((f) => f.id)).not.toContain("spell");
+    // opener is fine; may still have no-metric etc. depending on content — body typo alone must not fire
+  });
+
+  it("flags a body-word near-miss when deepSpell is on", () => {
+    const f = analyzeBullet(
+      "Led migration of billing to Stripe, cutting failed paymants 38%.",
+      { deepSpell: true },
+    ).find((x) => x.id === "spell");
+    expect(f).toBeTruthy();
+    expect(f!.suggest).toBe("payments");
+    expect(f!.hint.toLowerCase()).toContain("paymants");
+  });
+
+  it("does not flag known clean body words when deepSpell is on", () => {
+    expect(
+      analyzeBullet("Led migration of billing to Stripe, cutting failed payments 38%.", {
+        deepSpell: true,
+      }).map((f) => f.id),
+    ).not.toContain("spell");
+  });
+
+  it("does not double-flag the opener as spell when typo already covers it", () => {
+    // Opener typo path uses id "typo"; deepSpell skips first token.
+    const flags = analyzeBullet("Comtributed everything for the team with 3 wins", { deepSpell: true });
+    expect(flags.some((f) => f.id === "typo")).toBe(true);
+    expect(flags.filter((f) => f.id === "spell" && f.suggest === "contributed")).toHaveLength(0);
+  });
+});
+
+describe("findSpellingIssues (via deepSpell)", () => {
+  it("skips short tokens and ALL-CAPS acronyms", () => {
+    const flags = analyzeBullet("Led API rollout for SSO across EU teams in 2 weeks", {
+      deepSpell: true,
+    });
+    expect(flags.map((f) => f.id)).not.toContain("spell");
+  });
+});
