@@ -225,7 +225,13 @@ export function mergeParsedCVs(sources: ParsedCV[]): MergeResult {
     skills,
     projects,
     certifications,
-    notes: [`Merged ${files} CV${files === 1 ? "" : "s"} into one.`],
+    // Carry forward each source's confidence notes (de-duplicated) — merging
+    // doesn't fix a missing date or an unclear institution, so the "check
+    // this" review step should still see them on the combined result.
+    notes: [
+      `Merged ${files} CV${files === 1 ? "" : "s"} into one.`,
+      ...unionStrings(...sources.map((s) => s.notes)),
+    ],
   };
 
   return {

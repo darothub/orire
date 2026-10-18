@@ -10,6 +10,7 @@ import type { ParsedCV } from "@/lib/ingest/parse";
 import { mergeParsedCVs, type MergeResult, type BasicsField } from "@/lib/ingest/merge";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
 import { countFacts } from "./shared";
+import { fmtSize, Chip, Stat, ImportNotes } from "../ImportShared";
 import { analytics } from "@/lib/analytics/events";
 
 interface FileResult {
@@ -20,10 +21,16 @@ interface FileResult {
   parsed: ParsedCV | null;
   error: string | null;
 }
-function fmtSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+/** A structured import staged for review — nothing lands on the working CV
+ *  until the user confirms it (the "check this" step, P1-7: this route used
+ *  to apply on a single click with no review at all). */
+interface PendingApply {
+  r: FileResult;
+  mode: ImportMode;
+  parsed: ParsedCV;
+  /** How it was produced, echoed in the confirmation toast. */
+  via: string;
 }
 
 export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }) {
@@ -40,6 +47,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const [aiError, setAiError] = useState<{ i: number; message: string } | null>(null);
   const [mergePreview, setMergePreview] = useState<MergeResult | null>(null);
   const [choices, setChoices] = useState<Partial<Record<BasicsField, number>>>({});
+  const [pendingApply, setPendingApply] = useState<PendingApply | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const facts = countFacts(cv);
   const isSeed = isSampleCV(cv);
@@ -49,7 +57,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const upload = useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files);
     if (list.length === 0) return;
-    setBusy(true); setFatal(null); setResults(null); setApplied(null); setMergePreview(null); setChoices({});
+    setBusy(true); setFatal(null); setResults(null); setApplied(null); setMergePreview(null); setChoices({}); setPendingApply(null);
     try {
       const fd = new FormData();
       for (const f of list) fd.append("files", f);
@@ -68,10 +76,13 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
     if (e.dataTransfer.files?.length) upload(e.dataTransfer.files);
   }, [upload]);
 
-  const applyHeuristic = (r: FileResult, mode: ImportMode, note: string) => {
+  // Stage a parsed import for review rather than applying it straight to the
+  // working CV (P1-7 "check this" review step — this route used to apply on
+  // the first click with no confirmation at all). Nothing lands on the editor
+  // until confirmApply runs.
+  const stageHeuristic = (r: FileResult, mode: ImportMode, via: string) => {
     if (!r.parsed) return;
-    applyImport(r.parsed, mode);
-    setApplied(`${r.name} — ${mode === "replace" ? "replaced" : "appended"}${note}`);
+    setPendingApply({ r, mode, parsed: r.parsed, via });
   };
 
   const apply = async (r: FileResult, mode: ImportMode, i: number) => {
@@ -79,7 +90,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
     setApplied(null);
     // Empty extracted text → deterministic heuristic parse (fallback path).
     if (!r.text.trim()) {
-      applyHeuristic(r, mode, "");
+      stageHeuristic(r, mode, "");
       return;
     }
     // Structure the raw text with the selected managed assistant.
@@ -92,20 +103,28 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
       });
       const data = (await res.json()) as StructureResponse;
       if (data.ok && data.parsed) {
-        applyImport(data.parsed, mode);
-        setApplied(`${r.name} — ${mode === "replace" ? "replaced" : "appended"} · structured by ${providerLabel}`);
+        setPendingApply({ r, mode, parsed: data.parsed, via: `structured by ${providerLabel}` });
       } else {
         // Surface the provider error verbatim (req 12), then fall back to heuristic.
         setAiError({ i, message: data.error?.message ?? "The assistant could not structure this CV." });
-        applyHeuristic(r, mode, " · assistant failed, used built-in parser");
+        stageHeuristic(r, mode, "assistant failed, used built-in parser");
       }
     } catch (e) {
       setAiError({ i, message: e instanceof Error ? e.message : String(e) });
-      applyHeuristic(r, mode, " · assistant failed, used built-in parser");
+      stageHeuristic(r, mode, "assistant failed, used built-in parser");
     } finally {
       setAiBusy(null);
     }
   };
+
+  const confirmApply = () => {
+    if (!pendingApply) return;
+    const { r, mode, parsed, via } = pendingApply;
+    applyImport(parsed, mode);
+    setApplied(`${r.name} — ${mode === "replace" ? "replaced" : "appended"}${via ? ` · ${via}` : ""}`);
+    setPendingApply(null);
+  };
+  const cancelApply = () => setPendingApply(null);
 
   const parseable = (results ?? []).filter(
     (r): r is FileResult & { parsed: ParsedCV } => !!r.parsed,
@@ -237,6 +256,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
                 <span className="imp-kv"><em>Deduped</em>{mergePreview.stats.duplicatesRemoved}</span>
               )}
             </div>
+            <ImportNotes notes={mergePreview.merged.notes.filter((n) => !n.startsWith("Merged "))} />
             {mergePreview.conflicts.length > 0 && (
               <div className="imp-conflicts">
                 <span className="ed-label">Sources disagree — pick which to keep</span>
@@ -267,6 +287,38 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {pendingApply && (
+          <motion.div className="imp-card imp-pending" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <div className="imp-card-top">
+              <span className="imp-badge pending">REVIEW</span>
+              <span className="imp-name" title={pendingApply.r.name}>{pendingApply.r.name}</span>
+              {pendingApply.via && <span className="imp-meta">{pendingApply.via}</span>}
+            </div>
+            <p className="step-hint">
+              Nothing has changed yet. Check the extracted fields below, then{" "}
+              {pendingApply.mode === "replace" ? "replace the working CV" : "append this to the working CV"} —
+              or cancel and try the other assistant/mode.
+            </p>
+            <div className="imp-summary">
+              <Chip label="Name" value={pendingApply.parsed.basics.fullName} />
+              <Chip label="Title" value={pendingApply.parsed.basics.title} />
+              <Chip label="Email" value={pendingApply.parsed.basics.email} />
+              <Stat label="Experience" n={pendingApply.parsed.experience.length} />
+              <Stat label="Education" n={pendingApply.parsed.education.length} />
+              <Stat label="Skills" n={pendingApply.parsed.skills.reduce((a, g) => a + g.items.length, 0)} />
+            </div>
+            <ImportNotes notes={pendingApply.parsed.notes} />
+            <div className="imp-actions">
+              <button className="imp-btn primary" onClick={confirmApply}>
+                {pendingApply.mode === "replace" ? "Looks good — replace editor" : "Looks good — append"}
+              </button>
+              <button className="imp-btn" onClick={cancelApply}>Cancel</button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {results && (
         <div className="imp-results">
           {results.map((r, i) => (
@@ -288,10 +340,10 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
                     <Stat label="Skills" n={r.parsed.skills.reduce((a, g) => a + g.items.length, 0)} />
                   </div>
                   <div className="imp-actions">
-                    <button className="imp-btn primary" disabled={aiBusy === i} onClick={() => apply(r, "replace", i)}>
+                    <button className="imp-btn primary" disabled={aiBusy === i || !!pendingApply} onClick={() => apply(r, "replace", i)}>
                       {aiBusy === i ? "Structuring…" : "Replace editor (AI)"}
                     </button>
-                    <button className="imp-btn" disabled={aiBusy === i} onClick={() => apply(r, "merge", i)}>Append</button>
+                    <button className="imp-btn" disabled={aiBusy === i || !!pendingApply} onClick={() => apply(r, "merge", i)}>Append</button>
                     <span className="imp-ai-hint">via {providerLabel}</span>
                   </div>
                   {aiError?.i === i && (
@@ -324,10 +376,3 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   );
 }
 
-function Chip({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
-  return <span className="imp-kv"><em>{label}</em>{value}</span>;
-}
-function Stat({ label, n }: { label: string; n: number }) {
-  return <span className={`imp-kv ${n === 0 ? "zero" : ""}`}><em>{label}</em>{n}</span>;
-}

@@ -406,6 +406,30 @@ export function parseCVText(rawText: string): ParsedCV {
   if (!education.length) notes.push("No education entries detected under an Education heading.");
   if (!skills.length) notes.push("No skills detected under a Skills heading.");
 
+  // Per-field confidence checks (the "check this" review step reads these).
+  // The heuristic parser never invents values, but it can mis-split or miss a
+  // field it should have found — flag exactly what's uncertain so the review
+  // step can point the user at it instead of a silent, lossy import.
+  if (!basics.email) notes.push("No email address detected — add one if your CV has one.");
+  const noDates = experience.filter((e) => !e.startDate?.trim()).length;
+  if (noDates > 0) {
+    notes.push(
+      `${noDates} experience ${noDates === 1 ? "entry has" : "entries have"} no dates detected — check the date ranges.`,
+    );
+  }
+  const noCompany = experience.filter((e) => !e.company.trim()).length;
+  if (noCompany > 0) {
+    notes.push(
+      `${noCompany} experience ${noCompany === 1 ? "entry" : "entries"} may have the role and company merged — check the split.`,
+    );
+  }
+  const unclearInstitution = education.filter((e) => !INST_RE.test(e.institution)).length;
+  if (unclearInstitution > 0) {
+    notes.push(
+      `${unclearInstitution} education ${unclearInstitution === 1 ? "entry" : "entries"} didn't clearly match a school/institution name — check these.`,
+    );
+  }
+
   return { basics, experience, education, skills, projects, certifications, notes };
 }
 
@@ -513,6 +537,12 @@ export function parsedCVFromModelJSON(obj: Record<string, unknown>): ParsedCV {
 
   if (!basics.fullName) notes.push("The assistant did not return a name — please set it manually.");
   if (!experience.length) notes.push("No experience entries were returned.");
+  const noDates = experience.filter((e) => !e.startDate?.trim()).length;
+  if (noDates > 0) {
+    notes.push(
+      `${noDates} experience ${noDates === 1 ? "entry has" : "entries have"} no dates — check the date ranges.`,
+    );
+  }
 
   return { basics, experience, education, skills, projects, certifications, notes };
 }
