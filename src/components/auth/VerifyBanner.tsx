@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAccountStore } from "@/lib/store/accountStore";
 
 interface Status {
   signedIn: boolean;
@@ -11,15 +12,16 @@ interface Status {
 type Notice = { kind: "ok" | "err"; text: string } | null;
 
 /**
- * Sticky notice for signed-in users whose email isn't verified yet. The free
- * quota is locked server-side until they confirm, so this explains why and lets
- * them resend the link. It also surfaces the ?verified / ?verify_error results
- * of clicking the email link, then cleans those params out of the URL.
+ * Sticky notice for signed-in users whose email isn't verified yet. Product
+ * features (upload, download, cloud save, AI, checkout) stay locked
+ * server-side until they confirm. Surfaces ?verified / ?verify_error from the
+ * email link, then cleans those params out of the URL.
  */
 export function VerifyBanner() {
   const [status, setStatus] = useState<Status | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const [busy, setBusy] = useState(false);
+  const refreshAccount = useAccountStore((s) => s.refresh);
 
   useEffect(() => {
     let alive = true;
@@ -29,7 +31,7 @@ export function VerifyBanner() {
     const verified = url.searchParams.get("verified");
     const err = url.searchParams.get("verify_error");
     const initialNotice: Notice = verified
-      ? { kind: "ok", text: "Email verified — your free runs are unlocked." }
+      ? { kind: "ok", text: "Email verified — upload, download, and AI features are unlocked." }
       : err
         ? { kind: "err", text: err }
         : null;
@@ -45,6 +47,8 @@ export function VerifyBanner() {
         .then((s: Status) => {
           if (!alive) return;
           setStatus(s);
+          // Keep write-gate store in sync so CTAs unlock without a full reload.
+          void refreshAccount();
           // Apply the URL-derived notice inside the async callback (never
           // synchronously in the effect body) to keep renders predictable.
           if (applyNotice && initialNotice) setNotice(initialNotice);
@@ -61,7 +65,7 @@ export function VerifyBanner() {
       alive = false;
       window.removeEventListener("focus", onFocus);
     };
-  }, []);
+  }, [refreshAccount]);
 
   const resend = () => {
     if (busy) return;
@@ -109,7 +113,7 @@ export function VerifyBanner() {
     >
       <span>
         {notice?.text ??
-          "Verify your email to start your free runs — check your inbox for the link we sent."}
+          "Verify your email to upload, download, save, and use AI — check your inbox for the link we sent."}
       </span>
       {showBar && !isOk && (
         <button

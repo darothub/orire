@@ -5,6 +5,7 @@ import { parseCVText, type ParsedCV } from "@/lib/ingest/parse";
 import { parseLinkedInZip } from "@/lib/ingest/linkedin";
 import { decodeOrireKeywords, parsedFromCVData } from "@/lib/export/orireEmbed";
 import type { CVData } from "@/lib/cv/schema";
+import { requireVerifiedUser } from "@/lib/auth/guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,6 +56,15 @@ async function extractDocx(buf: ArrayBuffer): Promise<string> {
 }
 
 export async function POST(req: Request) {
+  // Upload is a product feature: browse-only until the account email is verified.
+  const gate = await requireVerifiedUser("upload a CV");
+  if (!gate.ok) {
+    return NextResponse.json(
+      { error: gate.message, code: gate.code },
+      { status: gate.status },
+    );
+  }
+
   let form: FormData;
   try {
     form = await req.formData();

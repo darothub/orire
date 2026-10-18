@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
 
   // Require a signed-in, verified user before spending managed AI keys.
-  const gate = await requireVerifiedUser();
+  const gate = await requireVerifiedUser("run the assistant");
   const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
   if (limited) return limited;
   if (!gate.ok) {

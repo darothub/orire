@@ -12,6 +12,7 @@ import type { StructureResponse } from "@/app/api/ai/structure/route";
 import { countFacts } from "./shared";
 import { fmtSize, Chip, Stat, ImportNotes } from "../ImportShared";
 import { analytics } from "@/lib/analytics/events";
+import { useWriteGate } from "@/lib/store/accountStore";
 
 interface FileResult {
   name: string;
@@ -53,10 +54,15 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   const isSeed = isSampleCV(cv);
   const hasContent = !isSeed && facts.experience + facts.education + facts.skills + facts.projects > 0;
   const providerLabel = PROVIDERS[provider].label;
+  const writeGate = useWriteGate("upload a CV");
 
   const upload = useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files);
     if (list.length === 0) return;
+    if (!writeGate.guard()) {
+      setFatal(writeGate.reason ?? "Verify your email to upload a CV.");
+      return;
+    }
     setBusy(true); setFatal(null); setResults(null); setApplied(null); setMergePreview(null); setChoices({}); setPendingApply(null);
     try {
       const fd = new FormData();
@@ -69,7 +75,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
     } catch (e) {
       setFatal(e instanceof Error ? e.message : String(e));
     } finally { setBusy(false); }
-  }, []);
+  }, [writeGate]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);

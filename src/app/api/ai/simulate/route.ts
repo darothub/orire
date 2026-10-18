@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
-  const gate = await requireVerifiedUser();
+  const gate = await requireVerifiedUser("run the assistant");
   // Prefer the stable user id so one account cannot multiply its budget across
   // IPs; unauthenticated callers still share an IP bucket.
   const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
