@@ -155,7 +155,12 @@ export function ExportView() {
       <div className="ws-head">
         <div>
           <h2>{VIEW_META.export.label}</h2>
-          <p>Style the CV, pick a page layout, and download it as a PDF or a Word (.docx) file — the live preview on the right updates as you go. The Word file is a clean, ATS-friendly version built from your content.</p>
+          <p>
+            Style the CV and download as <strong>PDF</strong> or <strong>Word (.docx)</strong>.
+            Page layout options apply to the <strong>PDF</strong> (pixel-true template snapshot).
+            Word is a clean, single-column, ATS-friendly file built from your content — not a visual clone of the template.
+            Plain-text copy for application forms is free and does not use a download.
+          </p>
         </div>
       </div>
 
@@ -217,7 +222,8 @@ export function ExportView() {
       </section>
 
       <section className="exp-sec">
-        <h4 className="exp-sec-title">Page layout</h4>
+        <h4 className="exp-sec-title">PDF page layout</h4>
+        <p className="exp-sec-hint">Affects Download PDF only. Word (.docx) always uses a standard single-column layout.</p>
         <div className="exp-modes">
           {PAGE_MODES.map((m) => (
             <button

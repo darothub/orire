@@ -57,7 +57,14 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 1,
     allowCompare: false,
     includedTiers: ["budget"],
-    perks: ["All 25 templates", "3 AI refines to try it", "Single assistant", "Clean PDF export"],
+    // Export is PDF + Word (.docx) for every plan; Free is capped on downloads,
+    // not format. Do not claim "PDF only" — the product ships both.
+    perks: [
+      "All 25 templates",
+      "3 AI refines to try it",
+      "Single assistant",
+      "PDF & Word export · 3 downloads",
+    ],
   },
   pro: {
     id: "pro",
@@ -67,7 +74,16 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 2,
     allowCompare: true,
     includedTiers: ["budget", "mid"],
-    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + pick the best", "Cover letters", "Full Grade breakdown", "Clean PDF, all page modes"],
+    // Page modes are a PDF layout option (not Word); unlimited downloads is the
+    // real paid differentiator vs Free's lifetime cap.
+    perks: [
+      "All 25 templates",
+      "30 refines / mo",
+      "Compare 2 + pick the best",
+      "Cover letters",
+      "Full Grade breakdown",
+      "PDF (page layouts) & Word · unlimited downloads",
+    ],
   },
   career: {
     id: "career",
@@ -77,7 +93,14 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 3,
     allowCompare: true,
     includedTiers: ["budget", "mid", "premium"],
-    perks: ["Unlimited refines (fair-use)", "Premium models included", "Parallel compare + pick the best", "JD simulation", "Company history"],
+    perks: [
+      "Unlimited refines (fair-use)",
+      "Premium models included",
+      "Parallel compare + pick the best",
+      "JD simulation",
+      "Company history",
+      "PDF (page layouts) & Word · unlimited downloads",
+    ],
   },
 };
 

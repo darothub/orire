@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
+  PLANS,
+  PLAN_ORDER,
   modelTier,
   modelAllowedOnPlan,
   providerCountAllowed,
@@ -140,6 +142,27 @@ describe("nextPlan", () => {
     expect(nextPlan("free")?.id).toBe("pro");
     expect(nextPlan("pro")?.id).toBe("career");
     expect(nextPlan("career")).toBeNull();
+  });
+});
+
+describe("plan export perks (PDF + Word)", () => {
+  // Product exports PDF and Word on every tier; Free only differs by download cap.
+
+  it("never claims PDF-only export", () => {
+    for (const id of PLAN_ORDER) {
+      const exportish = PLANS[id].perks.filter((p) => /pdf|word|docx|download/i.test(p));
+      expect(exportish.length).toBeGreaterThan(0);
+      for (const p of exportish) {
+        expect(p.toLowerCase()).not.toMatch(/pdf only|pdf-only/);
+        expect(p.toLowerCase()).toMatch(/word/);
+      }
+    }
+  });
+
+  it("Free names the download cap; paid plans say unlimited downloads", () => {
+    expect(PLANS.free.perks.some((p) => /3 downloads/i.test(p))).toBe(true);
+    expect(PLANS.pro.perks.some((p) => /unlimited downloads/i.test(p))).toBe(true);
+    expect(PLANS.career.perks.some((p) => /unlimited downloads/i.test(p))).toBe(true);
   });
 });
 

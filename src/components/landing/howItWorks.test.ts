@@ -23,4 +23,10 @@ describe("howItWorksSteps", () => {
     expect(first.title.toLowerCase()).toContain("upload");
     expect(last.title.toLowerCase()).toContain("export");
   });
+
+  it("export step mentions both PDF and Word", () => {
+    const last = howItWorksSteps()[2];
+    expect(last.body.toLowerCase()).toMatch(/pdf/);
+    expect(last.body.toLowerCase()).toMatch(/word|\.docx/);
+  });
 });
