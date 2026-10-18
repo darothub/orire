@@ -8,12 +8,22 @@ import { test as rawTest } from "@playwright/test";
  * "continue with this CV" branch so no upload or provider call is needed.
  */
 
+/** Rail workspace buttons only — exclude "Move X earlier/later" reorder controls. */
+function railNav(page: import("@playwright/test").Page) {
+  return page.getByRole("navigation", { name: "Workspaces" });
+}
+function railItem(page: import("@playwright/test").Page, name: string) {
+  // exact:true is required: keyboard reorder controls are named
+  // "Move Export earlier" and would otherwise match name: "Export".
+  return railNav(page).getByRole("button", { name, exact: true });
+}
+
 test.describe("app shell & navigation", () => {
   test("lands on the spotlight, then opens the editor with the live preview", async ({ appPage }) => {
     // Default view is the building-block spotlight (home).
     await expect(appPage.getByRole("heading", { name: "Your CV studio", exact: true })).toBeVisible();
     // Opening Edit shows the two-pane editor; the right pane renders #cv-paper.
-    await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Edit" }).click();
+    await railItem(appPage, "Edit").click();
     await expect(appPage.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
     const paper = appPage.locator("#cv-paper");
     await expect(paper).toBeVisible();
@@ -22,25 +32,23 @@ test.describe("app shell & navigation", () => {
   });
 
   test("the rail switches between workspaces", async ({ appPage }) => {
-    const nav = appPage.getByRole("navigation", { name: "Workspaces" });
-
-    await nav.getByRole("button", { name: "Export" }).click();
+    await railItem(appPage, "Export").click();
     await expect(appPage.getByRole("heading", { name: "Export", exact: true })).toBeVisible();
 
-    await nav.getByRole("button", { name: "Grade" }).click();
+    await railItem(appPage, "Grade").click();
     await expect(appPage.getByRole("heading", { name: "Grade", exact: true })).toBeVisible();
 
-    await nav.getByRole("button", { name: "AI Settings" }).click();
+    await railItem(appPage, "AI Settings").click();
     await expect(appPage.getByRole("heading", { name: "AI Settings", exact: true })).toBeVisible();
 
-    await nav.getByRole("button", { name: "Cover" }).click();
+    await railItem(appPage, "Cover").click();
     await expect(appPage.getByRole("heading", { name: "Cover letter", exact: true })).toBeVisible();
   });
 });
 
 test.describe("live editing", () => {
   test("editing a field updates the live preview", async ({ appPage }) => {
-    await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Edit" }).click();
+    await railItem(appPage, "Edit").click();
     const paper = appPage.locator("#cv-paper");
     await expect(paper).toContainText("Ada Okonkwo");
 
@@ -103,8 +111,7 @@ rawTest.describe("onboarding tour", () => {
 
 test.describe("re-brand flow", () => {
   test("re-brands the working CV and returns to the editor", async ({ appPage }) => {
-    const nav = appPage.getByRole("navigation", { name: "Workspaces" });
-    await nav.getByRole("button", { name: "Re-brand" }).click();
+    await railItem(appPage, "Re-brand").click();
 
     await expect(appPage.getByRole("heading", { name: "Re-brand a CV" })).toBeVisible();
 
@@ -122,7 +129,7 @@ test.describe("re-brand flow", () => {
 
 test.describe("export", () => {
   test("the export view exposes a PDF download", async ({ appPage }) => {
-    await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Export" }).click();
+    await railItem(appPage, "Export").click();
     await expect(appPage.getByRole("heading", { name: "Export", exact: true })).toBeVisible();
     await expect(appPage.getByRole("button", { name: "Download PDF" })).toBeVisible();
   });
@@ -131,12 +138,11 @@ test.describe("export", () => {
 test.describe("connect (AI providers)", () => {
   test("lists managed AI providers and no removed surfaces", async ({ appPage }) => {
     await stubAI(appPage);
-    await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "AI Settings" }).click();
+    await railItem(appPage, "AI Settings").click();
     await expect(appPage.getByRole("heading", { name: "AI Settings", exact: true })).toBeVisible();
 
     // Cut features must not reappear in the rail.
-    const nav = appPage.getByRole("navigation", { name: "Workspaces" });
-    await expect(nav.getByRole("button", { name: "Progress" })).toHaveCount(0);
-    await expect(nav.getByRole("button", { name: "Team" })).toHaveCount(0);
+    await expect(railItem(appPage, "Progress")).toHaveCount(0);
+    await expect(railItem(appPage, "Team")).toHaveCount(0);
   });
 });
