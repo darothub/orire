@@ -17,8 +17,11 @@ interface RebrandState {
   sourceName: string | null;
   /** How the draft was produced, shown back to the user for transparency. */
   via: string | null;
+  /** Confidence notes from the parse — the "check this" review step shows
+   *  these on the final preview, right before the user commits. */
+  notes: string[];
   templateId: string;
-  setDraft: (draft: CVData, sourceName: string, via: string, original?: CVData) => void;
+  setDraft: (draft: CVData, sourceName: string, via: string, original?: CVData, notes?: string[]) => void;
   setTemplate: (id: string) => void;
   reset: () => void;
 }
@@ -28,9 +31,10 @@ export const useRebrandStore = create<RebrandState>((set) => ({
   original: null,
   sourceName: null,
   via: null,
+  notes: [],
   templateId: "aurora",
-  setDraft: (draft, sourceName, via, original) =>
-    set({ draft, original: original ?? draft, sourceName, via }),
+  setDraft: (draft, sourceName, via, original, notes) =>
+    set({ draft, original: original ?? draft, sourceName, via, notes: notes ?? [] }),
   setTemplate: (templateId) => set({ templateId }),
-  reset: () => set({ draft: null, original: null, sourceName: null, via: null, templateId: "aurora" }),
+  reset: () => set({ draft: null, original: null, sourceName: null, via: null, notes: [], templateId: "aurora" }),
 }));

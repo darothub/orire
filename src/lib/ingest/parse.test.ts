@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parsedCVFromModelJSON } from "@/lib/ingest/parse";
+import { parsedCVFromModelJSON, parseCVText } from "@/lib/ingest/parse";
 
 describe("parsedCVFromModelJSON", () => {
   it("maps a well-formed model object into a ParsedCV with ids", () => {
@@ -64,5 +64,86 @@ describe("parsedCVFromModelJSON", () => {
     });
     expect(parsed.basics.phone).toBe("5550100");
     expect(parsed.certifications[0].date).toBe("2020");
+  });
+
+  it("flags experience entries the assistant returned with no dates", () => {
+    const parsed = parsedCVFromModelJSON({
+      basics: { fullName: "A B" },
+      experience: [
+        { company: "Acme", role: "Engineer", startDate: "2020", endDate: "2022", highlights: ["Did things"] },
+        { company: "Beta", role: "Lead", startDate: "", endDate: "", highlights: ["Did more things"] },
+      ],
+    });
+    expect(parsed.notes.some((n) => /no dates/i.test(n))).toBe(true);
+  });
+});
+
+describe("parseCVText — confidence notes (the \"check this\" review step reads these)", () => {
+  it("reports no notes for a cleanly-structured CV", () => {
+    const text = [
+      "Ada Lovelace",
+      "ada@example.com",
+      "",
+      "Experience",
+      "Lead Engineer — Analytical Engines — 2020 - 2022",
+      "- Wrote the first published algorithm",
+      "",
+      "Education",
+      "University of London",
+      "BSc Mathematics",
+      "",
+      "Skills",
+      "Mathematics, Algorithms",
+    ].join("\n");
+    const parsed = parseCVText(text);
+    expect(parsed.basics.email).toBe("ada@example.com");
+    expect(parsed.notes).toEqual([]);
+  });
+
+  it("flags a missing email", () => {
+    const text = ["Ada Lovelace", "", "Experience", "Engineer — Acme — 2020 - 2022", "- Did things"].join("\n");
+    expect(parseCVText(text).notes.some((n) => /email/i.test(n))).toBe(true);
+  });
+
+  it("flags experience entries with no detected date range", () => {
+    const text = [
+      "Ada Lovelace",
+      "ada@example.com",
+      "",
+      "Experience",
+      "Engineer — Acme",
+      "- Did things, no dates in this line",
+    ].join("\n");
+    const parsed = parseCVText(text);
+    expect(parsed.experience).toHaveLength(1);
+    expect(parsed.experience[0].startDate).toBe("");
+    expect(parsed.notes.some((n) => /no dates detected/i.test(n))).toBe(true);
+  });
+
+  it("flags experience entries where role/company couldn't be split", () => {
+    const text = [
+      "Ada Lovelace",
+      "ada@example.com",
+      "",
+      "Experience",
+      "Just one unsplit line 2020 - 2022",
+      "- Did things",
+    ].join("\n");
+    const parsed = parseCVText(text);
+    expect(parsed.experience[0].company).toBe("");
+    expect(parsed.notes.some((n) => /merged/i.test(n))).toBe(true);
+  });
+
+  it("flags education entries that don't clearly match an institution name", () => {
+    const text = [
+      "Ada Lovelace",
+      "ada@example.com",
+      "",
+      "Education",
+      "Something 2015 - 2019",
+    ].join("\n");
+    const parsed = parseCVText(text);
+    expect(parsed.education).toHaveLength(1);
+    expect(parsed.notes.some((n) => /institution/i.test(n))).toBe(true);
   });
 });

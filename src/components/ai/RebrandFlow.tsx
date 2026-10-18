@@ -12,6 +12,7 @@ import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { mergeParsedCVs } from "@/lib/ingest/merge";
 import { diffScores, grade } from "@/lib/cv/rating";
 import { countFacts } from "./refine/shared";
+import { fmtSize, Chip, Stat, ImportNotes } from "./ImportShared";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
 import { analytics } from "@/lib/analytics/events";
@@ -23,12 +24,6 @@ interface FileResult {
   text: string;
   parsed: ParsedCV | null;
   error: string | null;
-}
-
-function fmtSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
 /**
@@ -88,7 +83,7 @@ function UploadStep() {
     setAiError(null);
     // No extracted text → deterministic heuristic parse.
     if (!r.text.trim()) {
-      setDraft(cvDataFromParsed(r.parsed), r.name, "built-in parser");
+      setDraft(cvDataFromParsed(r.parsed), r.name, "built-in parser", undefined, r.parsed.notes);
       return;
     }
     setAiBusy(i);
@@ -100,17 +95,17 @@ function UploadStep() {
       });
       const data = (await res.json()) as StructureResponse;
       if (data.ok && data.parsed) {
-        setDraft(cvDataFromParsed(data.parsed), r.name, `structured by ${providerLabel}`, cvDataFromParsed(r.parsed));
+        setDraft(cvDataFromParsed(data.parsed), r.name, `structured by ${providerLabel}`, cvDataFromParsed(r.parsed), data.parsed.notes);
         analytics.rebrandStructured(provider, true);
       } else {
         // Surface the provider error verbatim (req 12), then fall back.
         setAiError({ i, message: data.error?.message ?? "The assistant could not structure this CV." });
-        setDraft(cvDataFromParsed(r.parsed), r.name, "assistant failed · built-in parser");
+        setDraft(cvDataFromParsed(r.parsed), r.name, "assistant failed · built-in parser", undefined, r.parsed.notes);
         analytics.rebrandStructured(provider, false);
       }
     } catch (e) {
       setAiError({ i, message: e instanceof Error ? e.message : String(e) });
-      setDraft(cvDataFromParsed(r.parsed), r.name, "assistant failed · built-in parser");
+      setDraft(cvDataFromParsed(r.parsed), r.name, "assistant failed · built-in parser", undefined, r.parsed.notes);
     } finally {
       setAiBusy(null);
     }
@@ -126,7 +121,8 @@ function UploadStep() {
   const mergeAndRebrand = () => {
     if (parseable.length < 2) return;
     const { merged, stats } = mergeParsedCVs(parseable.map((r) => r.parsed));
-    setDraft(cvDataFromParsed(merged), `${stats.files} merged CVs`, "merged · built-in parser");
+    const notes = merged.notes.filter((n) => !n.startsWith("Merged "));
+    setDraft(cvDataFromParsed(merged), `${stats.files} merged CVs`, "merged · built-in parser", undefined, notes);
   };
 
   return (
@@ -233,6 +229,7 @@ function UploadStep() {
                       <Stat label="Education" n={r.parsed.education.length} />
                       <Stat label="Skills" n={r.parsed.skills.reduce((a, g) => a + g.items.length, 0)} />
                     </div>
+                    <ImportNotes notes={r.parsed.notes} />
                     <div className="imp-actions">
                       <button className="imp-btn primary" disabled={aiBusy === i} onClick={() => rebrandFrom(r, i)}>
                         {aiBusy === i ? "Restructuring…" : "Re-brand this (AI)"}
@@ -257,6 +254,7 @@ function BrandStep() {
   const draft = useRebrandStore((s) => s.draft);
   const sourceName = useRebrandStore((s) => s.sourceName);
   const via = useRebrandStore((s) => s.via);
+  const notes = useRebrandStore((s) => s.notes);
   const templateId = useRebrandStore((s) => s.templateId);
   const resetRebrand = useRebrandStore((s) => s.reset);
   const workingCv = useCVStore((s) => s.cv);
@@ -311,6 +309,8 @@ function BrandStep() {
           </div>
         </div>
 
+        <ImportNotes notes={notes} />
+
         <div className="rb-score" role="group" aria-label="Projected rating">
           <span className="ed-label">Projected rating</span>
           <div className="rb-score-row">
@@ -351,10 +351,3 @@ function BrandStep() {
   );
 }
 
-function Chip({ label, value }: { label: string; value?: string }) {
-  if (!value) return null;
-  return <span className="imp-kv"><em>{label}</em>{value}</span>;
-}
-function Stat({ label, n }: { label: string; n: number }) {
-  return <span className={`imp-kv ${n === 0 ? "zero" : ""}`}><em>{label}</em>{n}</span>;
-}

@@ -51,4 +51,15 @@ describe("mergeParsedCVs", () => {
     expect(merged.skills).toHaveLength(1);
     expect(merged.skills[0].items).toEqual(["Go", "Rust", "Python"]);
   });
+
+  it("carries forward each source's confidence notes, de-duplicated, after the merge note", () => {
+    const a = cv({ notes: ["No email address detected — add one if your CV has one."] });
+    const b = cv({ notes: ["No email address detected — add one if your CV has one.", "1 education entry didn't clearly match a school/institution name — check these."] });
+    const { merged } = mergeParsedCVs([a, b]);
+    expect(merged.notes[0]).toMatch(/^Merged 2 CVs into one\.$/);
+    expect(merged.notes).toContain("No email address detected — add one if your CV has one.");
+    expect(merged.notes).toContain("1 education entry didn't clearly match a school/institution name — check these.");
+    // De-duplicated, not repeated once per source.
+    expect(merged.notes.filter((n) => /email/i.test(n))).toHaveLength(1);
+  });
 });
