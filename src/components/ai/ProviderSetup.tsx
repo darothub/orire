@@ -38,8 +38,9 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
           <div className="conn-default-head">
             <span className="ed-label">Editor coach</span>
             <span className="conn-hint">
-              Opening-verb checks always run. Optional dictionary spellcheck scans the rest of each
-              bullet for likely typos (compact English + tech list — not a full dictionary).
+              Opening-verb checks always run. Optional dictionary spellcheck is non-contextual: it
+              only flags single-letter typos against a compact English + tech list (not grammar or
+              full dictionary coverage). Prefer the browser/OS spellcheck for prose.
             </span>
           </div>
           <label className="conn-switch-opt" style={{ display: "inline-flex", gap: 8, alignItems: "center", cursor: "pointer" }}>
@@ -52,7 +53,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
             <span>Dictionary spellcheck on bullets</span>
           </label>
           <p id="deep-spell-hint" className="conn-hint" style={{ marginTop: 6 }}>
-            Off by default. Turn on if you want extra typo hints beyond the opener.
+            Off by default. Conservative on purpose — unknown words with no clear 1-edit fix stay silent.
           </p>
         </div>
       )}

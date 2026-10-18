@@ -142,4 +142,17 @@ describe("findSpellingIssues (via deepSpell)", () => {
     });
     expect(flags.map((f) => f.id)).not.toContain("spell");
   });
+
+  it("does not false-positive millions / responsive / maintainable", () => {
+    const a = analyzeBullet(
+      "Delivered end-to-end delivery of native Android features for a platform used by millions with 2 releases",
+      { deepSpell: true },
+    );
+    const b = analyzeBullet(
+      "Built responsive maintainable Android interfaces using Kotlin with 3 screens",
+      { deepSpell: true },
+    );
+    expect(a.map((f) => f.id)).not.toContain("spell");
+    expect(b.map((f) => f.id)).not.toContain("spell");
+  });
 });
