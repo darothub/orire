@@ -6,28 +6,36 @@ import { useId, useState, type InputHTMLAttributes } from "react";
  * Password field with a reveal/hide toggle. Behaves like a normal <input>
  * (all props pass through) but swaps between type="password" and "text" and
  * exposes an accessible eye button. Keeps the shared `.auth-input` styling.
+ *
+ * Pass `id` from a visible <label htmlFor> so screen-reader and click labels
+ * target the real control. The toggle stays out of the Tab order (tabIndex=-1)
+ * so Tab moves Email → Password → Submit without an extra stop.
  */
 export function PasswordInput({
   className = "auth-input",
+  id,
   ...props
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
   const [show, setShow] = useState(false);
-  const id = useId();
+  const autoId = useId();
+  const inputId = id ?? autoId;
+  const toggleId = `${inputId}-toggle`;
 
   return (
     <div className="pw-field">
       <input
         {...props}
+        id={inputId}
         type={show ? "text" : "password"}
         className={`${className} pw-input`}
-        aria-describedby={`${id}-toggle`}
       />
       <button
-        id={`${id}-toggle`}
+        id={toggleId}
         type="button"
         className="pw-toggle"
         onClick={() => setShow((s) => !s)}
         aria-label={show ? "Hide password" : "Show password"}
+        aria-controls={inputId}
         aria-pressed={show}
         title={show ? "Hide password" : "Show password"}
         tabIndex={-1}
