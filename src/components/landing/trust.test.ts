@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { trustStats } from "@/components/landing/trust";
+import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 describe("trustStats", () => {
   it("returns four stats", () => {
@@ -23,5 +24,10 @@ describe("trustStats", () => {
     const labels = trustStats().map((s) => s.label.toLowerCase()).join(" ");
     expect(labels).toContain("templates");
     expect(labels).toContain("ai assistants");
+  });
+
+  it("template stat value matches the live catalog count", () => {
+    const tpl = trustStats().find((s) => s.label.toLowerCase().includes("templates"));
+    expect(tpl?.value).toBe(String(TEMPLATE_COUNT));
   });
 });

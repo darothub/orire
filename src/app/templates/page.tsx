@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "../content.css";
-import { TEMPLATE_CATALOG } from "@/lib/templates/catalog";
+import { TEMPLATE_CATALOG, TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 export const metadata: Metadata = {
-  title: "CV templates — 25 ATS-ready designs | Orire",
+  title: `CV templates — ${TEMPLATE_COUNT} ATS-ready designs | Orire`,
   description:
-    "Browse Orire's 25 CV templates — from minimal and corporate to bold and executive. Pick one, upload your CV, and export an ATS-ready PDF.",
+    `Browse Orire's ${TEMPLATE_COUNT} CV templates — from minimal and corporate to bold and executive. Pick one, upload your CV, and export an ATS-ready PDF.`,
   alternates: { canonical: "/templates" },
 };
 

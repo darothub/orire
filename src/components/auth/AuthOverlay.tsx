@@ -10,6 +10,7 @@ import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/Turnstile
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { listFocusable, pickInitialFocus } from "@/components/auth/authFocus";
+import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -582,7 +583,7 @@ export function AuthOverlay() {
           <ul className="auth-usps" aria-label="What Orire does">
             <li><span aria-hidden>✎</span> Rebrand any CV into a clean, ATS-ready layout</li>
             <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
-            <li><span aria-hidden>❖</span> 25 standout templates, live preview as you edit</li>
+            <li><span aria-hidden>❖</span> {TEMPLATE_COUNT} standout templates, live preview as you edit</li>
           </ul>
           </div>
         </motion.div>
