@@ -2,9 +2,11 @@
  * orire — on-demand bullet quality review (Node runtime).
  *
  * The semantic layer of the content-quality coach: judges a single bullet's
- * verb strength + relevance, spelling and impact, and proposes a fact-grounded
- * rewrite. Auto-routed server-side (hidden provider) with managed-provider
- * failover; the dev mock serves it with no key.
+ * verb strength + relevance, spelling/grammar in full-sentence context, and
+ * impact, then proposes a fact-grounded rewrite.
+ *
+ * Plan-gated to Pro/Career — Free keeps the local opener coach only. Auto-routed
+ * server-side with managed-provider failover; the dev mock serves it with no key.
  */
 
 import { NextResponse } from "next/server";
@@ -24,6 +26,8 @@ import {
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
+import { getPlanId } from "@/lib/entitlement/entitlement";
+import { allowContextualBulletReview } from "@/lib/plan/plan";
 
 export const runtime = "nodejs";
 
@@ -57,6 +61,15 @@ export async function POST(req: Request) {
   const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
   if (limited) return limited;
   if (!gate.ok) return json(gate.message, gate.status);
+
+  // Sentence-context spelling/grammar review is Pro/Career (uses managed AI).
+  const plan = await getPlanId(gate.userId);
+  if (!allowContextualBulletReview(plan)) {
+    // Match cover-letter style: 200 body with upsell copy (client reads `error`).
+    return json(
+      "AI bullet review (spelling and impact in full-sentence context) is a Pro feature. Upgrade to Pro or Career to use Improve.",
+    );
+  }
 
   if (!fakeAiFor(provider) && !serverKeyFor("openai") && !serverKeyFor("anthropic")) {
     return json(notConfiguredMessage(provider));

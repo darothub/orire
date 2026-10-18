@@ -4,29 +4,21 @@
  * The instant, high-precision layer of the quality coach. It flags the things a
  * static check can do well and cheaply:
  *   - weak opener (Helped, Worked on…) and duty framing (Responsible for…)
- *   - a likely MISSPELLED opening verb — not via a megabyte dictionary, but by
- *     edit-distance against a curated action-verb lexicon ("Comtributed" is one
- *     edit from "Contributed")
+ *   - a likely MISSPELLED opening verb — edit-distance against a curated
+ *     action-verb lexicon ("Comtributed" → "Contributed")
  *   - an opener that isn't a recognized CV action verb at all ("Colonised")
  *   - no quantified result, first person, over-long
- *   - optional body-word dictionary spellcheck (`opts.deepSpell`) against a
- *     compact English + tech lexicon — off by default to avoid noise/bundle cost
  *
- * It deliberately judges only the OPENING VERB for the verb checks by default
- * (lowest false positives). Deeper context-aware judgement is the on-demand AI
- * review — see lib/ai/bulletReview.ts.
+ * Body spelling/grammar with sentence context is NOT done here — that needs AI
+ * (see lib/ai/bulletReview.ts, Pro/Career). Local dictionary scans without
+ * context were removed after false positives on real CV prose.
  */
-
-import { editDistance, findSpellingIssues } from "./spellcheck";
-
-export { editDistance } from "./spellcheck";
 
 export type CoachFlagId =
   | "weak-verb"
   | "duty"
   | "typo"
   | "odd-verb"
-  | "spell"
   | "no-metric"
   | "first-person"
   | "too-long";
@@ -37,16 +29,8 @@ export interface CoachFlag {
   label: string;
   hint: string;
   severity: CoachSeverity;
-  /** For `typo` / `spell`: the suggested correction (lowercase). */
+  /** For `typo`: the suggested correct opener (lowercase). */
   suggest?: string;
-}
-
-export interface AnalyzeBulletOptions {
-  /**
-   * When true, scan body words (not just the opener) against the compact
-   * dictionary and flag confident near-miss typos. Default false.
-   */
-  deepSpell?: boolean;
 }
 
 const WEAK_VERB_OPENERS = [
@@ -113,6 +97,25 @@ const wordCount = (text: string): number => text.trim().split(/\s+/).filter(Bool
 
 const cap = (w: string): string => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w);
 
+/** Levenshtein edit distance (small strings; pure). */
+export function editDistance(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  let curr = new Array<number>(n + 1);
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    [prev, curr] = [curr, prev];
+  }
+  return prev[n];
+}
+
 /** Nearest action verb to `word`, or null if none is within a sensible bound. */
 function nearestActionVerb(word: string): { word: string; dist: number } | null {
   let best: { word: string; dist: number } | null = null;
@@ -126,7 +129,7 @@ function nearestActionVerb(word: string): { word: string; dist: number } | null 
 }
 
 /** Analyse one highlight/bullet and return any quality flags (empty = clean). */
-export function analyzeBullet(text: string, opts: AnalyzeBulletOptions = {}): CoachFlag[] {
+export function analyzeBullet(text: string): CoachFlag[] {
   const flags: CoachFlag[] = [];
   const trimmed = text.trim();
   if (!trimmed) return flags;
@@ -178,18 +181,6 @@ export function analyzeBullet(text: string, opts: AnalyzeBulletOptions = {}): Co
     }
   }
 
-  // Optional body-word dictionary check (skip opener — already handled above).
-  if (opts.deepSpell) {
-    for (const issue of findSpellingIssues(trimmed, { skipFirst: true, limit: 2 })) {
-      flags.push({
-        id: "spell",
-        label: "Possible typo",
-        hint: `“${issue.word}” looks misspelled — did you mean “${cap(issue.suggest)}”?`,
-        severity: "warn",
-        suggest: issue.suggest,
-      });
-    }
-  }
 
   if (substantive && !METRIC_RE.test(trimmed)) {
     flags.push({
@@ -222,6 +213,6 @@ export function analyzeBullet(text: string, opts: AnalyzeBulletOptions = {}): Co
 }
 
 /** Count of bullets that have at least one `warn` flag. */
-export function coachWarningCount(bullets: string[], opts: AnalyzeBulletOptions = {}): number {
-  return bullets.filter((b) => analyzeBullet(b, opts).some((f) => f.severity === "warn")).length;
+export function coachWarningCount(bullets: string[]): number {
+  return bullets.filter((b) => analyzeBullet(b).some((f) => f.severity === "warn")).length;
 }

@@ -7,8 +7,10 @@ import { AutoTextarea } from "./AutoTextarea";
 import { EvidenceHelper } from "./EvidenceHelper";
 import { hasMeasurable } from "@/lib/ai/evidence";
 import { analyzeBullet } from "@/lib/cv/coach";
+import { usePlanStore } from "@/lib/store/planStore";
+import { useViewStore } from "@/lib/store/viewStore";
+import { allowContextualBulletReview } from "@/lib/plan/plan";
 import type { BulletReview } from "@/lib/ai/bulletReview";
-import { useSettingsStore } from "@/lib/store/settingsStore";
 
 function Field({
   label,
@@ -121,13 +123,20 @@ function HighlightItem({
   onRemove: () => void;
 }) {
   const controls = useDragControls();
-  const deepSpellcheck = useSettingsStore((s) => s.deepSpellcheck);
-  const flags = analyzeBullet(value, { deepSpell: deepSpellcheck });
+  const flags = analyzeBullet(value);
+  const plan = usePlanStore((s) => s.plan);
+  const setView = useViewStore((s) => s.setView);
+  const canAiReview = allowContextualBulletReview(plan);
   const [busy, setBusy] = useState(false);
   const [review, setReview] = useState<BulletReview | null>(null);
   const [err, setErr] = useState("");
 
   async function improve() {
+    if (!canAiReview) {
+      setErr("AI bullet review (spelling, grammar, impact in context) is on Pro and Career.");
+      setView("plans");
+      return;
+    }
     setBusy(true);
     setErr("");
     setReview(null);
@@ -181,9 +190,13 @@ function HighlightItem({
             className="ed-improve"
             onClick={() => void improve()}
             disabled={busy || !canReview}
-            title="Ask AI to check this bullet's wording and impact"
+            title={
+              canAiReview
+                ? "AI review: spelling, grammar, and impact in full-sentence context (Pro/Career)"
+                : "AI contextual review is a Pro/Career feature — opens plans"
+            }
           >
-            {busy ? "…" : "✨ Improve"}
+            {busy ? "…" : canAiReview ? "✨ Improve" : "✨ Improve · Pro"}
           </button>
           <button className="ed-mini" onClick={onRemove} aria-label="Remove highlight">
             ✕
