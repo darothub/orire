@@ -28,12 +28,24 @@ export function Column({ provider, state, before, applied, onApply, onReview }: 
           {state.phase === "error" && "error"}
         </span>
       </div>
-      {state.phase === "done" && state.servedBy && state.servedBy !== provider && (
+{state.phase === "done" && state.servedBy && state.servedBy !== provider && (
         <div className="cmp-fellback" title="Your chosen assistant was temporarily unavailable, so Orire served this from its managed backup. It still counts as one refine.">
           ⤷ {meta.label} was unavailable — served by {PROVIDERS[state.servedBy].label}
         </div>
       )}
-      {state.phase === "running" && <div className="cmp-loading"><span className="cmp-spinner" /> Contacting {meta.label}…</div>}
+      {state.phase === "running" && (
+        <div className="cmp-loading">
+          <span className="cmp-spinner" />
+          {state.retrying ? (
+            <>
+              {meta.label} is busy — retrying{state.retryAttempt ? ` (${state.retryAttempt})` : ""}…
+              {state.retryAfterMs ? <span className="cmp-retry-delay"> {Math.ceil(state.retryAfterMs / 1000)}s</span> : null}
+            </>
+          ) : (
+            <>Contacting {meta.label}…</>
+          )}
+        </div>
+      )}
       {state.phase === "error" && state.error && (
         <div className="imp-error"><strong>{state.error.title}{state.error.status ? ` (HTTP ${state.error.status})` : ""}</strong><pre>{state.error.body}</pre></div>
       )}

@@ -43,6 +43,9 @@ export interface ColState {
   error?: ColError;
   /** Set when the chosen assistant was down and a managed backup served this. */
   servedBy?: ProviderId;
+  retrying?: boolean;
+  retryAttempt?: number;
+  retryAfterMs?: number;
 }
 
 type JudgePhase = "idle" | "running" | "error" | "done";
@@ -201,34 +204,93 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     usePlanStore.getState().recordRefine();
 
     const runs = runProviders.map((provider) => {
-      set((s) => ({ cols: { ...s.cols, [provider]: { phase: "running" } } }));
+      set((s) => ({
+        cols: {
+          ...s.cols,
+          [provider]: { phase: "running", retrying: false, retryAttempt: 0, retryAfterMs: 0 },
+        },
+      }));
       return (async () => {
         try {
-          const res = await fetch("/api/ai/refine", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ provider, model: models[provider], jobDescription: jd, cv, runToken }),
-          });
-          const data = (await res.json()) as RefineResponse;
-          if (!data.ok || !data.raw) {
+          let attemptNumber = 0;
+          while (true) {
+            attemptNumber += 1;
             set((s) => ({
               cols: {
                 ...s.cols,
                 [provider]: {
-                  phase: "error",
-                  error: {
-                    title: `${PROVIDERS[provider].label} error`,
-                    body: data.error?.message ?? "Unknown error.",
-                    status: data.error?.status,
-                  },
+                  ...s.cols[provider],
+                  phase: "running",
+                  retrying: attemptNumber > 1,
+                  retryAttempt: attemptNumber,
+                  retryAfterMs: 0,
                 },
               },
             }));
-            return;
+
+            const res = await fetch("/api/ai/refine", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ provider, model: models[provider], jobDescription: jd, cv, runToken }),
+            });
+            const data = (await res.json()) as RefineResponse;
+
+            if (data.ok && data.raw) {
+              const grounded = factGround(cv, applyRefinePatch(cv, parseModelJSON(data.raw)));
+              const match = jdMatch(grounded.cv, jd);
+              set((s) => ({
+                cols: {
+                  ...s.cols,
+                  [provider]: {
+                    phase: "done",
+                    result: grounded,
+                    match,
+                    servedBy: data.servedBy,
+                    retrying: false,
+                    retryAttempt: 0,
+                    retryAfterMs: 0,
+                  },
+                },
+              }));
+              return;
+            }
+
+            const message = data.error?.message ?? "Unknown error.";
+            const status = data.error?.status;
+            const isBusy = status === 503 || /busy|temporar|overloaded|rate limit|try again/i.test(message);
+
+            if (!isBusy || attemptNumber >= 3) {
+              set((s) => ({
+                cols: {
+                  ...s.cols,
+                  [provider]: {
+                    phase: "error",
+                    error: {
+                      title: `${PROVIDERS[provider].label} error`,
+                      body: message,
+                      status,
+                    },
+                  },
+                },
+              }));
+              return;
+            }
+
+            const delayMs = 1500 * attemptNumber;
+            set((s) => ({
+              cols: {
+                ...s.cols,
+                [provider]: {
+                  ...s.cols[provider],
+                  phase: "running",
+                  retrying: true,
+                  retryAttempt: attemptNumber,
+                  retryAfterMs: delayMs,
+                },
+              },
+            }));
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
           }
-          const grounded = factGround(cv, applyRefinePatch(cv, parseModelJSON(data.raw)));
-          const match = jdMatch(grounded.cv, jd);
-          set((s) => ({ cols: { ...s.cols, [provider]: { phase: "done", result: grounded, match, servedBy: data.servedBy } } }));
         } catch (e) {
           const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
           set((s) => ({

@@ -18,6 +18,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 # Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
 concurrency:
@@ -66,8 +67,24 @@ jobs:
     runs-on: ubuntu-latest
     # Mirror the Bitbucket ordering: only run e2e once checks + build are green.
     needs: [checks, build]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     env:
       CI: "true"
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
+      DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -75,6 +92,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Apply Prisma schema to CI Postgres
+        run: npx prisma migrate deploy
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
