@@ -17,11 +17,13 @@ import { useTargetStore } from "@/lib/store/targetStore";
  * Bridges the local CV (Zustand + localStorage) with the signed-in user's cloud
  * copy. Renders nothing.
  *  - On first authentication: adopt the server copy if one exists, otherwise
- *    push the current local CV up so it becomes the user's cloud document.
+ *    push the current local CV up so it becomes the user's cloud document
+ *    (only when the CV is a real started non-sample draft — never leftover
+ *    memory from another account).
  *  - While signed in: debounce-save edits to the server, with a status
  *    indicator + one retry.
- *  - On sign-out: clear the local CV + history so a different account on the
- *    same browser never inherits the previous user's data.
+ *  - On sign-out: clear the local CV + history once storage is on the anon
+ *    key (deferred wipe), so a different account never inherits data.
  *
  * Waits for StorageScope so adopt/migrate always run against the bucket for
  * the current user id (never a previous account's localStorage key).
@@ -43,6 +45,8 @@ export function CloudSync() {
   // copy with stale local state.
   const savesReady = useRef(false);
   const prevStatus = useRef<typeof status | null>(null);
+  /** Sign-out requested; wipe runs when anon scope is ready (not same-tick race). */
+  const pendingWipe = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Adopt-or-seed once per authenticated user id (after storage is bound).
@@ -60,12 +64,10 @@ export function CloudSync() {
         const store = useCVStore.getState();
         if (remote) {
           store.hydrateFromCloud({ cv: remote.data, template: remote.template, baseline: remote.baseline });
-        } else if (!isSampleCV(store.cv)) {
-          // Seed the cloud only with a CV the user has actually made theirs. Never
-          // persist the untouched demo persona (Ada Okonkwo, @example.com) as a
-          // real signed-in document — the placeholder stays a local preview, and
-          // the user's first real edit or upload creates their cloud doc via
-          // autosave below.
+        } else if (store.started && !isSampleCV(store.cv)) {
+          // Seed only a real draft that survived StorageScope guest-preserve
+          // into *this* empty user bucket. Sample / unstarted never become
+          // cloud docs; empty buckets after account switch are reset to sample.
           await saveWorkingCV({ data: store.cv, template: store.activeTemplate, baseline: store.baseline });
           if (cancelled) return;
         }
@@ -88,6 +90,8 @@ export function CloudSync() {
   // (each as its own Document row, never touching activeDocumentId — that stays
   // owned by the adopt/seed effect above), then enters cloud mode exactly as
   // refreshFromCloud alone used to. Guarded so it fires once per user id.
+  // After account-scoped reset, leftover A versions are gone; only true guest
+  // library rows (or empty → refreshFromCloud) remain.
   useEffect(() => {
     if (status !== "authenticated" || !scopeReady || !sessionUserId) return;
     if (migratedFor.current === sessionUserId) return;
@@ -95,28 +99,38 @@ export function CloudSync() {
     void useLibraryStore.getState().migrateLocalToCloud();
   }, [status, scopeReady, sessionUserId, scope.generation]);
 
-  // Track sign-out. On the authenticated -> unauthenticated transition (a real
-  // sign-out, not an anonymous visitor's first load) wipe local CV + history so
-  // the next account on this browser starts clean. Always drop the server plan
-  // mirror and re-arm the sync guards. Wait until storage is back on the anon
-  // key so reset() persists into the guest bucket, not the previous user key.
+  // Track sign-out with a deferred wipe: when status flips authenticated →
+  // unauthenticated, scope often still has the old user id for a tick, so
+  // scopeReady is false and a same-tick wipe would no-op forever. Arm
+  // pendingWipe and run reset once anon scope is ready. Cancel if the user
+  // signs in again before wipe.
   useEffect(() => {
     const was = prevStatus.current;
     prevStatus.current = status;
-    if (status === "unauthenticated") {
-      hydratedFor.current = null;
-      migratedFor.current = null;
-      savesReady.current = false;
-      usePlanStore.getState().clearServer();
-      useUsageStore.getState().setSummary(null);
-      if (was === "authenticated" && scopeReady) {
-        useCVStore.getState().reset();
-        useLibraryStore.getState().clear();
-        useTargetStore.getState().clearTarget();
-        useSyncStore.getState().setStatus("idle");
-      }
+
+    if (status === "authenticated") {
+      pendingWipe.current = false;
+      return;
     }
-  }, [status, scopeReady, scope.generation]);
+
+    if (status !== "unauthenticated") return;
+
+    hydratedFor.current = null;
+    migratedFor.current = null;
+    savesReady.current = false;
+    usePlanStore.getState().clearServer();
+    useUsageStore.getState().setSummary(null);
+
+    if (was === "authenticated") pendingWipe.current = true;
+
+    if (pendingWipe.current && scopeReady && scope.userId === null) {
+      pendingWipe.current = false;
+      useCVStore.getState().reset();
+      useLibraryStore.getState().clear();
+      useTargetStore.getState().clearTarget();
+      useSyncStore.getState().setStatus("idle");
+    }
+  }, [status, scopeReady, scope.generation, scope.userId]);
 
   // Mirror the server-truth plan + usage whenever we become authenticated, so
   // the plan UI shows the enforceable numbers (not the local trial counter).
