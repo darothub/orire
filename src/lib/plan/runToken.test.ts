@@ -28,6 +28,19 @@ describe("runToken", () => {
     expect(check.payload?.u).toBeNull();
   });
 
+  it("round-trips an authorized failover and omits it when absent", async () => {
+    const { signRunToken, verifyRunToken } = await mod();
+    const withFb = verifyRunToken(
+      signRunToken({ userId: "u1", plan: "pro", providers: ["openai"], fallback: { provider: "anthropic", model: "claude-haiku-4-5" } }),
+    );
+    expect(withFb.ok).toBe(true);
+    expect(withFb.payload?.f).toEqual({ provider: "anthropic", model: "claude-haiku-4-5" });
+
+    const noFb = verifyRunToken(signRunToken({ userId: "u1", plan: "pro", providers: ["openai"], fallback: null }));
+    expect(noFb.ok).toBe(true);
+    expect(noFb.payload?.f).toBeUndefined();
+  });
+
   it("rejects a missing token", async () => {
     const { verifyRunToken } = await mod();
     expect(verifyRunToken(undefined).ok).toBe(false);

@@ -41,6 +41,8 @@ export interface ColState {
   result?: GroundingResult;
   match?: JDMatch;
   error?: ColError;
+  /** Set when the chosen assistant was down and a managed backup served this. */
+  servedBy?: ProviderId;
 }
 
 type JudgePhase = "idle" | "running" | "error" | "done";
@@ -226,7 +228,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
           }
           const grounded = factGround(cv, applyRefinePatch(cv, parseModelJSON(data.raw)));
           const match = jdMatch(grounded.cv, jd);
-          set((s) => ({ cols: { ...s.cols, [provider]: { phase: "done", result: grounded, match } } }));
+          set((s) => ({ cols: { ...s.cols, [provider]: { phase: "done", result: grounded, match, servedBy: data.servedBy } } }));
         } catch (e) {
           const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
           set((s) => ({
