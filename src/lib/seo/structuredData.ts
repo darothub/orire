@@ -8,7 +8,7 @@ import { PLANS, PLAN_ORDER } from "@/lib/plan/plan";
 
 const NAME = "Orire";
 const DESCRIPTION =
-  "Rebrand and refine your CV with elegant, animated templates. Upload a PDF or DOCX, tailor it to a job description, and export an ATS-ready CV.";
+  "Rebrand and refine your CV with elegant, animated templates. Upload a PDF or DOCX, tailor it to a job description, and download an ATS-ready PDF or Word (.docx).";
 
 export function buildStructuredData(siteUrl: string) {
   const base = siteUrl.replace(/\/+$/, ""); // tolerate a stray trailing slash

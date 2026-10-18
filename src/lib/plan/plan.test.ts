@@ -146,6 +146,27 @@ describe("nextPlan", () => {
   });
 });
 
+describe("plan export perks (PDF + Word)", () => {
+  // Product exports PDF and Word on every tier; Free only differs by download cap.
+
+  it("never claims PDF-only export", () => {
+    for (const id of PLAN_ORDER) {
+      const exportish = PLANS[id].perks.filter((p) => /pdf|word|docx|download/i.test(p));
+      expect(exportish.length).toBeGreaterThan(0);
+      for (const p of exportish) {
+        expect(p.toLowerCase()).not.toMatch(/pdf only|pdf-only/);
+        expect(p.toLowerCase()).toMatch(/word/);
+      }
+    }
+  });
+
+  it("Free names the download cap; paid plans say unlimited downloads", () => {
+    expect(PLANS.free.perks.some((p) => /3 downloads/i.test(p))).toBe(true);
+    expect(PLANS.pro.perks.some((p) => /unlimited downloads/i.test(p))).toBe(true);
+    expect(PLANS.career.perks.some((p) => /unlimited downloads/i.test(p))).toBe(true);
+  });
+});
+
 describe("providerAllowedOnPlan", () => {
   it("blocks Anthropic (Claude) on Free with an upgrade reason", () => {
     const r = providerAllowedOnPlan("free", "anthropic");

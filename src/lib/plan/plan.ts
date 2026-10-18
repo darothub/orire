@@ -58,8 +58,13 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 1,
     allowCompare: false,
     includedTiers: ["budget"],
-    // Template count comes from TEMPLATE_CATALOG — never hardcode here.
-    perks: [allTemplatesPerk(), "3 AI refines to try it", "Single assistant", "Clean PDF export"],
+    // Template count from catalog; export is PDF + Word (Free caps downloads, not format).
+    perks: [
+      allTemplatesPerk(),
+      "3 AI refines to try it",
+      "Single assistant",
+      "PDF & Word export · 3 downloads",
+    ],
   },
   pro: {
     id: "pro",
@@ -69,7 +74,15 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 2,
     allowCompare: true,
     includedTiers: ["budget", "mid"],
-    perks: [allTemplatesPerk(), "30 refines / mo", "Compare 2 + pick the best", "Cover letters", "Full Grade breakdown", "Clean PDF, all page modes"],
+    // Page modes are PDF-only; unlimited downloads is the paid differentiator.
+    perks: [
+      allTemplatesPerk(),
+      "30 refines / mo",
+      "Compare 2 + pick the best",
+      "Cover letters",
+      "Full Grade breakdown",
+      "PDF (page layouts) & Word · unlimited downloads",
+    ],
   },
   career: {
     id: "career",
@@ -79,9 +92,16 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 3,
     allowCompare: true,
     includedTiers: ["budget", "mid", "premium"],
-    // Same full catalog as Free/Pro — Career was missing this perk and looked
-    // like it offered fewer templates on the pricing card.
-    perks: [allTemplatesPerk(), "Unlimited refines (fair-use)", "Premium models included", "Parallel compare + pick the best", "JD simulation", "Company history"],
+    // Same full catalog + export formats as other tiers.
+    perks: [
+      allTemplatesPerk(),
+      "Unlimited refines (fair-use)",
+      "Premium models included",
+      "Parallel compare + pick the best",
+      "JD simulation",
+      "Company history",
+      "PDF (page layouts) & Word · unlimited downloads",
+    ],
   },
 };
 
