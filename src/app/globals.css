@@ -1508,6 +1508,19 @@ body {
 
 /* ---------- Version library ---------- */
 .lib-head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.lib-migration-note {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--surface-faint);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 13.5px;
+}
 .lib-save {
   overflow: hidden;
   border: 1px solid var(--line-2);

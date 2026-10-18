@@ -89,6 +89,26 @@ interface LibraryState {
   unshare: (id: string) => Promise<void>;
   /** Wipe in-memory state (sign-out). Never deletes server rows. */
   clear: () => void;
+
+  /**
+   * One-time result message from migrating this browser's anonymous versions
+   * into the signed-in account (see `migrateLocalToCloud`). Null once there's
+   * nothing to report, or after the user dismisses it.
+   */
+  migrationNote: string | null;
+  /**
+   * Called once, right when a session first becomes authenticated: moves any
+   * versions saved anonymously in this browser into the account as real
+   * `Document` rows, then enters cloud mode. Every created row passes
+   * `makeActive: false` — the adopt/seed flow in CloudSync owns
+   * `activeDocumentId`, and migrated rows must never contend with it. Local
+   * versions aren't dropped from `localStorage` until the next persisted
+   * write (see `partialize` below), but once cloud mode is entered that drop
+   * is unavoidable, so migration is best-effort: it tries every version once,
+   * then reports how many made it over via `migrationNote`.
+   */
+  migrateLocalToCloud: () => Promise<void>;
+  dismissMigrationNote: () => void;
 }
 
 function uid(): string {
@@ -119,6 +139,7 @@ export const useLibraryStore = create<LibraryState>()(
       lastCompany: "",
       cloud: false,
       loading: false,
+      migrationNote: null,
 
       refreshFromCloud: async () => {
         set({ loading: true, cloud: true });
@@ -262,7 +283,40 @@ export const useLibraryStore = create<LibraryState>()(
         await get().refreshFromCloud();
       },
 
-      clear: () => set({ versions: [], activeId: null, cloud: false }),
+      clear: () => set({ versions: [], activeId: null, cloud: false, migrationNote: null }),
+
+      migrateLocalToCloud: async () => {
+        if (get().cloud) return; // already in cloud mode — nothing local left to move
+        const toMigrate = get().versions;
+        if (toMigrate.length === 0) {
+          await get().refreshFromCloud();
+          return;
+        }
+        let migrated = 0;
+        for (const v of toMigrate) {
+          const res = await createVersion({
+            title: v.name,
+            company: v.company || null,
+            template: v.template,
+            data: v.cv,
+            baseline: v.baseline,
+            exported: Boolean(v.lastExportedAt),
+            makeActive: false,
+          });
+          if (res.ok) migrated++;
+        }
+        await get().refreshFromCloud();
+        const total = toMigrate.length;
+        const note =
+          migrated === total
+            ? `Moved ${migrated} saved version${migrated === 1 ? "" : "s"} from this browser to your account.`
+            : migrated > 0
+              ? `Moved ${migrated} of ${total} saved versions from this browser to your account — the rest stayed put, try saving them again.`
+              : `Couldn't move your ${total} saved version${total === 1 ? "" : "s"} from this browser to your account — try saving ${total === 1 ? "it" : "them"} again.`;
+        set({ migrationNote: note });
+      },
+
+      dismissMigrationNote: () => set({ migrationNote: null }),
     }),
     {
       name: "orire-library-v1",
