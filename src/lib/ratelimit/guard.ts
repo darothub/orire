@@ -60,6 +60,10 @@ async function apply(req: Request, cfg: LimitConfig, userId?: string | null): Pr
  * Guard an AI route. Returns a 429 `NextResponse` (shaped like the route's
  * `fail()` body so the client surfaces it verbatim) when the caller is over the
  * limit, or `null` when the request may proceed.
+ *
+ * Pass `userId` whenever the caller is known (verified session or refine run
+ * token). Buckets are then per-account via the shared store; without it they
+ * fall back to client IP.
  */
 export async function aiRateLimit(req: Request, provider: ProviderId, userId?: string | null): Promise<NextResponse | null> {
   const result = await apply(req, aiLimitConfig(), userId);

@@ -52,14 +52,16 @@ export async function POST(req: Request) {
   const provider = route.provider;
   const model = route.model;
 
-  const limited = await aiRateLimit(req, provider);
-  if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
 
   // Server-authoritative plan gate (Pro+). Free users get an upsell block.
   const session = await auth();
   const userId = session?.user?.id ?? null;
+  // Key the AI budget by user when signed in (IP otherwise) so NAT users don't
+  // share one bucket and a single account can't rotate IPs to bypass the cap.
+  const limited = await aiRateLimit(req, provider, userId);
+  if (limited) return limited;
   const plan = userId ? await getPlanId(userId) : "free";
   if (!allowCoverLetter(plan)) {
     return NextResponse.json(

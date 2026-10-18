@@ -81,6 +81,36 @@ describe("checkEnv — feature-group warnings", () => {
       expect(r.warnings.some((w) => w.includes(group.name))).toBe(true);
     }
   });
+
+  it("warns in production when managed AI is live without a shared rate-limit store", () => {
+    const r = checkEnv({
+      ...validEnv(),
+      NODE_ENV: "production",
+      OPENAI_API_KEY: "sk-test",
+    });
+    expect(r.ok).toBe(true);
+    expect(r.warnings.some((w) => w.includes("Shared rate limiting is not configured"))).toBe(true);
+  });
+
+  it("does not warn about shared rate limiting when Upstash is fully set", () => {
+    const r = checkEnv({
+      ...validEnv(),
+      NODE_ENV: "production",
+      OPENAI_API_KEY: "sk-test",
+      UPSTASH_REDIS_REST_URL: "https://example.upstash.io",
+      UPSTASH_REDIS_REST_TOKEN: "tok",
+    });
+    expect(r.warnings.some((w) => w.includes("Shared rate limiting"))).toBe(false);
+  });
+
+  it("does not warn about shared rate limiting outside production", () => {
+    const r = checkEnv({
+      ...validEnv(),
+      NODE_ENV: "development",
+      OPENAI_API_KEY: "sk-test",
+    });
+    expect(r.warnings.some((w) => w.includes("Shared rate limiting is not configured"))).toBe(false);
+  });
 });
 
 describe("formatEnvError", () => {

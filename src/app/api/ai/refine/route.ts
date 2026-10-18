@@ -78,8 +78,6 @@ export async function POST(req: Request) {
   }
   const model = (body.model ?? "").trim();
 
-  const limited = await aiRateLimit(req, provider);
-  if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
   // Managed key: orire holds the provider key server-side. In dev mock mode
@@ -107,6 +105,11 @@ export async function POST(req: Request) {
       { status: 403 }
     );
   }
+
+  // Rate-limit after the token is verified so signed-in runs key on the stable
+  // user id from the token (anonymous free trials still fall back to IP).
+  const limited = await aiRateLimit(req, provider, check.payload!.u);
+  if (limited) return limited;
 
   if (!model) {
     return NextResponse.json(fail(provider, "No model selected."), { status: 400 });

@@ -39,8 +39,6 @@ const json = (error: string, status = 200) => NextResponse.json({ ok: false, err
 export async function POST(req: Request) {
   const { provider } = routeTask("bullet-review") as { provider: ProviderId };
 
-  const limited = await aiRateLimit(req, provider);
-  if (limited) return limited;
   const oversize = bodyTooLarge(req);
   if (oversize) return json(oversize, 413);
 
@@ -56,6 +54,8 @@ export async function POST(req: Request) {
   if (sizeErr) return json(sizeErr, 413);
 
   const gate = await requireVerifiedUser();
+  const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
+  if (limited) return limited;
   if (!gate.ok) return json(gate.message, gate.status);
 
   if (!fakeAiFor(provider) && !serverKeyFor("openai") && !serverKeyFor("anthropic")) {

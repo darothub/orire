@@ -45,11 +45,13 @@ export async function POST(req: Request) {
   const provider = route.provider;
   const model = route.model;
 
-  const limited = await aiRateLimit(req, provider);
-  if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
   const gate = await requireVerifiedUser();
+  // Prefer the stable user id so one account cannot multiply its budget across
+  // IPs; unauthenticated callers still share an IP bucket.
+  const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
+  if (limited) return limited;
   if (!gate.ok) return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
   // Needs at least one managed provider key (either can serve via failover),
   // unless the dev mock is active.

@@ -45,11 +45,11 @@ export async function POST(req: Request) {
   const provider = route.provider;
   const model = route.model;
 
-  const limited = await aiRateLimit(req, provider);
-  if (limited) return limited;
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
   const gate = await requireVerifiedUser();
+  const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
+  if (limited) return limited;
   if (!gate.ok) return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
   // "Help me pick the best" is a paid feature (it rides on the compare flow,
   // which is Pro+). Enforce it here too so a direct call can't spend the
