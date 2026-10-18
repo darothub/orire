@@ -66,7 +66,9 @@ export const usePlanStore = create<PlanState>()(
       clearServer: () => set({ serverActive: false, serverUsed: 0, plan: "free" }),
     }),
     {
-      name: "orire-plan-v1",
+      // Anonymous default; StorageScope rebinds per signed-in user id so free-trial
+      // counters never leak across accounts on a shared browser.
+      name: "orire-plan:anon:v1",
       version: 1,
       // Never persist server-mirror fields — they're re-fetched on load.
       partialize: (s) => ({ plan: s.plan, usageMonth: s.usageMonth, refinesUsed: s.refinesUsed }),

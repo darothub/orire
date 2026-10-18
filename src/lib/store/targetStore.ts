@@ -64,7 +64,8 @@ export const useTargetStore = create<TargetState>()(
       clearTarget: () => set({ ideal: null, jd: "", label: "", createdAt: null, baseScore: 0 }),
     }),
     {
-      name: "orire-target-v1",
+      // Anonymous default; StorageScope rebinds per signed-in user id.
+      name: "orire-target:anon:v1",
       partialize: (s) => ({ ideal: s.ideal, jd: s.jd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore }),
     },
   ),

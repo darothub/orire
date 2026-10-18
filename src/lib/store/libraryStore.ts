@@ -319,7 +319,8 @@ export const useLibraryStore = create<LibraryState>()(
       dismissMigrationNote: () => set({ migrationNote: null }),
     }),
     {
-      name: "orire-library-v1",
+      // Anonymous default; StorageScope rebinds per signed-in user id.
+      name: "orire-library:anon:v1",
       // Never cache server-backed rows in localStorage; only persist the local
       // (anonymous) library.
       partialize: (s) =>

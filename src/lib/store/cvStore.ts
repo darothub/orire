@@ -426,7 +426,8 @@ export const useCVStore = create<CVState>()(
       reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, started: false, skillSuggestions: [], ignoredSkills: [] }),
     }),
     {
-      name: "orire-cv-v1",
+      // Anonymous default; StorageScope rebinds to `orire-cv:u:<id>:v1` on sign-in.
+      name: "orire-cv:anon:v1",
       version: 2,
       partialize: (s) => ({ cv: s.cv, activeTemplate: s.activeTemplate, baseline: s.baseline, started: s.started, ignoredSkills: s.ignoredSkills }),
       migrate: (persisted, version) => {

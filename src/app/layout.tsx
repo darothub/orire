@@ -5,6 +5,7 @@ import "./resume.css";
 import "./ingest.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { VerifyBanner } from "@/components/auth/VerifyBanner";
+import { StorageScope } from "@/components/auth/StorageScope";
 import { auth } from "@/lib/auth/auth";
 import { ConsentedAnalytics } from "@/components/analytics/ConsentedAnalytics";
 import { CookieBanner } from "@/components/analytics/CookieBanner";
@@ -55,6 +56,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full">
         <AuthProvider session={session}>
+          {/* Bind CV/library/target/plan localStorage keys to the current account. */}
+          <StorageScope />
           <VerifyBanner />
           {children}
           <SignupTracker isNewUser={session?.isNewUser === true} userId={session?.user?.id ?? null} />
