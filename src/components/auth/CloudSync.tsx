@@ -10,6 +10,8 @@ import { useSyncStore } from "@/lib/store/syncStore";
 import { loadWorkingCV, saveWorkingCV } from "@/app/actions/cv";
 import { isSampleCV } from "@/lib/cv/sample";
 import { readEntitlement } from "@/app/actions/refine";
+import { useStorageScope } from "@/components/auth/StorageScope";
+import { useTargetStore } from "@/lib/store/targetStore";
 
 /**
  * Bridges the local CV (Zustand + localStorage) with the signed-in user's cloud
@@ -20,11 +22,22 @@ import { readEntitlement } from "@/app/actions/refine";
  *    indicator + one retry.
  *  - On sign-out: clear the local CV + history so a different account on the
  *    same browser never inherits the previous user's data.
+ *
+ * Waits for StorageScope so adopt/migrate always run against the bucket for
+ * the current user id (never a previous account's localStorage key).
  */
 export function CloudSync() {
-  const { status } = useSession();
-  const hydratedFor = useRef(false);
-  const migratedFor = useRef(false);
+  const { data, status } = useSession();
+  const sessionUserId = data?.user?.id ?? null;
+  const scope = useStorageScope();
+  // Storage keys must match the session before we touch cloud or wipe local.
+  const scopeReady =
+    scope.ready &&
+    ((status === "authenticated" && !!sessionUserId && scope.userId === sessionUserId) ||
+      (status === "unauthenticated" && scope.userId === null));
+
+  const hydratedFor = useRef<string | null>(null);
+  const migratedFor = useRef<string | null>(null);
   // Saves stay OFF until the initial adopt/seed has fully completed, so an edit
   // (or the hydrate itself) during the async load can't overwrite the cloud
   // copy with stale local state.
@@ -32,11 +45,13 @@ export function CloudSync() {
   const prevStatus = useRef<typeof status | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Adopt-or-seed once per authenticated session. savesReady flips true only
-  // after this resolves.
+  // Adopt-or-seed once per authenticated user id (after storage is bound).
   useEffect(() => {
-    if (status !== "authenticated" || hydratedFor.current) return;
-    hydratedFor.current = true;
+    if (status !== "authenticated" || !scopeReady || !sessionUserId) return;
+    if (hydratedFor.current === sessionUserId) return;
+    hydratedFor.current = sessionUserId;
+    // Block autosave until this account's adopt/seed finishes (also on account switch).
+    savesReady.current = false;
     let cancelled = false;
     (async () => {
       try {
@@ -64,7 +79,7 @@ export function CloudSync() {
     return () => {
       cancelled = true;
     };
-  }, [status]);
+  }, [status, scopeReady, sessionUserId, scope.generation]);
 
   // Enter cloud mode as soon as we're authenticated — independent of the
   // adopt/seed path above — so the library's cloud features (share, server CRUD)
@@ -72,39 +87,41 @@ export function CloudSync() {
   // moves any versions saved anonymously in this browser into the account first
   // (each as its own Document row, never touching activeDocumentId — that stays
   // owned by the adopt/seed effect above), then enters cloud mode exactly as
-  // refreshFromCloud alone used to. Guarded so it fires once per session.
+  // refreshFromCloud alone used to. Guarded so it fires once per user id.
   useEffect(() => {
-    if (status === "authenticated" && !migratedFor.current) {
-      migratedFor.current = true;
-      void useLibraryStore.getState().migrateLocalToCloud();
-    }
-  }, [status]);
+    if (status !== "authenticated" || !scopeReady || !sessionUserId) return;
+    if (migratedFor.current === sessionUserId) return;
+    migratedFor.current = sessionUserId;
+    void useLibraryStore.getState().migrateLocalToCloud();
+  }, [status, scopeReady, sessionUserId, scope.generation]);
 
   // Track sign-out. On the authenticated -> unauthenticated transition (a real
   // sign-out, not an anonymous visitor's first load) wipe local CV + history so
   // the next account on this browser starts clean. Always drop the server plan
-  // mirror and re-arm the sync guards.
+  // mirror and re-arm the sync guards. Wait until storage is back on the anon
+  // key so reset() persists into the guest bucket, not the previous user key.
   useEffect(() => {
     const was = prevStatus.current;
     prevStatus.current = status;
     if (status === "unauthenticated") {
-      hydratedFor.current = false;
-      migratedFor.current = false;
+      hydratedFor.current = null;
+      migratedFor.current = null;
       savesReady.current = false;
       usePlanStore.getState().clearServer();
       useUsageStore.getState().setSummary(null);
-      if (was === "authenticated") {
+      if (was === "authenticated" && scopeReady) {
         useCVStore.getState().reset();
         useLibraryStore.getState().clear();
+        useTargetStore.getState().clearTarget();
         useSyncStore.getState().setStatus("idle");
       }
     }
-  }, [status]);
+  }, [status, scopeReady, scope.generation]);
 
   // Mirror the server-truth plan + usage whenever we become authenticated, so
   // the plan UI shows the enforceable numbers (not the local trial counter).
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated" || !scopeReady) return;
     let cancelled = false;
     (async () => {
       const ent = await readEntitlement();
@@ -116,11 +133,11 @@ export function CloudSync() {
     return () => {
       cancelled = true;
     };
-  }, [status]);
+  }, [status, scopeReady, sessionUserId, scope.generation]);
 
   // Debounced autosave of edits while signed in, with status + a single retry.
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (status !== "authenticated" || !scopeReady || !sessionUserId) return;
 
     const runSave = async () => {
       useSyncStore.getState().setStatus("saving");
@@ -150,7 +167,7 @@ export function CloudSync() {
       unsub();
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [status]);
+  }, [status, scopeReady, sessionUserId, scope.generation]);
 
   return null;
 }
