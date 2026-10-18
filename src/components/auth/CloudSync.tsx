@@ -24,6 +24,7 @@ import { readEntitlement } from "@/app/actions/refine";
 export function CloudSync() {
   const { status } = useSession();
   const hydratedFor = useRef(false);
+  const migratedFor = useRef(false);
   // Saves stay OFF until the initial adopt/seed has fully completed, so an edit
   // (or the hydrate itself) during the async load can't overwrite the cloud
   // copy with stale local state.
@@ -67,10 +68,16 @@ export function CloudSync() {
 
   // Enter cloud mode as soon as we're authenticated — independent of the
   // adopt/seed path above — so the library's cloud features (share, server CRUD)
-  // are available even if the initial working-CV load hiccups. refreshFromCloud
-  // sets cloud=true up front and tolerates a failed list internally.
+  // are available even if the initial working-CV load hiccups. migrateLocalToCloud
+  // moves any versions saved anonymously in this browser into the account first
+  // (each as its own Document row, never touching activeDocumentId — that stays
+  // owned by the adopt/seed effect above), then enters cloud mode exactly as
+  // refreshFromCloud alone used to. Guarded so it fires once per session.
   useEffect(() => {
-    if (status === "authenticated") void useLibraryStore.getState().refreshFromCloud();
+    if (status === "authenticated" && !migratedFor.current) {
+      migratedFor.current = true;
+      void useLibraryStore.getState().migrateLocalToCloud();
+    }
   }, [status]);
 
   // Track sign-out. On the authenticated -> unauthenticated transition (a real
@@ -82,6 +89,7 @@ export function CloudSync() {
     prevStatus.current = status;
     if (status === "unauthenticated") {
       hydratedFor.current = false;
+      migratedFor.current = false;
       savesReady.current = false;
       usePlanStore.getState().clearServer();
       useUsageStore.getState().setSummary(null);

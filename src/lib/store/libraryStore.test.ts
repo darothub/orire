@@ -126,6 +126,61 @@ describe("libraryStore — cloud mode", () => {
   });
 });
 
+describe("libraryStore — migrateLocalToCloud", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useLibraryStore.setState({ versions: [], activeId: null, lastCompany: "", cloud: false, loading: false, migrationNote: null });
+  });
+
+  it("moves every local version over with makeActive: false, then enters cloud mode", async () => {
+    await save({ name: "first" });
+    await save({ name: "second" });
+    expect(useLibraryStore.getState().cloud).toBe(false);
+
+    await useLibraryStore.getState().migrateLocalToCloud();
+
+    expect(server.createVersion).toHaveBeenCalledTimes(2);
+    for (const call of (server.createVersion as ReturnType<typeof vi.fn>).mock.calls) {
+      expect(call[0]).toMatchObject({ makeActive: false });
+    }
+    expect(server.listVersions).toHaveBeenCalled(); // refreshFromCloud
+    expect(useLibraryStore.getState().cloud).toBe(true);
+    expect(useLibraryStore.getState().migrationNote).toMatch(/moved 2 saved versions/i);
+  });
+
+  it("with nothing local, just enters cloud mode and reports nothing", async () => {
+    await useLibraryStore.getState().migrateLocalToCloud();
+    expect(server.createVersion).not.toHaveBeenCalled();
+    expect(useLibraryStore.getState().cloud).toBe(true);
+    expect(useLibraryStore.getState().migrationNote).toBeNull();
+  });
+
+  it("reports a partial count when some versions fail to migrate", async () => {
+    await save({ name: "first" });
+    await save({ name: "second" });
+    (server.createVersion as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ ok: true, id: "srv_1" })
+      .mockResolvedValueOnce({ ok: false, reason: "boom" });
+
+    await useLibraryStore.getState().migrateLocalToCloud();
+
+    expect(useLibraryStore.getState().migrationNote).toMatch(/moved 1 of 2/i);
+  });
+
+  it("is a no-op when already in cloud mode", async () => {
+    useLibraryStore.setState({ cloud: true });
+    await useLibraryStore.getState().migrateLocalToCloud();
+    expect(server.createVersion).not.toHaveBeenCalled();
+    expect(server.listVersions).not.toHaveBeenCalled();
+  });
+
+  it("dismissMigrationNote clears the note", () => {
+    useLibraryStore.setState({ migrationNote: "x" });
+    useLibraryStore.getState().dismissMigrationNote();
+    expect(useLibraryStore.getState().migrationNote).toBeNull();
+  });
+});
+
 describe("groupByCompany", () => {
   const mk = (company: string, updatedAt: number): CvVersion => ({
     id: `${company}-${updatedAt}`,

@@ -28,6 +28,8 @@ export function LibraryView() {
   const saveVersion = useLibraryStore((s) => s.saveVersion);
   const refreshFromCloud = useLibraryStore((s) => s.refreshFromCloud);
   const clear = useLibraryStore((s) => s.clear);
+  const migrationNote = useLibraryStore((s) => s.migrationNote);
+  const dismissMigrationNote = useLibraryStore((s) => s.dismissMigrationNote);
 
   const cv = useCVStore((s) => s.cv);
   const baseline = useCVStore((s) => s.baseline);
@@ -73,6 +75,21 @@ export function LibraryView() {
           {!cloud && versions.length > 0 && <button className="flow-btn ghost" onClick={clear}>Clear all</button>}
         </div>
       </div>
+
+      <AnimatePresence initial={false}>
+        {migrationNote && (
+          <motion.div
+            className="lib-migration-note"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span>📦 {migrationNote}</span>
+            <button className="flow-btn ghost sm" onClick={dismissMigrationNote}>Dismiss</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence initial={false}>
         {saving && (
