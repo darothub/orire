@@ -11,6 +11,7 @@
  */
 
 import type { ProviderId } from "@/lib/ai/types";
+import { allTemplatesPerk } from "@/lib/templates/catalog";
 
 export type PlanId = "free" | "pro" | "career";
 
@@ -57,7 +58,8 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 1,
     allowCompare: false,
     includedTiers: ["budget"],
-    perks: ["All 25 templates", "3 AI refines to try it", "Single assistant", "Clean PDF export"],
+    // Template count comes from TEMPLATE_CATALOG — never hardcode here.
+    perks: [allTemplatesPerk(), "3 AI refines to try it", "Single assistant", "Clean PDF export"],
   },
   pro: {
     id: "pro",
@@ -67,7 +69,7 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 2,
     allowCompare: true,
     includedTiers: ["budget", "mid"],
-    perks: ["All 25 templates", "30 refines / mo", "Compare 2 + pick the best", "Cover letters", "Full Grade breakdown", "Clean PDF, all page modes"],
+    perks: [allTemplatesPerk(), "30 refines / mo", "Compare 2 + pick the best", "Cover letters", "Full Grade breakdown", "Clean PDF, all page modes"],
   },
   career: {
     id: "career",
@@ -77,7 +79,9 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 3,
     allowCompare: true,
     includedTiers: ["budget", "mid", "premium"],
-    perks: ["Unlimited refines (fair-use)", "Premium models included", "Parallel compare + pick the best", "JD simulation", "Company history"],
+    // Same full catalog as Free/Pro — Career was missing this perk and looked
+    // like it offered fewer templates on the pricing card.
+    perks: [allTemplatesPerk(), "Unlimited refines (fair-use)", "Premium models included", "Parallel compare + pick the best", "JD simulation", "Company history"],
   },
 };
 

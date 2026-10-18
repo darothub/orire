@@ -49,6 +49,14 @@ export const TEMPLATE_CATALOG: TemplateInfo[] = [
   { id: "consul", name: "Consul", blurb: "Graphite + deep teal · serif", swatch: "linear-gradient(120deg,#1c2126,#0f6b6b)" },
 ];
 
+/** Live catalog size — pricing, SEO, and marketing must derive from this. */
+export const TEMPLATE_COUNT = TEMPLATE_CATALOG.length;
+
+/** Perk / headline copy shared by every plan (all templates on every tier). */
+export function allTemplatesPerk(): string {
+  return `All ${TEMPLATE_COUNT} templates`;
+}
+
 export function getTemplateInfo(id: string): TemplateInfo | undefined {
   return TEMPLATE_CATALOG.find((t) => t.id === id);
 }

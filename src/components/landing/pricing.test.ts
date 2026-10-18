@@ -35,4 +35,12 @@ describe("landingPlans", () => {
       expect(row.blurb).toBe(PLANS[row.id].blurb);
     }
   });
+
+  it("lists the same full template catalog on every pricing card", () => {
+    const first = landingPlans()[0].perks[0];
+    expect(first).toMatch(/^All \d+ templates$/);
+    for (const row of landingPlans()) {
+      expect(row.perks[0]).toBe(first);
+    }
+  });
 });
