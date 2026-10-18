@@ -12,6 +12,7 @@ import {
   remainingNote,
   nextPlan,
 } from "@/lib/plan/plan";
+import { TEMPLATE_COUNT, allTemplatesPerk } from "@/lib/templates/catalog";
 
 describe("modelTier", () => {
   it("classifies budget models", () => {
@@ -179,6 +180,17 @@ describe("providerAllowedOnPlan", () => {
     for (const plan of ["pro", "career"] as const) {
       expect(providerAllowedOnPlan(plan, "openai").allowed).toBe(true);
       expect(providerAllowedOnPlan(plan, "anthropic").allowed).toBe(true);
+    }
+  });
+});
+
+describe("plan template perks", () => {
+  it("every plan advertises the full live catalog (no tier-skewed count)", () => {
+    const expected = allTemplatesPerk();
+    expect(expected).toContain(String(TEMPLATE_COUNT));
+    for (const id of PLAN_ORDER) {
+      expect(PLANS[id].perks[0]).toBe(expected);
+      expect(PLANS[id].perks.some((p) => /template/i.test(p))).toBe(true);
     }
   });
 });

@@ -11,6 +11,7 @@
  */
 
 import type { ProviderId } from "@/lib/ai/types";
+import { allTemplatesPerk } from "@/lib/templates/catalog";
 
 export type PlanId = "free" | "pro" | "career";
 
@@ -57,10 +58,9 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 1,
     allowCompare: false,
     includedTiers: ["budget"],
-    // Export is PDF + Word (.docx) for every plan; Free is capped on downloads,
-    // not format. Do not claim "PDF only" — the product ships both.
+    // Template count from catalog; export is PDF + Word (Free caps downloads, not format).
     perks: [
-      "All 25 templates",
+      allTemplatesPerk(),
       "3 AI refines to try it",
       "Single assistant",
       "PDF & Word export · 3 downloads",
@@ -74,10 +74,9 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 2,
     allowCompare: true,
     includedTiers: ["budget", "mid"],
-    // Page modes are a PDF layout option (not Word); unlimited downloads is the
-    // real paid differentiator vs Free's lifetime cap.
+    // Page modes are PDF-only; unlimited downloads is the paid differentiator.
     perks: [
-      "All 25 templates",
+      allTemplatesPerk(),
       "30 refines / mo",
       "Compare 2 + pick the best",
       "Cover letters",
@@ -93,7 +92,9 @@ export const PLANS: Record<PlanId, Plan> = {
     maxProviders: 3,
     allowCompare: true,
     includedTiers: ["budget", "mid", "premium"],
+    // Same full catalog + export formats as other tiers.
     perks: [
+      allTemplatesPerk(),
       "Unlimited refines (fair-use)",
       "Premium models included",
       "Parallel compare + pick the best",

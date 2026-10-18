@@ -15,6 +15,7 @@ import { promises } from "@/components/landing/promises";
 import { employerLogos } from "@/components/landing/logos";
 import { HeroPreview } from "@/components/landing/HeroPreview";
 import { LiveDemo } from "@/components/landing/LiveDemo";
+import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -54,7 +55,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: "❖",
-    title: "25 standout templates",
+    title: `${TEMPLATE_COUNT} standout templates`,
     body: "Beautifully animated, ATS-ready layouts — live preview on the right while you edit on the left.",
   },
 ];
@@ -125,7 +126,7 @@ export function Landing() {
               <ul className="landing-usps" aria-label="What Orire does">
                 <li><span aria-hidden>◎</span> Simulate the ideal match</li>
                 <li><span aria-hidden>⚖</span> Clear CV score</li>
-                <li><span aria-hidden>❖</span> 25 standout templates</li>
+                <li><span aria-hidden>❖</span> {TEMPLATE_COUNT} standout templates</li>
               </ul>
             </motion.div>
             <HeroPreview />
