@@ -18,6 +18,8 @@ export const SCOPED_STORES = {
   library: { base: "orire-library", legacy: "orire-library-v1" },
   target: { base: "orire-target", legacy: "orire-target-v1" },
   plan: { base: "orire-plan", legacy: "orire-plan-v1" },
+  /** Left-rail block order — was global and leaked between accounts. */
+  flow: { base: "orire-flow", legacy: "orire-flow-v1" },
 } as const;
 
 export type ScopedStoreId = keyof typeof SCOPED_STORES;
