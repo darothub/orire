@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion, Reorder } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
@@ -79,6 +80,22 @@ export function WorkspaceRail() {
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
 
+  // Pointer drag (Reorder.Group) has no keyboard equivalent, so every block also
+  // gets explicit move-earlier/move-later buttons — the WAI-ARIA-recommended
+  // fallback for a reorderable list, and the only way a keyboard or switch user
+  // can rearrange the rail at all. "earlier/later" rather than "up/down" because
+  // the rail lays out horizontally on narrow screens.
+  const [announcement, setAnnouncement] = useState("");
+  const moveBlock = (v: WorkspaceView, dir: -1 | 1) => {
+    const idx = sequence.indexOf(v);
+    const to = idx + dir;
+    if (idx < 0 || to < 0 || to >= sequence.length) return;
+    const next = [...sequence];
+    [next[idx], next[to]] = [next[to], next[idx]];
+    setSequence(next);
+    setAnnouncement(`${VIEW_META[v].label} moved to position ${to + 1} of ${next.length}.`);
+  };
+
   return (
     <nav className="rail" aria-label="Workspaces">
       <button
@@ -91,11 +108,36 @@ export function WorkspaceRail() {
       >
         <BrandMark size={26} />
       </button>
-      {/* The flow sequence — drag to reorder (A2). */}
-      <Reorder.Group axis="y" values={sequence} onReorder={setSequence} className="rail-group" as="div">
-        {sequence.map((v) => (
-          <Reorder.Item key={v} value={v} as="div" className="rail-ritem">
+      {/* Screen-reader-only live region announcing keyboard reorders. */}
+      <div className="sr-only" aria-live="polite">{announcement}</div>
+      {/* The flow sequence — drag to reorder (A2), or use the move buttons below
+          each block (keyboard/AT fallback). */}
+      <Reorder.Group axis="y" values={sequence} onReorder={setSequence} className="rail-group" as="div" role="list">
+        {sequence.map((v, i) => (
+          <Reorder.Item key={v} value={v} as="div" className="rail-ritem" role="listitem" aria-roledescription="reorderable block">
             <RailButton item={v} badge={badgeFor(v)} />
+            <div className="rail-move">
+              <button
+                type="button"
+                className="rail-move-btn"
+                onClick={() => moveBlock(v, -1)}
+                disabled={i === 0}
+                aria-label={`Move ${VIEW_META[v].label} earlier`}
+                title="Move earlier"
+              >
+                ▲
+              </button>
+              <button
+                type="button"
+                className="rail-move-btn"
+                onClick={() => moveBlock(v, 1)}
+                disabled={i === sequence.length - 1}
+                aria-label={`Move ${VIEW_META[v].label} later`}
+                title="Move later"
+              >
+                ▼
+              </button>
+            </div>
           </Reorder.Item>
         ))}
       </Reorder.Group>
