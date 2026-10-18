@@ -53,6 +53,10 @@ export async function consumeEmailVerificationToken(raw: string): Promise<string
 
 /** Whether the given user has a verified email address. */
 export async function isEmailVerified(userId: string): Promise<boolean> {
+  // Hermetic Playwright session (no DB row) — see src/lib/e2e/bypass.ts.
+  const { isE2eBypassUser } = await import("@/lib/e2e/bypass");
+  if (isE2eBypassUser(userId)) return true;
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { emailVerified: true },

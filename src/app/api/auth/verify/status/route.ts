@@ -13,6 +13,16 @@ export async function GET() {
   const userId = session?.user?.id;
   if (!userId) return NextResponse.json({ signedIn: false, verified: false });
 
+  // Hermetic Playwright session has no User row — report verified for e2e only.
+  const { isE2eBypassUser, E2E_USER_EMAIL } = await import("@/lib/e2e/bypass");
+  if (isE2eBypassUser(userId)) {
+    return NextResponse.json({
+      signedIn: true,
+      verified: true,
+      email: E2E_USER_EMAIL,
+    });
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { emailVerified: true, email: true },
