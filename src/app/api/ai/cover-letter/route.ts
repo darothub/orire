@@ -19,11 +19,11 @@ import { fakeAiFor, fakeCoverLetter } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import type { CVData } from "@/lib/cv/schema";
-import { auth } from "@/lib/auth/auth";
 import { getPlanId } from "@/lib/entitlement/entitlement";
 import { allowCoverLetter } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
+import { requireVerifiedUser } from "@/lib/auth/guard";
 
 export const runtime = "nodejs";
 
@@ -55,14 +55,15 @@ export async function POST(req: Request) {
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
 
-  // Server-authoritative plan gate (Pro+). Free users get an upsell block.
-  const session = await auth();
-  const userId = session?.user?.id ?? null;
-  // Key the AI budget by user when signed in (IP otherwise) so NAT users don't
-  // share one bucket and a single account can't rotate IPs to bypass the cap.
-  const limited = await aiRateLimit(req, provider, userId);
+  // Verified account first (browse-only until email confirmed), then plan gate.
+  const gate = await requireVerifiedUser("generate a cover letter");
+  const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
   if (limited) return limited;
-  const plan = userId ? await getPlanId(userId) : "free";
+  if (!gate.ok) {
+    return NextResponse.json(fail(provider, gate.message, gate.status), { status: gate.status });
+  }
+  const userId = gate.userId;
+  const plan = await getPlanId(userId);
   if (!allowCoverLetter(plan)) {
     return NextResponse.json(
       fail(provider, "Cover letters are a Pro feature. Upgrade your plan to generate one.", 402),

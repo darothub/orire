@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth/auth";
+import { requireVerifiedAction } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db/prisma";
 import type { CVData } from "@/lib/cv/schema";
 import type { Prisma } from "@prisma/client";
@@ -48,8 +49,9 @@ export async function saveWorkingCV(input: {
   baseline: CVData | null;
   title?: string;
 }): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false, reason: "not-signed-in" };
+  const gate = await requireVerifiedAction("save your CV to the cloud");
+  if (!gate.ok) return { ok: false, reason: gate.reason };
+  const userId = gate.userId;
 
   const targetId = await resolveActiveDocId(userId);
   const title = input.title?.trim() || input.data.basics.fullName || "Untitled CV";
@@ -104,12 +106,12 @@ export async function saveRefineRun(input: {
   ratingBefore?: number;
   ratingAfter?: number;
 }): Promise<{ ok: boolean }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false };
+  const gate = await requireVerifiedAction("save refine history");
+  if (!gate.ok) return { ok: false };
 
   await prisma.refineRun.create({
     data: {
-      userId,
+      userId: gate.userId,
       company: input.company,
       jobDescription: input.jobDescription,
       provider: input.provider,

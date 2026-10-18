@@ -1,6 +1,7 @@
 "use server";
 
 import { auth } from "@/lib/auth/auth";
+import { requireVerifiedAction } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db/prisma";
 import type { CVData } from "@/lib/cv/schema";
 import type { Prisma } from "@prisma/client";
@@ -83,8 +84,9 @@ export async function createVersion(input: {
   exported?: boolean;
   makeActive?: boolean;
 }): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false, reason: "not-signed-in" };
+  const gate = await requireVerifiedAction("save a library version");
+  if (!gate.ok) return { ok: false, reason: gate.reason };
+  const userId = gate.userId;
 
   const created = await prisma.document.create({
     data: {
@@ -110,8 +112,9 @@ export async function updateVersionMeta(
   id: string,
   patch: { title?: string; company?: string | null },
 ): Promise<{ ok: boolean }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false };
+  const gate = await requireVerifiedAction("update a library version");
+  if (!gate.ok) return { ok: false };
+  const userId = gate.userId;
 
   const data: { title?: string; company?: string | null } = {};
   if (patch.title !== undefined) data.title = patch.title.trim() || "Untitled version";
@@ -124,8 +127,9 @@ export async function updateVersionMeta(
 
 /** Duplicate a version as a new "(copy)". Does not change the active pointer. */
 export async function duplicateVersion(id: string): Promise<{ ok: true; id: string } | { ok: false; reason: string }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false, reason: "not-signed-in" };
+  const gate = await requireVerifiedAction("duplicate a library version");
+  if (!gate.ok) return { ok: false, reason: gate.reason };
+  const userId = gate.userId;
 
   const src = await prisma.document.findFirst({ where: { id, userId } });
   if (!src) return { ok: false, reason: "not-found" };
@@ -147,8 +151,9 @@ export async function duplicateVersion(id: string): Promise<{ ok: true; id: stri
 
 /** Delete a version. If it was active, repoint to the most-recent remaining row. */
 export async function deleteVersion(id: string): Promise<{ ok: boolean; activeId: string | null }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false, activeId: null };
+  const gate = await requireVerifiedAction("delete a library version");
+  if (!gate.ok) return { ok: false, activeId: null };
+  const userId = gate.userId;
 
   const res = await prisma.document.deleteMany({ where: { id, userId } });
   if (res.count === 0) return { ok: false, activeId: null };
@@ -165,8 +170,9 @@ export async function deleteVersion(id: string): Promise<{ ok: boolean; activeId
 
 /** Set which version is active (the editor / autosave target). */
 export async function setActiveVersion(id: string): Promise<{ ok: boolean }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false };
+  const gate = await requireVerifiedAction("switch library version");
+  if (!gate.ok) return { ok: false };
+  const userId = gate.userId;
 
   const owned = await prisma.document.findFirst({ where: { id, userId }, select: { id: true } });
   if (!owned) return { ok: false };
@@ -176,8 +182,9 @@ export async function setActiveVersion(id: string): Promise<{ ok: boolean }> {
 
 /** Mark a version as exported just now (called from the export flow). */
 export async function markVersionExported(id: string): Promise<{ ok: boolean }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false };
+  const gate = await requireVerifiedAction("mark a version exported");
+  if (!gate.ok) return { ok: false };
+  const userId = gate.userId;
   const res = await prisma.document.updateMany({ where: { id, userId }, data: { lastExportedAt: new Date() } });
   return { ok: res.count > 0 };
 }
@@ -187,8 +194,9 @@ export async function markVersionExported(id: string): Promise<{ ok: boolean }> 
  * ownership-scoped; returns the token so the client can build the URL.
  */
 export async function shareVersion(id: string): Promise<{ ok: true; token: string } | { ok: false; reason: string }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false, reason: "not-signed-in" };
+  const gate = await requireVerifiedAction("share a library version");
+  if (!gate.ok) return { ok: false, reason: gate.reason };
+  const userId = gate.userId;
 
   const owned = await prisma.document.findFirst({ where: { id, userId }, select: { shareToken: true } });
   if (!owned) return { ok: false, reason: "not-found" };
@@ -201,8 +209,9 @@ export async function shareVersion(id: string): Promise<{ ok: true; token: strin
 
 /** Revoke the public share link for a version (link stops working immediately). */
 export async function unshareVersion(id: string): Promise<{ ok: boolean }> {
-  const userId = await requireUserId();
-  if (!userId) return { ok: false };
+  const gate = await requireVerifiedAction("unshare a library version");
+  if (!gate.ok) return { ok: false };
+  const userId = gate.userId;
   const res = await prisma.document.updateMany({ where: { id, userId }, data: { shareToken: null, sharedAt: null } });
   return { ok: res.count > 0 };
 }

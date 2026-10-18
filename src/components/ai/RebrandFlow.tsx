@@ -16,6 +16,7 @@ import { fmtSize, Chip, Stat, ImportNotes } from "./ImportShared";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import type { StructureResponse } from "@/app/api/ai/structure/route";
 import { analytics } from "@/lib/analytics/events";
+import { useWriteGate } from "@/lib/store/accountStore";
 
 interface FileResult {
   name: string;
@@ -51,6 +52,7 @@ function UploadStep() {
   const [aiBusy, setAiBusy] = useState<number | null>(null);
   const [aiError, setAiError] = useState<{ i: number; message: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const writeGate = useWriteGate("upload a CV");
 
   const providerLabel = PROVIDERS[provider].label;
   const facts = countFacts(cv);
@@ -59,6 +61,10 @@ function UploadStep() {
   const upload = useCallback(async (files: FileList | File[]) => {
     const list = Array.from(files);
     if (list.length === 0) return;
+    if (!writeGate.guard()) {
+      setFatal(writeGate.reason ?? "Verify your email to upload a CV.");
+      return;
+    }
     setBusy(true); setFatal(null); setResults(null); setAiError(null);
     try {
       const fd = new FormData();
@@ -71,7 +77,7 @@ function UploadStep() {
     } catch (e) {
       setFatal(e instanceof Error ? e.message : String(e));
     } finally { setBusy(false); }
-  }, []);
+  }, [writeGate]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDragOver(false);

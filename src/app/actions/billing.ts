@@ -15,6 +15,7 @@
 import { headers } from "next/headers";
 import type Stripe from "stripe";
 import { auth } from "@/lib/auth/auth";
+import { requireVerifiedAction } from "@/lib/auth/guard";
 import type { PlanId } from "@/lib/plan/plan";
 import { getStripe, isStripeConfigured, priceIdForPlan, CHECKOUT_TAX_OPTS } from "@/lib/billing/stripe";
 import {
@@ -124,9 +125,10 @@ export async function startCheckout(plan: PlanId): Promise<RedirectResult> {
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
   if (plan === "free") return { error: "The Free plan doesn’t require checkout." };
 
+  const gate = await requireVerifiedAction("start checkout");
+  if (!gate.ok) return { error: gate.message };
+  const userId = gate.userId;
   const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { error: "Sign in to subscribe." };
 
   const priceId = priceIdForPlan(plan);
   if (!priceId) return { error: `No Stripe price configured for the ${plan} plan.` };
@@ -164,9 +166,10 @@ export async function createCheckoutSession(plan: PlanId): Promise<EmbeddedCheck
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
   if (plan === "free") return { error: "The Free plan doesn’t require checkout." };
 
+  const gate = await requireVerifiedAction("start checkout");
+  if (!gate.ok) return { error: gate.message };
+  const userId = gate.userId;
   const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { error: "Sign in to subscribe." };
 
   const priceId = priceIdForPlan(plan);
   if (!priceId) return { error: `No Stripe price configured for the ${plan} plan.` };
@@ -473,9 +476,10 @@ export async function createSubscription(plan: PlanId): Promise<SubscriptionInte
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
   if (plan === "free") return { error: "The Free plan doesn’t require a subscription." };
 
+  const gate = await requireVerifiedAction("start checkout");
+  if (!gate.ok) return { error: gate.message };
+  const userId = gate.userId;
   const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { error: "Sign in to subscribe." };
 
   const priceId = priceIdForPlan(plan);
   if (!priceId) return { error: `No Stripe price configured for the ${plan} plan.` };

@@ -6,11 +6,10 @@ import { useUIStore } from "@/lib/store/uiStore";
 
 /**
  * Shared client mirror of the server's account-status truth
- * (`/api/auth/verify/status`). Used to gate write/download actions: an account
- * whose email isn't verified may read and explore, but may not produce output
- * (download a PDF, run the AI, etc.). The real enforcement for metered actions
- * is server-side; this store drives the UX so unverified users are told what to
- * do rather than silently failing.
+ * (`/api/auth/verify/status`). Used to gate write/upload/download actions: an
+ * account whose email isn't verified may browse, but may not upload, download,
+ * cloud-save, or spend AI. Real enforcement is server-side; this store drives
+ * the UX so unverified users see why a CTA is blocked.
  */
 interface AccountState {
   loaded: boolean;

@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
   const oversize = bodyTooLarge(req) ?? validateInputSize(body);
   if (oversize) return NextResponse.json(fail(provider, oversize, 413), { status: 413 });
-  const gate = await requireVerifiedUser();
+  const gate = await requireVerifiedUser("run the assistant");
   const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
   if (limited) return limited;
   if (!gate.ok) return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
