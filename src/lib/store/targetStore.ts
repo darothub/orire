@@ -26,10 +26,15 @@ interface TargetState {
   createdAt: number | null;
   /** Match score of the user's CV at the moment the target was locked. */
   baseScore: number;
+  /** True after a refine was applied while a target is locked: Simulate should
+   *  offer to re-run against the new CV and (confirmed) JD. */
+  resimPrompt: boolean;
 
   setJd: (jd: string) => void;
   setTarget: (ideal: CVData, jd: string, baseScore: number, label?: string) => void;
   clearTarget: () => void;
+  requestResim: () => void;
+  dismissResim: () => void;
 }
 
 /** Derive a compact role label from the ideal CV / JD for display. */
@@ -49,6 +54,7 @@ export const useTargetStore = create<TargetState>()(
       label: "",
       createdAt: null,
       baseScore: 0,
+      resimPrompt: false,
 
       setJd: (jd) => set({ jd }),
 
@@ -59,14 +65,17 @@ export const useTargetStore = create<TargetState>()(
           baseScore,
           label: label?.trim() || deriveLabel(ideal, jd),
           createdAt: Date.now(),
+          resimPrompt: false,
         }),
 
-      clearTarget: () => set({ ideal: null, jd: "", label: "", createdAt: null, baseScore: 0 }),
+      clearTarget: () => set({ ideal: null, jd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false }),
+      requestResim: () => set((s) => (s.ideal ? { resimPrompt: true } : {})),
+      dismissResim: () => set({ resimPrompt: false }),
     }),
     {
       // Anonymous default; StorageScope rebinds per signed-in user id.
       name: "orire-target:anon:v1",
-      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore }),
+      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore, resimPrompt: s.resimPrompt }),
     },
   ),
 );
