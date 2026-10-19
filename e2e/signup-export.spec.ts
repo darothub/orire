@@ -27,6 +27,15 @@ function guestCta(page: Page) {
   return page.getByRole("button", { name: "Get started free" }).first();
 }
 
+
+/** Dismiss cookie banner so it does not sit under/over the auth dialog. */
+async function dismissCookies(page: Page) {
+  const accept = page.getByRole("button", { name: "Accept", exact: true });
+  if (await accept.isVisible().catch(() => false)) {
+    await accept.click();
+  }
+}
+
 async function openExport(page: Page) {
   await railItem(page, "Export").click();
   await expect(page.getByRole("heading", { name: "Export", exact: true })).toBeVisible({
@@ -48,6 +57,7 @@ async function showMobileWork(page: Page) {
 rawTest.describe("guest signup entry", () => {
   rawTest("landing opens Create account dialog with accessible fields", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
+    await dismissCookies(page);
     await expect(guestCta(page)).toBeVisible({ timeout: SHELL_READY_TIMEOUT });
     await guestCta(page).click();
 
@@ -88,6 +98,7 @@ rawTest.describe("guest signup entry", () => {
     });
 
     await page.goto("/", { waitUntil: "domcontentloaded" });
+    await dismissCookies(page);
     await guestCta(page).click();
     const dialog = page.getByRole("dialog", { name: "Create your account" });
     await expect(dialog).toBeVisible({ timeout: SHELL_READY_TIMEOUT });
