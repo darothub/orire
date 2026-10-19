@@ -17,6 +17,7 @@ import { isAvailabilityFailure } from "@/lib/ai/server/failover";
 import { verifyRunToken } from "@/lib/plan/runToken";
 import { modelAllowedOnPlan, meterFor, type PlanId } from "@/lib/plan/plan";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 import { prisma } from "@/lib/db/prisma";
 import { consume } from "@/lib/entitlement/entitlement";
@@ -106,9 +107,21 @@ export async function POST(req: Request) {
     );
   }
 
+  // P1 browse-only: re-check verify at execution time (token mint alone is not enough).
+  const gate = await requireVerifiedUser("run refine");
+  if (!gate.ok) {
+    return NextResponse.json(fail(provider, gate.message, gate.status), { status: 200 });
+  }
+  if (check.payload!.u && check.payload!.u !== gate.userId) {
+    return NextResponse.json(
+      fail(provider, "This refine run belongs to a different account.", 403),
+      { status: 403 },
+    );
+  }
+
   // Rate-limit after the token is verified so signed-in runs key on the stable
   // user id from the token (anonymous free trials still fall back to IP).
-  const limited = await aiRateLimit(req, provider, check.payload!.u);
+  const limited = await aiRateLimit(req, provider, check.payload!.u ?? gate.userId);
   if (limited) return limited;
 
   if (!model) {

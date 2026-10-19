@@ -12,6 +12,7 @@
 "use server";
 
 import { auth } from "@/lib/auth/auth";
+import { requireVerifiedAction } from "@/lib/auth/guard";
 import { prisma } from "@/lib/db/prisma";
 import { cancelSubscriptionWithRetry, isStripeConfigured } from "@/lib/billing/stripe";
 import { getEntitlementRow } from "@/lib/entitlement/entitlement";
@@ -32,9 +33,11 @@ export type ExportAccountResult = { ok: true; data: unknown } | { ok: false; err
  * serialize to ISO via the caller's JSON.stringify.
  */
 export async function exportAccountData(): Promise<ExportAccountResult> {
-  const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { ok: false, error: "You’re not signed in." };
+  // Browse-only: full data export is a product feature, not a bare auth action.
+  // Account *deletion* stays sign-in-only so unverified users can leave.
+  const gate = await requireVerifiedAction("export your account data");
+  if (!gate.ok) return { ok: false, error: gate.message };
+  const userId = gate.userId;
 
   const [user, accounts, entitlement, documents, refineRuns, exportEvents, usage, memberships, ownedTeams] =
     await Promise.all([

@@ -535,9 +535,9 @@ export async function switchPlan(plan: PlanId): Promise<MutationResult> {
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
   if (plan === "free") return { error: "Use cancel to move to the Free plan." };
 
-  const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { error: "Sign in to change your plan." };
+  const gate = await requireVerifiedAction("change your plan");
+  if (!gate.ok) return { error: gate.message };
+  const userId = gate.userId;
 
   const priceId = priceIdForPlan(plan);
   if (!priceId) return { error: `No Stripe price configured for the ${plan} plan.` };
@@ -570,9 +570,9 @@ export async function switchPlan(plan: PlanId): Promise<MutationResult> {
  */
 export async function cancelSubscription(): Promise<MutationResult> {
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
-  const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { error: "Sign in to manage billing." };
+  const gate = await requireVerifiedAction("manage billing");
+  if (!gate.ok) return { error: gate.message };
+  const userId = gate.userId;
 
   const row = await getEntitlementRow(userId);
   if (!row?.stripeSubscriptionId) return { error: "No active subscription to cancel." };
@@ -590,9 +590,9 @@ export async function cancelSubscription(): Promise<MutationResult> {
 /** Undo a scheduled cancellation while the subscription is still active. */
 export async function resumeSubscription(): Promise<MutationResult> {
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
-  const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { error: "Sign in to manage billing." };
+  const gate = await requireVerifiedAction("manage billing");
+  if (!gate.ok) return { error: gate.message };
+  const userId = gate.userId;
 
   const row = await getEntitlementRow(userId);
   if (!row?.stripeSubscriptionId) return { error: "No subscription to resume." };
@@ -613,9 +613,10 @@ export async function resumeSubscription(): Promise<MutationResult> {
  */
 export async function createCardSetupIntent(): Promise<SetupIntentResult> {
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
+  const gate = await requireVerifiedAction("update your card");
+  if (!gate.ok) return { error: gate.message };
+  const userId = gate.userId;
   const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { error: "Sign in to update your card." };
 
   try {
     const stripe = getStripe();
@@ -640,9 +641,9 @@ export async function setDefaultPaymentMethod(paymentMethodId: string): Promise<
   if (!isStripeConfigured()) return { error: "Billing isn’t configured on this server." };
   if (!paymentMethodId || typeof paymentMethodId !== "string") return { error: "No card to set." };
 
-  const session = await auth();
-  const userId = session?.user?.id ?? null;
-  if (!userId) return { error: "Sign in to update your card." };
+  const gate = await requireVerifiedAction("update your card");
+  if (!gate.ok) return { error: gate.message };
+  const userId = gate.userId;
 
   const row = await getEntitlementRow(userId);
   if (!row?.stripeCustomerId) return { error: "No billing account on file." };
