@@ -1,5 +1,6 @@
 "use client";
 
+import { workspaceBusy } from "@/lib/store/busy";
 import { useState } from "react";
 import { motion, Reorder } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
@@ -62,16 +63,15 @@ export function WorkspaceRail() {
   const runProviders = useRefineStore((s) => s.runProviders);
   const active = useRunStore((s) => s.active);
 
-  const simBusy = Boolean(active["simulate"]);
-  const refineBusy =
-    judgePhase === "running" ||
-    Boolean(active["judge"]) ||
-    simBusy ||
-    runProviders.some((p) => cols[p]?.phase === "running");
+  const busy = workspaceBusy({
+    active,
+    judgePhase,
+    refineColPhases: runProviders.map((p) => cols[p]?.phase ?? "idle"),
+  });
 
   const badgeFor = (v: WorkspaceView): Badge => {
-    if (v === "refine") return refineBusy ? "busy" : null;
-    if (v === "target") return simBusy || active["retone"] ? "busy" : null;
+    if (v === "refine") return busy.refine ? "busy" : null;
+    if (v === "target") return busy.simulate ? "busy" : null;
     return null;
   };
 
