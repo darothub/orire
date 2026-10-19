@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseVerdict, buildJudgePrompt, canonicalCV, judgeCacheKey, type JudgeCandidate } from "@/lib/ai/judge";
+import { parseVerdict, buildJudgePrompt, canonicalCV, cvContentSig, judgeCacheKey, type JudgeCandidate } from "@/lib/ai/judge";
 import { sampleCV } from "@/lib/cv/sample";
 import type { CVData } from "@/lib/cv/schema";
 
@@ -81,6 +81,15 @@ describe("canonicalCV", () => {
     const b = JSON.stringify(canonicalCV(reId(sampleCV)));
     expect(a).toBe(b);
     expect(a).not.toContain('"id"');
+  });
+});
+
+describe("cvContentSig", () => {
+  it("is stable across re-id and changes when content edits", () => {
+    expect(cvContentSig(sampleCV)).toBe(cvContentSig(reId(sampleCV)));
+    const edited = JSON.parse(JSON.stringify(sampleCV)) as CVData;
+    edited.skills = [...edited.skills, { id: "sx", category: "New", items: ["Kubernetes"] }];
+    expect(cvContentSig(edited)).not.toBe(cvContentSig(sampleCV));
   });
 });
 
