@@ -16,5 +16,22 @@ export async function readUsage(): Promise<UsageSummary | null> {
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (!userId) return null;
-  return getUsageSummary(userId);
+  // Hermetic Playwright: no entitlement row — career-unlimited snapshot.
+  const { isE2eBypassUser } = await import("@/lib/e2e/bypass");
+  if (isE2eBypassUser(userId)) {
+    return {
+      plan: "career",
+      metrics: {
+        refine: { used: 0, cap: null, remaining: null, scope: "monthly" },
+        simulate: { used: 0, cap: null, remaining: null, scope: "monthly" },
+        download: { used: 0, cap: null, remaining: null, scope: "monthly" },
+      },
+    };
+  }
+  try {
+    return await getUsageSummary(userId);
+  } catch {
+    // Keep the ambient mirror null rather than crashing the client when DB is down.
+    return null;
+  }
 }

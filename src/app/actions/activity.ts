@@ -155,6 +155,12 @@ export async function authorizeExport(): Promise<ExportAuthz> {
       block: { title: "Sign in to download", body: "Create a free account to download your CV as a PDF." },
     };
   }
+  // Hermetic E2E: no DB entitlement row — allow unlimited downloads for the
+  // minted Playwright user only (ORIRE_E2E_BYPASS=1).
+  const { isE2eBypassUser } = await import("@/lib/e2e/bypass");
+  if (isE2eBypassUser(userId)) {
+    return { ok: true, plan: "career", used: 0, cap: null };
+  }
   if (!(await isEmailVerified(userId))) {
     return {
       ok: false,

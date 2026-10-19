@@ -26,6 +26,15 @@ const serverEnv: Record<string, string> = {
   // Prod (Vercel) trusts its own host automatically; the e2e server must be
   // told explicitly so this does not depend on a developer's shell/.env.
   AUTH_TRUST_HOST: "true",
+  // Unlock hermetic signup→export for minted e2e-user only (src/lib/e2e/bypass.ts).
+  // Never set ORIRE_E2E_BYPASS in production.
+  ORIRE_E2E_BYPASS: "1",
+  // Email/password form is gated by NEXT_PUBLIC_PASSWORD_AUTH (AuthOverlay).
+  // CI has no .env — force it on so guest signup E2E can exercise the form.
+  NEXT_PUBLIC_PASSWORD_AUTH: "true",
+  // Keep signup UI path free of Turnstile in hermetic CI.
+  TURNSTILE_SECRET_KEY: "",
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY: "",
   DATABASE_URL:
     process.env.DATABASE_URL ?? "postgresql://ci:ci@localhost:5432/ci?schema=public",
   DIRECT_URL:
@@ -50,6 +59,13 @@ export default defineConfig({
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    // Phone viewport only for signup→export QA. Smoke assumes a desktop
+    // split preview (#cv-paper visible beside Edit) and would false-fail here.
+    {
+      name: "mobile",
+      use: { ...devices["Pixel 7"] },
+      testMatch: /signup-export\.spec\.ts/,
+    },
   ],
   webServer: {
     // Run against a production build: no dev-overlay portal intercepting
