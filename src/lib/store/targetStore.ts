@@ -20,6 +20,9 @@ interface TargetState {
   ideal: CVData | null;
   /** The job description the ideal was generated from. */
   jd: string;
+  /** The JD the current ideal was simulated from; differs from `jd` once the
+   *  shared JD is edited (in Refine or Simulate), meaning the ideal is stale. */
+  idealJd: string;
   /** Short label for the role (derived from the ideal's title/JD) for the UI. */
   label: string;
   /** Epoch ms the target was set; null when unset. */
@@ -33,6 +36,9 @@ interface TargetState {
   setJd: (jd: string) => void;
   setTarget: (ideal: CVData, jd: string, baseScore: number, label?: string) => void;
   clearTarget: () => void;
+  /** User-initiated "Clear target": drops the ideal but keeps the shared JD so
+   *  Refine's job description isn't lost. Account wipes use `clearTarget`. */
+  discardTarget: () => void;
   requestResim: () => void;
   dismissResim: () => void;
 }
@@ -51,6 +57,7 @@ export const useTargetStore = create<TargetState>()(
     (set) => ({
       ideal: null,
       jd: "",
+      idealJd: "",
       label: "",
       createdAt: null,
       baseScore: 0,
@@ -62,20 +69,28 @@ export const useTargetStore = create<TargetState>()(
         set({
           ideal,
           jd,
+          idealJd: jd,
           baseScore,
           label: label?.trim() || deriveLabel(ideal, jd),
           createdAt: Date.now(),
           resimPrompt: false,
         }),
 
-      clearTarget: () => set({ ideal: null, jd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false }),
+      discardTarget: () => set({ ideal: null, idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false }),
+      clearTarget: () => set({ ideal: null, jd: "", idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false }),
       requestResim: () => set((s) => (s.ideal ? { resimPrompt: true } : {})),
       dismissResim: () => set({ resimPrompt: false }),
     }),
     {
       // Anonymous default; StorageScope rebinds per signed-in user id.
       name: "orire-target:anon:v1",
-      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore, resimPrompt: s.resimPrompt }),
+      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, idealJd: s.idealJd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore, resimPrompt: s.resimPrompt }),
     },
   ),
 );
+
+/** True when a target is locked but the shared JD has since been edited. Older
+ *  persisted targets have no `idealJd`, so they are never flagged. */
+export function isIdealStale(s: Pick<TargetState, "ideal" | "jd" | "idealJd">): boolean {
+  return Boolean(s.ideal && s.idealJd && s.idealJd.trim() !== s.jd.trim());
+}
