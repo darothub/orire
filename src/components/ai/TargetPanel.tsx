@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
@@ -12,12 +12,18 @@ import { planQualityLabel, remainingNote } from "@/lib/plan/plan";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { sharedRun, useIsRunning, useRunOrigin } from "@/lib/store/runStore";
 import { getTemplate } from "@/components/templates/registry";
-import { coerceSimulatedCV, targetMatch } from "@/lib/ai/simulate";
+import { coerceSimulatedCV, gapAnalysis, targetMatch } from "@/lib/ai/simulate";
 import { analyzeTone, type ToneLabel, type ToneProfile } from "@/lib/ai/retone";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { factGround, parseModelJSON, scoreGrounding, RefineParseError } from "@/lib/ai/guardrails";
+import { cvContentSig } from "@/lib/ai/judge";
 import { PROVIDERS, type RefineResponse } from "@/lib/ai/types";
 import { SECTION_LABELS, type CVData, type SectionKey } from "@/lib/cv/schema";
+
+/** Always read the working CV from the store at call time (edits + applied refine). */
+function liveWorkingCV(): CVData {
+  return useCVStore.getState().cv;
+}
 
 function coverageColor(v: number): string {
   const hue = Math.round((v / 100) * 130);
@@ -32,6 +38,7 @@ export function TargetView() {
   const cv = useCVStore((s) => s.cv);
   const activeTemplate = useCVStore((s) => s.activeTemplate);
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
+  const setSkillSuggestions = useCVStore((s) => s.setSkillSuggestions);
   const setView = useViewStore((s) => s.setView);
   const ideal = useTargetStore((s) => s.ideal);
   const jd = useTargetStore((s) => s.jd);
@@ -53,6 +60,8 @@ export function TargetView() {
   const [err, setErr] = useState<{ title: string; body: string; status?: number } | null>(null);
   const [preview, setPreview] = useState<{ cv: CVData; warnings: string[] } | null>(null);
   const [showBefore, setShowBefore] = useState(false);
+  /** Working-CV fingerprint the open retone preview was built from. */
+  const previewBaseSig = useRef<string | null>(null);
 
   // Generator (formerly the standalone Simulate view): building the ideal CV
   // happens inline here, so Target is a single destination with no bounce.
@@ -64,6 +73,23 @@ export function TargetView() {
   const simOrigin = useRunOrigin("simulate");
 
   const meta = PROVIDERS[provider];
+  const cvSig = useMemo(() => cvContentSig(cv), [cv]);
+
+  // Drop stale retone previews when the working CV changes (edit or apply refine).
+  useEffect(() => {
+    if (!preview || !previewBaseSig.current) return;
+    if (previewBaseSig.current === cvSig) return;
+    previewBaseSig.current = null;
+    setPreview(null);
+    setPhase("idle");
+    setShowBefore(false);
+  }, [cvSig, preview]);
+
+  // Keep editor skill chips aligned with the live gap vs the locked ideal.
+  useEffect(() => {
+    if (!ideal) return;
+    setSkillSuggestions(gapAnalysis(cv, ideal).missingSkills);
+  }, [cv, ideal, setSkillSuggestions]);
 
   const MineTpl = getTemplate(activeTemplate).Component;
 
@@ -85,7 +111,15 @@ export function TargetView() {
         return;
       }
       const built = coerceSimulatedCV(data.raw);
-      setTarget(built, jd, targetMatch(cv, built, jd).score);
+      // Baseline + chips must use the *current* working CV (edits + applied refine),
+      // not a render-closure snapshot from when the button was mounted.
+      const working = liveWorkingCV();
+      const locked = targetMatch(working, built, jd);
+      setTarget(built, jd, locked.score);
+      useCVStore.getState().setSkillSuggestions(locked.gap.missingSkills);
+      previewBaseSig.current = null;
+      setPreview(null);
+      setPhase("idle");
       setRecompose(false);
       setGenPhase("input");
       // Refresh the usage mirror (feature grey-out) and surface how many
@@ -193,14 +227,18 @@ export function TargetView() {
     setPhase("running");
     setErr(null);
     setPreview(null);
+    previewBaseSig.current = null;
     setShowBefore(false);
     const tone: ToneProfile = { ...detected, label: activeTone };
+    // Snapshot the latest working CV at request time (post-refine/edit).
+    const source = liveWorkingCV();
+    const sourceSig = cvContentSig(source);
     try {
       const data = await sharedRun<RefineResponse>("retone", "Target", () =>
         fetch("/api/ai/retone", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ provider, model: models[provider], cv, tone }),
+          body: JSON.stringify({ provider, model: models[provider], cv: source, tone }),
         }).then((r) => r.json() as Promise<RefineResponse>),
       );
       if (!data.ok || !data.raw) {
@@ -208,6 +246,16 @@ export function TargetView() {
           title: `${meta.label} error`,
           body: data.error?.message ?? "Unknown error.",
           status: data.error?.status,
+        });
+        setPhase("error");
+        return;
+      }
+      // If the working CV changed while retone was in flight, discard the result
+      // so we never ground/apply against a superseded document.
+      if (cvContentSig(liveWorkingCV()) !== sourceSig) {
+        setErr({
+          title: "CV changed during rewrite",
+          body: "Your CV was updated (edit or applied refine) while the rewrite ran. Run rewrite again on the latest version.",
         });
         setPhase("error");
         return;
@@ -224,7 +272,8 @@ export function TargetView() {
           }
         }
       }
-      const grounded = factGround(cv, applyRefinePatch(cv, patch));
+      const grounded = factGround(source, applyRefinePatch(source, patch));
+      previewBaseSig.current = sourceSig;
       setPreview({ cv: grounded.cv, warnings: grounded.warnings });
       setPhase("preview");
     } catch (e) {
@@ -237,12 +286,14 @@ export function TargetView() {
   function applyRetone() {
     if (!preview) return;
     applyRefinedCV(preview.cv);
+    previewBaseSig.current = null;
     setPreview(null);
     setPhase("idle");
     setShowBefore(false);
   }
 
   function discardRetone() {
+    previewBaseSig.current = null;
     setPreview(null);
     setPhase("idle");
     setShowBefore(false);
@@ -260,8 +311,9 @@ export function TargetView() {
         <div>
           <h2>{VIEW_META.target.label}</h2>
           <p>
-            Your live CV beside the ideal for <strong>{label || "this role"}</strong>
-            {dateLabel ? ` · locked ${dateLabel}` : ""}. The match updates as you edit.
+            Your latest working CV (edits and applied refine) beside the ideal for{" "}
+            <strong>{label || "this role"}</strong>
+            {dateLabel ? ` · locked ${dateLabel}` : ""}. Match and gaps recompute on every change.
           </p>
         </div>
       </div>

@@ -136,6 +136,15 @@ export function judgeCacheKey(
   return fnv1a(payload);
 }
 
+/**
+ * Content fingerprint of a CV (ids stripped). Used by Simulate/Target to detect
+ * when the working document changed after a retone preview or baseline lock so
+ * match/score always track the latest edit + applied refine.
+ */
+export function cvContentSig(cv: CVData): string {
+  return fnv1a(stableStringify(canonicalCV(cv)));
+}
+
 function clamp(v: unknown): number {
   const n = typeof v === "number" ? v : Number(v);
   if (!Number.isFinite(n)) return 0;

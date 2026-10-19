@@ -180,6 +180,20 @@ describe("targetMatch", () => {
     expect(m.gap.matchedSkills).toContain("Go");
     expect(m.gap.missingSkills).toEqual(expect.arrayContaining(["Kubernetes", "PostgreSQL"]));
   });
+
+  it("rises when skills from an applied refine land on the working CV", () => {
+    const ideal = coerceSimulatedCV(IDEAL_JSON);
+    const before = targetMatch(userCV(), ideal, "Go Kubernetes PostgreSQL");
+    // Simulate applyRefinedCV: replace working skills with refine output.
+    const afterRefine = userCV();
+    afterRefine.skills = [
+      { id: "s1", category: "Backend", items: ["Go", "Docker", "Kubernetes", "PostgreSQL"] },
+    ];
+    const after = targetMatch(afterRefine, ideal, "Go Kubernetes PostgreSQL");
+    expect(after.score).toBeGreaterThan(before.score);
+    expect(after.gap.coverage).toBe(100);
+    expect(after.gap.missingSkills).toEqual([]);
+  });
 });
 
 describe("buildSimulatePrompt", () => {
