@@ -10,7 +10,8 @@ import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { planQualityLabel, remainingNote } from "@/lib/plan/plan";
 import { useUsageStore } from "@/lib/store/usageStore";
-import { sharedRun, useIsRunning, useRunOrigin } from "@/lib/store/runStore";
+import { sharedRun, useIsRunning, useRunOrigin, useRunStore } from "@/lib/store/runStore";
+import { SimulateProgress } from "@/components/ai/SimulateProgress";
 import { getTemplate } from "@/components/templates/registry";
 import { coerceSimulatedCV, gapAnalysis, targetMatch } from "@/lib/ai/simulate";
 import { analyzeTone, type ToneLabel, type ToneProfile } from "@/lib/ai/retone";
@@ -74,6 +75,7 @@ export function TargetView() {
   const [usageNote, setUsageNote] = useState<string | null>(null);
   const simRunning = useIsRunning("simulate");
   const simOrigin = useRunOrigin("simulate");
+  const simStartedAt = useRunStore((s) => s.active["simulate"]?.startedAt);
 
   const meta = PROVIDERS[provider];
   const cvSig = useMemo(() => cvContentSig(cv), [cv]);
@@ -186,6 +188,7 @@ export function TargetView() {
               onChange={(e) => setJd(e.target.value)}
               disabled={genPhase === "running"}
             />
+            {running && <SimulateProgress startedAt={simStartedAt} />}
             <div className="imp-actions">
               <button
                 className="imp-btn"

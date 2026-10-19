@@ -2778,3 +2778,42 @@
   .rev-diff { grid-template-columns: 1fr; }
   .rev-foot { flex-direction: column-reverse; align-items: stretch; }
 }
+
+.sim-progress {
+  margin: 14px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+}
+.sim-progress-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.sim-progress-pct {
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+.sim-progress-bar {
+  height: 6px;
+  margin: 8px 0 6px;
+  border-radius: 999px;
+  background: var(--line-2);
+  overflow: hidden;
+}
+.sim-progress-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.4s ease-out;
+}
+.sim-progress-note {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.7;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sim-progress-fill { transition: none; }
+}
