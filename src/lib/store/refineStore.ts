@@ -363,7 +363,10 @@ export const useRefineStore = create<RefineState>((set, get) => ({
     }
   },
 
-  markApplied: (p) => set({ appliedProvider: p }),
+  markApplied: (p) => {
+    set({ appliedProvider: p });
+    useTargetStore.getState().requestResim();
+  },
 
   openReview: (p) => set({ reviewProvider: p }),
   closeReview: () => set({ reviewProvider: null }),

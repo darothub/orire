@@ -48,6 +48,8 @@ export function TargetView() {
   const createdAt = useTargetStore((s) => s.createdAt);
   const baseScore = useTargetStore((s) => s.baseScore);
   const clearTarget = useTargetStore((s) => s.clearTarget);
+  const resimPrompt = useTargetStore((s) => s.resimPrompt);
+  const dismissResim = useTargetStore((s) => s.dismissResim);
 
   const provider = useSettingsStore((s) => s.provider);
   const models = useSettingsStore((s) => s.models);
@@ -151,7 +153,7 @@ export function TargetView() {
             <h2>{VIEW_META.target.label}</h2>
             <p>
               {recompose
-                ? "Rebuild the ideal CV from a new job description. Your current target stays until the new one is ready."
+                ? "Confirm or edit the job description below, then rebuild the ideal CV against your latest CV. Your current target stays until the new one is ready."
                 : "Simulate the ideal 100%-match CV for a role, then edit your CV beside it until it matches. The ideal is simulated — a benchmark, not your facts — and is reused by Refine."}
             </p>
           </div>
@@ -320,6 +322,21 @@ export function TargetView() {
 
       {usageNote && (
         <div className="usage-note" role="status">{usageNote}</div>
+      )}
+
+      {resimPrompt && (
+        <div className="usage-note" role="status">
+          <strong>Your CV changed after a refinement.</strong> Re-simulate to benchmark the new version against the latest job description?
+          <div className="imp-actions">
+            <button className="imp-btn" onClick={dismissResim}>Not now</button>
+            <button
+              className="imp-btn primary"
+              onClick={() => { dismissResim(); setRecompose(true); setGenPhase("input"); setGenErr(null); }}
+            >
+              Re-simulate with my new CV
+            </button>
+          </div>
+        </div>
       )}
 
       <div className="tgt-meter">
