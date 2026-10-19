@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
-import { useTargetStore } from "@/lib/store/targetStore";
+import { useTargetStore, isIdealStale } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { planQualityLabel, remainingNote } from "@/lib/plan/plan";
@@ -47,7 +47,8 @@ export function TargetView() {
   const label = useTargetStore((s) => s.label);
   const createdAt = useTargetStore((s) => s.createdAt);
   const baseScore = useTargetStore((s) => s.baseScore);
-  const clearTarget = useTargetStore((s) => s.clearTarget);
+  const clearTarget = useTargetStore((s) => s.discardTarget);
+  const jdStale = useTargetStore(isIdealStale);
   const resimPrompt = useTargetStore((s) => s.resimPrompt);
   const dismissResim = useTargetStore((s) => s.dismissResim);
 
@@ -322,6 +323,20 @@ export function TargetView() {
 
       {usageNote && (
         <div className="usage-note" role="status">{usageNote}</div>
+      )}
+
+      {jdStale && !resimPrompt && (
+        <div className="usage-note" role="status">
+          <strong>The job description changed</strong> since this target was simulated (it is shared with Refine). Re-simulate to benchmark against the current JD.
+          <div className="imp-actions">
+            <button
+              className="imp-btn primary"
+              onClick={() => { setRecompose(true); setGenPhase("input"); setGenErr(null); }}
+            >
+              Re-simulate with current JD
+            </button>
+          </div>
+        </div>
       )}
 
       {resimPrompt && (
