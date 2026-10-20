@@ -32,8 +32,6 @@ model User {
   entitlement Entitlement?
   usage       UsageCounter[]
   consumedRefineRuns ConsumedRefineRun[]
-  ownedTeams      Team[]       @relation("TeamOwner")
-  teamMemberships TeamMember[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
 }
@@ -219,103 +217,4 @@ model ProcessedWebhookEvent {
   id          String   @id // Stripe event id, e.g. "evt_..."
   type        String
   processedAt DateTime @default(now())
-}
-
-// ---------- Teams / seats (Phase B3) ----------
-
-/// A Teams/Coach workspace. Owned by a user whose personal entitlement is the
-/// "teams" plan (bought via Stripe in B2). Members inherit Teams capability
-/// (premium tiers without a personal key) for as long as they hold a seat.
-model Team {
-  id        String   @id @default(cuid())
-  name      String
-  ownerId   String
-  plan      String   @default("teams")
-  seatLimit Int      @default(5)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  owner   User         @relation("TeamOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  members TeamMember[]
-  invites TeamInvite[]
-  keys    TeamKey[]
-  audits  TeamAudit[]
-
-  @@index([ownerId])
-}
-
-/// A held seat on a team. A user may hold at most one seat (enforced in code).
-model TeamMember {
-  id        String   @id @default(cuid())
-  teamId    String
-  userId    String
-  role      String   @default("member") // owner | admin | member
-  createdAt DateTime @default(now())
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([teamId, userId])
-  @@unique([userId])
-  @@index([teamId])
-}
-
-/// A pending email invite. Redeemed via a single-use token embedded in a link.
-model TeamInvite {
-  id          String    @id @default(cuid())
-  teamId      String
-  email       String
-  role        String    @default("member")
-  token       String    @unique
-  invitedById String
-  createdAt   DateTime  @default(now())
-  expiresAt   DateTime
-  acceptedAt  DateTime?
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@index([teamId])
-  @@index([email])
-}
-
-/// A pooled provider API key owned by a team (Phase B3b). The secret is stored
-/// encrypted at rest (AES-256-GCM); ciphertext/iv/tag are never returned to the
-/// client. Seated members run premium on the team's key without a personal one.
-model TeamKey {
-  id         String   @id @default(cuid())
-  teamId     String
-  provider   String // ProviderId: openai | anthropic
-  ciphertext String
-  iv         String
-  tag        String
-  label      String? // optional masked hint, e.g. "sk-…4f2a"
-  createdById String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@unique([teamId, provider])
-  @@index([teamId])
-}
-
-/// An immutable audit record of a team management action (Phase B3e): renames,
-/// role changes, ownership transfers, invites/revokes, joins, removals, leaves.
-/// Actor/target display names are snapshotted as `detail`-adjacent strings so the
-/// log still reads correctly after a member is removed or renamed. Cascade-deleted
-/// with the team.
-model TeamAudit {
-  id         String   @id @default(cuid())
-  teamId     String
-  action     String // see TeamAuditAction in src/lib/team/audit.ts
-  actorId    String
-  actorName  String?
-  targetId   String?
-  targetName String?
-  detail     String?
-  createdAt  DateTime @default(now())
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  @@index([teamId, createdAt])
 }

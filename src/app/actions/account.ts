@@ -39,7 +39,7 @@ export async function exportAccountData(): Promise<ExportAccountResult> {
   if (!gate.ok) return { ok: false, error: gate.message };
   const userId = gate.userId;
 
-  const [user, accounts, entitlement, documents, refineRuns, exportEvents, usage, memberships, ownedTeams] =
+  const [user, accounts, entitlement, documents, refineRuns, exportEvents, usage] =
     await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -55,8 +55,6 @@ export async function exportAccountData(): Promise<ExportAccountResult> {
       prisma.refineRun.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
       prisma.exportEvent.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
       prisma.usageCounter.findMany({ where: { userId }, select: { metric: true, period: true, count: true } }),
-      prisma.teamMember.findMany({ where: { userId }, select: { teamId: true, role: true, createdAt: true } }),
-      prisma.team.findMany({ where: { ownerId: userId }, select: { id: true, name: true, plan: true, seatLimit: true, createdAt: true } }),
     ]);
 
   if (!user) return { ok: false, error: "Account not found." };
@@ -73,7 +71,6 @@ export async function exportAccountData(): Promise<ExportAccountResult> {
       documents,
       refineRuns,
       exportEvents,
-      teams: { memberships, owned: ownedTeams },
     },
   };
 }
@@ -87,19 +84,6 @@ export async function deleteAccount(): Promise<DeleteAccountResult> {
   const session = await auth();
   const userId = session?.user?.id ?? null;
   if (!userId) return { error: "You’re not signed in." };
-
-  // Refuse to silently destroy a shared Teams workspace — the owner must hand it
-  // over or disband it first, otherwise other seated members would lose access.
-  const sharedTeam = await prisma.team.findFirst({
-    where: { ownerId: userId, members: { some: { userId: { not: userId } } } },
-    select: { id: true },
-  });
-  if (sharedTeam) {
-    return {
-      error:
-        "You own a team with other members. Transfer ownership or remove members before deleting your account.",
-    };
-  }
 
   // Cancel any active Stripe subscription so billing stops for a leaving
   // customer. We retry transient failures, but never block deletion — the
