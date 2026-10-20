@@ -1,7 +1,7 @@
 "use client";
 
 import { workspaceBusy } from "@/lib/store/busy";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, Reorder } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
@@ -14,6 +14,15 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { useRunStore } from "@/lib/store/runStore";
 
 type Badge = "warn" | "busy" | null;
+
+// Mirrors globals.css's `@media (max-width: 820px)` rail breakpoint, where
+// `.rail-group`/`.rail-ritem` switch from a vertical column to a horizontal
+// row. Framer Motion's drag physics don't know about CSS, so the rail's
+// `Reorder.Group axis` has to be tracked in JS and kept in sync with this
+// same breakpoint — otherwise pointer-drag stays locked to the vertical axis
+// on a horizontally-laid-out strip and reordering by touch doesn't track the
+// visual order.
+const RAIL_NARROW_QUERY = "(max-width: 820px)";
 
 // Rail items backed by a metered action — greyed out when its free cap is spent.
 const METRIC_FOR_VIEW: Partial<Record<WorkspaceView, Metric>> = {
@@ -86,6 +95,21 @@ export function WorkspaceRail() {
   // can rearrange the rail at all. "earlier/later" rather than "up/down" because
   // the rail lays out horizontally on narrow screens.
   const [announcement, setAnnouncement] = useState("");
+
+  // Starts "y" (desktop default) and flips to "x" once we know the viewport
+  // is narrow — avoids a hydration mismatch, and matches on resize so
+  // rotating a tablet or resizing a window doesn't leave drag on the wrong
+  // axis mid-session.
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(RAIL_NARROW_QUERY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncs to a client-only media-query signal, not derived data
+    setNarrow(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setNarrow(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   const moveBlock = (v: WorkspaceView, dir: -1 | 1) => {
     const idx = sequence.indexOf(v);
     const to = idx + dir;
@@ -112,7 +136,7 @@ export function WorkspaceRail() {
       <div className="sr-only" aria-live="polite">{announcement}</div>
       {/* The flow sequence — drag to reorder (A2), or use the move buttons below
           each block (keyboard/AT fallback). */}
-      <Reorder.Group axis="y" values={sequence} onReorder={setSequence} className="rail-group" as="div" role="list">
+      <Reorder.Group axis={narrow ? "x" : "y"} values={sequence} onReorder={setSequence} className="rail-group" as="div" role="list">
         {sequence.map((v, i) => (
           <Reorder.Item key={v} value={v} as="div" className="rail-ritem" role="listitem" aria-roledescription="reorderable block">
             <RailButton item={v} badge={badgeFor(v)} />
