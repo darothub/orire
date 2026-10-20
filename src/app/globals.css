@@ -1279,6 +1279,7 @@ body {
   margin-top: 18px;
 }
 .spot-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1298,6 +1299,37 @@ body {
   box-shadow: var(--shadow);
 }
 .spot-card.is-locked { opacity: 0.62; }
+/* "Number the blocks, highlight the recommended next step for new users"
+   (critique §3 / P1-9) — a small ordinal badge on every card, plus an
+   accent ring + inline tag on whichever one is next for this user. */
+.spot-card-num {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+}
+.spot-card.is-recommended {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.spot-card.is-recommended .spot-card-num {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0b0b12;
+}
+.spot-card-next {
+  color: var(--accent);
+  font-weight: 700;
+}
 .spot-card-open {
   display: flex;
   align-items: flex-start;
