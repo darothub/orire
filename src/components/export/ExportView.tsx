@@ -62,6 +62,10 @@ export function ExportView() {
   const [fileName, setFileName] = useState(defaultName);
   const [company, setCompany] = useState(lastCompany);
   const [mode, setMode] = useState<PageMode>("paged");
+  // Defaults on: lets this exact PDF be re-imported later with zero drift
+  // (see orireEmbed.ts). Off before sending somewhere the recipient shouldn't
+  // silently receive your full structured CV embedded in the file metadata.
+  const [embedData, setEmbedData] = useState(true);
   const [busyFormat, setBusyFormat] = useState<"pdf" | "docx" | "txt" | null>(null);
   const busy = busyFormat !== null;
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -107,7 +111,7 @@ export function ExportView() {
       const name = fileName.trim() || defaultName;
       const ok =
         format === "pdf"
-          ? await exportCVtoPDF(mode, name, cv)
+          ? await exportCVtoPDF(mode, name, cv, { embedData })
           : format === "docx"
             ? await exportCVtoDocx(name, cv)
             : downloadTextFile(name, cvToPlainText(cv));
@@ -244,6 +248,21 @@ export function ExportView() {
             </button>
           ))}
         </div>
+        <label className="exp-embed-toggle">
+          <input
+            type="checkbox"
+            checked={embedData}
+            onChange={(e) => setEmbedData(e.target.checked)}
+          />
+          <span>
+            Include re-import data
+            <em>
+              {embedData
+                ? "This exact PDF can be re-imported later with no loss. The full CV data travels invisibly inside the file — turn off before sending it somewhere that shouldn't receive that."
+                : "This PDF won’t carry your full CV data in its metadata. Re-importing it later will go through the normal parser instead of a lossless round-trip."}
+            </em>
+          </span>
+        </label>
       </section>
 
       <section className="exp-sec">
