@@ -169,6 +169,21 @@ function embedCVData(pdf: jsPDF, cv: CVData): void {
   pdf.setProperties({ keywords: encodeOrireKeywords(cv) });
 }
 
+export interface ExportPDFOptions {
+  /**
+   * Embed the exact CVData (base64) in the PDF's Keywords metadata so this
+   * file re-imports losslessly later (see orireEmbed.ts). Defaults to `true`.
+   *
+   * Set `false` before sending the PDF somewhere the recipient shouldn't
+   * receive the full structured CV invisibly along with the visible page —
+   * the metadata travels with the file regardless of who opens it or how
+   * (per the architecture critique's "strip on final send" privacy note,
+   * P1-13). The on-page invisible text layer (for ATS/Ctrl-F extraction) is
+   * unaffected either way — it only ever holds what's visibly on the page.
+   */
+  embedData?: boolean;
+}
+
 /**
  * Export the live CV (#cv-paper) straight to a downloaded PDF — no browser
  * print dialog. The page mode controls pagination:
@@ -176,14 +191,17 @@ function embedCVData(pdf: jsPDF, cv: CVData): void {
  *  - paged: the CV flows across A4 pages, breaking between entries (never
  *    through a line) and carrying an extractable text layer on every page;
  *  - fit: the CV is scaled to sit on one A4 page.
- * The exact CV data is also embedded in metadata so the PDF re-imports
- * losslessly. Returns false when the paper isn't mounted.
+ * The exact CV data is also embedded in metadata by default so the PDF
+ * re-imports losslessly — pass `{ embedData: false }` to skip that (see
+ * {@link ExportPDFOptions}). Returns false when the paper isn't mounted.
  */
 export async function exportCVtoPDF(
   mode: PageMode,
   fileName: string,
   cv: CVData,
+  opts: ExportPDFOptions = {},
 ): Promise<boolean> {
+  const embedData = opts.embedData ?? true;
   const el = document.getElementById("cv-paper");
   if (!el) return false;
 
@@ -205,7 +223,7 @@ export async function exportCVtoPDF(
       orientation: pageH >= pageW ? "portrait" : "landscape",
     });
     writeInvisibleLines(pdf, readableLines(pdf, cv));
-    embedCVData(pdf, cv);
+    if (embedData) embedCVData(pdf, cv);
     pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pageW, pageH, undefined, "FAST");
     pdf.save(file);
     return true;
@@ -214,7 +232,7 @@ export async function exportCVtoPDF(
   if (mode === "fit") {
     const pdf = new jsPDF({ unit: "pt", format: "a4" });
     writeInvisibleLines(pdf, readableLines(pdf, cv));
-    embedCVData(pdf, cv);
+    if (embedData) embedCVData(pdf, cv);
     const margin = 22;
     const availW = A4_W - margin * 2;
     const availH = A4_H - margin * 2;
@@ -229,7 +247,7 @@ export async function exportCVtoPDF(
   // paged — break at block boundaries so no entry is cut, crop each page's
   // slice so pages never overlap, and give every page its own text layer.
   const pdf = new jsPDF({ unit: "pt", format: "a4" });
-  embedCVData(pdf, cv);
+  if (embedData) embedCVData(pdf, cv);
 
   const renderH = A4_W * ratio; // full CV height in points, at A4 width
   const slices = computePageSlices(renderH, A4_H, breaksPt);

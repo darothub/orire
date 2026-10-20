@@ -1481,6 +1481,39 @@ body {
 .exp-mode-txt { display: flex; flex-direction: column; gap: 1px; }
 .exp-mode-txt strong { font-size: 13.5px; font-weight: 600; }
 .exp-mode-txt em { font-style: normal; font-size: 11.5px; color: var(--muted); }
+
+/* "Include re-import data" privacy toggle — see ExportView.tsx / orireEmbed.ts. */
+.exp-embed-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+.exp-embed-toggle input[type="checkbox"] {
+  margin-top: 3px;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  accent-color: var(--accent, currentColor);
+  cursor: pointer;
+}
+.exp-embed-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.exp-embed-toggle em {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--muted);
+}
 .exp-warn {
   margin: 2px 0 12px;
   font-size: 12.5px;
