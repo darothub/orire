@@ -402,6 +402,45 @@ body {
   justify-content: space-between;
   margin: -4px -4px 0;
 }
+.ed-card-tools-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+/* Drag has no keyboard equivalent, so every reorderable card/highlight also
+   gets explicit move-earlier/move-later buttons next to the grip. */
+.ed-move {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ed-move-btn {
+  width: 18px;
+  height: 14px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--faint);
+  font-size: 8px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.ed-move-btn:hover:not(:disabled) {
+  color: var(--accent-2);
+  background: var(--bg);
+}
+.ed-move-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.ed-move-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.ed-bullet-move {
+  margin-top: 10px;
+  flex: none;
+}
 .ed-grip {
   display: inline-flex;
   align-items: center;
