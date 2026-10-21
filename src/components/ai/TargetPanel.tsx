@@ -157,7 +157,7 @@ export function TargetView() {
             <p>
               {recompose
                 ? "Confirm or edit the job description below, then rebuild the ideal CV against your latest CV. Your current target stays until the new one is ready."
-                : "Simulate the ideal 100%-match CV for a role, then edit your CV beside it until it matches. The ideal is simulated — a benchmark, not your facts — and is reused by Refine."}
+                : "Generate an illustrative role-target CV from a job description and compare it with your experience. Scores are Orire guidance, not an employer or ATS assessment."}
             </p>
           </div>
         </div>
@@ -202,7 +202,7 @@ export function TargetView() {
                 ) : busyElsewhere ? (
                   <><span className="cmp-spinner" /> Simulating{simOrigin ? ` · from ${simOrigin}` : ""}…</>
                 ) : (
-                  "Simulate a 100% match"
+                  "Generate role-target example"
                 )}
               </button>
             </div>
@@ -357,7 +357,7 @@ export function TargetView() {
         </div>
       )}
 
-      <div className="tgt-meter">
+      <p className="score-disclosure" id="target-score-explainer">\n        <strong>About this score:</strong> Orire compares your CV with an AI-generated example and signals from the pasted job description. It is an illustrative benchmark, not an employer decision, ATS pass rate, or prediction of interviews. Only include skills and achievements you actually have.\n      </p>\n\n      <div className="tgt-meter" aria-describedby="target-score-explainer">
         <div className="sim-cov">
           <svg viewBox="0 0 84 84" width="84" height="84" className="sim-cov-svg">
             <circle cx="42" cy="42" r="34" className="rate-ring-track" />
@@ -376,7 +376,7 @@ export function TargetView() {
           <div className="sim-cov-center">
             <strong style={{ color: coverageColor(match.score) }}>{match.score}%</strong>
           </div>
-          <span className="rate-ring-label">Match</span>
+          <span className="rate-ring-label">Simulated match</span>
         </div>
 
         <div className="tgt-meter-body">
@@ -544,7 +544,7 @@ export function TargetView() {
 
         <div className="tgt-col">
           <div className="tgt-col-head ideal">
-            <span className="tgt-col-tag">Target · 100%</span>
+            <span className="tgt-col-tag">Simulated reference</span>
             <span className="tgt-col-sub">Simulated · not your facts</span>
           </div>
           <div className="tgt-paper-wrap">

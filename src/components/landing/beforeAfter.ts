@@ -10,26 +10,26 @@
 export interface BeforeAfterLine {
   /** The dull "as uploaded" phrasing. */
   before: string;
-  /** The re-branded, outcome-led phrasing (same facts, sharpened). */
+  /** Illustrative rewritten phrasing without unverifiable quantitative claims. */
   after: string;
 }
 
 const LINES: BeforeAfterLine[] = [
   {
     before: "Responsible for managing the company's social media.",
-    after: "Grew the brand's following 3× to 45k and lifted engagement 60% in 11 months.",
+    after: "Planned and published social media content, reviewed engagement trends, and coordinated campaign updates.",
   },
   {
     before: "Helped the design team with various projects.",
-    after: "Shipped 20+ product screens and cut design-to-dev handoff time by 40%.",
+    after: "Collaborated with product designers on interface layouts and prepared design handoffs for development.",
   },
   {
     before: "Worked on improving the checkout page.",
-    after: "Redesigned checkout, raising conversion from 2.1% to 3.4% across 90k sessions.",
+    after: "Reviewed the checkout journey, identified friction points, and implemented usability improvements.",
   },
   {
     before: "Did customer support and answered tickets.",
-    after: "Resolved 1,200+ tickets at a 97% CSAT while trimming first-response time to 8 minutes.",
+    after: "Resolved customer support requests, documented recurring issues, and collaborated on service improvements.",
   },
 ];
 

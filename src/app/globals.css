@@ -4814,3 +4814,7 @@ html[data-theme="light"] .landing-scrim {
 .landing-gallery .landing-gallery-real-paper {
   text-align: left;
 }
+
+/* Visible scoring caveat: readable in dark/light workspace themes. */
+.score-disclosure { max-width: 850px; margin: 12px 0 20px; padding: 12px 16px; border-left: 3px solid var(--accent); border-radius: 8px; color: var(--muted); background: var(--surface-soft); font-size: 13px; line-height: 1.65; }
+.score-disclosure strong { color: var(--text); }
