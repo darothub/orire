@@ -4853,3 +4853,11 @@ html[data-theme="light"] .landing-scrim {
 @media (max-width: 760px) {
   .landing-pricing-disclosure { text-align: left; padding-inline: 3px; }
 }
+
+
+/* All three pricing plans share one grid row and should have matching outer
+   heights even when their entitlement lists contain different numbers of lines. */
+@media (min-width: 761px) {
+  .landing-price-grid { align-items: stretch; }
+  .landing-price-card { height: 100%; }
+}
