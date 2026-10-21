@@ -32,6 +32,7 @@ model User {
   entitlement Entitlement?
   usage       UsageCounter[]
   consumedRefineRuns ConsumedRefineRun[]
+  lifecycleEmails LifecycleEmail[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
 }
@@ -205,6 +206,25 @@ model ConsumedRefineRun {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+}
+
+/// Idempotency ledger for lifecycle/activation nudge emails (P1-12), so the
+/// cron sweep that sends them never double-sends. One row per (user, kind) —
+/// `kind` identifies which nudge, e.g. "activation_24h". The sweep's own
+/// signals for "has this user activated" are read from existing tables
+/// (ExportEvent, UsageCounter) rather than duplicated here; this table exists
+/// only because nothing else tracks "have we already emailed this user about
+/// this".
+model LifecycleEmail {
+  id     String   @id @default(cuid())
+  userId String
+  kind   String
+  sentAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind])
   @@index([userId])
 }
 

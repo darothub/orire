@@ -123,3 +123,77 @@ export function emailVerificationEmail(token: string): {
 
   return { subject, html, text };
 }
+
+/**
+ * Activation nudge, sent once by the activation-nudge cron (P1-12) to a
+ * signed-up user who, 24–48h later, still hasn't tried whichever of
+ * {export, Simulate} `gap` names. Returns subject + html + text for
+ * sendMail(). `gap === "both"` covers both CTAs in one email.
+ */
+export function activationNudgeEmail(gap: "export" | "simulate" | "both"): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const studioLink = `${appUrl()}/`;
+
+  const copy = {
+    export: {
+      subject: "Your CV is ready to download",
+      heading: "Don't forget to download your CV",
+      body: "You started a CV on Orire but haven't downloaded it yet. Export it as a PDF or Word file whenever you're ready — it only takes a second.",
+      cta: "Open your CV",
+    },
+    simulate: {
+      subject: "See the 100%-match CV for your target job",
+      heading: "Try Simulate — see exactly where your CV falls short",
+      body: "Orire can show you what a 100%-match CV would look like for any job, then help you close the gap in your own words — nothing invented. Most people find this the most useful thing here.",
+      cta: "Try Simulate",
+    },
+    both: {
+      subject: "Pick up where you left off on Orire",
+      heading: "Pick up where you left off",
+      body: "You started a CV on Orire but haven't tried Simulate (see the 100%-match CV for a job and exactly where yours falls short) or downloaded your CV yet. Both take under a minute.",
+      cta: "Open your CV",
+    },
+  }[gap];
+
+  const subject = copy.subject;
+
+  const html = `<!doctype html>
+<html>
+  <body style="margin:0;background:${BG};padding:32px 0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr><td align="center">
+        <table role="presentation" width="440" cellpadding="0" cellspacing="0"
+          style="background:#13161f;border:1px solid #242a38;border-radius:16px;padding:32px;">
+          <tr><td style="font-size:20px;font-weight:700;color:#fff;padding-bottom:4px;">
+            <span style="color:${ACCENT};">✦</span> Orire
+          </td></tr>
+          <tr><td style="font-size:18px;font-weight:600;color:#fff;padding:14px 0 6px;">
+            ${copy.heading}
+          </td></tr>
+          <tr><td style="font-size:14px;line-height:1.6;color:#a6adbb;padding-bottom:22px;">
+            ${copy.body}
+          </td></tr>
+          <tr><td style="padding-bottom:22px;">
+            <a href="${studioLink}" style="display:inline-block;background:${ACCENT};color:#0b0d12;
+              font-weight:600;font-size:14px;text-decoration:none;padding:12px 22px;border-radius:10px;">
+              ${copy.cta}
+            </a>
+          </td></tr>
+          <tr><td style="font-size:12px;line-height:1.6;color:#6b7280;">
+            You're getting this because you signed up for Orire. We'll only send this once.
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`;
+
+  const text = [copy.heading, "", copy.body, "", studioLink, "", "You're getting this because you signed up for Orire. We'll only send this once."].join(
+    "\n",
+  );
+
+  return { subject, html, text };
+}
