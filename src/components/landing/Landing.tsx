@@ -171,16 +171,16 @@ export function Landing() {
           <div className="landing-gallery-grid">
             {demoTemplates().slice(0, 3).map((template) => (
               <Link key={template.id} className="landing-gallery-card" href={`/templates/${template.id}`}>
-                <span className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true">
-                  <span className="landing-gallery-real-paper">
+                <div className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true">
+                  <div className="landing-gallery-real-paper">
                     <span className="paper landing-gallery-template">
                       {(() => {
                         const Preview = getTemplate(template.id).Component;
                         return <Preview cv={sampleCV} />;
                       })()}
                     </span>
-                  </span>
-                </span>
+                  </div>
+                </div>
                 <span className="landing-gallery-name">{template.name}</span>
                 <span className="landing-gallery-description">{template.blurb}</span>
                 <span className="landing-gallery-action">Preview template →</span>
