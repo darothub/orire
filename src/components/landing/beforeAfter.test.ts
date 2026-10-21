@@ -16,9 +16,9 @@ describe("beforeAfterLines", () => {
     }
   });
 
-  it("makes the after copy quantified (contains a digit)", () => {
+  it("does not manufacture precise impact metrics absent from source", () => {
     for (const line of lines) {
-      expect(line.after).toMatch(/\d/);
+      expect(line.after).not.toMatch(/\d/);
     }
   });
 
