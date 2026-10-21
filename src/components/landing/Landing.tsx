@@ -28,7 +28,7 @@ interface Feature {
 const FEATURES: Feature[] = [
   {
     icon: "◎",
-    title: "Simulate the ideal candidate",
+    title: "Explore simulated role-match guidance",
     body: "Explore a simulated role-match profile, compare it with your CV, and identify experience and wording you may want to highlight. The simulation is guidance, not an employer decision.",
   },
   {
@@ -49,7 +49,7 @@ const FEATURES: Feature[] = [
   {
     icon: "⚖",
     title: "A clear CV score",
-    body: "Every draft gets a clear score from a fixed rubric, so the same CV always scores the same — watch it climb as you tighten each line.",
+    body: "Use Orire’s internal writing-quality rubric to review changes. It is guidance, not an employer or ATS rating.",
   },
   {
     icon: "❖",
