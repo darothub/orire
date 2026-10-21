@@ -4803,3 +4803,14 @@ html[data-theme="light"] .landing-scrim {
   outline-offset: 3px;
   border-radius: 4px;
 }
+
+
+/* The marketing card title is centered, but each CV must retain its own
+   template typography and alignment. Inherited text-align:center was forcing
+   Aurora, Noir, and Imperial documents to render incorrectly. */
+.landing-gallery .landing-gallery-template.paper {
+  text-align: left;
+}
+.landing-gallery .landing-gallery-real-paper {
+  text-align: left;
+}
