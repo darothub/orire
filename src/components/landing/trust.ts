@@ -8,7 +8,7 @@ export type TrustStat = {
 const STATS: TrustStat[] = [
   { value: String(TEMPLATE_COUNT), label: "out-of-this-world templates" },
   { value: "2×", label: "AI assistants compared side by side" },
-  { value: "100%", label: "job-match simulation before you apply" },
+  { value: "Role", label: "match guidance to review before applying" },
   { value: "0", label: "star bars or clipart — ever" },
 ];
 

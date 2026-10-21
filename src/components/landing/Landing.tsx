@@ -6,15 +6,13 @@ import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesL
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { CvShowcase } from "@/components/landing/CvShowcase";
 import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
-import { trustStats } from "@/components/landing/trust";
 import { beforeAfterLines } from "@/components/landing/beforeAfter";
-import { promises } from "@/components/landing/promises";
-import { employerLogos } from "@/components/landing/logos";
-import { HeroPreview } from "@/components/landing/HeroPreview";
 import { LiveDemo } from "@/components/landing/LiveDemo";
+import { demoTemplates } from "@/components/landing/demo";
+import { getTemplate } from "@/components/templates/registry";
+import { sampleCV } from "@/lib/cv/sample";
 import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -31,7 +29,7 @@ const FEATURES: Feature[] = [
   {
     icon: "◎",
     title: "Simulate the ideal candidate",
-    body: "See the CV that would match a role 100%, and exactly where yours falls short — then move your real experience toward that concrete target. Nothing else shows you the gap.",
+    body: "Explore a simulated role-match profile, compare it with your CV, and identify experience and wording you may want to highlight. The simulation is guidance, not an employer decision.",
   },
   {
     icon: "⟳",
@@ -56,7 +54,7 @@ const FEATURES: Feature[] = [
   {
     icon: "❖",
     title: `${TEMPLATE_COUNT} standout templates`,
-    body: "Beautifully animated, ATS-ready layouts — live preview on the right while you edit on the left.",
+    body: "Explore distinct CV layouts, then see your changes in a live preview as you edit.",
   },
 ];
 
@@ -70,9 +68,6 @@ export function Landing() {
 
   return (
     <div className="landing">
-      {/* Signature living backdrop + legibility scrim (shared with the gate). */}
-      <CvShowcase />
-      <div className="auth-scrim landing-scrim" aria-hidden />
 
       <header className="landing-nav">
         <div className="landing-brand">
@@ -83,6 +78,7 @@ export function Landing() {
         <div className="landing-nav-actions">
           <nav className="landing-nav-links" aria-label="Sections">
             <a href="#how">How it works</a>
+            <a href="#templates">Templates</a>
             <a href="#demo">Live demo</a>
             <a href="#pricing">Pricing</a>
           </nav>
@@ -98,65 +94,99 @@ export function Landing() {
 
       <main className="landing-main">
         <section className="landing-hero">
-          <div className="landing-hero-grid">
+          <div className="landing-hero-grid landing-hero-centered">
             <motion.div
               className="landing-hero-inner"
               initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.7, ease: EASE }}
             >
-              <span className="landing-eyebrow">The ideal candidate, revealed</span>
+              <span className="landing-eyebrow">Your experience, clearly presented</span>
               <h1 className="landing-title">
-                See the perfect CV for any job — then close the gap to yours.
+                Build a CV that makes your experience stand out.
               </h1>
               <p className="landing-sub">
-                Orire simulates the candidate who&apos;d match the role 100%, shows
-                exactly where you fall short, and moves your real experience toward
-                that target — then re-brands, refines and scores the result. Never
-                inventing anything you didn&apos;t do.
+                Create, refine and download a professional CV with AI-powered
+                assistance and carefully designed templates. Keep your experience
+                accurate and choose the final wording yourself.
               </p>
               <div className="landing-hero-cta">
                 <button className="landing-cta lg" onClick={() => openAuth("signup")}>
-                  Get started free
+                  Create your CV →
                 </button>
-                <button className="landing-ghost lg" onClick={() => openAuth("signin")}>
-                  I already have an account
-                </button>
+                <a className="landing-ghost lg" href="#templates">
+                  Explore templates
+                </a>
               </div>
-              <ul className="landing-usps" aria-label="What Orire does">
-                <li><span aria-hidden>◎</span> Simulate the ideal match</li>
-                <li><span aria-hidden>⚖</span> Clear CV score</li>
-                <li><span aria-hidden>❖</span> {TEMPLATE_COUNT} standout templates</li>
-              </ul>
             </motion.div>
-            <HeroPreview />
           </div>
         </section>
 
-        <section className="landing-logos" aria-label="Target employers">
-          <motion.p
-            className="landing-logos-cap"
-            initial={{ opacity: 0, y: 10 }}
+        <section id="how" className="landing-section landing-how landing-how-compact" aria-label="How it works">
+          <motion.div
+            className="landing-about-head"
+            initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.6 }}
+            viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.5, ease: EASE }}
           >
-            Build a CV ready for roles at teams like these
-          </motion.p>
-          <motion.ul
-            className="landing-logos-row"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.6, ease: EASE }}
-          >
-            {employerLogos().map((name) => (
-              <li key={name} className="landing-logo-mark">{name}</li>
+            <span className="landing-eyebrow">How it works</span>
+            <h2 className="landing-h2">Three simple steps to a stronger CV</h2>
+          </motion.div>
+          <ol className="landing-steps">
+            {howItWorksSteps().map((step, i) => (
+              <motion.li
+                key={step.n}
+                className="landing-step"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: EASE }}
+              >
+                <span className="landing-step-n" aria-hidden>{String(step.n).padStart(2, "0")}</span>
+                <h3 className="landing-step-title">{["Add your details", "Refine with AI", "Download your CV"][i]}</h3>
+                <p className="landing-step-body">{step.body}</p>
+              </motion.li>
             ))}
-          </motion.ul>
+          </ol>
         </section>
 
-        <section className="landing-section landing-ba" aria-label="Before and after">
+        <section id="templates" className="landing-section landing-gallery" aria-labelledby="landing-gallery-heading">
+          <div className="landing-about-head">
+            <span className="landing-eyebrow">Designed for your next step</span>
+            <h2 id="landing-gallery-heading" className="landing-h2">Explore real CV templates before signing up.</h2>
+            <p className="landing-about-lead">
+              See how three available Orire templates present the same fictional example CV.
+              Choose a design that fits your experience, then make it your own.
+            </p>
+          </div>
+          <div className="landing-gallery-grid">
+            {demoTemplates().slice(0, 3).map((template) => (
+              <article key={template.id} className="landing-gallery-card">
+                {/* Full templates can contain anchors. Keep the decorative
+                    snapshot inert and outside the card's navigation link. */}
+                <div className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true" inert>
+                  <div className="landing-gallery-real-paper">
+                    <div className="paper landing-gallery-template">
+                      {(() => {
+                        const Preview = getTemplate(template.id).Component;
+                        return <Preview cv={sampleCV} />;
+                      })()}
+                    </div>
+                  </div>
+                </div>
+                <h3 className="landing-gallery-name">{template.name}</h3>
+                <p className="landing-gallery-description">{template.blurb}</p>
+                <Link className="landing-gallery-action" href={`/templates/${template.id}`}>
+                  Preview {template.name} template →
+                </Link>
+              </article>
+            ))}
+          </div>
+          <p className="landing-gallery-more"><Link href="/templates">View all {TEMPLATE_COUNT} templates →</Link></p>
+        </section>
+
+        <section className="landing-section landing-ba" aria-label="Before and after writing examples">
           <motion.div
             className="landing-about-head"
             initial={{ opacity: 0, y: 16 }}
@@ -165,7 +195,7 @@ export function Landing() {
             transition={{ duration: 0.5, ease: EASE }}
           >
             <span className="landing-eyebrow">Same facts, sharper story</span>
-            <h2 className="landing-h2">Watch a flat duty become a hireable win.</h2>
+            <h2 className="landing-h2">See how clearer writing strengthens your experience.</h2>
             <p className="landing-about-lead">
               Orire never invents experience — it re-frames what you already did
               into outcome-led lines a recruiter can&apos;t skim past. The
@@ -196,30 +226,6 @@ export function Landing() {
           </ul>
         </section>
 
-        <section className="landing-trust" aria-label="Why Orire">
-          <motion.ul
-            className="landing-trust-row"
-            initial={{ opacity: 0, y: 14 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.5, ease: EASE }}
-          >
-            {trustStats().map((stat, i) => (
-              <motion.li
-                key={stat.label}
-                className="landing-trust-item"
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{ delay: i * 0.08, duration: 0.45, ease: EASE }}
-              >
-                <span className="landing-trust-value">{stat.value}</span>
-                <span className="landing-trust-label">{stat.label}</span>
-              </motion.li>
-            ))}
-          </motion.ul>
-        </section>
-
         <section className="landing-section landing-features" aria-label="Features">
           <motion.h2
             className="landing-h2"
@@ -228,7 +234,7 @@ export function Landing() {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.5, ease: EASE }}
           >
-            Everything you need to ship a standout CV
+            Tools to help you create a confident, professional CV
           </motion.h2>
           <div className="landing-grid">
             {FEATURES.map((f, i) => (
@@ -248,65 +254,7 @@ export function Landing() {
           </div>
         </section>
 
-        <section id="how" className="landing-section landing-how" aria-label="How it works">
-          <motion.div
-            className="landing-about-head"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
-          >
-            <span className="landing-eyebrow">How it works</span>
-            <h2 className="landing-h2">From the CV you have to the one the role wants — in three steps.</h2>
-          </motion.div>
-          <ol className="landing-steps">
-            {howItWorksSteps().map((step, i) => (
-              <motion.li
-                key={step.n}
-                className="landing-step"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: i * 0.1, duration: 0.5, ease: EASE }}
-              >
-                <span className="landing-step-n" aria-hidden>{step.n}</span>
-                <span className="landing-step-icon" aria-hidden>{step.icon}</span>
-                <h3 className="landing-step-title">{step.title}</h3>
-                <p className="landing-step-body">{step.body}</p>
-              </motion.li>
-            ))}
-          </ol>
-        </section>
-
         <LiveDemo />
-
-        <section className="landing-section landing-quotes" aria-label="What to expect">
-          <motion.div
-            className="landing-about-head"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
-          >
-            <span className="landing-eyebrow">What to expect</span>
-            <h2 className="landing-h2">Built to move your real experience forward.</h2>
-          </motion.div>
-          <div className="landing-quote-grid">
-            {promises().map((p, i) => (
-              <motion.div
-                key={p.title}
-                className="landing-quote-card"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: (i % 2) * 0.08, duration: 0.5, ease: EASE }}
-              >
-                <span className="landing-promise-title">{p.title}</span>
-                <p className="landing-quote-text">{p.body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
 
         <section id="pricing" className="landing-section landing-pricing" aria-label="Pricing">
           <motion.div
@@ -317,7 +265,7 @@ export function Landing() {
             transition={{ duration: 0.5, ease: EASE }}
           >
             <span className="landing-eyebrow">Simple, honest pricing</span>
-            <h2 className="landing-h2">Start free. Upgrade when it lands you interviews.</h2>
+            <h2 className="landing-h2">Start free. Choose a plan when you need more.</h2>
             <p className="landing-about-lead">
               Every plan runs on Orire’s managed AI — no API keys to wrangle, no
               surprise bills. Upgrade, downgrade or cancel anytime.
@@ -333,7 +281,7 @@ export function Landing() {
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ delay: i * 0.08, duration: 0.5, ease: EASE }}
               >
-                {p.highlighted && <span className="landing-price-badge">Most popular</span>}
+                {p.highlighted && <span className="landing-price-badge">Recommended</span>}
                 <h3 className="landing-price-name">{p.label}</h3>
                 <div className="landing-price-amt">
                   <span className="landing-price-num">{p.priceLabel}</span>
@@ -366,8 +314,7 @@ export function Landing() {
           >
             <h2 className="landing-h2">Ready to re-brand your CV?</h2>
             <p className="landing-final-sub">
-              Create a free account and have a tailored, beautifully designed CV
-              in minutes.
+              Start with your experience, choose a template, and refine your CV at your own pace.
             </p>
             <button className="landing-cta lg" onClick={() => openAuth("signup")}>
               Get started free
@@ -375,26 +322,6 @@ export function Landing() {
           </motion.div>
         </section>
 
-        <section className="landing-section landing-about" aria-label="About Orire">
-          <motion.div
-            className="landing-about-head"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
-          >
-            <span className="landing-eyebrow">Good fortune, shared</span>
-            <h2 className="landing-h2">Be the next to share the good news</h2>
-            <p className="landing-about-lead">
-              Orire means good fortune — and the good news travels fast. People
-              arrive with the CV they already have and leave with one that’s
-              structured, elegant and tailored to the role they want. Your story
-              stays honest and yours: Orire works from your facts, shows its
-              reasoning, and keeps a consistent CV score so you can see exactly
-              how far a draft has moved. Land the role, then pass the luck on.
-            </p>
-          </motion.div>
-        </section>
       </main>
 
       <footer className="landing-foot">

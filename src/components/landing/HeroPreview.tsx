@@ -30,10 +30,10 @@ const Layers = memo(function Layers() {
 
   return (
     <>
-      <pre className="landing-hero-plain">{plain.join("\n")}</pre>
+      <pre className="landing-hero-plain" aria-hidden="true">{plain.join("\n")}</pre>
       <span className="landing-hero-chip landing-hero-chip-before">Before</span>
 
-      <div className="landing-hero-after" data-hero-after>
+      <div className="landing-hero-after" data-hero-after aria-hidden="true">
         <div className="landing-hero-paper-scale">
           <div className="paper landing-hero-paper">
             <Component cv={sampleCV} />
@@ -161,7 +161,8 @@ export function HeroPreview() {
       initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.7, delay: 0.15, ease: EASE }}
-      aria-label="Before and after preview"
+      role="group"
+      aria-label="Before and after comparison of a fictional example CV"
     >
       <div className="landing-hero-frame landing-hero-compare" ref={frameRef}>
         <Layers />
@@ -175,7 +176,7 @@ export function HeroPreview() {
       </div>
 
       <span className="landing-hero-frame-label">
-        Plain text becomes {/^[aeiou]/i.test(featured.name) ? "an" : "a"} <strong>{featured.name}</strong> CV — same facts, elevated. Drag to compare.
+        Fictional example: plain text becomes {/^[aeiou]/i.test(featured.name) ? "an" : "a"} <strong>{featured.name}</strong> CV. Drag to compare.
       </span>
     </motion.div>
   );
