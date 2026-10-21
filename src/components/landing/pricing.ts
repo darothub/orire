@@ -8,7 +8,7 @@
  * is unit-testable in the node env with no DOM.
  */
 
-import { PLANS, PLAN_ORDER, type PlanId } from "@/lib/plan/plan";
+import { PLANS, PLAN_METERS, PLAN_ORDER, type PlanId, type MeterRule } from "@/lib/plan/plan";
 
 export interface LandingPlan {
   id: PlanId;
@@ -19,6 +19,7 @@ export interface LandingPlan {
   cadence: string;
   blurb: string;
   perks: string[];
+  usageDetails: string[];
   /** The recommended plan is visually emphasised. */
   highlighted: boolean;
   /** Call-to-action copy for this card. */
@@ -27,6 +28,12 @@ export interface LandingPlan {
 
 /** The plan we steer visitors toward (best value for an active job hunt). */
 export const RECOMMENDED_PLAN: PlanId = "pro";
+
+/** Distinguish lifetime free quotas from recurring monthly allowances. */
+function quotaText(action: string, meter: MeterRule): string {
+  if (meter.cap === null) return action === "AI refinements" ? `${action}: unlimited (subject to fair use)` : `${action}: unlimited`;
+  return `${action}: ${meter.cap} ${meter.scope === "monthly" ? "per month" : "total, lifetime"}`;
+}
 
 /** Build display-ready pricing rows from the canonical plan policy. */
 export function landingPlans(): LandingPlan[] {
@@ -40,6 +47,11 @@ export function landingPlans(): LandingPlan[] {
       cadence: free ? "forever" : "/ month",
       blurb: plan.blurb,
       perks: plan.perks,
+      usageDetails: [
+        quotaText("AI refinements", PLAN_METERS[id].refine),
+        quotaText("Job-match simulations", PLAN_METERS[id].simulate),
+        quotaText("PDF / Word downloads", PLAN_METERS[id].download),
+      ],
       highlighted: id === RECOMMENDED_PLAN,
       cta: free ? "Start free" : `Choose ${plan.label}`,
     };

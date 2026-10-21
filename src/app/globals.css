@@ -4818,3 +4818,46 @@ html[data-theme="light"] .landing-scrim {
 /* Visible scoring caveat: readable in dark/light workspace themes. */
 .score-disclosure { max-width: 850px; margin: 12px 0 20px; padding: 12px 16px; border-left: 3px solid var(--accent); border-radius: 8px; color: var(--muted); background: var(--surface-soft); font-size: 13px; line-height: 1.65; }
 .score-disclosure strong { color: var(--text); }
+
+
+/* Pricing transparency: quota visibility and contract details across viewports. */
+.landing-price-usage-title {
+  margin: 18px 0 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f4f6fb;
+}
+.landing-price-usage {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(244,246,251,.8);
+}
+.landing-price-usage li::before {
+  content: "•";
+  margin-right: 9px;
+  color: #3ad9b4;
+}
+.landing-pricing-disclosure {
+  max-width: 880px;
+  margin: 28px auto 0;
+  text-align: center;
+  color: rgba(244,246,251,.78);
+  font-size: 13px;
+  line-height: 1.7;
+}
+@media (max-width: 760px) {
+  .landing-pricing-disclosure { text-align: left; padding-inline: 3px; }
+}
+
+
+/* All three pricing plans share one grid row and should have matching outer
+   heights even when their entitlement lists contain different numbers of lines. */
+@media (min-width: 761px) {
+  .landing-price-grid { align-items: stretch; }
+  .landing-price-card { height: 100%; }
+}
