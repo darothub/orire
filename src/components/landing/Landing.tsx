@@ -16,6 +16,8 @@ import { employerLogos } from "@/components/landing/logos";
 import { HeroPreview } from "@/components/landing/HeroPreview";
 import { LiveDemo } from "@/components/landing/LiveDemo";
 import { demoTemplates } from "@/components/landing/demo";
+import { getTemplate } from "@/components/templates/registry";
+import { sampleCV } from "@/lib/cv/sample";
 import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -100,7 +102,7 @@ export function Landing() {
 
       <main className="landing-main">
         <section className="landing-hero">
-          <div className="landing-hero-grid">
+          <div className="landing-hero-grid landing-hero-centered">
             <motion.div
               className="landing-hero-inner"
               initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
@@ -109,35 +111,26 @@ export function Landing() {
             >
               <span className="landing-eyebrow">Your experience, clearly presented</span>
               <h1 className="landing-title">
-                Build a CV that shows your strengths.
+                Build a CV that makes your experience stand out.
               </h1>
               <p className="landing-sub">
-                Create a polished CV, tailor it to a role, and improve how you
-                present your real experience. Explore professional templates, see
-                changes live, and review AI suggestions before using them.
+                Create, refine and download a professional CV with AI-powered
+                assistance and carefully designed templates. Keep your experience
+                accurate and choose the final wording yourself.
               </p>
               <div className="landing-hero-cta">
                 <button className="landing-cta lg" onClick={() => openAuth("signup")}>
-                  Create my CV
+                  Create your CV →
                 </button>
                 <a className="landing-ghost lg" href="#templates">
                   Explore templates
                 </a>
-                <button className="landing-ghost lg" onClick={() => openAuth("signin")}>
-                  Sign in
-                </button>
               </div>
-              <ul className="landing-usps" aria-label="What Orire does">
-                <li><span aria-hidden>◎</span> Tailor to a job</li>
-                <li><span aria-hidden>⚖</span> Review your CV</li>
-                <li><span aria-hidden>❖</span> {TEMPLATE_COUNT} standout templates</li>
-              </ul>
             </motion.div>
-            <HeroPreview />
           </div>
         </section>
 
-        <section id="how" className="landing-section landing-how" aria-label="How it works">
+        <section id="how" className="landing-section landing-how landing-how-compact" aria-label="How it works">
           <motion.div
             className="landing-about-head"
             initial={{ opacity: 0, y: 16 }}
@@ -146,7 +139,7 @@ export function Landing() {
             transition={{ duration: 0.5, ease: EASE }}
           >
             <span className="landing-eyebrow">How it works</span>
-            <h2 className="landing-h2">From your existing CV to a polished document in three steps.</h2>
+            <h2 className="landing-h2">Three simple steps to a stronger CV</h2>
           </motion.div>
           <ol className="landing-steps">
             {howItWorksSteps().map((step, i) => (
@@ -158,9 +151,8 @@ export function Landing() {
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ delay: i * 0.1, duration: 0.5, ease: EASE }}
               >
-                <span className="landing-step-n" aria-hidden>{step.n}</span>
-                <span className="landing-step-icon" aria-hidden>{step.icon}</span>
-                <h3 className="landing-step-title">{step.title}</h3>
+                <span className="landing-step-n" aria-hidden>{String(step.n).padStart(2, "0")}</span>
+                <h3 className="landing-step-title">{["Add your details", "Refine with AI", "Download your CV"][i]}</h3>
                 <p className="landing-step-body">{step.body}</p>
               </motion.li>
             ))}
@@ -172,7 +164,7 @@ export function Landing() {
             <span className="landing-eyebrow">Designed for your next step</span>
             <h2 id="landing-gallery-heading" className="landing-h2">Explore real CV templates before signing up.</h2>
             <p className="landing-about-lead">
-              Preview a selection of Orire&apos;s available layouts using fictional example details.
+              See how three available Orire templates present the same fictional example CV.
               Choose a design that fits your experience, then make it your own.
             </p>
           </div>
@@ -180,16 +172,13 @@ export function Landing() {
             {demoTemplates().slice(0, 3).map((template) => (
               <Link key={template.id} className="landing-gallery-card" href={`/templates/${template.id}`}>
                 <span className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true">
-                  <span className="landing-gallery-paper">
-                    <span className="landing-gallery-line wide" />
-                    <span className="landing-gallery-line" />
-                    <span className="landing-gallery-rule" />
-                    <span className="landing-gallery-line wide" />
-                    <span className="landing-gallery-line" />
-                    <span className="landing-gallery-line short" />
-                    <span className="landing-gallery-rule" />
-                    <span className="landing-gallery-line wide" />
-                    <span className="landing-gallery-line short" />
+                  <span className="landing-gallery-real-paper">
+                    <span className="paper landing-gallery-template">
+                      {(() => {
+                        const Preview = getTemplate(template.id).Component;
+                        return <Preview cv={sampleCV} />;
+                      })()}
+                    </span>
                   </span>
                 </span>
                 <span className="landing-gallery-name">{template.name}</span>
@@ -199,6 +188,15 @@ export function Landing() {
             ))}
           </div>
           <p className="landing-gallery-more"><Link href="/templates">View all {TEMPLATE_COUNT} templates →</Link></p>
+        </section>
+
+        <section className="landing-section landing-compare" aria-labelledby="landing-compare-heading">
+          <div className="landing-about-head">
+            <span className="landing-eyebrow">See the transformation</span>
+            <h2 id="landing-compare-heading" className="landing-h2">Your experience, with better presentation.</h2>
+            <p className="landing-about-lead">Move the divider to compare a fictional example CV before and after formatting.</p>
+          </div>
+          <HeroPreview />
         </section>
 
         <section className="landing-logos" aria-label="Target employers">
