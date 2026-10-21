@@ -5,6 +5,9 @@ import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { useFlowStore, COMPOSABLE_BLOCKS } from "@/lib/store/flowStore";
 import { useUsageStore } from "@/lib/store/usageStore";
+import { useCVStore } from "@/lib/store/cvStore";
+import { useLibraryStore } from "@/lib/store/libraryStore";
+import { recommendedNextBlock } from "@/lib/cv/recommendedNext";
 import type { Metric } from "@/lib/plan/plan";
 
 /** Metered blocks that grey out / route to Plans once the free cap is spent. */
@@ -14,7 +17,16 @@ const METRIC_FOR_VIEW: Partial<Record<WorkspaceView, Metric>> = {
   export: "download",
 };
 
-function BlockCard({ view }: { view: WorkspaceView }) {
+/** Reads the live signals `recommendedNextBlock` decides on — see that
+ *  function for why these three and not the rest of the grid. */
+function useRecommendedNext(): WorkspaceView | null {
+  const started = useCVStore((s) => s.started);
+  const refined = useCVStore((s) => s.baseline !== null);
+  const exported = useLibraryStore((s) => s.versions.some((v) => !!v.lastExportedAt));
+  return recommendedNextBlock({ started, refined, exported });
+}
+
+function BlockCard({ view, number, recommended }: { view: WorkspaceView; number: number; recommended: boolean }) {
   const meta = VIEW_META[view];
   const setView = useViewStore((s) => s.setView);
   const inFlow = useFlowStore((s) => s.sequence.includes(view));
@@ -24,12 +36,16 @@ function BlockCard({ view }: { view: WorkspaceView }) {
   const locked = useUsageStore((s) => (metric ? s.exhausted(metric) : false));
 
   return (
-    <div className={`spot-card${locked ? " is-locked" : ""}`}>
+    <div className={`spot-card${locked ? " is-locked" : ""}${recommended ? " is-recommended" : ""}`}>
+      <span className="spot-card-num" aria-hidden>{number}</span>
       <button
         type="button"
         className="spot-card-open"
         onClick={() => setView(locked ? "plans" : view)}
-        aria-label={locked ? `${meta.label} — free limit reached, upgrade to continue` : `Open ${meta.label}`}
+        aria-label={
+          (locked ? `${meta.label} — free limit reached, upgrade to continue` : `Open ${meta.label}`) +
+          (recommended ? " — recommended next" : "")
+        }
       >
         <span className="spot-card-icon" aria-hidden>{meta.icon}</span>
         <span className="spot-card-text">
@@ -37,7 +53,10 @@ function BlockCard({ view }: { view: WorkspaceView }) {
             {meta.label}
             {locked && <span className="spot-card-lock" aria-hidden> 🔒</span>}
           </span>
-          <span className="spot-card-hint">{locked ? "Free limit reached — upgrade to Pro." : meta.hint}</span>
+          <span className="spot-card-hint">
+            {recommended && <span className="spot-card-next">Recommended next · </span>}
+            {locked ? "Free limit reached — upgrade to Pro." : meta.hint}
+          </span>
         </span>
       </button>
       <button
@@ -95,6 +114,8 @@ export function SpotlightView() {
   const resetFlow = useFlowStore((s) => s.resetFlow);
   const coachSeen = useFlowStore((s) => s.coachSeen);
   const dismissCoach = useFlowStore((s) => s.dismissCoach);
+  const recommendedNext = useRecommendedNext();
+  const gridBlocks = COMPOSABLE_BLOCKS.filter((v) => v !== "target");
 
   return (
     <motion.div
@@ -126,8 +147,8 @@ export function SpotlightView() {
       <SimulateHero />
 
       <div className="spot-grid">
-        {COMPOSABLE_BLOCKS.filter((v) => v !== "target").map((v) => (
-          <BlockCard key={v} view={v} />
+        {gridBlocks.map((v, i) => (
+          <BlockCard key={v} view={v} number={i + 1} recommended={v === recommendedNext} />
         ))}
       </div>
 
