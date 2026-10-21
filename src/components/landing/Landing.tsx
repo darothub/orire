@@ -6,7 +6,6 @@ import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesL
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { CvShowcase } from "@/components/landing/CvShowcase";
 import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { trustStats } from "@/components/landing/trust";
@@ -73,9 +72,6 @@ export function Landing() {
 
   return (
     <div className="landing">
-      {/* Signature living backdrop + legibility scrim (shared with the gate). */}
-      <CvShowcase />
-      <div className="auth-scrim landing-scrim" aria-hidden />
 
       <header className="landing-nav">
         <div className="landing-brand">
