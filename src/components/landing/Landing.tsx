@@ -15,6 +15,7 @@ import { promises } from "@/components/landing/promises";
 import { employerLogos } from "@/components/landing/logos";
 import { HeroPreview } from "@/components/landing/HeroPreview";
 import { LiveDemo } from "@/components/landing/LiveDemo";
+import { demoTemplates } from "@/components/landing/demo";
 import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -31,7 +32,7 @@ const FEATURES: Feature[] = [
   {
     icon: "◎",
     title: "Simulate the ideal candidate",
-    body: "See the CV that would match a role 100%, and exactly where yours falls short — then move your real experience toward that concrete target. Nothing else shows you the gap.",
+    body: "Explore a simulated role-match profile, compare it with your CV, and identify experience and wording you may want to highlight. The simulation is guidance, not an employer decision.",
   },
   {
     icon: "⟳",
@@ -56,7 +57,7 @@ const FEATURES: Feature[] = [
   {
     icon: "❖",
     title: `${TEMPLATE_COUNT} standout templates`,
-    body: "Beautifully animated, ATS-ready layouts — live preview on the right while you edit on the left.",
+    body: "Explore distinct CV layouts, then see your changes in a live preview as you edit.",
   },
 ];
 
@@ -83,6 +84,7 @@ export function Landing() {
         <div className="landing-nav-actions">
           <nav className="landing-nav-links" aria-label="Sections">
             <a href="#how">How it works</a>
+            <a href="#templates">Templates</a>
             <a href="#demo">Live demo</a>
             <a href="#pricing">Pricing</a>
           </nav>
@@ -105,32 +107,68 @@ export function Landing() {
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.7, ease: EASE }}
             >
-              <span className="landing-eyebrow">The ideal candidate, revealed</span>
+              <span className="landing-eyebrow">Your experience, clearly presented</span>
               <h1 className="landing-title">
-                See the perfect CV for any job — then close the gap to yours.
+                Build a CV that shows your strengths.
               </h1>
               <p className="landing-sub">
-                Orire simulates the candidate who&apos;d match the role 100%, shows
-                exactly where you fall short, and moves your real experience toward
-                that target — then re-brands, refines and scores the result. Never
-                inventing anything you didn&apos;t do.
+                Create a polished CV, tailor it to a role, and improve how you
+                present your real experience. Explore professional templates, see
+                changes live, and review AI suggestions before using them.
               </p>
               <div className="landing-hero-cta">
                 <button className="landing-cta lg" onClick={() => openAuth("signup")}>
-                  Get started free
+                  Create my CV
                 </button>
+                <a className="landing-ghost lg" href="#templates">
+                  Explore templates
+                </a>
                 <button className="landing-ghost lg" onClick={() => openAuth("signin")}>
-                  I already have an account
+                  Sign in
                 </button>
               </div>
               <ul className="landing-usps" aria-label="What Orire does">
-                <li><span aria-hidden>◎</span> Simulate the ideal match</li>
-                <li><span aria-hidden>⚖</span> Clear CV score</li>
+                <li><span aria-hidden>◎</span> Tailor to a job</li>
+                <li><span aria-hidden>⚖</span> Review your CV</li>
                 <li><span aria-hidden>❖</span> {TEMPLATE_COUNT} standout templates</li>
               </ul>
             </motion.div>
             <HeroPreview />
           </div>
+        </section>
+
+        <section id="templates" className="landing-section landing-gallery" aria-labelledby="landing-gallery-heading">
+          <div className="landing-about-head">
+            <span className="landing-eyebrow">Designed for your next step</span>
+            <h2 id="landing-gallery-heading" className="landing-h2">Explore real CV templates before signing up.</h2>
+            <p className="landing-about-lead">
+              Preview a selection of Orire&apos;s available layouts using fictional example details.
+              Choose a design that fits your experience, then make it your own.
+            </p>
+          </div>
+          <div className="landing-gallery-grid">
+            {demoTemplates().slice(0, 3).map((template) => (
+              <Link key={template.id} className="landing-gallery-card" href={`/templates/${template.id}`}>
+                <span className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true">
+                  <span className="landing-gallery-paper">
+                    <span className="landing-gallery-line wide" />
+                    <span className="landing-gallery-line" />
+                    <span className="landing-gallery-rule" />
+                    <span className="landing-gallery-line wide" />
+                    <span className="landing-gallery-line" />
+                    <span className="landing-gallery-line short" />
+                    <span className="landing-gallery-rule" />
+                    <span className="landing-gallery-line wide" />
+                    <span className="landing-gallery-line short" />
+                  </span>
+                </span>
+                <span className="landing-gallery-name">{template.name}</span>
+                <span className="landing-gallery-description">{template.blurb}</span>
+                <span className="landing-gallery-action">Preview template →</span>
+              </Link>
+            ))}
+          </div>
+          <p className="landing-gallery-more"><Link href="/templates">View all {TEMPLATE_COUNT} templates →</Link></p>
         </section>
 
         <section className="landing-logos" aria-label="Target employers">
@@ -141,7 +179,7 @@ export function Landing() {
             viewport={{ once: true, amount: 0.6 }}
             transition={{ duration: 0.5, ease: EASE }}
           >
-            Build a CV ready for roles at teams like these
+            Explore roles at organizations like these — no affiliation or endorsement implied
           </motion.p>
           <motion.ul
             className="landing-logos-row"
@@ -317,7 +355,7 @@ export function Landing() {
             transition={{ duration: 0.5, ease: EASE }}
           >
             <span className="landing-eyebrow">Simple, honest pricing</span>
-            <h2 className="landing-h2">Start free. Upgrade when it lands you interviews.</h2>
+            <h2 className="landing-h2">Start free. Choose a plan when you need more.</h2>
             <p className="landing-about-lead">
               Every plan runs on Orire’s managed AI — no API keys to wrangle, no
               surprise bills. Upgrade, downgrade or cancel anytime.
@@ -333,7 +371,7 @@ export function Landing() {
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ delay: i * 0.08, duration: 0.5, ease: EASE }}
               >
-                {p.highlighted && <span className="landing-price-badge">Most popular</span>}
+                {p.highlighted && <span className="landing-price-badge">Recommended</span>}
                 <h3 className="landing-price-name">{p.label}</h3>
                 <div className="landing-price-amt">
                   <span className="landing-price-num">{p.priceLabel}</span>
