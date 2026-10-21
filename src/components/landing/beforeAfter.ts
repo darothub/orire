@@ -10,7 +10,7 @@
 export interface BeforeAfterLine {
   /** The dull "as uploaded" phrasing. */
   before: string;
-  /** The re-branded, outcome-led phrasing (same facts, sharpened). */
+  /** Illustrative rewritten phrasing without unverifiable quantitative claims. */
   after: string;
 }
 
