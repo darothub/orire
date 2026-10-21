@@ -162,8 +162,10 @@ export function Landing() {
           </div>
           <div className="landing-gallery-grid">
             {demoTemplates().slice(0, 3).map((template) => (
-              <Link key={template.id} className="landing-gallery-card" href={`/templates/${template.id}`}>
-                <div className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true">
+              <article key={template.id} className="landing-gallery-card">
+                {/* Full templates can contain anchors. Keep the decorative
+                    snapshot inert and outside the card's navigation link. */}
+                <div className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true" inert>
                   <div className="landing-gallery-real-paper">
                     <div className="paper landing-gallery-template">
                       {(() => {
@@ -173,10 +175,12 @@ export function Landing() {
                     </div>
                   </div>
                 </div>
-                <span className="landing-gallery-name">{template.name}</span>
-                <span className="landing-gallery-description">{template.blurb}</span>
-                <span className="landing-gallery-action">Preview template →</span>
-              </Link>
+                <h3 className="landing-gallery-name">{template.name}</h3>
+                <p className="landing-gallery-description">{template.blurb}</p>
+                <Link className="landing-gallery-action" href={`/templates/${template.id}`}>
+                  Preview {template.name} template →
+                </Link>
+              </article>
             ))}
           </div>
           <p className="landing-gallery-more"><Link href="/templates">View all {TEMPLATE_COUNT} templates →</Link></p>
