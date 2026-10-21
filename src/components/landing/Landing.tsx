@@ -173,12 +173,12 @@ export function Landing() {
               <Link key={template.id} className="landing-gallery-card" href={`/templates/${template.id}`}>
                 <div className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true">
                   <div className="landing-gallery-real-paper">
-                    <span className="paper landing-gallery-template">
+                    <div className="paper landing-gallery-template">
                       {(() => {
                         const Preview = getTemplate(template.id).Component;
                         return <Preview cv={sampleCV} />;
                       })()}
-                    </span>
+                    </div>
                   </div>
                 </div>
                 <span className="landing-gallery-name">{template.name}</span>
