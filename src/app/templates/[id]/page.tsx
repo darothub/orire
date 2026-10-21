@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import "../../content.css";
 import { TEMPLATE_CATALOG, getTemplateInfo } from "@/lib/templates/catalog";
 import { getTemplateCopy } from "@/lib/seo/templatesContent";
+import { TemplateDetailPreview } from "@/components/templates/TemplateDetailPreview";
 
 export function generateStaticParams() {
   return TEMPLATE_CATALOG.map((t) => ({ id: t.id }));
@@ -38,7 +39,7 @@ export default async function TemplateDetail({
   return (
     <main className="content content-narrow">
       <Link href="/templates" className="content-back">← All templates</Link>
-      <span className="tpl-hero" style={{ display: "block", background: info.swatch }} aria-hidden />
+      <TemplateDetailPreview id={id} name={info.name} />
       <h1>{info.name} CV template</h1>
       <p className="content-lede">{copy?.summary ?? info.blurb}</p>
 
@@ -53,12 +54,12 @@ export default async function TemplateDetail({
       </ul>
 
       <p style={{ marginTop: 28 }}>
-        Every template is ATS-ready and exports to a clean PDF. Orire re-frames
+        Orire offers PDF exports and editable CV designs. Orire re-frames
         your real experience into the design — it never invents anything that
         is not already in your CV.
       </p>
 
-      <Link href="/" className="content-cta">Use the {info.name} template →</Link>
+      <Link href="/" className="content-cta">Create your CV with {info.name} →</Link>
 
       <p style={{ marginTop: 36 }}>
         See <Link href="/templates">all {TEMPLATE_CATALOG.length} templates</Link>{" "}
