@@ -4782,3 +4782,24 @@ html[data-theme="light"] .landing-scrim {
   .landing-main > .landing-section .landing-about-head .landing-h2,
   .landing-features > .landing-h2 { font-size: clamp(29px, 8vw, 38px); }
 }
+
+
+/* The gallery card is an article, not a link: actual CV previews contain
+   their own anchors, so only its explicit "Preview" action is interactive. */
+.landing-gallery .landing-gallery-card:focus-within {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.landing-gallery .landing-gallery-action {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: none;
+}
+.landing-gallery .landing-gallery-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
