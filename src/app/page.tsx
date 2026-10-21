@@ -158,7 +158,7 @@ function TargetChip({ mounted }: { mounted: boolean }) {
     <button
       className="tgt-chip"
       onClick={() => setView("target")}
-      title="Open the Simulate page — edit your CV against the locked ideal"
+      title="Open simulated match guidance — not an ATS score or hiring prediction"
       style={{ ["--tgt-hue" as string]: String(hue) }}
     >
       <span className="tgt-chip-ic" aria-hidden>🎯</span>
