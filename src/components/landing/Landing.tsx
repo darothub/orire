@@ -267,8 +267,8 @@ export function Landing() {
             <span className="landing-eyebrow">Simple, honest pricing</span>
             <h2 className="landing-h2">Start free. Choose a plan when you need more.</h2>
             <p className="landing-about-lead">
-              Every plan runs on Orire’s managed AI — no API keys to wrangle, no
-              surprise bills. Upgrade, downgrade or cancel anytime.
+              Prices are in US dollars (USD). Paid plans renew monthly.
+              Orire includes managed AI usage—no separate AI API key required.
             </p>
           </motion.div>
           <div className="landing-price-grid">
@@ -288,6 +288,10 @@ export function Landing() {
                   <span className="landing-price-cad">{p.cadence}</span>
                 </div>
                 <p className="landing-price-blurb">{p.blurb}</p>
+                <p className="landing-price-usage-title">Usage limits</p>
+                <ul className="landing-price-usage" aria-label={`${p.label} usage limits`}>
+                  {p.usageDetails.map((detail) => <li key={detail}>{detail}</li>)}
+                </ul>
                 <ul className="landing-price-perks">
                   {p.perks.map((perk) => (
                     <li key={perk}><span aria-hidden>✓</span> {perk}</li>
@@ -302,6 +306,7 @@ export function Landing() {
               </motion.div>
             ))}
           </div>
+          <p className="landing-pricing-disclosure">Paid subscriptions renew monthly in USD until cancelled. Cancel through billing settings; access generally continues until the current paid period ends. Applicable taxes, if any, are shown during checkout before payment. Free quotas are lifetime totals, not monthly allowances.</p>
         </section>
 
         <section className="landing-section landing-final">
