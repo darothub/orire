@@ -65,11 +65,11 @@ export function RateView() {
       <div className="ws-head">
         <div>
           <h2>{VIEW_META.rate.label}</h2>
-          <p>How your final CV scores against the initial — deterministic across six dimensions.</p>
+          <p>An internal writing-quality rubric comparing your current and initial CV. Not an ATS score or hiring prediction.</p>
         </div>
       </div>
 
-        {!started ? (
+        <p className="score-disclosure"><strong>How grading works:</strong> This score reflects Orire’s fixed CV-writing rubric. It helps track edits; employers and applicant-tracking systems may evaluate your CV differently.</p>\n\n        {!started ? (
           <div className="rate-hero solo">
             <Ring value={0} label="Rating" sub="—" />
             <p className="rate-note">
