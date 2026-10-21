@@ -4556,3 +4556,94 @@ html[data-theme="light"] .landing-scrim {
 .landing-gallery-more { margin-top: 20px; text-align: center; }
 .landing-gallery-more a { color: var(--accent-2); }
 @media (max-width: 760px) { .landing-gallery-grid { grid-template-columns: 1fr; } .landing-gallery-art { min-height: 155px; } }
+
+
+/* Reference-inspired homepage composition: centered promise, compact steps,
+   and authentic CV samples. Scoped overrides preserve the authenticated studio. */
+.landing-hero {
+  min-height: auto;
+  padding: clamp(52px, 8vw, 105px) 0 clamp(24px, 4vw, 48px);
+}
+.landing-hero-centered { display: block; max-width: 1000px; margin: 0 auto; }
+.landing-hero-centered .landing-hero-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  text-align: center;
+}
+.landing-hero-centered .landing-title {
+  max-width: 920px;
+  margin-inline: auto;
+  font-size: clamp(36px, 5.3vw, 64px);
+  line-height: 1.1;
+}
+.landing-hero-centered .landing-sub {
+  max-width: 790px;
+  margin-inline: auto;
+}
+.landing-hero-centered .landing-hero-cta { justify-content: center; }
+.landing-how-compact { padding-top: clamp(22px, 3vw, 46px); }
+.landing-how-compact .landing-about-head { text-align: center; margin-bottom: 24px; }
+.landing-how-compact .landing-steps { gap: 14px; }
+.landing-how-compact .landing-step {
+  min-height: 156px;
+  padding: 24px 22px;
+  box-shadow: none;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  backdrop-filter: none;
+}
+.landing-how-compact .landing-step-n {
+  position: static;
+  display: block;
+  margin-bottom: 15px;
+  font: 500 14px/1.2 var(--font-sans);
+  color: var(--muted);
+}
+.landing-how-compact .landing-step-title { font-size: 19px; }
+.landing-how-compact .landing-step-body { font-size: 13px; }
+.landing-gallery .landing-about-head { text-align: center; }
+.landing-gallery .landing-gallery-grid { gap: clamp(12px, 2vw, 24px); }
+.landing-gallery .landing-gallery-card { text-align: center; background: var(--surface-soft); }
+.landing-gallery .landing-gallery-art {
+  height: 300px;
+  padding: 20px 6px 0;
+  align-items: start;
+  display: flex;
+  justify-content: center;
+}
+.landing-gallery-real-paper {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 265px;
+  height: 280px;
+  overflow: hidden;
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,.22));
+}
+.landing-gallery-template {
+  width: 794px;
+  min-height: 1123px;
+  transform: scale(.333);
+  transform-origin: top left;
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+}
+.landing-gallery .landing-gallery-name { margin-top: 5px; }
+.landing-gallery .landing-gallery-action { display: block; margin-bottom: 3px; }
+.landing-compare .landing-hero-visual { max-width: 780px; margin: 24px auto 0; }
+.landing-compare .landing-hero-frame { height: 420px; }
+#templates { scroll-margin-top: 84px; }
+@media (max-width: 760px) {
+  .landing-hero { padding-top: 46px; }
+  .landing-hero-centered .landing-title { letter-spacing: -.7px; }
+  .landing-hero-centered .landing-hero-cta { gap: 10px; }
+  .landing-how-compact .landing-steps { grid-template-columns: 1fr; }
+  .landing-how-compact .landing-step { min-height: auto; }
+  .landing-gallery .landing-gallery-grid { grid-template-columns: 1fr; max-width: 460px; margin-inline: auto; }
+  .landing-compare .landing-hero-frame { height: 320px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-gallery-card { transition: none; }
+  .landing-gallery-card:hover { transform: none; }
+}
