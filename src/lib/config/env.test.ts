@@ -111,6 +111,22 @@ describe("checkEnv — feature-group warnings", () => {
     });
     expect(r.warnings.some((w) => w.includes("Shared rate limiting is not configured"))).toBe(false);
   });
+
+  it("warns in production when CRON_SECRET is unset (the activation-nudge cron will never send)", () => {
+    const r = checkEnv({ ...validEnv(), NODE_ENV: "production" });
+    expect(r.ok).toBe(true);
+    expect(r.warnings.some((w) => w.includes("CRON_SECRET is not set"))).toBe(true);
+  });
+
+  it("does not warn about CRON_SECRET once it's set", () => {
+    const r = checkEnv({ ...validEnv(), NODE_ENV: "production", CRON_SECRET: "s" });
+    expect(r.warnings.some((w) => w.includes("CRON_SECRET"))).toBe(false);
+  });
+
+  it("does not warn about CRON_SECRET outside production", () => {
+    const r = checkEnv({ ...validEnv(), NODE_ENV: "development" });
+    expect(r.warnings.some((w) => w.includes("CRON_SECRET"))).toBe(false);
+  });
 });
 
 describe("formatEnvError", () => {
