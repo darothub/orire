@@ -137,6 +137,36 @@ export function Landing() {
           </div>
         </section>
 
+        <section id="how" className="landing-section landing-how" aria-label="How it works">
+          <motion.div
+            className="landing-about-head"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.4 }}
+            transition={{ duration: 0.5, ease: EASE }}
+          >
+            <span className="landing-eyebrow">How it works</span>
+            <h2 className="landing-h2">From your existing CV to a polished document in three steps.</h2>
+          </motion.div>
+          <ol className="landing-steps">
+            {howItWorksSteps().map((step, i) => (
+              <motion.li
+                key={step.n}
+                className="landing-step"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: EASE }}
+              >
+                <span className="landing-step-n" aria-hidden>{step.n}</span>
+                <span className="landing-step-icon" aria-hidden>{step.icon}</span>
+                <h3 className="landing-step-title">{step.title}</h3>
+                <p className="landing-step-body">{step.body}</p>
+              </motion.li>
+            ))}
+          </ol>
+        </section>
+
         <section id="templates" className="landing-section landing-gallery" aria-labelledby="landing-gallery-heading">
           <div className="landing-about-head">
             <span className="landing-eyebrow">Designed for your next step</span>
@@ -284,36 +314,6 @@ export function Landing() {
               </motion.div>
             ))}
           </div>
-        </section>
-
-        <section id="how" className="landing-section landing-how" aria-label="How it works">
-          <motion.div
-            className="landing-about-head"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
-          >
-            <span className="landing-eyebrow">How it works</span>
-            <h2 className="landing-h2">From the CV you have to the one the role wants — in three steps.</h2>
-          </motion.div>
-          <ol className="landing-steps">
-            {howItWorksSteps().map((step, i) => (
-              <motion.li
-                key={step.n}
-                className="landing-step"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: i * 0.1, duration: 0.5, ease: EASE }}
-              >
-                <span className="landing-step-n" aria-hidden>{step.n}</span>
-                <span className="landing-step-icon" aria-hidden>{step.icon}</span>
-                <h3 className="landing-step-title">{step.title}</h3>
-                <p className="landing-step-body">{step.body}</p>
-              </motion.li>
-            ))}
-          </ol>
         </section>
 
         <LiveDemo />
