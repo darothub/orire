@@ -43,4 +43,16 @@ describe("landingPlans", () => {
       expect(row.perks[0]).toBe(first);
     }
   });
+  it("displays lifetime and monthly usage correctly from canonical meters", () => {
+    const rows = landingPlans();
+    const free = rows.find((row) => row.id === "free")!;
+    const pro = rows.find((row) => row.id === "pro")!;
+    const career = rows.find((row) => row.id === "career")!;
+    expect(free.usageDetails).toContain("AI refinements: 3 total, lifetime");
+    expect(free.usageDetails).toContain("Job-match simulations: 1 total, lifetime");
+    expect(free.usageDetails).toContain("PDF / Word downloads: 3 total, lifetime");
+    expect(pro.usageDetails).toContain("AI refinements: 30 per month");
+    expect(pro.usageDetails).toContain("PDF / Word downloads: unlimited");
+    expect(career.usageDetails).toContain("AI refinements: unlimited (subject to fair use)");
+  });
 });
