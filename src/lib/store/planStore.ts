@@ -4,6 +4,25 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { PlanId } from "@/lib/plan/plan";
 
+/**
+ * Why this store still mirrors a usage count, separately from `usageStore`:
+ *
+ * `usageStore` is a signed-in-only, server-authoritative mirror of EVERY
+ * metered metric (refine/simulate/download) via `readUsage()`. It has no
+ * notion of an anonymous trial — its `summary` is simply null when signed
+ * out.
+ *
+ * `planStore` predates it and still owns the one thing `usageStore` can't:
+ * the LOCAL, anonymous refine-trial counter (`refinesUsed`, reset monthly)
+ * that lets a signed-out visitor try Refine before creating an account. Once
+ * signed in, `refineUsed()` below switches to the server-mirrored count
+ * instead — kept here (not read from `usageStore`) only so callers get one
+ * seamless number across the anonymous→signed-in transition without caring
+ * which backs it. This was previously named `usedThisMonth()`, which read as
+ * a general usage figure and invited confusion with `usageStore`'s broader
+ * multi-metric one; it only ever counted refines, so the name now says so.
+ */
+
 /** Current calendar month key, e.g. "2026-09" — resets usage automatically. */
 function monthKey(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -26,8 +45,10 @@ interface PlanState {
   setPlan: (p: PlanId) => void;
   /** Count one refine run against the LOCAL cap (a compare counts once). */
   recordRefine: () => void;
-  /** Live count for the current month — server truth when signed in. */
-  usedThisMonth: () => number;
+  /** Refines used this month — server truth when signed in, the local trial
+   *  counter otherwise. Refine-specific; see the module comment above for why
+   *  this doesn't just read from `usageStore`. */
+  refineUsed: () => number;
 
   /** Adopt server-authoritative plan + usage (after authorize/readEntitlement). */
   syncFromServer: (v: { plan: PlanId; usedThisMonth: number }) => void;
@@ -56,7 +77,7 @@ export const usePlanStore = create<PlanState>()(
             : { usageMonth: now, refinesUsed: 1 }
         );
       },
-      usedThisMonth: () => {
+      refineUsed: () => {
         const s = get();
         if (s.serverActive) return s.serverUsed;
         return s.usageMonth === monthKey() ? s.refinesUsed : 0;

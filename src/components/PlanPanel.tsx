@@ -39,7 +39,7 @@ export function PlanPanel() {
   const setPlan = usePlanStore((s) => s.setPlan);
   const syncFromServer = usePlanStore((s) => s.syncFromServer);
   const openAuth = useUIStore((s) => s.openAuth);
-  const used = usePlanStore((s) => s.usedThisMonth());
+  const used = usePlanStore((s) => s.refineUsed());
 
   const [billing, setBilling] = useState<BillingDetail | null>(null);
   const [busy, setBusy] = useState<PlanId | "cancel" | "resume" | "card" | null>(null);
