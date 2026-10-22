@@ -14,6 +14,12 @@ for (const viewport of [
     appPage.on("pageerror", (error) => errors.push(error.message));
     await appPage.setViewportSize({ width: viewport.width, height: viewport.height });
     await appPage.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
+    // The real consent dialog is positioned over the review footer; dismiss it
+    // before navigating. This also leaves screenshots unobstructed.
+    const consent = appPage.getByRole("dialog", { name: "Cookie consent" });
+    await expect(consent).toBeVisible({ timeout: 15_000 });
+    await consent.getByRole("button", { name: "Decline" }).click();
+    await expect(consent).toBeHidden();
 
     await appPage.route("**/api/ai/refine", async (route) => {
       await route.fulfill({
@@ -44,7 +50,11 @@ for (const viewport of [
     await appPage.locator("textarea.ai-jd").fill(
       "Hiring a product designer with experience improving accessibility and user interfaces.",
     );
-    await appPage.getByRole("button", { name: "Continue", exact: true }).click();
+    // Framer Motion may leave the previous step in the DOM during its exit
+    // transition. Scope Continue to the active job-description step.
+    await appPage.locator(".refine-step").filter({
+      has: appPage.locator("textarea.ai-jd"),
+    }).getByRole("button", { name: "Continue", exact: true }).click();
     await appPage.getByRole("button", { name: "Refine my CV" }).click();
 
     await expect(appPage.getByRole("button", { name: /Review & apply/ })).toBeVisible({ timeout: 15_000 });
