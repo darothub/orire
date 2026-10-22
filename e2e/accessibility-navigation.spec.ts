@@ -53,7 +53,8 @@ for (const viewport of [
     await expect(noir).toHaveAttribute("aria-pressed", "true");
     await expect(previewStatus).toContainText("Noir");
 
-    await page.locator("#demo").getByRole("button", { name: /Enlarge .* CV preview/ }).click();
+    const enlargeButton = page.locator("#demo").getByRole("button", { name: /Enlarge .* CV preview/ });
+    await enlargeButton.click();
     const dialog = page.getByRole("dialog", { name: /full-size CV preview/ });
     await expect(dialog).toBeVisible();
     const textAlternative = dialog.getByRole("region", { name: "Fictional CV text alternative" });
@@ -71,6 +72,9 @@ for (const viewport of [
 
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
+    // A modal must return keyboard focus to the control that opened it.
+    // This is a behavioral regression check: no visual product change.
+    await expect(enlargeButton).toBeFocused();
     expect(errors).toEqual([]);
   });
 }
