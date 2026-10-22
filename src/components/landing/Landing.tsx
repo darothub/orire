@@ -10,6 +10,7 @@ import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { beforeAfterLines } from "@/components/landing/beforeAfter";
 import { LiveDemo } from "@/components/landing/LiveDemo";
+import { LandingMobileNav } from "@/components/landing/LandingMobileNav";
 import { demoTemplates } from "@/components/landing/demo";
 import { getTemplate } from "@/components/templates/registry";
 import { sampleCV } from "@/lib/cv/sample";
@@ -86,9 +87,11 @@ export function Landing() {
           <button className="landing-ghost" onClick={() => openAuth("signin")}>
             Sign in
           </button>
-          <button className="landing-cta" onClick={() => openAuth("signup")}>
-            Get started
+          <button className="landing-cta landing-header-cta" aria-label="Get started" onClick={() => openAuth("signup")}>
+            <span className="landing-header-cta-long">Get started</span>
+            <span className="landing-header-cta-short" aria-hidden="true">Start</span>
           </button>
+          <LandingMobileNav />
         </div>
       </header>
 
