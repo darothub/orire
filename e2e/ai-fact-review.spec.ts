@@ -8,6 +8,7 @@ import { test, expect } from "./fixtures";
 for (const viewport of [
   { name: "desktop-1440", width: 1440, height: 900 },
   { name: "mobile-390", width: 390, height: 844 },
+  { name: "mobile-320", width: 320, height: 720 },
 ]) {
   test("UX85 suspicious AI edits require explicit review " + viewport.name, async ({ appPage }) => {
     const errors: string[] = [];
@@ -82,6 +83,45 @@ for (const viewport of [
       path: path + "AFTER-actual-AI-review-panel-" + viewport.name + ".png",
       animations: "disabled",
     });
+
+    // UX114: full-viewport evidence at natural scroll positions. Never use an
+    // element screenshot to diagnose sticky UI: it may stitch scroll positions.
+    if (viewport.width <= 390) {
+      const paneSwitch = appPage.locator(".mpane-switch");
+      await expect(paneSwitch).toBeVisible();
+      for (const [position, target] of [
+        ["review-warning", appPage.locator(".rev-ground").first()],
+        ["review-actions", appPage.locator(".rev-bulk")],
+        ["review-footer", appPage.getByRole("button", { name: "Keep my original CV" })],
+      ] as const) {
+        await target.scrollIntoViewIfNeeded();
+        await appPage.screenshot({
+          path: "test-results/ux114-viewport/BEFORE-ACTUAL-Orire-" + viewport.name + "-" + position + ".png",
+          animations: "disabled",
+          fullPage: false,
+        });
+        // Record geometry of the actual viewport rather than falsely claiming
+        // an overlay based on stitched component screenshots.
+        const geometry = await appPage.evaluate(() => {
+          const switcher = document.querySelector(".mpane-switch");
+          const warning = document.querySelector(".rev-ground");
+          const actions = document.querySelector(".rev-bulk");
+          const footer = document.querySelector(".rev-foot");
+          const rect = (el: Element | null) => {
+            if (!el) return null;
+            const r = el.getBoundingClientRect();
+            return { top: r.top, bottom: r.bottom, left: r.left, right: r.right };
+          };
+          return { switcher: rect(switcher), warning: rect(warning), actions: rect(actions), footer: rect(footer) };
+        });
+        test.info().annotations.push({
+          type: "ux114-viewport-geometry-" + position,
+          description: JSON.stringify(geometry),
+        });
+      }
+      const htmlWidth = await appPage.evaluate(() => document.documentElement.scrollWidth);
+      expect(htmlWidth).toBeLessThanOrEqual(viewport.width + 1);
+    }
 
     // Rejection is a no-op; the editor retains the original sample CV.
     await appPage.getByRole("button", { name: "Keep my original CV" }).click();
