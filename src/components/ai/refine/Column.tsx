@@ -12,7 +12,7 @@ import type { JDMatch } from "@/lib/ai/jdmatch";
 import { gapAnalysis, type GapAnalysis } from "@/lib/ai/simulate";
 import { countFacts, type FactCounts } from "./shared";
 
-export function Column({ provider, state, before, applied, onApply, onReview }: { provider: ProviderId; state: ColState; before: FactCounts; applied: boolean; onApply: () => void; onReview: () => void }) {
+export function Column({ provider, state, before, applied, onReview }: { provider: ProviderId; state: ColState; before: FactCounts; applied: boolean; onReview: () => void }) {
   const ideal = useTargetStore((s) => s.ideal);
   const baseMatch = useRefineStore((s) => s.baseMatch);
   const meta = PROVIDERS[provider];
@@ -66,18 +66,18 @@ export function Column({ provider, state, before, applied, onApply, onReview }: 
           {state.result.warnings.length > 0 ? (
             <div className={`ai-flags cmp-flags ${scoreGrounding(state.result).label}`}>
               <strong>
-                <span className="cmp-fidelity">Fidelity {scoreGrounding(state.result).score}%</span>
+                <span className="cmp-fidelity">Automated checks</span>
                 {" · "}{state.result.warnings.length} guardrail note{state.result.warnings.length > 1 ? "s" : ""}
               </strong>
               <ul>{state.result.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
             </div>
           ) : (
-            <div className="ai-clean cmp-clean">✓ Fully grounded in your CV · fidelity 100%</div>
+            <div className="ai-clean cmp-clean">✓ No issues flagged by automatic checks · please verify every suggestion</div>
           )}
           <div className="imp-actions cmp-actions">
             {applied ? (
-              <button className="flow-btn applied" onClick={onApply} title="Re-apply this version to your CV">
-                ✓ Applied to your CV
+              <button className="flow-btn applied" onClick={onReview} title="Review the changes before applying again">
+                ✓ Applied · Review again
               </button>
             ) : (
               <button className="flow-btn primary" onClick={onReview}>Review &amp; apply →</button>

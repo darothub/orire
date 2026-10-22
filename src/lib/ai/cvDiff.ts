@@ -83,30 +83,46 @@ export function diffCv(before: CVData, after: CVData): CvChange[] {
 }
 
 /**
- * Build the CV to apply: the refined candidate with every *rejected* change
- * reverted to the user's original. Accepting everything == applying the whole
- * refined CV; rejecting a change surgically restores that one piece.
+ * Build the reviewed result using SOURCE as the starting point, never the
+ * untrusted AI candidate. This is a strict allowlist of fields presented in the
+ * review UI. It prevents invisible changes to employment history, dates,
+ * education, certifications, project URLs, ids or section order.
+ *
+ * A proposal whose source identity does not align at an index cannot have its
+ * highlights applied to that index, regardless of what the user clicks.
  */
 export function applyReviewed(before: CVData, after: CVData, rejected: Iterable<string>): CVData {
-  const out = clone(after);
+  const out = clone(before);
   const reject = new Set(rejected);
+  const reviewable = new Set(diffCv(before, after).map((change) => change.id));
+  const allowed = (id: string) => reviewable.has(id) && !reject.has(id);
 
-  if (reject.has("title")) out.basics.title = before.basics.title;
-  if (reject.has("summary")) out.basics.summary = before.basics.summary;
-  if (reject.has("skills")) out.skills = clone(before.skills);
+  if (allowed("title")) out.basics.title = after.basics.title;
+  if (allowed("summary")) out.basics.summary = after.basics.summary;
+  if (allowed("skills")) out.skills = clone(after.skills);
 
-  for (const id of reject) {
-    if (id.startsWith("exp:")) {
-      const i = Number(id.slice(4));
-      if (Number.isInteger(i) && out.experience[i] && before.experience[i]) {
-        out.experience[i].highlights = clone(before.experience[i].highlights);
-      }
-    } else if (id.startsWith("prj:")) {
-      const i = Number(id.slice(4));
-      if (Number.isInteger(i) && out.projects[i] && before.projects[i]) {
-        out.projects[i].highlights = clone(before.projects[i].highlights);
-      }
-    }
+  for (let i = 0; i < before.experience.length; i++) {
+    const source = before.experience[i];
+    const proposed = after.experience[i];
+    if (!proposed || !allowed(`exp:${i}`)) continue;
+
+    const sameJob = source.company === proposed.company &&
+      source.role === proposed.role &&
+      (source.startDate ?? "") === (proposed.startDate ?? "") &&
+      (source.endDate ?? "") === (proposed.endDate ?? "") &&
+      Boolean(source.current) === Boolean(proposed.current);
+    if (sameJob) out.experience[i].highlights = clone(proposed.highlights);
+  }
+
+  for (let i = 0; i < before.projects.length; i++) {
+    const source = before.projects[i];
+    const proposed = after.projects[i];
+    if (!proposed || !allowed(`prj:${i}`)) continue;
+    const sameProject = source.name === proposed.name &&
+      (source.role ?? "") === (proposed.role ?? "") &&
+      (source.startDate ?? "") === (proposed.startDate ?? "") &&
+      (source.endDate ?? "") === (proposed.endDate ?? "");
+    if (sameProject) out.projects[i].highlights = clone(proposed.highlights);
   }
   return out;
 }

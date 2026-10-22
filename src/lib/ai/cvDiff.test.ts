@@ -68,4 +68,58 @@ describe("applyReviewed", () => {
     expect(a.skills[0].items).toEqual(["TypeScript", "Go"]); // after untouched
     expect(b.skills[0].items).toEqual(["TypeScript"]); // before untouched
   });
+  it("does not apply unreviewed employers, roles, dates, degrees or deleted entries", () => {
+    const original = base();
+    const proposed = refined();
+    proposed.basics.fullName = "Someone Else";
+    proposed.basics.email = "attacker@example.com";
+    proposed.experience[0] = {
+      ...proposed.experience[0],
+      company: "Fabricated Global Corp",
+      role: "CEO",
+      startDate: "2035",
+      highlights: ["Led a team of 9000 engineers"],
+    };
+    proposed.experience.splice(1, 1); // model omitted an actual employer
+    proposed.projects = [];
+    proposed.education = [
+      { id: "fake", institution: "Invented Institute", degree: "PhD", field: "Robotics" },
+    ];
+    proposed.certifications = [{ id: "fake-cert", name: "Fake License" }];
+    proposed.order = ["skills"];
+
+    const result = applyReviewed(original, proposed, []);
+    expect(result.basics.fullName).toBe(original.basics.fullName);
+    expect(result.basics.email).toBe(original.basics.email);
+    expect(result.experience).toEqual(original.experience);
+    expect(result.projects).toEqual(original.projects);
+    expect(result.education).toEqual(original.education);
+    expect(result.certifications).toEqual(original.certifications);
+    expect(result.order).toEqual(original.order);
+    expect(result.basics.summary).toBe("Tailored summary.");
+  });
+
+  it("only copies explicitly accepted and aligned wording into the original", () => {
+    const original = base();
+    const proposed = refined();
+    proposed.experience[0].id = "fresh-model-id";
+    proposed.experience[0].location = "Invented City";
+    proposed.projects[0].url = "https://not-original.example";
+    const result = applyReviewed(original, proposed, ["title", "summary", "skills", "prj:0"]);
+    expect(result.experience[0].highlights).toEqual(["Shipped a thing that moved a metric."]);
+    expect(result.experience[0].id).toBe("e0");
+    expect(result.experience[0].location).toBe(original.experience[0].location);
+    expect(result.projects[0]).toEqual(original.projects[0]);
+    expect(result.skills).toEqual(original.skills);
+    expect(result.basics.title).toBe(original.basics.title);
+  });
+
+  it("rejects misaligned project bullets even when a user accepts everything", () => {
+    const original = base();
+    const proposed = refined();
+    proposed.projects[0].name = "Entirely different project";
+    const result = applyReviewed(original, proposed, []);
+    expect(result.projects).toEqual(original.projects);
+  });
+
 });

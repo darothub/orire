@@ -1,181 +1,129 @@
 /**
- * orire — patch-mode refine reconstruction.
+ * orire — safe reconstruction of a model's optional CV wording patch.
  *
- * The token-lean refine prompt (see prompt.ts) asks the model for ONLY the
- * tailorable content, referencing source experience/projects by index. This
- * module turns that compact patch back into a full candidate object shaped like
- * the CV schema, so the existing deterministic `factGround` pass can run over it
- * unchanged. Locked facts (identity, dates, companies, URLs, education, certs)
- * are carried straight from the source — the model never has to echo them.
+ * The model is NOT allowed to add/remove/reorder experience or projects. Its
+ * references select ONLY which highlight text it proposes to rewrite; every
+ * existing entry, locked fact and source order is carried forward untouched.
+ * Applying a partial, duplicate or malformed patch must never silently delete
+ * a user's career history or attach a bullet to a different employer.
  *
- * Robustness is deliberate: a malformed, empty, or partial patch must NEVER
- * blow away the CV. Missing sections fall back to the full source, and unknown
- * refs are skipped. This directly guards against the earlier failure where a
- * replace "cut out names and poorly arranged the details".
+ * The resulting candidate still goes through factGround() and, crucially,
+ * explicit per-change human review. Automated checks cannot prove every
+ * sentence factually accurate.
  */
-
 import type { CVData } from "@/lib/cv/schema";
 
 export interface RefinePatch {
   title?: string;
   summary?: string;
+  /** Older model responses may contain order; silently ignore it for safety. */
   order?: number[];
   experience?: PatchExpItem[];
   projects?: PatchPrjItem[];
   skills?: { category?: string; items?: string[] }[];
 }
-interface PatchExpItem {
-  ref?: number;
-  role?: string;
-  highlights?: string[];
-}
-interface PatchPrjItem {
-  ref?: number;
-  role?: string;
-  highlights?: string[];
-}
+interface PatchExpItem { ref?: number; role?: string; highlights?: string[] }
+interface PatchPrjItem { ref?: number; role?: string; highlights?: string[] }
 
-function asStr(v: unknown): string {
-  return typeof v === "string" ? v : v == null ? "" : String(v);
+function asStr(value: unknown): string {
+  return typeof value === "string" ? value : "";
 }
-function asStrArray(v: unknown): string[] {
-  return Array.isArray(v) ? v.map(asStr).map((s) => s.trim()).filter(Boolean) : [];
+function asStrArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((x): x is string => typeof x === "string").map((x) => x.trim()).filter(Boolean)
+    : [];
 }
-function isInt(v: unknown): v is number {
-  return typeof v === "number" && Number.isInteger(v) && v >= 0;
+function validRef(value: unknown, max: number): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 && value < max;
 }
 
 /**
- * Reconstruct a full-shape candidate (as `factGround` expects) from the source
- * CV and a model patch. The return value is intentionally a loose record — it
- * is fed straight into `factGround`, which re-grounds and re-ids everything.
+ * Only the first valid entry for a given source ref is considered. Extra,
+ * duplicated, negative or out-of-range refs never become source entries.
+ * A missing ref simply preserves its corresponding original item.
  */
+function bySourceRef<T extends { ref?: number }>(items: unknown, length: number): Map<number, T> {
+  const mapped = new Map<number, T>();
+  if (!Array.isArray(items)) return mapped;
+  for (const raw of items) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
+    const entry = raw as T;
+    if (validRef(entry.ref, length) && !mapped.has(entry.ref)) mapped.set(entry.ref, entry);
+  }
+  return mapped;
+}
+
+/** Turn a compact model patch into a full candidate without data loss. */
 export function applyRefinePatch(
   source: CVData,
-  patch: Record<string, unknown>
+  patch: Record<string, unknown>,
 ): Record<string, unknown> {
   const p = (patch ?? {}) as RefinePatch;
+  const expPatches = bySourceRef<PatchExpItem>(p.experience, source.experience.length);
+  const projectPatches = bySourceRef<PatchPrjItem>(p.projects, source.projects.length);
 
-  // ----- basics: only title + summary are tailorable; the rest are locked. ---
+  // The only tailorable basics are the professional headline and summary.
   const basics = {
     title: asStr(p.title).trim() || source.basics.title,
     summary: asStr(p.summary).trim() || source.basics.summary,
   };
 
-  // ----- experience: rebuild by ref, carrying locked facts from source. ------
-  const pExp = Array.isArray(p.experience) ? p.experience : null;
-  let experience: Record<string, unknown>[];
-  if (pExp && pExp.length > 0) {
-    experience = pExp
-      .map((raw): Record<string, unknown> | null => {
-        const e = (raw ?? {}) as PatchExpItem;
-        if (!isInt(e.ref) || e.ref >= source.experience.length) return null;
-        const src = source.experience[e.ref];
-        const highlights = asStrArray(e.highlights);
-        return {
-          company: src.company,
-          role: asStr(e.role).trim() || src.role,
-          location: src.location ?? "",
-          startDate: src.startDate ?? "",
-          endDate: src.endDate ?? "",
-          current: Boolean(src.current),
-          highlights: highlights.length > 0 ? highlights : src.highlights,
-        };
-      })
-      .filter((x): x is Record<string, unknown> => x !== null);
-    // A patch that referenced nothing valid must not empty the CV.
-    if (experience.length === 0) experience = source.experience.map(fullExp);
-  } else {
-    experience = source.experience.map(fullExp);
-  }
+  // Iterate the SOURCE order, never the untrusted patch order. Keep all rows,
+  // including rows the model forgot to reference. Source roles are job facts:
+  // never accept model-proposed role/title upgrades.
+  const experience = source.experience.map((src, ref) => {
+    const highlights = asStrArray(expPatches.get(ref)?.highlights);
+    return {
+      company: src.company,
+      role: src.role,
+      location: src.location ?? "",
+      startDate: src.startDate ?? "",
+      endDate: src.endDate ?? "",
+      current: Boolean(src.current),
+      highlights: highlights.length ? highlights : [...src.highlights],
+    };
+  });
 
-  // Optional explicit reorder by source ref (applied only when it covers the
-  // rebuilt set 1:1 to avoid dropping or duplicating entries).
-  if (Array.isArray(p.order) && pExp && pExp.length > 0) {
-    const wanted = p.order.filter(isInt);
-    const bySrcRole = new Map<string, Record<string, unknown>>();
-    pExp.forEach((e, i) => {
-      if (isInt(e?.ref)) bySrcRole.set(`${e.ref}`, experience[i]);
-    });
-    const reordered = wanted
-      .map((ref) => bySrcRole.get(`${ref}`))
-      .filter((x): x is Record<string, unknown> => Boolean(x));
-    if (reordered.length === experience.length) experience = reordered;
-  }
+  const projects = source.projects.map((src, ref) => {
+    const highlights = asStrArray(projectPatches.get(ref)?.highlights);
+    return {
+      name: src.name,
+      role: src.role ?? "",
+      url: src.url ?? "",
+      startDate: src.startDate ?? "",
+      endDate: src.endDate ?? "",
+      highlights: highlights.length ? highlights : [...src.highlights],
+    };
+  });
 
-  // ----- projects: same ref-based rebuild. -----------------------------------
-  const pPrj = Array.isArray(p.projects) ? p.projects : null;
-  let projects: Record<string, unknown>[];
-  if (pPrj && pPrj.length > 0) {
-    projects = pPrj
-      .map((raw): Record<string, unknown> | null => {
-        const pr = (raw ?? {}) as PatchPrjItem;
-        if (!isInt(pr.ref) || pr.ref >= source.projects.length) return null;
-        const src = source.projects[pr.ref];
-        const highlights = asStrArray(pr.highlights);
-        return {
-          name: src.name,
-          role: asStr(pr.role).trim() || src.role || "",
-          url: src.url ?? "",
-          startDate: src.startDate ?? "",
-          endDate: src.endDate ?? "",
-          highlights: highlights.length > 0 ? highlights : src.highlights,
-        };
-      })
-      .filter((x): x is Record<string, unknown> => x !== null);
-    if (projects.length === 0) projects = source.projects.map(fullPrj);
-  } else {
-    projects = source.projects.map(fullPrj);
-  }
+  // Skills can be regrouped or removed only after visible per-change review.
+  // factGround() removes unmatched new skills before any user can apply them.
+  const skillPatches = Array.isArray(p.skills) ? p.skills : null;
+  const skills = skillPatches && skillPatches.length
+    ? skillPatches.map((group) => ({
+        category: asStr(group?.category).trim(),
+        items: asStrArray(group?.items),
+      }))
+    : source.skills.map((group) => ({
+        category: group.category,
+        items: [...group.items],
+      }));
 
-  // ----- skills: the model may regroup/reorder EXISTING skills; factGround
-  //       filters out anything not in the source, so passing strings is safe.
-  const pSkills = Array.isArray(p.skills) ? p.skills : null;
-  const skills =
-    pSkills && pSkills.length > 0
-      ? pSkills.map((g) => ({
-          category: asStr(g?.category).trim(),
-          items: asStrArray(g?.items),
-        }))
-      : source.skills.map((g) => ({ category: g.category, items: g.items }));
-
-  // ----- education + certifications: fully locked — carry from source. -------
-  const education = source.education.map((e) => ({
-    institution: e.institution,
-    degree: e.degree,
-    field: e.field ?? "",
-    startDate: e.startDate ?? "",
-    endDate: e.endDate ?? "",
-    details: e.details ?? "",
+  // Identity, education and certifications are never tailorable by this AI.
+  const education = source.education.map((entry) => ({
+    institution: entry.institution,
+    degree: entry.degree,
+    field: entry.field ?? "",
+    startDate: entry.startDate ?? "",
+    endDate: entry.endDate ?? "",
+    details: entry.details ?? "",
   }));
-  const certifications = source.certifications.map((c) => ({
-    name: c.name,
-    issuer: c.issuer ?? "",
-    date: c.date ?? "",
-    url: c.url ?? "",
+  const certifications = source.certifications.map((entry) => ({
+    name: entry.name,
+    issuer: entry.issuer ?? "",
+    date: entry.date ?? "",
+    url: entry.url ?? "",
   }));
 
-  return { basics, experience, education, skills, projects, certifications };
-}
-
-function fullExp(e: CVData["experience"][number]): Record<string, unknown> {
-  return {
-    company: e.company,
-    role: e.role,
-    location: e.location ?? "",
-    startDate: e.startDate ?? "",
-    endDate: e.endDate ?? "",
-    current: Boolean(e.current),
-    highlights: e.highlights,
-  };
-}
-function fullPrj(p: CVData["projects"][number]): Record<string, unknown> {
-  return {
-    name: p.name,
-    role: p.role ?? "",
-    url: p.url ?? "",
-    startDate: p.startDate ?? "",
-    endDate: p.endDate ?? "",
-    highlights: p.highlights,
-  };
+  return { basics, experience, projects, skills, education, certifications };
 }
