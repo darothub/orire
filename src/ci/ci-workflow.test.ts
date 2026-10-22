@@ -32,7 +32,12 @@ describe("GitHub Actions CI workflow", () => {
   it("runs a production build and the Playwright e2e suite", () => {
     expect(workflow).toContain("npm run build");
     expect(workflow).toContain("npm run test:e2e");
-    expect(workflow).toContain("playwright install --with-deps chromium");
+    expect(workflow).toContain("playwright install-deps chromium");
+    expect(workflow).toContain("playwright install chromium");
+    expect(workflow).not.toContain("playwright install --with-deps chromium");
+    expect(workflow).toMatch(/name: Install Chromium system dependencies\n\s*timeout-minutes: 8/);
+    expect(workflow).toMatch(/name: Install Playwright Chromium browser\n\s*timeout-minutes: 8/);
+    expect(workflow).toMatch(/name: Run Playwright E2E suite\n\s*timeout-minutes: 18/);
   });
 
   it("gates e2e behind checks and build", () => {
