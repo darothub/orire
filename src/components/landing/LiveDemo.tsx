@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { useRef, useState } from "react";
+import { AnimatePresence, motion, MotionConfig, useReducedMotion } from "framer-motion";
 import { getTemplate } from "@/components/templates/registry";
 import { demoTemplates } from "@/components/landing/demo";
 import { sampleCV } from "@/lib/cv/sample";
@@ -16,6 +16,8 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 export function LiveDemo() {
   const options = demoTemplates();
   const [activeId, setActiveId] = useState(options[0].id);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const reducedMotion = useReducedMotion();
   const openAuth = useUIStore((s) => s.openAuth);
   const Component = getTemplate(activeId).Component;
   const active = options.find((o) => o.id === activeId) ?? options[0];
@@ -57,23 +59,70 @@ export function LiveDemo() {
 
         <div className="landing-demo-preview">
           <div className="landing-demo-frame" aria-label="Fictional example CV preview">
+            <button
+              type="button"
+              className="landing-demo-expand"
+              onClick={() => dialogRef.current?.showModal()}
+              aria-label={`Enlarge ${active.name} CV preview`}
+            >
+              <span aria-hidden="true">⤢</span>
+              View full CV
+            </button>
             <MotionConfig reducedMotion="user">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeId}
                   className="landing-demo-paper-scale"
-                  initial={{ opacity: 0, y: 14, scale: 0.985 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.985 }}
-                  transition={{ duration: 0.45, ease: EASE }}
+                  initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={reducedMotion ? { duration: 0 } : { duration: 0.3, ease: EASE }}
                 >
-                  <div className="paper landing-demo-paper">
+                  {/* The document scales separately from the motion wrapper,
+                      so Framer Motion cannot override its responsive scale. */}
+                  <div className="paper landing-demo-paper" aria-hidden="true" inert>
                     <Component cv={sampleCV} />
                   </div>
                 </motion.div>
               </AnimatePresence>
             </MotionConfig>
           </div>
+          <dialog
+            ref={dialogRef}
+            className="landing-demo-dialog"
+            aria-labelledby="landing-demo-dialog-heading"
+            aria-describedby="landing-demo-dialog-description"
+            onClick={(event) => {
+              if (event.target === dialogRef.current) dialogRef.current?.close();
+            }}
+          >
+            <div className="landing-demo-dialog-header">
+              <div>
+                <h3 id="landing-demo-dialog-heading">{active.name} — full-size CV preview</h3>
+                <p id="landing-demo-dialog-description">
+                  Fictional details. Scroll vertically and sideways to inspect the full-size document.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="landing-demo-dialog-close"
+                onClick={() => dialogRef.current?.close()}
+                aria-label="Close full-size preview"
+              >
+                Close <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div
+              className="landing-demo-dialog-scroll"
+              role="region"
+              aria-label={`Full-size ${active.name} fictional CV`}
+              tabIndex={0}
+            >
+              <div className="paper landing-demo-full-paper" aria-hidden="true" inert>
+                <Component cv={sampleCV} />
+              </div>
+            </div>
+          </dialog>
           <div className="landing-demo-foot">
             <span className="landing-demo-foot-label">
               Previewing <strong>{active.name}</strong> with fictional example details. Your own CV stays yours.
