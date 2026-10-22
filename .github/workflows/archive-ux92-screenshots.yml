@@ -1,0 +1,56 @@
+name: Archive UX92 real screenshot evidence
+
+on:
+  push:
+    branches: ["fix/ux92-keyboard-navigation-screenreader"]
+    paths: [".github/workflows/archive-ux92-screenshots.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  archive-a11y-screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download actual Orire browser capture
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 39726055692 --repo darothub/orire \
+            --name playwright-report --dir /tmp/ux92-browser
+      - name: Preserve verified screenshots in docs/visual-qa/ux92
+        run: |
+          set -eu
+          src=/tmp/ux92-browser/test-results/ux92-a11y
+          test -f "$src/AFTER-skip-link-focused-mobile-390.png"
+          test -f "$src/AFTER-skip-link-focused-desktop-1440.png"
+          test -f "$src/AFTER-screenreader-CV-dialog-mobile-390.png"
+          mkdir -p docs/visual-qa/ux92
+          cp "$src/"*.png docs/visual-qa/ux92/
+          cat > docs/visual-qa/ux92/README.md <<'EOF'
+          # Issue #92 — real browser accessibility QA screenshots
+
+          Screenshots from real Orire localhost render (Chromium / Playwright),
+          not image-generated or browser-only design approximations.
+          Browser capture commit: 2679ff326c0e15b490d8a52f5e0b0fb44fa0e095.
+          Successful CI run: https://github.com/darothub/orire/actions/runs/39726055692
+          29 E2E tests passed; build, lint, typecheck, unit tests passed.
+
+          AFTER-skip-link-focused: only visible to keyboard users after Tab.
+          The default pointer-first page appearance is intentionally unchanged.
+          AFTER-screenreader-CV-dialog: dialog visually unchanged; accessible
+          text equivalent comes from fictional sample CV, hidden visually.
+
+          BEFORE — actual Orire homepage baseline prior to this change:
+          https://github.com/darothub/orire/issues/86#issuecomment-6323212994
+
+          Tested at 390x844 mobile and 1440x900 desktop in dark theme.
+          This is a partial #92 audit; other issues remain open.
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/visual-qa/ux92
+          git commit -m "docs(ux92): retain real a11y keyboard-focus and CV screenshots"
+          git push origin HEAD:refs/heads/fix/ux92-keyboard-navigation-screenreader
