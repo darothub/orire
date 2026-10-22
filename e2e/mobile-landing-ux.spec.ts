@@ -32,7 +32,7 @@ for (const viewport of viewports) {
     const menu = page.getByRole("button", { name: "Open section menu" });
     if (isMobileMenu) {
       await expect(menu).toBeVisible();
-      await expect(page.getByRole("button", { name: "Get started" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Get started", exact: true })).toBeVisible();
       await menu.click();
       const mobileNav = page.getByRole("navigation", { name: "Mobile page sections" });
       await expect(mobileNav).toBeVisible();
