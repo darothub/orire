@@ -66,10 +66,10 @@ export function LandingMobileNav() {
           <span />
         </span>
       </button>
-      <AnimatePresence>
+      <div id="landing-mobile-section-links">
+        <AnimatePresence>
         {open && (
           <motion.nav
-            id="landing-mobile-section-links"
             className="landing-mobile-menu-panel"
             aria-label="Mobile page sections"
             initial={reducedMotion ? false : { opacity: 0, y: -8, scale: 0.98 }}
@@ -94,7 +94,8 @@ export function LandingMobileNav() {
             </button>
           </motion.nav>
         )}
-      </AnimatePresence>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
