@@ -47,7 +47,8 @@ for (const viewport of [
     const metrics = await page.evaluate(() => ({
       viewport: window.innerWidth,
       docWidth: document.documentElement.scrollWidth,
-      h1: document.querySelectorAll("h1").length,\n      h1Texts: Array.from(document.querySelectorAll("h1")).map((el) => (el.textContent ?? "").trim().slice(0, 100)),
+      h1: document.querySelectorAll("h1").length,
+      h1Texts: Array.from(document.querySelectorAll("h1")).map((el) => (el.textContent ?? "").trim().slice(0, 100)),
       unlabeledButtons: Array.from(document.querySelectorAll("button"))
         .filter((el) => !(el.textContent?.trim() || el.getAttribute("aria-label") || el.getAttribute("aria-labelledby") || el.getAttribute("title")))
         .length,
