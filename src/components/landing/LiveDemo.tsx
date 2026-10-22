@@ -73,9 +73,9 @@ export function LiveDemo() {
                 <motion.div
                   key={activeId}
                   className="landing-demo-paper-scale"
-                  initial={reducedMotion ? false : { opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
+                  initial={reducedMotion ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={reducedMotion ? { duration: 0 } : { duration: 0.3, ease: EASE }}
                 >
                   {/* The document scales separately from the motion wrapper,
