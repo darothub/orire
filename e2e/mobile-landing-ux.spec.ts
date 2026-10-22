@@ -33,6 +33,17 @@ for (const viewport of viewports) {
     if (isMobileMenu) {
       await expect(menu).toBeVisible();
       await expect(page.getByRole("button", { name: "Get started", exact: true })).toBeVisible();
+      const sizes = await page.locator(".landing-mobile-menu-toggle, .landing-nav-actions > .theme-toggle, .landing-nav-actions > .landing-header-cta")
+        .evaluateAll((nodes) => nodes.map((el) => {
+          const box = el.getBoundingClientRect();
+          return { width: box.width, height: box.height };
+        }));
+      expect(sizes).toHaveLength(3);
+      for (const size of sizes) {
+        expect(size.width).toBeGreaterThanOrEqual(44);
+        expect(size.height).toBeGreaterThanOrEqual(44);
+      }
+      await expect(page.locator("#landing-mobile-section-links")).toHaveCount(1);
       await menu.click();
       const mobileNav = page.getByRole("navigation", { name: "Mobile page sections" });
       await expect(mobileNav).toBeVisible();
