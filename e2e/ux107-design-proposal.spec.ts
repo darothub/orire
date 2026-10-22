@@ -176,7 +176,9 @@ for (const viewport of sizes) {
     await expect(page.locator(".ux107-card")).toHaveCount(3);
     await expect(page.locator(".ux107-paper-wrap img.ux107-actual-image")).toHaveCount(3);
     await page.evaluate(() => document.fonts.ready);
-    await page.locator(".ux107-actual-image").first().evaluate(async (image) => { await (image as HTMLImageElement).decode(); });
+    await page.locator(".ux107-actual-image").evaluateAll(async (images) => {
+      await Promise.all(images.map((image) => (image as HTMLImageElement).decode()));
+    });
     await page.screenshot({ path: folder+"AFTER-PROPOSED-guide-"+viewport.name+"-full.png", fullPage:true, animations:"disabled" });
     await page.screenshot({ path: folder+"AFTER-PROPOSED-guide-"+viewport.name+"-first-view.png", animations:"disabled" });
     await page.locator("#compare-designs").screenshot({ path: folder+"AFTER-PROPOSED-real-CV-comparison-"+viewport.name+".png", animations:"disabled" });
