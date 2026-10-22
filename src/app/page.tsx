@@ -295,6 +295,7 @@ export default function Home() {
     <>
       {revealApp ? (
         <div className="app has-rail">
+          <a className="skip-to-main" href="#main-content">Skip to main content</a>
       <header className="app-bar">
         <div className="brand">
           <span className="brand-dot"><BrandMark size={26} /></span>
@@ -331,7 +332,7 @@ export default function Home() {
       </header>
       <CloudSync />
 
-      <main className={`workspace${wide ? " is-compare" : ""}`} data-mpane={mobilePane}>
+      <main id="main-content" className={`workspace${wide ? " is-compare" : ""}`} data-mpane={mobilePane} tabIndex={-1}>
         <WorkspaceRail />
 
         {!wide && (

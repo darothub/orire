@@ -112,6 +112,36 @@ export function LiveDemo() {
                 Close <span aria-hidden="true">×</span>
               </button>
             </div>
+            {/* The rendered CV is intentionally inert, so its embedded contact
+                links cannot steal focus. Expose the actual fictional data as
+                semantic text for screen-reader visitors instead. */}
+            <section className="sr-only" aria-label="Fictional CV text alternative">
+              <h4>{sampleCV.basics.fullName} — {sampleCV.basics.title}</h4>
+              <p>{sampleCV.basics.location}. {sampleCV.basics.summary}</p>
+              <h5>Experience</h5>
+              <ul>
+                {sampleCV.experience.map((entry) => (
+                  <li key={entry.id}>
+                    {entry.role} at {entry.company}, {entry.startDate} to {entry.current ? "present" : entry.endDate}.
+                    <ul>
+                      {entry.highlights.map((line) => <li key={line}>{line}</li>)}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+              <h5>Education</h5>
+              <ul>
+                {sampleCV.education.map((entry) => (
+                  <li key={entry.id}>{entry.degree} {entry.field}, {entry.institution}</li>
+                ))}
+              </ul>
+              <h5>Skills</h5>
+              <ul>
+                {sampleCV.skills.map((group) => (
+                  <li key={group.id}>{group.category}: {group.items.join(", ")}</li>
+                ))}
+              </ul>
+            </section>
             <div
               className="landing-demo-dialog-scroll"
               role="region"
@@ -124,7 +154,7 @@ export function LiveDemo() {
             </div>
           </dialog>
           <div className="landing-demo-foot">
-            <span className="landing-demo-foot-label">
+            <span className="landing-demo-foot-label" role="status" aria-live="polite" aria-atomic="true">
               Previewing <strong>{active.name}</strong> with fictional example details. Your own CV stays yours.
             </span>
             <button type="button" className="landing-cta" onClick={() => openAuth("signup")}>
