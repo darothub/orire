@@ -27,8 +27,9 @@ for (const sample of cases) {
     if (await consent.isVisible().catch(() => false)) await consent.click();
     await page.evaluate(() => document.fonts.ready);
 
-    const allGuideHeadings = page.locator("main.ux107 h1");
-    await expect(allGuideHeadings).toHaveCount(1);
+    // CV thumbnails contain their own decorative document headings, which are
+    // inert/aria-hidden. Count the ACCESSIBLE page heading, not hidden markup.
+    await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
     await expect(page.getByRole("heading", {
       level: 2,
       name: "One CV. Three different first impressions.",
@@ -110,6 +111,10 @@ test("UX107 keyboard section jump and real template destination", async ({ page 
 
   const oxford = page.getByRole("link", { name: "Preview Oxford CV template" });
   await oxford.focus();
+  // Use genuine keyboard focus (not only element.focus(), which need not
+  // match :focus-visible in Chromium without a keyboard interaction).
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Shift+Tab");
   await expect(oxford).toBeFocused();
   const ring = await oxford.evaluate(el => getComputedStyle(el).outlineStyle);
   expect(ring).not.toBe("none");
