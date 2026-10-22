@@ -1,0 +1,68 @@
+name: Archive UX107 real before/after guide screenshots
+
+on:
+  push:
+    branches: ["design/ux107-real-guide-comparison"]
+    paths: [".github/workflows/archive-ux107-guide-evidence.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  publish-real-design-evidence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dedicated evidence branch, not main or production
+        uses: actions/checkout@v4
+        with:
+          ref: ux107-visual-evidence
+      - name: Download successful Chromium screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 39740467593 --repo darothub/orire \
+            --name playwright-report --dir /tmp/orire-ux107-source
+
+      - name: Preserve real before and browser-only proposed screenshots
+        run: |
+          set -eu
+          source=/tmp/orire-ux107-source/test-results/ux107-browser-proposal
+          test -s "$source/BEFORE-ACTUAL-guide-desktop-1440x900-first-view.png"
+          test -s "$source/AFTER-PROPOSED-guide-desktop-1440x900-first-view.png"
+          test -s "$source/ACTUAL-ORIRE-template-meridian-source.png"
+          test -s "$source/ACTUAL-ORIRE-template-oxford-source.png"
+          test -s "$source/ACTUAL-ORIRE-template-vertex-source.png"
+          mkdir -p docs/visual-qa/ux107/{before,proposed,actual-template-sources}
+          cp "$source"/BEFORE-ACTUAL-*.png docs/visual-qa/ux107/before/
+          cp "$source"/AFTER-PROPOSED-*.png docs/visual-qa/ux107/proposed/
+          cp "$source"/ACTUAL-ORIRE-template-*.png docs/visual-qa/ux107/actual-template-sources/
+          cat > docs/visual-qa/ux107/README.md <<'EOF'
+          # Orire issue #107 — genuine before / proposed after visuals
+
+          Source: Orire's real public guide route running locally in Chromium,
+          using the actual GitHub Actions-built application.
+          BEFORE-ACTUAL: unmodified page, no invented content or visual changes.
+          AFTER-PROPOSED: the same real guide with browser-only injected design.
+          After images are NOT an implementation and are NOT approved.
+          Actual template image sources are screenshots of real Orire public
+          /templates/meridian, /templates/oxford and /templates/vertex pages,
+          all using fictional sampleCV. No private user data included.
+
+          Capture CI: https://github.com/darothub/orire/actions/runs/39740467593
+          Design-only draft PR: https://github.com/darothub/orire/pull/110
+          Source screenshot test commit: b809d36ae4af44246711b2c505a3637458bfaa43
+          34 E2E tests passed, build/lint/typecheck/unit passed.
+          Viewports: desktop 1440x900, mobile 390x844, narrow 320x720.
+          Checks: no horizontal document overflow, all CV images loaded and
+          links lead to their actual public template detail route.
+
+          BEFORE and AFTER views have the consent banner dismissed.
+          This branch is a permanent visual evidence archive. Do not merge it
+          into main or delete it while GitHub issue #107 links its PNG assets.
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/visual-qa/ux107
+          git commit -m "docs(ux107): preserve genuine guide before and screenshot-based proposal"
+          git push origin HEAD:refs/heads/ux107-visual-evidence
