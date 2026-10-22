@@ -48,8 +48,7 @@ const css = [
   ".ux107 .ux107-card-top{display:flex;justify-content:space-between;align-items:center;padding:15px 18px 12px;gap:8px;font-size:12px;color:var(--muted)}",
   ".ux107 .ux107-card-top strong{color:var(--accent-2)}",
   ".ux107 .ux107-paper-wrap{display:flex;justify-content:center;align-items:flex-start;min-width:0;padding:18px 9px 20px;background:radial-gradient(ellipse at 50% 0%,rgba(58,217,180,.09),transparent 65%),rgba(6,13,20,.32)}",
-  ".ux107 .ux107-paper-wrap .tpl-detail-preview-window{width:246px!important;height:348px!important;max-width:100%;flex:0 0 246px;overflow:hidden;background:#fff;border-radius:5px;box-shadow:0 11px 27px #0005}",
-  ".ux107 .ux107-paper-wrap .tpl-detail-preview-paper.paper{width:794px!important;min-width:794px!important;max-width:none!important;transform:scale(.31)!important;transform-origin:top left!important;text-align:left!important}",
+  ".ux107 .ux107-paper-wrap img.ux107-actual-image{display:block;width:246px;height:348px;max-width:100%;object-fit:cover;object-position:top;background:#fff;border-radius:5px;box-shadow:0 11px 27px #0005}",
   ".ux107 .ux107-card-text{display:flex;flex:1;flex-direction:column;gap:8px;padding:18px 19px 21px}",
   ".ux107 .ux107-card-text h3{font-size:21px;margin:0;letter-spacing:-.025em}",
   ".ux107 .ux107-card-text p{font-size:13px;line-height:1.6;color:var(--muted);margin:0}",
@@ -74,7 +73,7 @@ function proposedGuide(previews: Record<string, string>) {
     '<article class="ux107-card">',
     '<div class="ux107-card-top"><strong>',template.label,'</strong><span>',String(i+1).padStart(2, "0"),' / 03</span></div>',
     '<div class="ux107-paper-wrap" aria-label="Actual Orire ',template.name,' design with fictional CV information">',
-    previews[template.id],'</div>',
+    '<img class="ux107-actual-image" src="', previews[template.id], '" alt="Actual Orire ',template.name,' CV preview with fictional Ada Okonkwo details" />','</div>',
     '<div class="ux107-card-text"><h3>',template.name,'</h3><p>',template.blurb,
     '</p><p class="ux107-feature">',template.feature,'</p><p>',template.advice,
     '</p><a href="/templates/',template.id,'">Preview ',template.name,' →</a></div></article>',
@@ -120,9 +119,14 @@ function proposedGuide(previews: Record<string, string>) {
 }
 
 async function dismissCookies(page: import("@playwright/test").Page) {
-  const consent = page.getByRole("dialog", { name: "Cookie consent" });
-  if (await consent.isVisible().catch(() => false)) {
-    await consent.getByRole("button", { name: "Decline" }).click();
+  // CookieBanner is not a role=dialog on public content routes.
+  // Wait for the rendered button; preserve the same dismissed-cookie browser
+  // state in BEFORE and AFTER so the consent strip never hides UI evidence.
+  const decline = page.getByRole("button", { name: "Decline", exact: true });
+  await decline.waitFor({ state: "visible", timeout: 1600 }).catch(() => {});
+  if (await decline.isVisible().catch(() => false)) {
+    await decline.click();
+    await expect(decline).toBeHidden();
   }
 }
 
@@ -141,18 +145,28 @@ for (const viewport of sizes) {
     await page.screenshot({ path: folder+"BEFORE-ACTUAL-guide-"+viewport.name+"-full.png", fullPage: true, animations:"disabled" });
     await page.screenshot({ path: folder+"BEFORE-ACTUAL-guide-"+viewport.name+"-first-view.png", animations:"disabled" });
 
-    // These are REAL template components rendered by Orire itself.
+    // Every image is an ACTUAL PNG screenshot of Orire's real CV renderer,
+    // not a CSS illustration, recreated template or scraped stock graphic.
     const previews: Record<string,string> = {};
+    await page.setViewportSize({ width: 1440, height: 900 });
     for (const template of templates) {
       await page.goto("/templates/"+template.id, { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { name: template.name+" CV template" })).toBeVisible();
       const frame = page.locator(".tpl-detail-preview-window");
       await expect(frame).toBeVisible();
-      previews[template.id] = await frame.evaluate((element) => element.outerHTML);
-      expect(previews[template.id]).toContain("tpl-detail-preview-paper");
+      const text = await frame.locator(".paper").textContent();
+      expect(text).toContain("Ada Okonkwo");
+      const image = await frame.screenshot({
+        path: folder+"ACTUAL-ORIRE-template-"+template.id+"-source.png",
+        animations: "disabled",
+      });
+      expect(image.byteLength).toBeGreaterThan(10_000);
+      previews[template.id] = "data:image/png;base64,"+image.toString("base64");
     }
-    // Reopen actual guide, then inject proposed design IN THIS TEST BROWSER ONLY.
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    // Reopen the actual guide; inject the proposed styling only in browser.
     await page.goto(GUIDE, { waitUntil: "domcontentloaded" });
+    await dismissCookies(page);
     await page.addStyleTag({ content: css });
     await page.locator("main.content").evaluate((main, html) => {
       main.classList.add("ux107");
@@ -160,8 +174,9 @@ for (const viewport of sizes) {
     }, proposedGuide(previews));
     await expect(page.getByRole("heading", { name: "Pick a CV template that puts your experience first." })).toBeVisible();
     await expect(page.locator(".ux107-card")).toHaveCount(3);
-    await expect(page.locator(".ux107-paper-wrap .tpl-detail-preview-paper.paper")).toHaveCount(3);
+    await expect(page.locator(".ux107-paper-wrap img.ux107-actual-image")).toHaveCount(3);
     await page.evaluate(() => document.fonts.ready);
+    await page.locator(".ux107-actual-image").first().evaluate(async (image) => { await (image as HTMLImageElement).decode(); });
     await page.screenshot({ path: folder+"AFTER-PROPOSED-guide-"+viewport.name+"-full.png", fullPage:true, animations:"disabled" });
     await page.screenshot({ path: folder+"AFTER-PROPOSED-guide-"+viewport.name+"-first-view.png", animations:"disabled" });
     await page.locator("#compare-designs").screenshot({ path: folder+"AFTER-PROPOSED-real-CV-comparison-"+viewport.name+".png", animations:"disabled" });
