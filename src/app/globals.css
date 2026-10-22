@@ -2686,9 +2686,9 @@ body {
     display: flex;
     gap: 4px;
     padding: 8px 14px 0;
-    position: sticky;
-    top: 0;
-    z-index: 5;
+    /* UX114: keep the switcher in document flow so AI warnings are never
+       obscured by an overlaid sticky bar on narrow screens. */
+    position: static;
   }
   .mpane-btn {
     flex: 1;
