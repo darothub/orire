@@ -5145,3 +5145,37 @@ html[data-theme="light"] .landing-scrim {
   .landing-demo-expand:hover { transform: none; }
   .landing-demo-dialog[open] { animation: none; }
 }
+
+
+/* UX #92: first keyboard Tab reveals a prominent skip link. It is off-screen
+   during pointer browsing, so the approved landing/editor designs stay intact. */
+.skip-to-main {
+  position: fixed;
+  z-index: 10000;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 2px solid #fff;
+  border-radius: 11px;
+  background: #11483b;
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 7px 25px rgba(0, 0, 0, .45);
+  transform: translateY(calc(-100% - 28px));
+}
+.skip-to-main:focus,
+.skip-to-main:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid #ffd971;
+  outline-offset: 3px;
+}
+#main-content:focus { outline: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .skip-to-main { transition: transform .15s ease-out; }
+}
