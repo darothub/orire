@@ -4874,6 +4874,8 @@ html[data-theme="light"] .landing-scrim {
 @media (max-width: 860px) {
   .landing-nav { z-index: 10; }
   .landing-mobile-menu { display: block; position: relative; flex: none; }
+  .landing-nav-actions > .theme-toggle { width: 44px; height: 44px; flex: none; }
+  .landing-nav-actions > .landing-header-cta { min-height: 44px; }
   .landing-mobile-menu-toggle {
     width: 44px;
     height: 44px;
@@ -4968,7 +4970,6 @@ html[data-theme="light"] .landing-scrim {
   .landing-header-cta { padding-inline: 12px; }
   .landing-header-cta-long { display: none; }
   .landing-header-cta-short { display: inline; }
-  .landing-mobile-menu-toggle { width: 40px; height: 40px; }
 }
 
 /* Full page centred at every breakpoint. Independent CSS scale preserves
