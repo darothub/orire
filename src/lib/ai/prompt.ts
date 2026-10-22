@@ -104,7 +104,7 @@ Return ONLY a compact JSON "patch" of the content you want to CHANGE — never t
 
 ABSOLUTE RULES (fact-grounding):
 - Use ONLY facts already in the source CV. NEVER invent or alter employers, titles you did not hold, dates, locations, degrees, institutions, certifications, project names, metrics, or numbers, and NEVER add skills the person did not list.
-- You MAY: reorder items, rephrase highlights for clarity/impact, emphasise the most relevant experience, trim less-relevant highlights, and write a tailored summary — but only from facts already present.
+- You MAY: suggest clearer highlights and a tailored summary using existing facts. DO NOT remove, duplicate or reorder experience/projects. Preserve actual job titles and project roles exactly; the application will ignore attempts to change them.
 - TERMINOLOGY MATCHING: when source and job description name the SAME existing skill/tech differently, prefer the job's wording — but only when the fact is genuinely present.
 - Reference each experience/project by its source index ("ref"). Do not emit company names, dates, emails, phone, or URLs — those are carried from the source automatically.
 - Output MUST be valid JSON only (no markdown, no prose), matching the patch schema.`;
@@ -113,12 +113,11 @@ export const PATCH_SCHEMA_HINT = `Return ONLY this JSON shape (omit any field yo
 {
   "title": string,                 // tailored headline (optional)
   "summary": string,               // tailored professional summary (optional)
-  "order": [number],               // source experience indices in the new display order (optional)
-  "experience": [                  // one entry per source experience you keep, by ref
-    { "ref": number, "role": string, "highlights": [string] }
+  "experience": [                  // optional wording edits for existing source refs only
+    { "ref": number, "highlights": [string] }
   ],
   "projects": [
-    { "ref": number, "role": string, "highlights": [string] }
+    { "ref": number, "highlights": [string] }
   ],
   "skills": [                      // reorder/regroup EXISTING skills only
     { "category": string, "items": [string] }
@@ -172,7 +171,7 @@ export function buildPatchPrompt(cv: CVData, jobDescription: string): string {
     jobDescription.trim(),
     "```",
     "",
-    "Produce the tailoring patch. Reorder and rephrase to best match the job, obeying every fact-grounding rule.",
+    "Produce a wording-only tailoring patch. Do not add, remove, reorder or reassign CV entries; obey every fact-grounding rule.",
     PATCH_SCHEMA_HINT,
   ].join("\n");
 }
