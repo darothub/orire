@@ -5179,3 +5179,12 @@ html[data-theme="light"] .landing-scrim {
 @media (prefers-reduced-motion: no-preference) {
   .skip-to-main { transition: transform .15s ease-out; }
 }
+
+
+/* UX #92: onboarding keeps a clear keyboard focus affordance without
+   changing the approved tour's normal mouse/touch appearance. */
+.tour-actions button:focus-visible {
+  outline: 3px solid var(--accent-2);
+  outline-offset: 3px;
+}
+.tour-title:focus { outline: none; }

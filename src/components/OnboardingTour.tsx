@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useOnboardingStore } from "@/lib/store/onboardingStore";
 
 type Place = "right" | "left" | "bottom" | "center";
@@ -113,6 +113,11 @@ export function OnboardingTour() {
   const stop = useOnboardingStore((s) => s.stop);
 
   const [rect, setRect] = useState<Rect | null>(null);
+  const tourRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
+  const titleId = useId();
+  const descriptionId = useId();
+  const reducedMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
@@ -151,25 +156,85 @@ export function OnboardingTour() {
     };
   }, [active, measure]);
 
-  // Keyboard driving: →/Enter next, ← back, Esc skip.
+  // A modal must make its background inaccessible and return keyboard focus
+  // after closing. The tour renders via a portal into document.body, so marking
+  // the app shell inert does not hide the tour itself from assistive technology.
   useEffect(() => {
     if (!active) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        stop();
-      } else if (e.key === "ArrowRight" || e.key === "Enter") {
-        e.preventDefault();
-        if (isLast) stop();
-        else next();
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        back();
+
+    const opener = document.activeElement;
+    openerRef.current =
+      opener instanceof HTMLElement && opener !== document.body ? opener : null;
+    const workspace = document.querySelector<HTMLElement>(".app.has-rail");
+    const previouslyInert = workspace?.hasAttribute("inert") ?? false;
+    if (workspace && !previouslyInert) workspace.setAttribute("inert", "");
+
+    return () => {
+      if (workspace && !previouslyInert) workspace.removeAttribute("inert");
+      const target = openerRef.current;
+      openerRef.current = null;
+      // The command palette has an exit animation. Its input/button may still
+      // be connected at cleanup time but disappears a frame later. Never
+      // restore focus into that transient portal: use its persistent trigger.
+      const paletteOpener = Boolean(target?.closest(".cmdk-panel"));
+      if (target?.isConnected && !paletteOpener && !target.closest("[inert]")) {
+        target.focus({ preventScroll: true });
+      } else {
+        document.querySelector<HTMLElement>(".cmdk-hint-btn, .rail button")
+          ?.focus({ preventScroll: true });
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [active, isLast, next, back, stop]);
+  }, [active]);
+
+  // Each step changes the dialog's accessible description. Move focus to its
+  // heading so a screen reader announces the current step and instructions.
+  useEffect(() => {
+    if (!active) return;
+    const raf = window.requestAnimationFrame(() => {
+      tourRef.current?.querySelector<HTMLElement>(".tour-title")
+        ?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(raf);
+  }, [active, step]);
+
+  // Escape closes the tour. Tab stays inside the modal. Deliberately do not
+  // hijack Enter or arrow keys globally: Enter on "Back" or "Skip" must invoke
+  // that button's own native behavior, never unexpectedly advance a step.
+  useEffect(() => {
+    if (!active) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        stop();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const card = tourRef.current?.querySelector<HTMLElement>(".tour-card");
+      if (!card) return;
+      const buttons = Array.from(
+        card.querySelectorAll<HTMLButtonElement>("button:not([disabled])"),
+      );
+      if (!buttons.length) return;
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      const focused = document.activeElement;
+
+      if (event.shiftKey && focused === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && focused === last) {
+        event.preventDefault();
+        first.focus();
+      } else if (!(focused instanceof HTMLElement) || !card.contains(focused)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+    }
+
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [active, stop]);
 
   if (!mounted) return null;
 
@@ -187,18 +252,22 @@ export function OnboardingTour() {
       {active && (
         <motion.div
           className="tour-root"
-          initial={{ opacity: 0 }}
+          ref={tourRef}
+          initial={reducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={reducedMotion ? { duration: 0 } : { duration: 0.2 }}
           role="dialog"
           aria-modal="true"
           aria-label="Getting started tour"
+          aria-describedby={descriptionId}
         >
           {/* Click-catcher: tapping the dimmed area advances the tour. */}
           <button
             className={`tour-catch${spot ? "" : " is-dim"}`}
-            aria-label="Advance to next step"
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
             onClick={() => (isLast ? stop() : next())}
           />
 
@@ -210,13 +279,13 @@ export function OnboardingTour() {
             key={step}
             className="tour-card"
             style={{ width: CARD_W, ...cardPosition(rect, current.place) }}
-            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            initial={reducedMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ type: "spring", stiffness: 420, damping: 32 }}
+            transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 32 }}
           >
             <div className="tour-step">Step {step + 1} of {STEPS.length}</div>
-            <h3 className="tour-title">{current.title}</h3>
-            <p className="tour-body">{current.body}</p>
+            <h3 id={titleId} className="tour-title" tabIndex={-1}>{current.title}</h3>
+            <p id={descriptionId} className="tour-body">{current.body}</p>
 
             <div className="tour-dots" aria-hidden>
               {STEPS.map((_, i) => (
@@ -225,9 +294,9 @@ export function OnboardingTour() {
             </div>
 
             <div className="tour-actions">
-              <button className="tour-skip" onClick={() => stop()}>
-                {isLast ? "" : "Skip"}
-              </button>
+              {!isLast && (
+                <button className="tour-skip" onClick={() => stop()}>Skip</button>
+              )}
               <div className="tour-nav">
                 {step > 0 && (
                   <button className="btn-ghost" onClick={() => back()}>Back</button>
