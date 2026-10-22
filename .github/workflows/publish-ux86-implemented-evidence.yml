@@ -1,0 +1,50 @@
+name: Publish UX86 implemented screenshots
+
+on:
+  push:
+    branches: ["ux86-visual-evidence"]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  attach-real-implementation-images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ux86-visual-evidence
+      - name: Download verified Playwright screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 39722369626 \
+            --repo darothub/orire \
+            --name playwright-report \
+            --dir /tmp/ux86-implemented
+      - name: Preserve browser screenshots in the visual evidence branch
+        run: |
+          set -eu
+          src=/tmp/ux86-implemented/test-results/ux86-implementation
+          test -f "$src/AFTER-demo-mobile-390.png"
+          test -f "$src/AFTER-menu-open-mobile-390.png"
+          test -f "$src/AFTER-enlarged-mobile-390.png"
+          mkdir -p ux86/implemented
+          cp "$src/"*.png ux86/implemented/
+          cat > ux86/implemented/README.md <<'EOF'
+          # AFTER — Actual Orire implementation screenshots (issue #86)
+          - Actual browser capture, not a design mockup.
+          - Source PR #105, commit a18a0e902de4c36eb908508b1f53b2f2b13847e7.
+          - GitHub Actions: https://github.com/darothub/orire/actions/runs/39722369626
+          - 30 E2E tests passed plus build/lint/typecheck/unit tests.
+          - Browser Playwright/Chromium serves the Orire application on localhost.
+          - Viewports: 320x720, 390x844, 768x1024, 1440x900.
+          - Captures: navigation open/closed, fitted CV, full-size CV dialog.
+          - The BEFORE real images and AFTER-PROPOSED design images are preserved in the parent ux86 directory.
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ux86/implemented
+          git commit -m "docs(ux86): preserve verified implementation screenshots"
+          git push origin HEAD:ux86-visual-evidence
