@@ -26,8 +26,6 @@ export function RunStep({ onBack }: { onBack: () => void }) {
   const usageNote = useRefineStore((s) => s.usageNote);
   const cv = useCVStore((s) => s.cv);
   const jd = useTargetStore((s) => s.jd);
-  const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
-  const markApplied = useRefineStore((s) => s.markApplied);
   const appliedProvider = useRefineStore((s) => s.appliedProvider);
   const reviewProvider = useRefineStore((s) => s.reviewProvider);
   const openReview = useRefineStore((s) => s.openReview);
@@ -46,13 +44,6 @@ export function RunStep({ onBack }: { onBack: () => void }) {
     revisited &&
     runSig !== null &&
     runSig !== refineRunSignature(runProviders, jd, cv);
-
-  const apply = (p: ProviderId) => {
-    const r = cols[p].result;
-    if (!r) return;
-    applyRefinedCV(r.cv);
-    markApplied(p);
-  };
 
   if (!started) {
     return (
@@ -114,7 +105,6 @@ export function RunStep({ onBack }: { onBack: () => void }) {
             state={cols[p]}
             before={before}
             applied={appliedProvider === p}
-            onApply={() => apply(p)}
             onReview={() => openReview(p)}
           />
         ))}
