@@ -23,8 +23,15 @@ for (const sample of cases) {
       .toHaveCount(0);
     await expect(page.locator(".guide-draft,.guide-outline")).toHaveCount(0);
 
+    // CookieBanner hydrates after the first server paint. Wait briefly for the
+    // real consent control instead of racing isVisible() before hydration; all
+    // captured screenshots must show the page itself, not a consent overlay.
     const consent = page.getByRole("button", { name: "Decline", exact: true });
-    if (await consent.isVisible().catch(() => false)) await consent.click();
+    await consent.waitFor({ state: "visible", timeout: 3500 }).catch(() => {});
+    if (await consent.isVisible().catch(() => false)) {
+      await consent.click();
+      await expect(consent).toBeHidden();
+    }
     await page.evaluate(() => document.fonts.ready);
 
     // CV thumbnails contain their own decorative document headings, which are
