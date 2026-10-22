@@ -4861,3 +4861,286 @@ html[data-theme="light"] .landing-scrim {
   .landing-price-grid { align-items: stretch; }
   .landing-price-card { height: 100%; }
 }
+
+
+/* UX-007 — approved mobile navigation and true-to-template CV preview.
+   The scale belongs to the paper, NOT the Framer Motion wrapper: animations
+   previously replaced wrapper transforms and clipped the CV at all widths. */
+
+/* Desktop navigation is unchanged; this disclosure exists only <=860px. */
+.landing-mobile-menu { display: none; }
+.landing-header-cta-short { display: none; }
+
+@media (max-width: 860px) {
+  .landing-nav { z-index: 10; }
+  .landing-mobile-menu { display: block; position: relative; flex: none; }
+  .landing-mobile-menu-toggle {
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(26,36,37,.94);
+    color: #eff6f4;
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease;
+  }
+  .landing-mobile-menu-toggle:hover,
+  .landing-mobile-menu-toggle.is-open {
+    background: rgba(50,70,69,.95);
+    border-color: rgba(58,217,180,.65);
+  }
+  .landing-mobile-menu-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .landing-mobile-menu-icon span {
+    width: 19px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform .22s ease, opacity .16s ease;
+  }
+  .landing-mobile-menu-toggle.is-open .landing-mobile-menu-icon span:first-child {
+    transform: translateY(6px) rotate(45deg);
+  }
+  .landing-mobile-menu-toggle.is-open .landing-mobile-menu-icon span:nth-child(2) {
+    opacity: 0;
+  }
+  .landing-mobile-menu-toggle.is-open .landing-mobile-menu-icon span:last-child {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+  .landing-mobile-menu-panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 10px);
+    right: 0;
+    width: min(310px, calc(100vw - 32px));
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: #142021;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  .landing-mobile-menu-panel a,
+  .landing-mobile-menu-panel button {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border: 0;
+    padding: 11px 14px;
+    border-radius: 9px;
+    text-align: left;
+    text-decoration: none;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: #f1f7f5;
+    background: transparent;
+    cursor: pointer;
+    transition: background .16s ease, color .16s ease;
+  }
+  .landing-mobile-menu-panel a:hover,
+  .landing-mobile-menu-panel button:hover {
+    color: #fff;
+    background: rgba(58,217,180,.16);
+  }
+  .landing-mobile-menu-signin { border-top: 1px solid rgba(255,255,255,.13) !important; }
+  .landing-mobile-menu-toggle:focus-visible,
+  .landing-mobile-menu-panel :is(a,button):focus-visible {
+    outline: 3px solid #3ad9b4;
+    outline-offset: 3px;
+  }
+}
+@media (max-width: 359px) {
+  .landing-nav { padding-inline: 12px; gap: 6px; }
+  .landing-brand { gap: 7px; }
+  .landing-nav-actions { gap: 6px; }
+  .landing-header-cta { padding-inline: 12px; }
+  .landing-header-cta-long { display: none; }
+  .landing-header-cta-short { display: inline; }
+  .landing-mobile-menu-toggle { width: 40px; height: 40px; }
+}
+
+/* Full page centred at every breakpoint. Independent CSS scale preserves
+   the exact template layout; motion animations can no longer unscale it. */
+.landing-demo .landing-demo-frame {
+  height: 650px;
+}
+.landing-demo .landing-demo-frame .landing-demo-paper-scale {
+  left: 0;
+  top: 16px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  transform: none !important;
+}
+.landing-demo .landing-demo-paper-scale > .paper.landing-demo-paper {
+  box-sizing: border-box;
+  display: block;
+  flex: 0 0 794px;
+  width: 794px;
+  min-width: 794px;
+  max-width: none;
+  scale: .78;
+  transform-origin: top center;
+  text-align: left;
+  pointer-events: none;
+  user-select: none;
+}
+@media (max-width: 760px) {
+  .landing-demo .landing-demo-frame { height: 640px; }
+  .landing-demo .landing-demo-paper-scale > .paper.landing-demo-paper { scale: .55; }
+}
+@media (max-width: 640px) {
+  .landing-demo .landing-demo-frame { height: 475px; }
+  .landing-demo .landing-demo-paper-scale > .paper.landing-demo-paper { scale: .40; }
+}
+@media (max-width: 359px) {
+  .landing-demo .landing-demo-frame { height: 392px; }
+  .landing-demo .landing-demo-paper-scale > .paper.landing-demo-paper { scale: .32; }
+}
+
+/* A full-size, scrollable disclosure keeps detailed CV text readable even on
+   phones; unlike the preview thumbnail, it can be panned horizontally. */
+.landing-demo-expand {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 10px;
+  background: rgba(12,20,24,.92);
+  color: #f5fffc;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.landing-demo-expand:hover {
+  background: #203a37;
+  border-color: #3ad9b4;
+  transform: translateY(-2px);
+}
+.landing-demo-expand:focus-visible,
+.landing-demo-dialog-close:focus-visible {
+  outline: 3px solid #3ad9b4;
+  outline-offset: 3px;
+}
+.landing-demo-dialog {
+  width: min(96vw, 960px);
+  height: min(90dvh, 930px);
+  max-width: 96vw;
+  max-height: 90dvh;
+  margin: auto;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.24);
+  border-radius: 16px;
+  color: #f4f6fb;
+  background: #10191b;
+  box-shadow: 0 36px 110px rgba(0,0,0,.65);
+}
+.landing-demo-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  animation: orire-demo-modal-enter .22s ease-out both;
+}
+.landing-demo-dialog::backdrop {
+  background: rgba(3,9,13,.78);
+  backdrop-filter: blur(5px);
+}
+.landing-demo-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 20px;
+  padding: 18px 22px;
+  flex: none;
+}
+.landing-demo-dialog-header h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f6fffc;
+}
+.landing-demo-dialog-header p {
+  margin: 0;
+  color: rgba(244,246,251,.76);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.landing-demo-dialog-close {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 9px;
+  background: #25312f;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  flex: none;
+}
+.landing-demo-dialog-close span { font-size: 19px; }
+.landing-demo-dialog-scroll {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 18px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: #222d30;
+}
+.landing-demo-dialog-scroll:focus-visible {
+  outline: 3px solid #3ad9b4;
+  outline-offset: -3px;
+}
+.landing-demo .landing-demo-full-paper.paper {
+  display: block;
+  box-sizing: border-box;
+  width: 794px;
+  min-width: 794px;
+  max-width: none;
+  min-height: 1123px;
+  margin: 0 auto;
+  scale: 1;
+  text-align: left;
+  pointer-events: none;
+}
+@keyframes orire-demo-modal-enter {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+@media (max-width: 640px) {
+  .landing-demo-dialog { width: calc(100vw - 16px); max-width: calc(100vw - 16px); }
+  .landing-demo-dialog-header { padding: 14px; gap: 8px; }
+  .landing-demo-dialog-header h3 { font-size: 16px; }
+  .landing-demo-dialog-scroll { padding: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-mobile-menu-toggle,
+  .landing-mobile-menu-icon span,
+  .landing-mobile-menu-panel :is(a,button),
+  .landing-demo-expand { transition: none; }
+  .landing-demo-expand:hover { transform: none; }
+  .landing-demo-dialog[open] { animation: none; }
+}
