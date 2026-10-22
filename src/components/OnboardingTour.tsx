@@ -173,10 +173,13 @@ export function OnboardingTour() {
       if (workspace && !previouslyInert) workspace.removeAttribute("inert");
       const target = openerRef.current;
       openerRef.current = null;
-      if (target?.isConnected) {
+      // The command palette has an exit animation. Its input/button may still
+      // be connected at cleanup time but disappears a frame later. Never
+      // restore focus into that transient portal: use its persistent trigger.
+      const paletteOpener = Boolean(target?.closest(".cmdk-panel"));
+      if (target?.isConnected && !paletteOpener && !target.closest("[inert]")) {
         target.focus({ preventScroll: true });
       } else {
-        // Replaying from the command palette can unmount its original button.
         document.querySelector<HTMLElement>(".cmdk-hint-btn, .rail button")
           ?.focus({ preventScroll: true });
       }
