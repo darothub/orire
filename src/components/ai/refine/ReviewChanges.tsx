@@ -11,11 +11,10 @@ import { diffCv, applyReviewed, type CvChange } from "@/lib/ai/cvDiff";
 
 /**
  * Story 2 — AI-edit transparency. Before a refined CV touches the editor, show
- * exactly what the assistant changed, line by line (before → after), and let
- * the user accept or reject each change. The guardrail result (`factGround`) is
- * surfaced up top so the user can see nothing was invented. Accepting
- * everything applies the full refined CV; rejecting a change surgically keeps
- * that one piece of the original (see `applyReviewed`).
+ * what the assistant proposes, line by line (before → after). Automated checks
+ * flag some risks but cannot verify the truth of every sentence. Nothing is
+ * applied until the user explicitly accepts changes; only reviewed wording is
+ * copied to the unchanged source CV (see `applyReviewed`).
  */
 export function ReviewChanges({ provider }: { provider: ProviderId }) {
   const cols = useRefineStore((s) => s.cols);
@@ -35,7 +34,13 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
   const after = result?.cv ?? null;
 
   const changes = useMemo<CvChange[]>(() => (after ? diffCv(before, after) : []), [before, after]);
-  const [rejected, setRejected] = useState<Set<string>>(() => new Set());
+  // Safe-by-default: all suggestions are rejected until the user opts in.
+  const [rejected, setRejected] = useState<Set<string>>(
+    () => new Set(after ? diffCv(before, after).map((change) => change.id) : []),
+  );
+  // The comparison is against the CV captured when the run began. If the
+  // editor has changed since, refusing to apply prevents overwriting new work.
+  const sourceChanged = JSON.stringify(before) !== JSON.stringify(liveCV);
 
   const toggle = (id: string) =>
     setRejected((prev) => {
@@ -50,7 +55,14 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
   const warnings = result?.warnings ?? [];
 
   const apply = () => {
-    if (!after) return;
+    if (!after || sourceChanged) return;
+    if (accepted === 0) {
+      closeReview();
+      return;
+    }
+    // Re-read the store at click time: an edit made since render must never
+    // get overwritten by a stale AI result even if React hasn't rerendered.
+    if (JSON.stringify(useCVStore.getState().cv) !== JSON.stringify(before)) return;
     applyRefinedCV(applyReviewed(before, after, rejected));
     markApplied(provider);
     closeReview();
@@ -83,17 +95,26 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
 
       <div className={`rev-ground ${grounding?.label ?? "clean"}`}>
         {warnings.length === 0 ? (
-          <p>✓ Every change is grounded in your original — <strong>nothing was invented</strong>. Fidelity {grounding?.score ?? 100}%.</p>
+          <p>✓ No issues flagged by automated checks. <strong>This does not prove the AI wording is accurate.</strong> Verify every claim against your original CV before accepting.</p>
         ) : (
           <>
             <p>
-              <strong>Fidelity {grounding?.score ?? 0}%</strong> · changes stay grounded in your facts, with{" "}
-              {warnings.length} guardrail note{warnings.length > 1 ? "s" : ""} to check below.
+              <strong>Review required:</strong> automated checks flagged{" "}
+              {warnings.length} possible unsupported detail{warnings.length > 1 ? "s" : ""}.
+              Only accept wording you can confirm from your experience.
             </p>
             <ul>{warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
           </>
         )}
       </div>
+
+      {sourceChanged && (
+        <div className="rev-ground review" role="alert">
+          <strong>Your CV changed since this AI comparison.</strong>{" "}
+          Applying the old result could erase your newer edits. Cancel and run
+          Refine again using the current CV.
+        </div>
+      )}
 
       {changes.length === 0 ? (
         <div className="rev-none">
@@ -102,7 +123,7 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
       ) : (
         <>
           <div className="rev-bulk">
-            <span>{accepted} of {changes.length} change{changes.length > 1 ? "s" : ""} selected</span>
+            <span>{accepted} of {changes.length} suggestion{changes.length > 1 ? "s" : ""} explicitly accepted</span>
             <div className="rev-bulk-btns">
               <button onClick={() => setRejected(new Set())} disabled={rejected.size === 0}>Accept all</button>
               <button onClick={() => setRejected(new Set(changes.map((c) => c.id)))} disabled={rejected.size === changes.length}>Reject all</button>
@@ -121,7 +142,7 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
                       onClick={() => toggle(c.id)}
                       aria-pressed={!isRejected}
                     >
-                      {isRejected ? "Rejected — keeping original" : "✓ Accepted"}
+                      {isRejected ? "Keep original" : "✓ Accepted"}
                     </button>
                   </div>
                   <div className="rev-diff">
@@ -151,7 +172,7 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
 
       <div className="rev-foot">
         <button className="flow-btn ghost" onClick={closeReview}>Cancel</button>
-        <button className="flow-btn primary lg" onClick={changes.length === 0 ? closeReview : apply}>
+        <button className="flow-btn primary lg" onClick={changes.length === 0 ? closeReview : apply} disabled={sourceChanged}>
           {changes.length === 0
             ? "Back to comparison"
             : accepted === 0

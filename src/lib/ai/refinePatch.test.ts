@@ -44,7 +44,7 @@ describe("applyRefinePatch", () => {
     expect(cv.experience[0].highlights).toEqual(["Led the analytical engine"]);
   });
 
-  it("keeps only referenced experiences and honours patch order", () => {
+  it("preserves all original jobs in their original order despite the patch order", () => {
     const src = source();
     // Keep both but reversed via ref order.
     const patch = {
@@ -54,10 +54,10 @@ describe("applyRefinePatch", () => {
       ],
     };
     const out = applyRefinePatch(src, patch) as { experience: { company: string }[] };
-    expect(out.experience.map((e) => e.company)).toEqual(["Difference Ltd", "Analytical Co"]);
+    expect(out.experience.map((e) => e.company)).toEqual(["Analytical Co", "Difference Ltd"]);
   });
 
-  it("applies explicit order array by source ref", () => {
+  it("ignores unreviewed reorder requests to preserve source job alignment", () => {
     const src = source();
     const patch = {
       order: [1, 0],
@@ -67,7 +67,7 @@ describe("applyRefinePatch", () => {
       ],
     };
     const out = applyRefinePatch(src, patch) as { experience: { company: string }[] };
-    expect(out.experience.map((e) => e.company)).toEqual(["Difference Ltd", "Analytical Co"]);
+    expect(out.experience.map((e) => e.company)).toEqual(["Analytical Co", "Difference Ltd"]);
   });
 
   it("falls back to full source experience when patch omits it", () => {
@@ -108,4 +108,63 @@ describe("applyRefinePatch", () => {
     expect(cv.education[0].institution).toBe("Uni");
     expect(cv.certifications[0].name).toBe("Cert A");
   });
+  it("never silently removes unreferenced experience or projects in a partial patch", () => {
+    const src = source();
+    const patch = {
+      experience: [{ ref: 1, highlights: ["Computed tables with the original inputs"] }],
+      projects: [{ ref: 900, highlights: ["Invented project"] }],
+    };
+    const { cv } = factGround(src, applyRefinePatch(src, patch));
+    expect(cv.experience).toHaveLength(2);
+    expect(cv.experience[0].highlights).toEqual(src.experience[0].highlights);
+    expect(cv.experience[1].highlights).toEqual(["Computed tables with the original inputs"]);
+    expect(cv.projects).toHaveLength(1);
+    expect(cv.projects[0].highlights).toEqual(src.projects[0].highlights);
+  });
+
+  it("rejects hallucinated role promotions, negative refs and duplicate source refs", () => {
+    const src = source();
+    const patch = {
+      order: [1, 1, 0],
+      experience: [
+        { ref: -1, role: "CEO", highlights: ["Founded a new startup"] },
+        { ref: 0, role: "Chief Technology Officer", highlights: ["Improved internal software"] },
+        { ref: 0, role: "Director", highlights: ["Fabricated duplicate"] },
+        { ref: 99, role: "Founder", highlights: ["Fake company"] },
+      ],
+      projects: [{ ref: 0, role: "CTO", highlights: ["Updated original project"] }],
+    };
+    const { cv } = factGround(src, applyRefinePatch(src, patch));
+    expect(cv.experience).toHaveLength(src.experience.length);
+    expect(cv.experience.map((e) => [e.company, e.role, e.startDate, e.endDate]))
+      .toEqual(src.experience.map((e) => [e.company, e.role, e.startDate, e.endDate]));
+    expect(cv.experience[0].highlights).toEqual(["Improved internal software"]);
+    expect(cv.experience[1].highlights).toEqual(src.experience[1].highlights);
+    expect(cv.projects).toHaveLength(1);
+    expect(cv.projects[0].role).toBe("Lead");
+  });
+
+  it("does not mistake malformed patches for permission to overwrite source highlights", () => {
+    const src = source();
+    const patch = {
+      experience: [{ ref: 0, highlights: "new claim" }, { ref: 1, highlights: [null, 99, ""] }],
+      projects: "not an array",
+    };
+    const { cv } = factGround(src, applyRefinePatch(src, patch));
+    expect(cv.experience.map((e) => e.highlights))
+      .toEqual(src.experience.map((e) => e.highlights));
+    expect(cv.projects[0].highlights).toEqual(src.projects[0].highlights);
+  });
+
+  it("still surfaces fabricated metrics in a legitimate referenced rewrite", () => {
+    const src = source();
+    const patch = {
+      experience: [{ ref: 0, highlights: ["Improved revenue by 999% and saved $8M."] }],
+    };
+    const { cv, warnings } = factGround(src, applyRefinePatch(src, patch));
+    expect(cv.experience[0].highlights).toEqual(["Improved revenue by 999% and saved $8M."]);
+    expect(warnings.join(" ")).toContain("999%");
+    expect(warnings.join(" ")).toContain("$8M");
+  });
+
 });
