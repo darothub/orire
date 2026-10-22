@@ -69,6 +69,7 @@ export function Landing() {
 
   return (
     <div className="landing">
+      <a className="skip-to-main" href="#main-content">Skip to main content</a>
 
       <header className="landing-nav">
         <div className="landing-brand">
@@ -95,7 +96,7 @@ export function Landing() {
         </div>
       </header>
 
-      <main className="landing-main">
+      <main id="main-content" className="landing-main" tabIndex={-1}>
         <section className="landing-hero">
           <div className="landing-hero-grid landing-hero-centered">
             <motion.div
