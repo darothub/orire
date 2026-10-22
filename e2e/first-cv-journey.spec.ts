@@ -21,6 +21,7 @@ for (const viewport of [
     await page.goto("/", { waitUntil: "domcontentloaded" });
 
     const consent = page.getByRole("dialog", { name: "Cookie consent" });
+    await consent.waitFor({ state: "visible", timeout: 3_000 }).catch(() => {});
     if (await consent.isVisible().catch(() => false)) {
       await consent.getByRole("button", { name: "Decline" }).click();
     }
@@ -52,6 +53,12 @@ for (const viewport of [
     await signIn(page);
     await page.reload({ waitUntil: "domcontentloaded" });
     await waitForShell(page);
+    // Authenticated account-scoped storage can re-show cookie consent. Clear it
+    // before evidence captures; the test remains opt-out of optional tracking.
+    await consent.waitFor({ state: "visible", timeout: 3_000 }).catch(() => {});
+    if (await consent.isVisible().catch(() => false)) {
+      await consent.getByRole("button", { name: "Decline" }).click();
+    }
 
     // Brand new user: onboarding should open before the editor.
     const tour = page.getByRole("dialog", { name: "Getting started tour" });
