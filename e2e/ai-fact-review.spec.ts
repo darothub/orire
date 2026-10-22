@@ -89,6 +89,10 @@ for (const viewport of [
     if (viewport.width <= 390) {
       const paneSwitch = appPage.locator(".mpane-switch");
       await expect(paneSwitch).toBeVisible();
+      // UX114 implemented: unlike the old sticky switcher, the actual mobile
+      // toggle must stay in normal document flow as the user scrolls.
+      await expect.poll(() => paneSwitch.evaluate((el) => getComputedStyle(el).position)).toBe("static");
+
       for (const [position, target] of [
         ["review-warning", appPage.locator(".rev-ground").first()],
         ["review-actions", appPage.locator(".rev-bulk")],
@@ -97,6 +101,11 @@ for (const viewport of [
         await target.scrollIntoViewIfNeeded();
         await appPage.screenshot({
           path: "test-results/ux114-viewport/BEFORE-ACTUAL-Orire-" + viewport.name + "-" + position + ".png",
+          animations: "disabled",
+          fullPage: false,
+        });
+        await appPage.screenshot({
+          path: "test-results/ux114-implemented/AFTER-IMPLEMENTED-Orire-" + viewport.name + "-" + position + ".png",
           animations: "disabled",
           fullPage: false,
         });
