@@ -95,7 +95,7 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
 
       <div className={`rev-ground ${grounding?.label ?? "clean"}`}>
         {warnings.length === 0 ? (
-          <p>✓ Every change is grounded in your original — <strong>nothing was invented</strong>. Fidelity {grounding?.score ?? 100}%.</p>
+          <p>✓ No issues flagged by automated checks. <strong>This does not prove the AI wording is accurate.</strong> Verify every claim against your original CV before accepting.</p>
         ) : (
           <>
             <p>
