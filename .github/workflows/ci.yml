@@ -65,6 +65,7 @@ jobs:
   e2e:
     name: E2E · Playwright
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     # Mirror the Bitbucket ordering: only run e2e once checks + build are green.
     needs: [checks, build]
     services:
@@ -101,8 +102,17 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             playwright-${{ runner.os }}-
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      # Separate OS packages from the browser download so a stalled setup is
+      # identifiable in Actions rather than looking like a hanging test suite.
+      - name: Install Chromium system dependencies
+        timeout-minutes: 8
+        run: npx playwright install-deps chromium
+      - name: Install Playwright Chromium browser
+        timeout-minutes: 8
+        run: npx playwright install chromium
+      - name: Run Playwright E2E suite
+        timeout-minutes: 18
+        run: npm run test:e2e
       - name: Upload Playwright report
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
