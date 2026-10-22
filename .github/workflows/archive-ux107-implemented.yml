@@ -1,0 +1,63 @@
+name: Archive UX107 actual implementation screenshots
+
+on:
+  push:
+    branches: ["ux107-visual-evidence"]
+    paths:
+      - ".github/workflows/archive-ux107-implemented.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  save-real-ux107-screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ux107-visual-evidence
+      - name: Download passed Orire Playwright run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run download 39753538887 --repo darothub/orire \
+            --name playwright-report --dir /tmp/ux107-screenshots
+      - name: Preserve actual implemented screenshots with approved proposal
+        run: |
+          set -eu
+          src=/tmp/ux107-screenshots/test-results/ux107-implemented
+          test -s "$src/AFTER-IMPLEMENTED-guide-desktop-1440x900-dark-first-view.png"
+          test -s "$src/AFTER-IMPLEMENTED-guide-mobile-390x844-dark-first-view.png"
+          test -s "$src/AFTER-IMPLEMENTED-real-CV-comparison-desktop-1440x900-dark.png"
+          mkdir -p docs/visual-qa/ux107/implemented
+          cp "$src/"*.png docs/visual-qa/ux107/implemented/
+          cat > docs/visual-qa/ux107/implemented/README.md <<'EOF'
+          # AFTER — Actual Orire CV template guide implementation (#107)
+
+          GENUINE browser screenshots of the current implementation from
+          https://github.com/darothub/orire/pull/111, commit
+          c7df5bc27eb7940621acb03709544ced6351e2d3.
+          Not a browser-injected mockup, generated illustration or production capture.
+
+          Orire was built and served on localhost by Chromium / Playwright,
+          https://github.com/darothub/orire/actions/runs/39753538887.
+          Build, lint, typecheck, unit tests and 38 E2E tests passed.
+
+          Captures: 1440x900 desktop dark, 390x844 mobile dark,
+          320x720 narrow dark, 390x844 mobile light.
+          Full page, first screen and real CV comparison for each width/theme.
+          Cookie consent was declined before capturing.
+
+          The BEFORE (real existing Orire guide) and AFTER-PROPOSED
+          (approved visual design, browser-only) images live in sibling
+          'before' and 'proposed' directories. Do not conflate stages.
+
+          The real Meridian/Oxford/Vertex CVs use the genuine template renderer
+          and identical fictional sampleCV content. No user CVs present.
+          EOF
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/visual-qa/ux107/implemented
+          git commit -m "docs(ux107): preserve actual implemented guide screenshots next to approved proposals"
+          git push origin HEAD:ux107-visual-evidence
