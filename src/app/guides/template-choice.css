@@ -1,0 +1,338 @@
+/* UX #107 — approved real-Orire template selection editorial redesign.
+ * Uses Orire's existing theme tokens. Only this one guide gets these styles;
+ * other unfinished /guides/[slug] pages retain their current layout.
+ */
+.content.ux107 {
+  max-width: 1140px;
+  padding-top: 28px;
+  padding-bottom: 110px;
+}
+.ux107,
+.ux107 :where(header, section, article, aside, div, ol, li, a, p, h1, h2, h3) {
+  box-sizing: border-box;
+}
+.ux107 .content-back { margin-bottom: 26px; }
+.ux107 .ux107-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(25px, 5vw, 54px);
+  border: 1px solid var(--line-2);
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(58, 217, 180, .18), transparent 60%),
+    linear-gradient(125deg, var(--panel-2), var(--panel));
+}
+.ux107 .ux107-overline {
+  font-size: 11px;
+  font-weight: 780;
+  letter-spacing: .13em;
+  color: var(--accent-2);
+  text-transform: uppercase;
+}
+.ux107 .ux107-hero h1 {
+  max-width: 800px;
+  margin: 15px 0 18px;
+  font-size: clamp(32px, 5.4vw, 59px);
+  line-height: 1.1;
+  letter-spacing: -.045em;
+}
+.ux107 .ux107-hero > p:not(.ux107-caption) {
+  max-width: 700px;
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: clamp(16px, 1.6vw, 19px);
+  line-height: 1.65;
+}
+.ux107 .ux107-hero .ux107-caption {
+  margin: 18px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.ux107 .ux107-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.ux107 .ux107-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 12px 18px;
+  border-radius: 11px;
+  font-size: 14px;
+  font-weight: 720;
+  text-decoration: none;
+  line-height: 1.4;
+  text-align: center;
+}
+.ux107 .ux107-actions .ux107-primary {
+  color: #081611;
+  background: var(--grad);
+}
+.ux107 .ux107-actions .ux107-secondary {
+  color: var(--text);
+  border: 1px solid var(--line-2);
+  background: rgba(128, 128, 128, .05);
+}
+.ux107 .ux107-actions .ux107-primary:hover { filter: brightness(1.09); }
+.ux107 .ux107-actions .ux107-secondary:hover { border-color: var(--accent-2); }
+.ux107 .ux107-three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+.ux107 .ux107-mini {
+  padding: 18px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.ux107 .ux107-mini strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+.ux107 .ux107-mini p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.ux107 .ux107-section { margin-top: 70px; }
+.ux107 .ux107-section h2 {
+  margin: 10px 0 13px;
+  font-size: clamp(26px, 3.1vw, 36px);
+  line-height: 1.14;
+  letter-spacing: -.035em;
+}
+.ux107 .ux107-lede {
+  max-width: 750px;
+  margin: 0 0 23px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.ux107 .ux107-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  counter-reset: none;
+}
+.ux107 .ux107-steps li {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.ux107 .ux107-steps b {
+  display: block;
+  margin-bottom: 9px;
+  font-size: 14px;
+  color: var(--accent-2);
+}
+.ux107 .ux107-steps strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+}
+.ux107 .ux107-steps p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.ux107 .ux107-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.ux107 .ux107-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 17px;
+  background: var(--panel);
+}
+.ux107 .ux107-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 18px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.ux107 .ux107-card-top strong { color: var(--accent-2); }
+.ux107 .ux107-paper-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 18px 9px 20px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(58, 217, 180, .09), transparent 65%),
+    rgba(6, 13, 20, .12);
+}
+.ux107 .ux107-paper-stage {
+  position: relative;
+  width: min(246px, 100%);
+  aspect-ratio: 246 / 348;
+  overflow: hidden;
+  flex: none;
+  border-radius: 5px;
+  background: white;
+  box-shadow: 0 11px 27px rgba(0, 0, 0, .32);
+}
+.ux107 .ux107-paper-inner.paper {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  box-sizing: border-box;
+  width: 794px;
+  min-width: 794px;
+  max-width: none;
+  min-height: 1123px;
+  margin: 0;
+  text-align: left;
+  transform: translateX(-50%) scale(.3098);
+  transform-origin: top center;
+  pointer-events: none;
+  user-select: none;
+}
+.ux107 .ux107-card-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 19px 21px;
+}
+.ux107 .ux107-card-text h3 {
+  margin: 0;
+  font-size: 21px;
+  letter-spacing: -.025em;
+}
+.ux107 .ux107-card-text p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.ux107 .ux107-card-text .ux107-feature {
+  color: var(--text);
+  font-weight: 700;
+}
+.ux107 .ux107-card-text .ux107-consideration {
+  padding-top: 5px;
+  border-top: 1px solid var(--line-2);
+}
+.ux107 .ux107-card-text .ux107-consideration strong {
+  color: var(--text);
+}
+.ux107 .ux107-card-text > a {
+  margin-top: auto;
+  padding-top: 12px;
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--accent-2);
+  text-decoration: none;
+}
+.ux107 .ux107-card-text > a:hover { text-decoration: underline; }
+.ux107 .ux107-footnote {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.ux107 .ux107-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.ux107 .ux107-col {
+  min-width: 0;
+  padding: 23px 25px;
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  background: var(--panel);
+}
+.ux107 .ux107-col h3 {
+  margin: 0 0 12px;
+  font-size: 19px;
+}
+.ux107 .ux107-col p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.ux107 .ux107-col p:last-child { margin-bottom: 0; }
+.ux107 .ux107-finish {
+  padding: clamp(24px, 4vw, 42px);
+  border: 1px solid var(--line-2);
+  border-radius: 20px;
+  background: linear-gradient(130deg, var(--panel-2), var(--panel));
+}
+.ux107 .ux107-finish h2 { margin: 12px 0 18px; }
+.ux107 .ux107-finish ol {
+  padding-left: 21px;
+  margin-bottom: 23px;
+  color: var(--muted);
+}
+.ux107 .ux107-finish li {
+  margin-bottom: 7px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.ux107 a:focus-visible {
+  outline: 3px solid var(--accent-2);
+  outline-offset: 4px;
+}
+@media (max-width: 830px) {
+  .ux107 .ux107-grid,
+  .ux107 .ux107-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .content.ux107 {
+    padding: 24px 16px 75px;
+  }
+  .ux107 .ux107-hero {
+    padding: 24px 20px;
+    border-radius: 17px;
+  }
+  .ux107 .ux107-actions a { flex: 1 1 100%; }
+  .ux107 .ux107-three,
+  .ux107 .ux107-steps,
+  .ux107 .ux107-grid,
+  .ux107 .ux107-columns {
+    grid-template-columns: 1fr;
+  }
+  .ux107 .ux107-mini { padding: 14px 17px; }
+  .ux107 .ux107-section { margin-top: 52px; }
+  .ux107 .ux107-paper-wrap { padding: 20px 9px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ux107 .ux107-card {
+    transition: transform .18s ease, border-color .18s ease;
+  }
+  .ux107 .ux107-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-2);
+  }
+  .ux107 .ux107-actions a,
+  .ux107 .ux107-card-text > a {
+    transition: filter .18s ease, color .18s ease;
+  }
+}
