@@ -79,7 +79,6 @@ function proposedGuide(previews: Record<string, string>) {
     '</p><a href="/templates/',template.id,'">Preview ',template.name,' →</a></div></article>',
   ].join("")).join("");
   return [
-    '<span class="ux107-stamp" aria-hidden="true">PROPOSED · NOT IMPLEMENTED</span>',
     '<a href="/guides" class="content-back">← All guides</a>',
     '<header class="ux107-hero"><span class="ux107-overline">ORIRE FIELD GUIDE / TEMPLATE CHOICE</span>',
     '<h1>Pick a CV template that puts your experience first.</h1>',
