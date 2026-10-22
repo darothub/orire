@@ -257,7 +257,6 @@ export function OnboardingTour() {
           role="dialog"
           aria-modal="true"
           aria-label="Getting started tour"
-          aria-labelledby={titleId}
           aria-describedby={descriptionId}
         >
           {/* Click-catcher: tapping the dimmed area advances the tour. */}
