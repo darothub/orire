@@ -48,7 +48,7 @@ for (const viewport of viewports) {
       await expect(page.getByRole("button", { name: "Open section menu" })).toBeFocused();
 
       await menu.click();
-      await page.locator(".landing-hero h1").click();
+      // Use an empty viewport edge: the expanded menu intentionally overlays the hero.\n      await page.mouse.click(5, viewport.height - 14);
       await expect(mobileNav).toBeHidden();
 
       await menu.click();
