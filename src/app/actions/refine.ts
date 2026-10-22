@@ -15,6 +15,7 @@
 
 import { auth } from "@/lib/auth/auth";
 import { devLoginEnabled } from "@/lib/dev/devAccess";
+import { isE2eBypassUser } from "@/lib/e2e/bypass";
 import type { ProviderId } from "@/lib/ai/types";
 import type { PlanId } from "@/lib/plan/plan";
 import {
@@ -60,6 +61,27 @@ export async function authorizeRefineRun(selections: RunSelection[]): Promise<Au
   const session = await auth();
   const userId = session?.user?.id ?? null;
   const signedIn = Boolean(userId);
+
+  // Hermetic CI only: the stateless Playwright session has no database user.
+  // Restrict the fake run to its hard-coded test ID and a single free-tier
+  // OpenAI column. This remains impossible for ordinary/production accounts
+  // unless the dedicated E2E flag AND signed test user are both present.
+  if (isE2eBypassUser(userId)) {
+    const valid = selections.length === 1 && selections[0].provider === "openai";
+    if (!valid) {
+      return {
+        ok: false, signedIn: false, plan: "free", usedThisMonth: 0,
+        cap: refineCap("free"),
+        block: { title: "Test run restricted", body: "The isolated E2E session permits only one OpenAI assistant." },
+      };
+    }
+    return {
+      ok: true,
+      token: signRunToken({ userId: null, plan: "free", providers: ["openai"] }),
+      signedIn: false, plan: "free", usedThisMonth: 0,
+      cap: refineCap("free"),
+    };
+  }
 
   const plan: PlanId = userId ? await getPlanId(userId) : "free";
   const usedThisMonth = userId ? await getUsed(userId, "refine", plan) : 0;
