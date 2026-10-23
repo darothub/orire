@@ -4,6 +4,9 @@ import sitemap from "@/app/sitemap";
 import { metadata as templateIndexMetadata } from "@/app/templates/page";
 import { generateMetadata, generateStaticParams } from "@/app/templates/[id]/page";
 import { TEMPLATE_CATALOG } from "@/lib/templates/catalog";
+import { GUIDES } from "@/lib/content/guides";
+import { metadata as guidesMetadata } from "@/app/guides/page";
+import { publicMetadata, privateMetadata } from "@/lib/seo/metadata";
 
 /**
  * UX94: public SEO contracts. Validate actual metadata and route generators
@@ -21,6 +24,30 @@ describe("public SEO routes", () => {
     }
     expect(urls.every((url) => url.startsWith("https://"))).toBe(true);
     expect(urls.some((url) => /\/(?:api|checkout|reset|forgot)(?:\/|$)/.test(url))).toBe(false);
+  });
+
+  it("includes every published guide, with no private or duplicate sitemap entries", () => {
+    const urls = sitemap().map((entry) => entry.url);
+    for (const guide of GUIDES) {
+      expect(urls).toContain(`https://orire.app/guides/${guide.slug}`);
+    }
+    expect(urls).not.toContain("https://orire.app/account");
+    expect(urls).not.toContain("https://orire.app/editor");
+  });
+
+  it("keeps public canonical and social URL consistent, and private pages nonindexable", () => {
+    const publicPage = publicMetadata("CV guide | Orire", "Useful factual CV advice.", "/guides");
+    expect(publicPage.alternates?.canonical).toBe("/guides");
+    expect(publicPage.openGraph).toMatchObject({
+      url: "/guides",
+      title: publicPage.title,
+      description: publicPage.description,
+    });
+    expect(guidesMetadata.alternates?.canonical).toBe("/guides");
+    expect(guidesMetadata.openGraph).toMatchObject({ url: "/guides" });
+    const userPage = privateMetadata("Your CV");
+    expect(userPage.robots).toMatchObject({ index: false, follow: false, nocache: true });
+    expect(userPage.alternates?.canonical).toEqual(null);
   });
 
   it("exposes a sitemap while excluding API and account recovery from crawling", () => {
