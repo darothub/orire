@@ -103,3 +103,22 @@ authenticatedTest("authenticated CV workspace has keyboard skip-to-main link", a
   await appPage.keyboard.press("Enter");
   await expect(appPage.locator("main#main-content")).toBeFocused();
 });
+
+test("UX92 public support form labels and error announcement", async ({ page }) => {
+  await page.goto("/support", { waitUntil: "domcontentloaded" });
+  const email = page.getByRole("textbox", { name: "Your email" });
+  const message = page.getByRole("textbox", { name: "How can we help?" });
+  await email.focus();
+  await expect(email).toBeFocused();
+  await email.fill("candidate@example.test");
+  await message.fill("Please help with a CV export problem.");
+  await page.route("**/api/support", (route) => route.fulfill({
+    status: 503,
+    contentType: "application/json",
+    body: JSON.stringify({ ok: false, error: "Support temporarily unavailable" }),
+  }));
+  await page.getByRole("button", { name: "Send message" }).click();
+  await expect(page.getByRole("alert")).toContainText("Support temporarily unavailable");
+  await expect(email).toHaveValue("candidate@example.test");
+  await expect(message).toHaveValue("Please help with a CV export problem.");
+});
