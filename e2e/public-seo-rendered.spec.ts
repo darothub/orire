@@ -25,7 +25,7 @@ test("public pages expose correct canonical and social metadata in rendered HTML
   }
 });
 
-test("completed guide indexes while editorial-outline guides have noindex", async ({ page }) => {
+test("all four completed advice guides are indexable", async ({ page }) => {
   await page.goto("/guides/choose-the-right-cv-template", { waitUntil: "domcontentloaded" });
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href", "https://orire.app/guides/choose-the-right-cv-template",
@@ -34,9 +34,13 @@ test("completed guide indexes while editorial-outline guides have noindex", asyn
   const publishedRobotsContent = await publishedRobots.count() ? await publishedRobots.getAttribute("content") : "";
   expect(publishedRobotsContent ?? "").not.toMatch(/noindex/i);
 
-  await page.goto("/guides/tailor-cv-to-job-description", { waitUntil: "domcontentloaded" });
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/i);
-  await expect(page.locator('link[rel="canonical"]')).toHaveCount(0);
+  for (const slug of ["tailor-cv-to-job-description", "quantify-achievements-on-your-cv", "beat-applicant-tracking-systems-ats"]) {
+    await page.goto("/guides/" + slug, { waitUntil: "domcontentloaded" });
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://orire.app/guides/" + slug);
+    const robots = page.locator('meta[name="robots"]');
+    expect((await robots.count() ? await robots.getAttribute("content") : "") ?? "").not.toMatch(/noindex/i);
+    await expect(page.locator(".guide-draft")).toHaveCount(0);
+  }
 });
 
 test("sitemap and robots routes expose valid public SEO data", async ({ request }) => {
@@ -45,7 +49,7 @@ test("sitemap and robots routes expose valid public SEO data", async ({ request 
   const xml = await sitemap.text();
   expect(xml).toContain("https://orire.app/templates");
   expect(xml).toContain("https://orire.app/guides/choose-the-right-cv-template");
-  expect(xml).not.toContain("https://orire.app/guides/tailor-cv-to-job-description");
+  expect(xml).toContain("https://orire.app/guides/tailor-cv-to-job-description");
   expect(xml).not.toContain("<lastmod>");
 
   const robots = await request.get("/robots.txt");
