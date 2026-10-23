@@ -71,7 +71,11 @@ export default defineConfig({
     // Run against a production build: no dev-overlay portal intercepting
     // clicks, and closer to what ships. Reuses an already-running server
     // locally so repeat runs are fast.
-    // In GitHub Actions the E2E job builds once before launching Playwright.\n    // For local runs retain the build-and-start convenience.\n    command: process.env.E2E_PREBUILT === "1"\n      ? `npx next start -p ${PORT}`\n      : `npx next build && npx next start -p ${PORT}`,
+    // In GitHub Actions the E2E job builds once before launching Playwright.
+    // For local runs retain the build-and-start convenience.
+    command: process.env.E2E_PREBUILT === "1"
+      ? `npx next start -p ${PORT}`
+      : `npx next build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
     env: serverEnv,
     reuseExistingServer: !process.env.CI,
