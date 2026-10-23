@@ -116,6 +116,9 @@ export function SpotlightView() {
   const dismissCoach = useFlowStore((s) => s.dismissCoach);
   const recommendedNext = useRecommendedNext();
   const gridBlocks = COMPOSABLE_BLOCKS.filter((v) => v !== "target");
+  const setView = useViewStore((s) => s.setView);
+  const cvName = useCVStore((s) => s.cv.basics.fullName);
+  const started = useCVStore((s) => s.started);
 
   return (
     <motion.div
@@ -124,15 +127,24 @@ export function SpotlightView() {
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="ws-head">
+      <header className="ws-head">
         <div>
+          <span className="spot-studio-eyebrow">Your workspace · Orire Studio</span>
           <h2>Your CV studio</h2>
-          <p>
-            Each tool is a building block. Add the ones you want to your flow — they line up in the
-            left panel in the order you&apos;ll use them. Click any block to open it.
-          </p>
+          <p>Shape your experience into a CV you're proud to share. Start with your draft, then refine and export when you're ready.</p>
         </div>
-      </div>
+      </header>
+      <section className="spot-studio-next" aria-label="Continue your CV">
+        <div>
+          <span className="spot-studio-eyebrow">Your next step</span>
+          <h3>{started ? "Continue your CV" : "Start your first CV"}</h3>
+          <p>{started ? `Pick up where you left off${cvName ? ` — ${cvName}` : ""}. Your existing edits remain in your workspace.` : "Add your experience, choose a template and see the live preview as you work."}</p>
+        </div>
+        <div className="spot-studio-actions">
+          <button type="button" className="flow-btn primary" onClick={() => setView("edit")}>{started ? "Continue editing →" : "Create your CV →"}</button>
+          <button type="button" className="flow-btn" onClick={() => setView("history")}>Your library</button>
+        </div>
+      </section>
 
       {!coachSeen && (
         <div className="spot-coach" role="note">
