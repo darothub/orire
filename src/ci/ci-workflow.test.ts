@@ -35,8 +35,8 @@ describe("GitHub Actions CI workflow", () => {
     expect(workflow).not.toMatch(/^\s*run:\s*npx playwright install-deps chromium\s*$/m);
     expect(workflow).toContain("playwright install chromium");
     expect(workflow).not.toContain("playwright install --with-deps chromium");
-    expect(workflow).toMatch(/name: Verify Chromium can launch\n\s*timeout-minutes: 2/);
-    expect(workflow).toMatch(/name: Install Playwright Chromium browser\n\s*timeout-minutes: 8/);
+    expect(workflow).toMatch(/name: Verify Chromium can launch\n\s*if: steps.docs.outputs.skip != .true.\n\s*timeout-minutes: 2/);
+    expect(workflow).toMatch(/name: Install Playwright Chromium browser\n\s*if: steps.docs.outputs.skip != .true.\n\s*timeout-minutes: 8/);
     expect(workflow).toContain("name: Run full Playwright regression");
     expect(workflow).toContain("npx playwright test --grep '@smoke'");
   });
@@ -51,6 +51,15 @@ describe("GitHub Actions CI workflow", () => {
     expect(e2e).toContain("name: Build once for browser tests");
     expect(e2e).toContain("name: Record build elapsed time");
     expect(e2e).toContain("Choose PR smoke or full regression");
+  });
+
+  it("preserves the required E2E job for documentation-only PRs", () => {
+    expect(workflow).toContain("name: Classify documentation-only PR");
+    expect(workflow).toContain("id: docs");
+    expect(workflow).toContain("git diff --name-only");
+    expect(workflow).toContain("steps.docs.outputs.skip != 'true'");
+    expect(workflow).not.toContain("paths-ignore:");
+    expect(workflow).toContain("name: Run full Playwright regression");
   });
 
   it("does not deploy from CI (Vercel Git integration owns deploys)", () => {
