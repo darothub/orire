@@ -12,6 +12,13 @@ const root = process.cwd();
 const workflowPath = resolve(root, ".github/workflows/ci.yml");
 const workflow = existsSync(workflowPath) ? readFileSync(workflowPath, "utf8") : "";
 
+/** Locate a named workflow step without depending on YAML property order. */
+function stepBlock(yaml: string, name: string): string {
+  const blocks = yaml.split(/(?=^      - (?:name:|uses:|run:))/m);
+  const block = blocks.find((part) => part.startsWith("      - name: " + name + "\n"));
+  if (!block) throw new Error("Missing workflow step: " + name);
+  return block;
+}
 describe("GitHub Actions CI workflow", () => {
   it("exists at .github/workflows/ci.yml", () => {
     expect(existsSync(workflowPath)).toBe(true);
@@ -35,8 +42,8 @@ describe("GitHub Actions CI workflow", () => {
     expect(workflow).not.toMatch(/^\s*run:\s*npx playwright install-deps chromium\s*$/m);
     expect(workflow).toContain("playwright install chromium");
     expect(workflow).not.toContain("playwright install --with-deps chromium");
-    expect(workflow).toMatch(/name: Verify Chromium can launch\n\s*if: steps.docs.outputs.skip != .true.\n\s*timeout-minutes: 2/);
-    expect(workflow).toMatch(/name: Install Playwright Chromium browser\n\s*if: steps.docs.outputs.skip != .true.\n\s*timeout-minutes: 8/);
+    expect(stepBlock(workflow, "Verify Chromium can launch")).toMatch(/^\s*timeout-minutes: 2$/m);
+    expect(stepBlock(workflow, "Install Playwright Chromium browser")).toMatch(/^\s*timeout-minutes: 8$/m);
     expect(workflow).toContain("name: Run full Playwright regression");
     expect(workflow).toContain("npx playwright test --grep '@smoke'");
   });
@@ -69,6 +76,23 @@ describe("GitHub Actions CI workflow", () => {
   });
 });
 
+describe("Workflow step parsing", () => {
+  it("accepts step properties in any order and extra conditions", () => {
+    const fixture = [
+      "      - name: Verify Chromium can launch",
+      "        timeout-minutes: 2",
+      "        env:",
+      "          CI: true",
+      "        if: steps.docs.outputs.skip != true",
+      "        run: echo launched",
+      "      - name: Run full Playwright regression",
+      "        run: npm run test:e2e",
+    ].join("\n");
+    expect(stepBlock(fixture, "Verify Chromium can launch")).toMatch(/^\s*timeout-minutes: 2$/m);
+    expect(stepBlock(fixture, "Verify Chromium can launch")).toContain("steps.docs.outputs.skip");
+    expect(stepBlock(fixture, "Verify Chromium can launch")).not.toContain("Run full Playwright regression");
+  });
+});
 describe("Bitbucket Pipelines retirement", () => {
   it("no longer ships bitbucket-pipelines.yml", () => {
     expect(existsSync(resolve(root, "bitbucket-pipelines.yml"))).toBe(false);
