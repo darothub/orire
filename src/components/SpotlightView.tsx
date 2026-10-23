@@ -131,7 +131,7 @@ export function SpotlightView() {
         <div>
           <span className="spot-studio-eyebrow">Your workspace · Orire Studio</span>
           <h2>Your CV studio</h2>
-          <p>Shape your experience into a CV you're proud to share. Start with your draft, then refine and export when you're ready.</p>
+          <p>Shape your experience into a CV you&apos;re proud to share. Start with your draft, then refine and export when you&apos;re ready.</p>
         </div>
       </header>
       <section className="spot-studio-next" aria-label="Continue your CV">
