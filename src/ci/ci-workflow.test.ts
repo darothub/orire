@@ -53,6 +53,15 @@ describe("GitHub Actions CI workflow", () => {
     expect(e2e).toContain("Choose PR smoke or full regression");
   });
 
+  it("preserves the required E2E job for documentation-only PRs", () => {
+    expect(workflow).toContain("name: Classify documentation-only PR");
+    expect(workflow).toContain("id: docs");
+    expect(workflow).toContain("git diff --name-only");
+    expect(workflow).toContain("steps.docs.outputs.skip != 'true'");
+    expect(workflow).not.toContain("paths-ignore:");
+    expect(workflow).toContain("name: Run full Playwright regression");
+  });
+
   it("does not deploy from CI (Vercel Git integration owns deploys)", () => {
     expect(workflow).not.toMatch(/vercel\s+(--prod|pull|deploy)/i);
     expect(workflow).not.toMatch(/npx\s+vercel/i);
