@@ -10,7 +10,7 @@ for (const viewport of [
   { name: "mobile-390", width: 390, height: 844 },
   { name: "mobile-320", width: 320, height: 720 },
 ]) {
-  test("UX85 suspicious AI edits require explicit review " + viewport.name, async ({ appPage }) => {
+  test("@smoke UX85 suspicious AI edits require explicit review " + viewport.name, async ({ appPage }) => {
     const errors: string[] = [];
     appPage.on("pageerror", (error) => errors.push(error.message));
     await appPage.setViewportSize({ width: viewport.width, height: viewport.height });

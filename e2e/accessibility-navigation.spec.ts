@@ -10,7 +10,7 @@ for (const viewport of [
   { width: 390, height: 844, id: "mobile-390" },
   { width: 1440, height: 900, id: "desktop-1440" },
 ]) {
-  test("public landing keyboard skip and accessible demo " + viewport.id, async ({ page }) => {
+  test("@smoke public landing keyboard skip and accessible demo " + viewport.id, async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

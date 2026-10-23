@@ -115,7 +115,7 @@ rawTest.describe("guest signup entry", () => {
 });
 
 test.describe("signed-in edit → export", () => {
-  test("edit updates preview then PDF and Word downloads succeed", async ({ appPage }, testInfo) => {
+  test("@smoke edit updates preview then PDF and Word downloads succeed", async ({ appPage }, testInfo) => {
     // On phone the live paper is display:none while Edit is open; PDF capture needs
     // a painted node. Mobile button reachability is covered in the mobile suite.
     test.skip(

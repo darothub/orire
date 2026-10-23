@@ -37,11 +37,14 @@ describe("GitHub Actions CI workflow", () => {
     expect(workflow).not.toContain("playwright install --with-deps chromium");
     expect(workflow).toMatch(/name: Verify Chromium can launch\n\s*timeout-minutes: 2/);
     expect(workflow).toMatch(/name: Install Playwright Chromium browser\n\s*timeout-minutes: 8/);
-    expect(workflow).toMatch(/name: Run Playwright E2E suite\n\s*timeout-minutes: 18/);
+    expect(workflow).toContain("name: Run full Playwright regression");
+    expect(workflow).toContain("npx playwright test --grep '@smoke'");
   });
 
-  it("gates e2e behind checks and build", () => {
-    expect(workflow).toMatch(/needs:\s*\[checks,\s*build\]/);
+  it("gates the single-build E2E job behind code checks", () => {
+    expect(workflow).toMatch(/needs:\s*\[checks\]/);
+    expect(workflow).toContain('E2E_PREBUILT: "1"');
+    expect(workflow).toContain("Choose PR smoke or full regression");
   });
 
   it("does not deploy from CI (Vercel Git integration owns deploys)", () => {

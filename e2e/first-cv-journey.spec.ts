@@ -13,7 +13,7 @@ for (const viewport of [
   { name: "desktop-1440", width: 1440, height: 900 },
   { name: "mobile-390", width: 390, height: 844 },
 ]) {
-  test("UX87 anonymous visitor to first edited CV " + viewport.name, async ({ page }) => {
+  test("@smoke UX87 anonymous visitor to first edited CV " + viewport.name, async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

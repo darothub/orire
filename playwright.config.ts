@@ -47,8 +47,8 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 2 : undefined,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   timeout: 30_000,
   expect: { timeout: 7_000 },
@@ -71,7 +71,11 @@ export default defineConfig({
     // Run against a production build: no dev-overlay portal intercepting
     // clicks, and closer to what ships. Reuses an already-running server
     // locally so repeat runs are fast.
-    command: `npx next build && npx next start -p ${PORT}`,
+    // In GitHub Actions the E2E job builds once before launching Playwright.
+    // For local runs retain the build-and-start convenience.
+    command: process.env.E2E_PREBUILT === "1"
+      ? `npx next start -p ${PORT}`
+      : `npx next build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
     env: serverEnv,
     reuseExistingServer: !process.env.CI,
