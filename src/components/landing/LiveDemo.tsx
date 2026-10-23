@@ -92,6 +92,30 @@ export function LiveDemo() {
             className="landing-demo-dialog"
             aria-labelledby="landing-demo-dialog-heading"
             aria-describedby="landing-demo-dialog-description"
+            onKeyDown={(event) => {
+              if (event.key !== "Tab") return;
+              const dialog = dialogRef.current;
+              if (!dialog) return;
+              const controls = Array.from(
+                dialog.querySelectorAll<HTMLElement>(
+                  'button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+                ),
+              ).filter((element) => !element.hasAttribute("inert") && element.getClientRects().length > 0);
+              if (controls.length === 0) {
+                event.preventDefault();
+                dialog.focus();
+                return;
+              }
+              const current = document.activeElement;
+              const index = controls.findIndex((element) => element === current);
+              if (event.shiftKey && index <= 0) {
+                event.preventDefault();
+                controls[controls.length - 1].focus();
+              } else if (!event.shiftKey && (index === -1 || index === controls.length - 1)) {
+                event.preventDefault();
+                controls[0].focus();
+              }
+            }}
             onClick={(event) => {
               if (event.target === dialogRef.current) dialogRef.current?.close();
             }}
