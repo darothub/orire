@@ -50,24 +50,12 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm test
 
-  build:
-    name: Production build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run build
-
   e2e:
     name: E2E · Playwright
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    # Mirror the Bitbucket ordering: only run e2e once checks + build are green.
-    needs: [checks, build]
+    # Code checks must pass first; this job owns the one production build.
+    needs: [checks]
     services:
       postgres:
         image: postgres:16
@@ -84,10 +72,15 @@ jobs:
           --health-retries=5
     env:
       CI: "true"
+      E2E_PREBUILT: "1"
+      NEXT_PUBLIC_PASSWORD_AUTH: "true"
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ""
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
       DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -112,12 +105,35 @@ jobs:
       - name: Verify Chromium can launch
         timeout-minutes: 2
         run: node -e 'const { chromium } = require("@playwright/test"); chromium.launch({headless:true}).then(b => b.close()).catch(e => { console.error(e); process.exit(1); });'
-      # Fail fast on the critical public keyboard/dialog journey rather than
-      # discovering a deterministic accessibility regression at suite end.
-      - name: Accessibility keyboard smoke (desktop and mobile)
-        timeout-minutes: 5
-        run: npx playwright test e2e/accessibility-navigation.spec.ts --project=chromium --retries=0
-      - name: Run Playwright E2E suite
+      - name: Build once for browser tests
+        timeout-minutes: 8
+        run: npm run build
+      - name: Choose PR smoke or full regression
+        id: tier
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          MODE=smoke
+          if [[ "$EVENT_NAME" != "pull_request" ]]; then
+            MODE=full
+          else
+            # Full coverage for changes to security-sensitive or shared
+            # application paths, with a safe fallback if diff inspection fails.
+            if ! git diff --name-only "$BASE_SHA"...HEAD > /tmp/orire-changed-files; then
+              MODE=full
+            elif grep -Eq '^(src/app/api/|src/lib/(auth|payments|stripe|e2e)/|src/components/ai/|src/components/templates/|prisma/|package(-lock)?[.]json|playwright[.]config[.]ts|[.]github/workflows/)' /tmp/orire-changed-files; then
+              MODE=full
+            fi
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "Selected $MODE Playwright coverage" >> "$GITHUB_STEP_SUMMARY"
+      - name: Run PR critical smoke
+        if: steps.tier.outputs.mode == 'smoke'
+        timeout-minutes: 12
+        run: npx playwright test --grep '@smoke'
+      - name: Run full Playwright regression
+        if: steps.tier.outputs.mode == 'full'
         timeout-minutes: 18
         run: npm run test:e2e
       - name: Upload Playwright report
