@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import "../../content.css";
@@ -18,11 +19,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const guide = getGuide(slug);
   if (!guide) return {};
-  return {
-    title: `${guide.title} | Orire`,
-    description: guide.description,
-    alternates: { canonical: `/guides/${slug}` },
-  };
+  return publicMetadata(
+    `${guide.title} | Orire`,
+    guide.description,
+    `/guides/${slug}`,
+  );
 }
 
 export default async function GuideArticle({

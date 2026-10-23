@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = process.env.APP_URL ?? "https://orire.app";
+import { SITE_URL } from "@/lib/seo/metadata";
 
 export default function robots(): MetadataRoute.Robots {
   return {

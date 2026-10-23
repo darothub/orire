@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 import "../legal.css";
 import { COMPANY } from "@/lib/legal/company";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy — Orire",
-  description: "How Orire collects, uses and protects your personal data.",
-  alternates: { canonical: "/privacy" },
-};
+export const metadata = publicMetadata(
+  "Privacy Policy — Orire",
+  "How Orire collects, uses and protects your personal data.",
+  "/privacy",
+);
 
 export default function PrivacyPage() {
   return (

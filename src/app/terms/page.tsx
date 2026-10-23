@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 import "../legal.css";
 import { COMPANY } from "@/lib/legal/company";
 
-export const metadata: Metadata = {
-  title: "Terms of Service — Orire",
-  description: "The terms that govern your use of Orire.",
-  alternates: { canonical: "/terms" },
-};
+export const metadata = publicMetadata(
+  "Terms of Service — Orire",
+  "The terms that govern your use of Orire.",
+  "/terms",
+);
 
 export default function TermsPage() {
   return (

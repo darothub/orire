@@ -1,14 +1,13 @@
-import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 import "../content.css";
 import { GUIDES } from "@/lib/content/guides";
 
-export const metadata: Metadata = {
-  title: "CV guides — practical advice for a stronger CV | Orire",
-  description:
-    "Practical, honest guides on tailoring your CV, quantifying achievements, getting past ATS, and choosing a template.",
-  alternates: { canonical: "/guides" },
-};
+export const metadata = publicMetadata(
+  "CV guides — practical advice for a stronger CV | Orire",
+  "Practical, honest guides on tailoring your CV, quantifying achievements, getting past ATS, and choosing a template.",
+  "/guides",
+);
 
 export default function GuidesIndex() {
   return (

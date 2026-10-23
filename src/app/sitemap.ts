@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { TEMPLATE_CATALOG } from "@/lib/templates/catalog";
 import { GUIDES } from "@/lib/content/guides";
 
-const SITE_URL = process.env.APP_URL ?? "https://orire.app";
+import { SITE_URL } from "@/lib/seo/metadata";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
