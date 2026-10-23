@@ -1,0 +1,13 @@
+{
+  "purpose": "Create a proposed UI mockup by editing an actual Orire screenshot. Not an implemented browser render.",
+  "preserve": ["Real Orire header", "Existing intro typography and copy", "Graphite/emerald colors", "Existing template cards, names, sample data and spacing"],
+  "insert": {
+    "placement": "Between /templates intro and existing catalog",
+    "heading": "See what you'll export",
+    "body": "PDF preserves the selected design. Word uses a clean, single-column layout. TXT is plain text.",
+    "policy": "Free: 3 lifetime downloads. Pro and Career: unlimited downloads.",
+    "links": ["View fictional CV", "Sample PDF", "Sample Word"],
+    "note": "Fictional sample — no account needed to inspect the example."
+  },
+  "constraints": ["Sample download assets and links are proposed, not currently implemented", "Do not imply Word is a visual template clone", "Do not change account-export authorization or metering", "Do not redraw unrelated UI", "Clearly identify output as AFTER — proposed mockup"]
+}
