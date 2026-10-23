@@ -274,11 +274,23 @@ export function AuthOverlay() {
     if (busy) return;
     setBusy(id);
     setAuthErr(null);
-    if (!(await passCaptcha())) {
+    try {
+      if (!(await passCaptcha())) return;
+      // OAuth normally navigates away. If initiation fails, tell the user
+      // what happened and re-enable the button instead of leaving a spinner.
+      const result = await signIn(id, { callbackUrl: "/", redirect: false });
+      if (result?.error) {
+        setAuthErr("Could not start Google sign-in. Please try again.");
+      } else if (result?.url) {
+        window.location.assign(result.url);
+      } else {
+        setAuthErr("Could not start Google sign-in. Please try again.");
+      }
+    } catch {
+      setAuthErr("Could not start Google sign-in. Please try again.");
+    } finally {
       setBusy(null);
-      return;
     }
-    void signIn(id, { callbackUrl: "/" });
   };
 
   const submitEmail = async (e: React.FormEvent) => {
