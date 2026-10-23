@@ -22,7 +22,7 @@ function escapeHtml(s: string): string {
  * Support contact endpoint. Emails the operator's support inbox via the shared
  * mailer (Resend in prod, SMTP/Mailpit in dev). Rate-limited per IP under the
  * shared "auth:support" budget. The sender's address goes in the subject/body
- * so the operator can reply directly. Delivery errors surface verbatim.
+ * so the operator can reply directly. Mail transport details are never sent to clients.
  */
 export async function POST(req: Request) {
   const limited = await authRateLimit(req, "support");
@@ -54,8 +54,11 @@ export async function POST(req: Request) {
 
   try {
     await sendMail({ to: inbox, subject, html, text, replyTo: email });
-  } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 502 });
+  } catch {
+    return NextResponse.json(
+      { error: "Your message could not be sent right now. Please try again later or email support directly." },
+      { status: 502 },
+    );
   }
 
   return NextResponse.json({ ok: true });
