@@ -30,7 +30,7 @@ import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboardingStore, hasSeenOnboarding } from "@/lib/store/onboardingStore";
 import { useSession } from "next-auth/react";
 import { getTemplate } from "@/components/templates/registry";
-import { useUIStore } from "@/lib/store/uiStore";
+import { useUIStore, readPendingPlanIntent } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { useViewStore } from "@/lib/store/viewStore";
@@ -221,7 +221,9 @@ export default function Home() {
   // landing lands on the Plans view after signing up, so they can complete the
   // plan they picked. Free (or no) intent just enters the app normally.
   useEffect(() => {
-    if (!revealApp || !intendedPlan || intendedPlan === "free") return;
+    if (!revealApp) return;
+    const selectedPlan = intendedPlan ?? readPendingPlanIntent();
+    if (!selectedPlan || selectedPlan === "free") return;
     setView("plans");
     clearIntendedPlan();
   }, [revealApp, intendedPlan, setView, clearIntendedPlan]);
