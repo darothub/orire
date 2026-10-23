@@ -41,10 +41,16 @@ describe("GitHub Actions CI workflow", () => {
     expect(workflow).toContain("npx playwright test --grep '@smoke'");
   });
 
-  it("gates the single-build E2E job behind code checks", () => {
-    expect(workflow).toMatch(/needs:\s*\[checks\]/);
-    expect(workflow).toContain('E2E_PREBUILT: "1"');
-    expect(workflow).toContain("Choose PR smoke or full regression");
+  it("runs independent E2E checks in parallel and caches Next builds", () => {
+    const e2e = workflow.split("\n  e2e:\n")[1];
+    expect(e2e).toBeDefined();
+    expect(e2e).not.toMatch(/^\s*needs:/m);
+    expect(e2e).toContain('E2E_PREBUILT: "1"');
+    expect(e2e).toContain("name: Cache Next.js incremental build data");
+    expect(e2e).toContain("path: .next/cache");
+    expect(e2e).toContain("name: Build once for browser tests");
+    expect(e2e).toContain("name: Record build elapsed time");
+    expect(e2e).toContain("Choose PR smoke or full regression");
   });
 
   it("does not deploy from CI (Vercel Git integration owns deploys)", () => {
