@@ -111,12 +111,13 @@ for (const viewport of [
   });
 }
 
-test("UX87 selecting a paid plan opens signup without opening checkout", async ({ page }) => {
+for (const planName of ["Pro", "Career"]) {
+  test(`UX87 ${planName} plan intent opens signup without checkout`, async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.locator("#pricing").scrollIntoViewIfNeeded();
-  const pro = page.locator(".landing-price-card").filter({ has: page.getByRole("heading", { name: "Pro", exact: true }) });
-  await expect(pro).toBeVisible();
-  const action = pro.getByRole("button");
+  const plan = page.locator(".landing-price-card").filter({ has: page.getByRole("heading", { name: planName, exact: true }) });
+  await expect(plan).toBeVisible();
+  const action = plan.getByRole("button");
   await action.click();
   const dialog = page.getByRole("dialog", { name: "Create your account" });
   await expect(dialog).toBeVisible();
@@ -125,4 +126,5 @@ test("UX87 selecting a paid plan opens signup without opening checkout", async (
   await expect(page.getByRole("dialog", { name: "Welcome back" })).toBeVisible();
   // Clicking pricing must never initiate Stripe while unauthenticated.
   expect(page.url()).not.toMatch(/checkout|stripe/i);
-});
+  });
+}
