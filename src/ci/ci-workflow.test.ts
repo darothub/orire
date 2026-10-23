@@ -35,8 +35,8 @@ describe("GitHub Actions CI workflow", () => {
     expect(workflow).not.toMatch(/^\s*run:\s*npx playwright install-deps chromium\s*$/m);
     expect(workflow).toContain("playwright install chromium");
     expect(workflow).not.toContain("playwright install --with-deps chromium");
-    expect(workflow).toMatch(/name: Verify Chromium can launch\n\s*timeout-minutes: 2/);
-    expect(workflow).toMatch(/name: Install Playwright Chromium browser\n\s*timeout-minutes: 8/);
+    expect(workflow).toMatch(/name: Verify Chromium can launch\n\s*if: steps.docs.outputs.skip != .true.\n\s*timeout-minutes: 2/);
+    expect(workflow).toMatch(/name: Install Playwright Chromium browser\n\s*if: steps.docs.outputs.skip != .true.\n\s*timeout-minutes: 8/);
     expect(workflow).toContain("name: Run full Playwright regression");
     expect(workflow).toContain("npx playwright test --grep '@smoke'");
   });
