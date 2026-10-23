@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { TEMPLATE_CATALOG } from "@/lib/templates/catalog";
-import { GUIDES } from "@/lib/content/guides";
+import { GUIDES, isPublishedGuide } from "@/lib/content/guides";
 
 import { SITE_URL } from "@/lib/seo/metadata";
 
@@ -24,7 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  const guideRoutes: MetadataRoute.Sitemap = GUIDES.map((g) => ({
+  const guideRoutes: MetadataRoute.Sitemap = GUIDES.filter((g) => isPublishedGuide(g.slug)).map((g) => ({
     url: `${base}/guides/${g.slug}`,
     lastModified,
     changeFrequency: "monthly",
