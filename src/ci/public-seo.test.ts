@@ -27,6 +27,14 @@ describe("public SEO routes", () => {
     expect(urls.some((url) => /\/(?:api|checkout|reset|forgot)(?:\/|$)/.test(url))).toBe(false);
   });
 
+  it("does not fabricate modification dates for pages with unknown update times", () => {
+    const first = sitemap();
+    const second = sitemap();
+    expect(first.length).toBeGreaterThan(0);
+    expect(first.every((entry) => entry.lastModified === undefined)).toBe(true);
+    expect(second).toEqual(first);
+  });
+
   it("includes every published guide, with no private or duplicate sitemap entries", () => {
     const urls = sitemap().map((entry) => entry.url);
     for (const guide of GUIDES) {
