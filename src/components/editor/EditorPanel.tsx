@@ -1,5 +1,7 @@
 "use client";
 
+import { funnel } from "@/lib/analytics/funnel";
+
 import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useState } from "react";
@@ -415,7 +417,7 @@ export function EditorPanel() {
   const announce = setAnnouncement;
 
   return (
-    <div className="ed-root">
+    <div className="ed-root" onChangeCapture={() => funnel.firstEdit()}>
       <div className="sr-only" aria-live="polite">{announcement}</div>
       {/* Basics */}
       <section className="ed-section">

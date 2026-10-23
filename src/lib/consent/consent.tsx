@@ -18,7 +18,7 @@ export type ConsentChoice = "granted" | "denied";
 const STORAGE_KEY = "orire-consent";
 const listeners = new Set<() => void>();
 
-function readStored(): ConsentChoice | null {
+export function readConsent(): ConsentChoice | null {
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
     return v === "granted" || v === "denied" ? v : null;
@@ -59,7 +59,7 @@ interface ConsentValue {
 }
 
 export function useConsent(): ConsentValue {
-  const consent = useSyncExternalStore(subscribe, readStored, () => null);
+  const consent = useSyncExternalStore(subscribe, readConsent, () => null);
   // false during SSR and the first client render, true after hydration.
   const ready = useSyncExternalStore(subscribe, () => true, () => false);
   const setConsent = useCallback((choice: ConsentChoice) => write(choice), []);

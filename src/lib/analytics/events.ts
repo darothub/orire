@@ -1,11 +1,11 @@
-import { track } from "@vercel/analytics";
+import { consentedTrack as track } from "./consentedTrack";
 import { PLANS, type PlanId } from "@/lib/plan/plan";
 import { metaTrack } from "./meta";
 
 /**
  * Thin, typed wrapper over Vercel Web Analytics custom events so event names
  * and property shapes stay consistent across the app. `track` is a no-op on the
- * server and when analytics isn't available, so these are safe to call from any
+ * server and calls are explicitly consent-gated, so these are safe to call from any
  * client code path. Property values must be string | number | boolean | null.
  */
 export const analytics = {
@@ -39,8 +39,9 @@ export const analytics = {
   },
   /** A new account was created (email or OAuth). Fire once per user. */
   signupCompleted: () => {
-    track("signup_completed");
+    if (!track("signup_completed")) return false;
     metaTrack("CompleteRegistration", { status: true });
+    return true;
   },
   /** A paid subscription checkout completed. `eventId` dedupes retries/server-side. */
   purchaseCompleted: (plan: string, value: number, currency: string, eventId?: string) => {

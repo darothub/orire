@@ -1,3 +1,4 @@
+import { readConsent } from "@/lib/consent/consent";
 import { getAttribution } from "./attribution";
 
 /**
@@ -31,6 +32,7 @@ export function metaTrack(
   data: Record<string, string | number | boolean> = {},
   eventID?: string,
 ): void {
+  if (readConsent() !== "granted") return;
   const f = fbq();
   if (!f) return;
   const { fbclid: _omit, ...utm } = getAttribution();
