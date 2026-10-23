@@ -80,8 +80,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      # Keep the required E2E check visible and successful for docs-only PRs.
-      # Unlike workflow paths-ignore, this does not leave a required check pending.
       - name: Classify documentation-only PR
         id: docs
         env:
@@ -172,7 +170,7 @@ jobs:
           retention-days: 7
  /tmp/orire-docs-changes; then
               echo "skip=true" >> "$GITHUB_OUTPUT"
-              echo "Documentation-only PR: browser setup and regression are not required." >> "$GITHUB_STEP_SUMMARY"
+              echo "Documentation-only PR: E2E skipped (required job remains successful)." >> "$GITHUB_STEP_SUMMARY"
             fi
           fi
       - uses: actions/setup-node@v4
@@ -258,8 +256,7 @@ jobs:
         timeout-minutes: 18
         run: npm run test:e2e
       - name: Upload Playwright report
-        if: steps.docs.outputs.skip != 'true'
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.docs.outputs.skip != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
