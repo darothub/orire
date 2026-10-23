@@ -1,0 +1,49 @@
+{
+  "sourceCommit": "48fa224703aaf6e219fd01f2e3218b81b5518baf",
+  "browser": "154.0.8037.57",
+  "theme": "dark",
+  "capturedAt": "2026-10-23T16:14:40.143Z",
+  "baseURL": "http://127.0.0.1:3493",
+  "pages": [
+    {
+      "route": "/templates",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "file": "BEFORE-actual-templates-desktop-1440.png",
+      "errors": []
+    },
+    {
+      "route": "/templates/aurora",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "status": 200,
+      "file": "BEFORE-actual-aurora-desktop-1440.png",
+      "errors": []
+    },
+    {
+      "route": "/templates",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "file": "BEFORE-actual-templates-mobile-390.png",
+      "errors": []
+    },
+    {
+      "route": "/templates/aurora",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "status": 200,
+      "file": "BEFORE-actual-aurora-mobile-390.png",
+      "errors": []
+    }
+  ]
+}

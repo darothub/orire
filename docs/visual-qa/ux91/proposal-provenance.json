@@ -1,0 +1,29 @@
+{
+  "mockups": [
+    {
+      "file": "AFTER-proposed-templates-desktop.png",
+      "source": "BEFORE-actual-templates-desktop-1440.png",
+      "tool": "image_gen screenshot edit",
+      "generationFile": "exec-5379849c-34ec-433f-aaaf-49e3583ada6b.png",
+      "outputPixels": {
+        "width": 1586,
+        "height": 992
+      },
+      "status": "AFTER \u2014 PROPOSED, NOT IMPLEMENTED",
+      "limitations": "Generator resampled screenshot dimensions and approximated some catalog card spacing. Not a pixel-perfect browser render or implementation proof."
+    },
+    {
+      "file": "AFTER-proposed-templates-mobile.png",
+      "source": "BEFORE-actual-templates-mobile-390.png",
+      "tool": "image_gen screenshot edit",
+      "generationFile": "exec-b3866cee-abd3-4f97-abca-ca75cb95f5db.png",
+      "outputPixels": {
+        "width": 853,
+        "height": 1844
+      },
+      "status": "AFTER \u2014 PROPOSED, NOT IMPLEMENTED",
+      "limitations": "Generator resampled screenshot dimensions and approximated some catalog card spacing. Not a pixel-perfect browser render or implementation proof."
+    }
+  ],
+  "scope": "Single export-confidence panel. No application source changes."
+}
