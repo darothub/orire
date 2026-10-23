@@ -54,8 +54,7 @@ jobs:
     name: E2E · Playwright
     runs-on: ubuntu-latest
     timeout-minutes: 35
-    # Code checks must pass first; this job owns the one production build.
-    needs: [checks]
+    # E2E owns its production build and can run alongside code checks.
     services:
       postgres:
         image: postgres:16
@@ -105,9 +104,25 @@ jobs:
       - name: Verify Chromium can launch
         timeout-minutes: 2
         run: node -e 'const { chromium } = require("@playwright/test"); chromium.launch({headless:true}).then(b => b.close()).catch(e => { console.error(e); process.exit(1); });'
+      - name: Cache Next.js incremental build data
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'app/**', 'pages/**', 'public/**', 'next.config.*', 'tsconfig.json') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}-
+      - name: Capture build start
+        id: build_clock
+        run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
       - name: Build once for browser tests
         timeout-minutes: 8
         run: npm run build
+      - name: Record build elapsed time
+        env:
+          STARTED: ${{ steps.build_clock.outputs.started }}
+        run: |
+          seconds=$(( $(date +%s) - STARTED ))
+          echo "Next.js production build: ${seconds}s" >> "$GITHUB_STEP_SUMMARY"
       - name: Choose PR smoke or full regression
         id: tier
         env:
