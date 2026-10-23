@@ -1,6 +1,8 @@
-const { chromium } = require('playwright');
-const fs = require('fs');
-const out = __dirname;
+import { chromium } from '@playwright/test';
+import fs from 'node:fs';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const out = dirname(fileURLToPath(import.meta.url));
 (async () => {
  const browser = await chromium.launch({executablePath:process.env.ORIRE_CAPTURE_BROWSER || undefined,headless:true});
  const evidence = {sourceCommit:'48fa224703aaf6e219fd01f2e3218b81b5518baf',browser:browser.version(),theme:'dark',capturedAt:new Date().toISOString(),baseURL:process.env.BASE_URL || 'http://127.0.0.1:3493',pages:[]};

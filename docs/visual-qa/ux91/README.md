@@ -67,10 +67,10 @@ These images were made with `image_gen` edits using the exact corresponding actu
 
 ## Reproducing the unchanged baseline capture
 
-The committed [capture helper](capture.cjs) uses the repository's Playwright dependency, optional `ORIRE_CAPTURE_BROWSER` executable path, and `BASE_URL` (default local port 3493). It records the fixed source SHA above because this evidence belongs to that baseline; update provenance deliberately if recapturing a different application commit. Start that unmodified production build first, then run:
+The committed [capture helper](capture.mjs) uses the repository's Playwright dependency, optional `ORIRE_CAPTURE_BROWSER` executable path, and `BASE_URL` (default local port 3493). It records the fixed source SHA above because this evidence belongs to that baseline; update provenance deliberately if recapturing a different application commit. Start that unmodified production build first, then run:
 
 ```sh
-BASE_URL=http://127.0.0.1:3493 ORIRE_CAPTURE_BROWSER=/usr/bin/chromium node docs/visual-qa/ux91/capture.cjs
+BASE_URL=http://127.0.0.1:3493 ORIRE_CAPTURE_BROWSER=/usr/bin/chromium node docs/visual-qa/ux91/capture.mjs
 ```
 
 The browser path is a local validation override; CI's pinned browser was not replaced. Capture dimensions are fixed and optional tracking is denied. Image-generation mockups are separately derived assets, not produced by this capture helper.
