@@ -28,6 +28,32 @@ interface UIState {
   setExplored: (v: boolean) => void;
 }
 
+/** Preserve a chosen paid plan through the full-page OAuth redirect in this tab.
+ * Do not persist it in localStorage across future unrelated visits. */
+const PLAN_INTENT_KEY = "orire.signup.plan-intent";
+export function readPendingPlanIntent(): PlanId | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const value = window.sessionStorage.getItem(PLAN_INTENT_KEY);
+    return value === "pro" || value === "career" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePendingPlanIntent(plan: PlanId | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (plan === "pro" || plan === "career") {
+      window.sessionStorage.setItem(PLAN_INTENT_KEY, plan);
+    } else {
+      window.sessionStorage.removeItem(PLAN_INTENT_KEY);
+    }
+  } catch {
+    // Session storage can be unavailable in privacy-restricted browsers.
+  }
+}
+
 /** Ephemeral UI flags — intentionally NOT persisted. */
 export const useUIStore = create<UIState>((set) => ({
   previewEdit: false,
@@ -38,9 +64,15 @@ export const useUIStore = create<UIState>((set) => ({
   authOpen: false,
   authMode: "signin",
   intendedPlan: null,
-  openAuth: (mode = "signin", plan = null) => set({ authOpen: true, authMode: mode, intendedPlan: plan }),
+  openAuth: (mode = "signin", plan = null) => {
+    writePendingPlanIntent(plan);
+    set({ authOpen: true, authMode: mode, intendedPlan: plan });
+  },
   closeAuth: () => set({ authOpen: false }),
-  clearIntendedPlan: () => set({ intendedPlan: null }),
+  clearIntendedPlan: () => {
+    writePendingPlanIntent(null);
+    set({ intendedPlan: null });
+  },
   explored: false,
   setExplored: (v) => set({ explored: v }),
 }));
