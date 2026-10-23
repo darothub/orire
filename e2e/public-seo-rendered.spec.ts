@@ -6,7 +6,7 @@ import { test, expect } from "@playwright/test";
  */
 test("public pages expose correct canonical and social metadata in rendered HTML", async ({ page }) => {
   const routes = [
-    { path: "/", canonical: "https://orire.app/" },
+    { path: "/", canonical: "https://orire.app" },
     { path: "/templates", canonical: "https://orire.app/templates" },
     { path: "/guides", canonical: "https://orire.app/guides" },
     { path: "/privacy", canonical: "https://orire.app/privacy" },
@@ -30,8 +30,9 @@ test("completed guide indexes while editorial-outline guides have noindex", asyn
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     "href", "https://orire.app/guides/choose-the-right-cv-template",
   );
-  expect((await page.locator('meta[name="robots"]').getAttribute("content")) ?? "")
-    .not.toMatch(/noindex/i);
+  const publishedRobots = page.locator('meta[name="robots"]');
+  const publishedRobotsContent = await publishedRobots.count() ? await publishedRobots.getAttribute("content") : "";
+  expect(publishedRobotsContent ?? "").not.toMatch(/noindex/i);
 
   await page.goto("/guides/tailor-cv-to-job-description", { waitUntil: "domcontentloaded" });
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/i);
