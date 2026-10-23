@@ -77,6 +77,13 @@ export const GUIDES: Guide[] = [
   },
 ];
 
+/** Only the fully written guide is approved for search indexing. */
+export const PUBLISHED_GUIDE_SLUGS = new Set(["choose-the-right-cv-template"]);
+
+export function isPublishedGuide(slug: string): boolean {
+  return PUBLISHED_GUIDE_SLUGS.has(slug);
+}
+
 export function getGuide(slug: string): Guide | undefined {
   return GUIDES.find((g) => g.slug === slug);
 }
