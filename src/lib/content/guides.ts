@@ -77,8 +77,8 @@ export const GUIDES: Guide[] = [
   },
 ];
 
-/** Only the fully written guide is approved for search indexing. */
-export const PUBLISHED_GUIDE_SLUGS = new Set(["choose-the-right-cv-template"]);
+/** Only guides with complete published articles are approved for indexing. */
+export const PUBLISHED_GUIDE_SLUGS = new Set(["choose-the-right-cv-template", "tailor-cv-to-job-description", "quantify-achievements-on-your-cv", "beat-applicant-tracking-systems-ats"]);
 
 export function isPublishedGuide(slug: string): boolean {
   return PUBLISHED_GUIDE_SLUGS.has(slug);
