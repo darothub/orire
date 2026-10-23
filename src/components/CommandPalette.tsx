@@ -33,6 +33,8 @@ export function CommandPalette() {
   const [idx, setIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const setView = useViewStore((s) => s.setView);
   const currentView = useViewStore((s) => s.view);
@@ -65,6 +67,68 @@ export function CommandPalette() {
       const t = setTimeout(() => inputRef.current?.focus(), 20);
       return () => clearTimeout(t);
     }
+  }, [open]);
+
+  // Keep the palette in its existing styled location while isolating siblings
+  // at every ancestor level. Making the whole workspace inert would also hide
+  // this dialog, which is rendered inside it.
+  useEffect(() => {
+    if (!open) return;
+    const overlay = overlayRef.current;
+    const panel = panelRef.current;
+    if (!overlay || !panel) return;
+    const opener = document.activeElement;
+    const isolated: HTMLElement[] = [];
+    overlay.inert = false;
+    let ancestor: HTMLElement = overlay;
+    while (ancestor.parentElement) {
+      for (const sibling of ancestor.parentElement.children) {
+        if (sibling instanceof HTMLElement && sibling !== ancestor && !sibling.inert) {
+          sibling.inert = true;
+          isolated.push(sibling);
+        }
+      }
+      if (ancestor.parentElement === document.body) break;
+      ancestor = ancestor.parentElement;
+    }
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      // Query on every keypress: searching can remove all command buttons.
+      const controls = Array.from(panel.querySelectorAll<HTMLElement>(
+        'input:not([disabled]), button:not([disabled]), [tabindex="0"]',
+      )).filter((element) => element.getClientRects().length > 0);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (!first || !last) return;
+      const focused = document.activeElement;
+      if (!panel.contains(focused) || (event.shiftKey ? focused === first : focused === last)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      }
+    };
+    document.addEventListener("keydown", onKey, true);
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+      // AnimatePresence retains the closing palette briefly; its departing
+      // controls must not remain keyboard stops after the background unlocks.
+      overlay.inert = true;
+      for (const element of isolated) element.inert = false;
+      // A command can launch the tour. Let that dialog own initial focus;
+      // its existing cleanup restores the persistent palette trigger later.
+      if (useOnboardingStore.getState().active) return;
+      if (opener instanceof HTMLElement && opener.isConnected && !opener.closest("[inert]")) {
+        opener.focus({ preventScroll: true });
+      } else {
+        document.querySelector<HTMLElement>(".cmdk-hint-btn")?.focus({ preventScroll: true });
+      }
+    };
   }, [open]);
 
   const close = () => setOpen(false);
@@ -186,6 +250,7 @@ export function CommandPalette() {
     <AnimatePresence>
       {open && (
         <motion.div
+          ref={overlayRef}
           className="cmdk-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -194,6 +259,7 @@ export function CommandPalette() {
           onMouseDown={close}
         >
           <motion.div
+            ref={panelRef}
             className="cmdk-panel"
             role="dialog"
             aria-modal="true"
