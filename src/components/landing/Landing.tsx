@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import { useConsent } from "@/lib/consent/consent";
+import { funnel, type CtaPlacement } from "@/lib/analytics/funnel";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
@@ -66,6 +69,14 @@ const FEATURES: Feature[] = [
  */
 export function Landing() {
   const openAuth = useUIStore((s) => s.openAuth);
+  const { consent } = useConsent();
+  useEffect(() => {
+    if (consent === "granted") funnel.landingViewed();
+  }, [consent]);
+  const startSignup = (placement: CtaPlacement, plan?: Parameters<typeof openAuth>[1]) => {
+    funnel.landingCta(placement);
+    openAuth("signup", plan);
+  };
 
   return (
     <div className="landing">
@@ -88,7 +99,7 @@ export function Landing() {
           <button className="landing-ghost" onClick={() => openAuth("signin")}>
             Sign in
           </button>
-          <button className="landing-cta landing-header-cta" aria-label="Get started" onClick={() => openAuth("signup")}>
+          <button className="landing-cta landing-header-cta" aria-label="Get started" onClick={() => startSignup("header")}>
             <span className="landing-header-cta-long">Get started</span>
             <span className="landing-header-cta-short" aria-hidden="true">Start</span>
           </button>
@@ -115,7 +126,7 @@ export function Landing() {
                 accurate and choose the final wording yourself.
               </p>
               <div className="landing-hero-cta">
-                <button className="landing-cta lg" onClick={() => openAuth("signup")}>
+                <button className="landing-cta lg" onClick={() => startSignup("hero")}>
                   Create your CV →
                 </button>
                 <a className="landing-ghost lg" href="#templates">
@@ -303,7 +314,7 @@ export function Landing() {
                 </ul>
                 <button
                   className={p.highlighted ? "landing-cta" : "landing-ghost"}
-                  onClick={() => openAuth("signup", p.id)}
+                  onClick={() => startSignup("pricing", p.id)}
                 >
                   {p.cta}
                 </button>
@@ -325,7 +336,7 @@ export function Landing() {
             <p className="landing-final-sub">
               Start with your experience, choose a template, and refine your CV at your own pace.
             </p>
-            <button className="landing-cta lg" onClick={() => openAuth("signup")}>
+            <button className="landing-cta lg" onClick={() => startSignup("footer")}>
               Get started free
             </button>
           </motion.div>

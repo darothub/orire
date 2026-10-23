@@ -1,5 +1,7 @@
 "use client";
 
+import { funnel } from "@/lib/analytics/funnel";
+
 import { useRef } from "react";
 import {
   motion,
@@ -61,7 +63,11 @@ export function TemplatePicker({
               // In gallery mode also push the persona into the working document
               // so the live preview and editor stay in sync with the card.
               onSelect={
-                gallery ? () => previewTemplate(t.id, persona) : () => setTemplate(t.id)
+                () => {
+                  funnel.templateChosen(t.id);
+                  if (gallery) previewTemplate(t.id, persona);
+                  else setTemplate(t.id);
+                }
               }
             />
           );

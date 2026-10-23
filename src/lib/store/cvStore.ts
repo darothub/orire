@@ -1,5 +1,6 @@
 "use client";
 
+import { funnel } from "@/lib/analytics/funnel";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
@@ -260,7 +261,10 @@ export const useCVStore = create<CVState>()(
           cv: { ...s.cv, certifications: s.cv.certifications.filter((c) => c.id !== id) },
         })),
 
-      setTemplate: (id) => set({ activeTemplate: id }),
+      setTemplate: (id) => {
+        set({ activeTemplate: id });
+        funnel.templateChosen(id);
+      },
       previewTemplate: (id, cv) => set({ activeTemplate: id, cv }),
       setOrder: (order) => set((s) => ({ cv: { ...s.cv, order } })),
 

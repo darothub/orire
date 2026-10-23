@@ -2,9 +2,8 @@
 
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { analytics } from "@/lib/analytics/events";
-
-const KEY = "orire-signup-tracked";
+import { useConsent } from "@/lib/consent/consent";
+import { trackNewSignup } from "@/lib/analytics/signup";
 
 /**
  * Reports a single sign-up conversion for the session that created the
@@ -19,20 +18,13 @@ export function SignupTracker({
   userId: string | null;
 }) {
   const { data } = useSession();
+  const { consent } = useConsent();
   const fresh = data?.isNewUser ?? isNewUser;
   const id = data?.user?.id ?? userId;
 
   useEffect(() => {
-    if (!fresh || !id) return;
-    try {
-      if (window.localStorage.getItem(KEY) === id) return;
-      window.localStorage.setItem(KEY, id);
-    } catch {
-      // Without storage we can't dedupe, so skip rather than double-count.
-      return;
-    }
-    analytics.signupCompleted();
-  }, [fresh, id]);
+    if (consent === "granted") trackNewSignup(fresh, id);
+  }, [fresh, id, consent]);
 
   return null;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { privateAnalyticsEvent } from "@/lib/analytics/privacy";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -8,9 +9,8 @@ import { useConsent } from "@/lib/consent/consent";
 
 /**
  * All non-essential third-party tracking, loaded only after the visitor has
- * granted consent. Gating the *loading* here is enough: every event call
- * elsewhere (Vercel `track`, `metaTrack`) is a safe no-op while these scripts
- * are absent, so no call site needs its own guard.
+ * granted consent. Event helpers also check the current choice: unmounting
+ * script components cannot unload third-party functions after withdrawal.
  */
 export function ConsentedAnalytics() {
   const { consent } = useConsent();
@@ -18,7 +18,7 @@ export function ConsentedAnalytics() {
 
   return (
     <>
-      <Analytics />
+      <Analytics beforeSend={privateAnalyticsEvent} />
       <SpeedInsights />
       <Script
         src="https://static.cloudflareinsights.com/beacon.min.js"

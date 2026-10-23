@@ -10,6 +10,8 @@ import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/Turnstile
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { listFocusable, pickInitialFocus } from "@/components/auth/authFocus";
+import { funnel } from "@/lib/analytics/funnel";
+import { useConsent } from "@/lib/consent/consent";
 import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -55,6 +57,10 @@ const PASSWORD_AUTH_ENABLED = process.env.NEXT_PUBLIC_PASSWORD_AUTH === "true";
 export function AuthOverlay() {
   const open = useUIStore((s) => s.authOpen);
   const mode = useUIStore((s) => s.authMode);
+  const { consent } = useConsent();
+  useEffect(() => {
+    if (open && mode === "signup" && consent === "granted") funnel.signupStarted();
+  }, [open, mode, consent]);
   const close = useUIStore((s) => s.closeAuth);
   const openAuth = useUIStore((s) => s.openAuth);
   /** Switch tabs without clearing `intendedPlan` (openAuth defaults plan to null). */

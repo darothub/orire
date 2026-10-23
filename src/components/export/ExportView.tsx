@@ -1,5 +1,7 @@
 "use client";
 
+import { funnel } from "@/lib/analytics/funnel";
+
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
@@ -127,6 +129,7 @@ export function ExportView() {
         });
         return;
       }
+      funnel.firstExport(format);
       // File the export in the library: stamps the active version exported, or
       // snapshots a new one if nothing is active yet — so nothing downloaded is
       // ever lost and the user can reopen exactly what they saved.
