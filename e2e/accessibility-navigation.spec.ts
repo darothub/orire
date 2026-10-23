@@ -70,6 +70,19 @@ for (const viewport of [
       animations: "disabled",
     });
 
+    // A modal must contain sequential keyboard focus, including reverse Tab.
+    // Exercise actual browser keyboard navigation instead of inspecting only
+    // aria-modal markup. Run enough steps to traverse/wrap short dialogs.
+    for (const key of ["Tab", "Shift+Tab"] as const) {
+      for (let index = 0; index < 8; index++) {
+        await page.keyboard.press(key);
+        const focusInsideDialog = await dialog.evaluate(
+          (element) => element.contains(document.activeElement),
+        );
+        expect(focusInsideDialog, `Focus escaped the CV preview dialog on ${key}, step ${index + 1}`).toBe(true);
+      }
+    }
+
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     // A modal must return keyboard focus to the control that opened it.
