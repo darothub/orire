@@ -12,13 +12,13 @@ for (const viewport of [
   test(`landing performance baseline ${viewport.label}`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await page.addInitScript(() => {
-      const samples: number[] = [];
+      const samples: { value: number; startTime: number }[] = [];
       Object.defineProperty(window, "__orireLayoutShifts", { value: samples });
       Object.defineProperty(window, "__orireLCP", { value: { ms: 0 } });
       new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           const shift = entry as PerformanceEntry & { value: number; hadRecentInput: boolean };
-          if (!shift.hadRecentInput) samples.push(shift.value);
+          if (!shift.hadRecentInput) samples.push({ value: shift.value, startTime: shift.startTime });
         }
       }).observe({ type: "layout-shift", buffered: true });
       new PerformanceObserver((list) => {
@@ -34,14 +34,25 @@ for (const viewport of [
     await page.waitForTimeout(1500);
     const metrics = await page.evaluate(() => {
       const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-      const shifts = (window as Window & { __orireLayoutShifts?: number[] }).__orireLayoutShifts ?? [];
+      const shifts = (window as Window & { __orireLayoutShifts?: { value: number; startTime: number }[] }).__orireLayoutShifts ?? [];
+      let cls = 0, sessionScore = 0, sessionStart = 0, previousShift = 0;
+      for (const shift of shifts) {
+        if (!sessionScore || shift.startTime - previousShift > 1000 || shift.startTime - sessionStart > 5000) {
+          sessionScore = shift.value;
+          sessionStart = shift.startTime;
+        } else {
+          sessionScore += shift.value;
+        }
+        previousShift = shift.startTime;
+        cls = Math.max(cls, sessionScore);
+      }
       return {
         url: location.pathname,
         viewport: { width: innerWidth, height: innerHeight },
         navigationMs: Math.round(navigation?.duration ?? 0),
         domInteractiveMs: Math.round(navigation?.domInteractive ?? 0),
         transferBytes: navigation?.transferSize ?? 0,
-        layoutShiftScore: Number(shifts.reduce((sum, value) => sum + value, 0).toFixed(4)),
+        layoutShiftScore: Number(cls.toFixed(4)),
         observedLcpMs: Math.round((window as Window & { __orireLCP?: { ms: number } }).__orireLCP?.ms ?? 0),
         resourcesLoaded: performance.getEntriesByType("resource").length,
       };
