@@ -5,21 +5,21 @@ import { GUIDES, isPublishedGuide } from "@/lib/content/guides";
 import { SITE_URL } from "@/lib/seo/metadata";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+  // Do not claim every public page was edited on each sitemap request.
+  // Add lastModified only when a trustworthy per-page update date exists.
   const base = SITE_URL.replace(/\/+$/, "");
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${base}/`, lastModified, changeFrequency: "weekly", priority: 1 },
-    { url: `${base}/templates`, lastModified, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${base}/guides`, lastModified, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${base}/support`, lastModified, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${base}/privacy`, lastModified, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${base}/terms`, lastModified, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${base}/`, changeFrequency: "weekly", priority: 1 },
+    { url: `${base}/templates`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${base}/guides`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${base}/support`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${base}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${base}/terms`, changeFrequency: "yearly", priority: 0.3 },
   ];
 
   const templateRoutes: MetadataRoute.Sitemap = TEMPLATE_CATALOG.map((t) => ({
     url: `${base}/templates/${t.id}`,
-    lastModified,
     changeFrequency: "monthly",
     priority: 0.6,
   }));
