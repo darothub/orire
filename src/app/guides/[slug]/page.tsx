@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import "../../content.css";
 import "../template-choice.css";
 import { ChooseTemplateGuide } from "@/components/guides/ChooseTemplateGuide";
-import { GUIDES, getGuide } from "@/lib/content/guides";
+import { GUIDES, getGuide, isPublishedGuide } from "@/lib/content/guides";
 
 export function generateStaticParams() {
   return GUIDES.map((g) => ({ slug: g.slug }));
@@ -19,11 +19,16 @@ export async function generateMetadata({
   const { slug } = await params;
   const guide = getGuide(slug);
   if (!guide) return {};
-  return publicMetadata(
+  const metadata = publicMetadata(
     `${guide.title} | Orire`,
     guide.description,
     `/guides/${slug}`,
   );
+  if (!isPublishedGuide(slug)) {
+    metadata.robots = { index: false, follow: false };
+    metadata.alternates = { canonical: null };
+  }
+  return metadata;
 }
 
 export default async function GuideArticle({

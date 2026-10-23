@@ -4,7 +4,8 @@ import sitemap from "@/app/sitemap";
 import { metadata as templateIndexMetadata } from "@/app/templates/page";
 import { generateMetadata, generateStaticParams } from "@/app/templates/[id]/page";
 import { TEMPLATE_CATALOG } from "@/lib/templates/catalog";
-import { GUIDES } from "@/lib/content/guides";
+import { GUIDES, isPublishedGuide } from "@/lib/content/guides";
+import { generateMetadata as guideMetadata } from "@/app/guides/[slug]/page";
 import { metadata as guidesMetadata } from "@/app/guides/page";
 import { publicMetadata, privateMetadata } from "@/lib/seo/metadata";
 
@@ -29,10 +30,27 @@ describe("public SEO routes", () => {
   it("includes every published guide, with no private or duplicate sitemap entries", () => {
     const urls = sitemap().map((entry) => entry.url);
     for (const guide of GUIDES) {
-      expect(urls).toContain(`https://orire.app/guides/${guide.slug}`);
+      if (isPublishedGuide(guide.slug)) {
+        expect(urls).toContain(`https://orire.app/guides/${guide.slug}`);
+      } else {
+        expect(urls).not.toContain(`https://orire.app/guides/${guide.slug}`);
+      }
     }
     expect(urls).not.toContain("https://orire.app/account");
     expect(urls).not.toContain("https://orire.app/editor");
+  });
+
+  it("noindexes unfinished editorial guide scaffolds without hiding completed guides", async () => {
+    for (const guide of GUIDES) {
+      const result = await guideMetadata({ params: Promise.resolve({ slug: guide.slug }) });
+      if (isPublishedGuide(guide.slug)) {
+        expect(result.robots).not.toMatchObject({ index: false });
+        expect(result.alternates?.canonical).toBe(`/guides/${guide.slug}`);
+      } else {
+        expect(result.robots).toMatchObject({ index: false, follow: false });
+        expect(result.alternates?.canonical).toEqual(null);
+      }
+    }
   });
 
   it("keeps public canonical and social URL consistent, and private pages nonindexable", () => {
