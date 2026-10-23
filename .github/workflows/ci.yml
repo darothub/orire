@@ -102,14 +102,16 @@ jobs:
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             playwright-${{ runner.os }}-
-      # Separate OS packages from the browser download so a stalled setup is
-      # identifiable in Actions rather than looking like a hanging test suite.
-      - name: Install Chromium system dependencies
-        timeout-minutes: 8
-        run: npx playwright install-deps chromium
+      # GitHub's ubuntu-latest image already includes Chromium's shared libraries.
+      # Avoid apt installation of 25MB of fonts/upgrades from a slow mirror:
+      # run #39859528021 exhausted 8 minutes before any test could start.
+      # Verify Chromium really launches below; do not silently skip dependency errors.
       - name: Install Playwright Chromium browser
         timeout-minutes: 8
         run: npx playwright install chromium
+      - name: Verify Chromium can launch
+        timeout-minutes: 2
+        run: node -e 'const { chromium } = require("@playwright/test"); chromium.launch({headless:true}).then(b => b.close()).catch(e => { console.error(e); process.exit(1); });'
       - name: Run Playwright E2E suite
         timeout-minutes: 18
         run: npm run test:e2e
