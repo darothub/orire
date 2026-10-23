@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { privateMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSharedCV } from "@/lib/share/shared";
@@ -13,10 +14,7 @@ export async function generateMetadata({
   const { token } = await params;
   const shared = await getSharedCV(token);
   const title = shared ? `${shared.name} — CV` : "Shared CV";
-  return {
-    title,
-    robots: { index: false, follow: false, nocache: true },
-  };
+  return privateMetadata(title);
 }
 
 export default async function SharedCVPage({

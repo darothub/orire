@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { publicMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import "../../content.css";
@@ -19,11 +20,11 @@ export async function generateMetadata({
   const info = getTemplateInfo(id);
   if (!info) return {};
   const copy = getTemplateCopy(id);
-  return {
-    title: `${info.name} — CV template | Orire`,
-    description: copy?.summary ?? info.blurb,
-    alternates: { canonical: `/templates/${id}` },
-  };
+  return publicMetadata(
+    `${info.name} — CV template | Orire`,
+    copy?.summary ?? info.blurb,
+    `/templates/${id}`,
+  );
 }
 
 export default async function TemplateDetail({

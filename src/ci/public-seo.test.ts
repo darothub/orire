@@ -44,6 +44,10 @@ describe("public SEO routes", () => {
       expect(meta.alternates?.canonical).toBe(`/templates/${template.id}`);
       expect(typeof meta.description).toBe("string");
       expect((meta.description as string).trim().length).toBeGreaterThan(30);
+      expect(meta.openGraph).toMatchObject({
+        title: meta.title, description: meta.description, url: `/templates/${template.id}`,
+      });
+      expect(meta.twitter).toMatchObject({ title: meta.title, description: meta.description });
       descriptions.add(meta.description as string);
     }
     expect(descriptions.size).toBe(TEMPLATE_CATALOG.length);
