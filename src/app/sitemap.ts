@@ -26,7 +26,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const guideRoutes: MetadataRoute.Sitemap = GUIDES.filter((g) => isPublishedGuide(g.slug)).map((g) => ({
     url: `${base}/guides/${g.slug}`,
-    lastModified,
     changeFrequency: "monthly",
     priority: 0.5,
   }));
