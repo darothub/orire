@@ -112,6 +112,11 @@ jobs:
       - name: Verify Chromium can launch
         timeout-minutes: 2
         run: node -e 'const { chromium } = require("@playwright/test"); chromium.launch({headless:true}).then(b => b.close()).catch(e => { console.error(e); process.exit(1); });'
+      # Fail fast on the critical public keyboard/dialog journey rather than
+      # discovering a deterministic accessibility regression at suite end.
+      - name: Accessibility keyboard smoke (desktop and mobile)
+        timeout-minutes: 5
+        run: npx playwright test e2e/accessibility-navigation.spec.ts --project=chromium --retries=0
       - name: Run Playwright E2E suite
         timeout-minutes: 18
         run: npm run test:e2e
