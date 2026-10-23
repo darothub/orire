@@ -118,7 +118,7 @@ test("UX92 public support form labels and error announcement", async ({ page }) 
     body: JSON.stringify({ ok: false, error: "Support temporarily unavailable" }),
   }));
   await page.getByRole("button", { name: "Send message" }).click();
-  await expect(page.getByRole("alert")).toContainText("Support temporarily unavailable");
+  await expect(page.locator(".support-error[role=\"alert\"]")).toContainText("Support temporarily unavailable");
   await expect(email).toHaveValue("candidate@example.test");
   await expect(message).toHaveValue("Please help with a CV export problem.");
 });
