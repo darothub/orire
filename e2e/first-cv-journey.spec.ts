@@ -79,6 +79,12 @@ for (const viewport of [
     if (viewport.width < 800 && (await pane.count())) {
       await pane.getByRole("tab", { name: "Preview" }).click();
     }
+    // The journey includes choosing a real template, not only editing a name.
+    const templates = page.locator(".picker .pick-card");
+    await expect(templates.first()).toBeVisible();
+    const selected = templates.nth(1);
+    await selected.click();
+    await expect(selected).toHaveAttribute("aria-pressed", "true");
     const paper = page.locator("#cv-paper");
     await expect(paper).toBeVisible();
     await expect(paper).toContainText("First Journey Candidate");
