@@ -5188,3 +5188,45 @@ html[data-theme="light"] .landing-scrim {
   outline-offset: 3px;
 }
 .tour-title:focus { outline: none; }
+
+
+/* UX151 — refreshed Studio entry point, retaining existing workspace actions. */
+.spot-studio-eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--accent-2);
+  font-size: 11px;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  font-weight: 760;
+}
+.spot-studio-next {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: clamp(20px, 4vw, 34px);
+  margin: 12px 0 24px;
+  border: 1px solid var(--line-2);
+  border-radius: 22px;
+  background: radial-gradient(ellipse at 100% 0%, rgba(58, 217, 180, .15), transparent 58%), linear-gradient(125deg, var(--panel-2), var(--panel));
+}
+.spot-studio-next h3 {
+  font-size: clamp(22px, 2.7vw, 32px);
+  line-height: 1.18;
+  letter-spacing: -.035em;
+  margin: 0 0 10px;
+}
+.spot-studio-next p {
+  color: var(--muted);
+  max-width: 54ch;
+  line-height: 1.6;
+  margin: 0;
+}
+.spot-studio-actions { display: flex; gap: 9px; flex-wrap: wrap; flex-shrink: 0; }
+.spot-studio-next button:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; }
+@media (max-width: 760px) {
+  .spot-studio-next { align-items: stretch; flex-direction: column; border-radius: 17px; }
+  .spot-studio-actions { flex-direction: column; }
+  .spot-studio-actions button { width: 100%; justify-content: center; }
+}

@@ -1,6 +1,6 @@
 import { test, expect, signIn, waitForShell } from "./fixtures";
 
-test("UX151 capture actual authenticated Studio baselines on desktop and mobile", async ({ page }, testInfo) => {
+test("UX151 capture implemented Studio after images on desktop and mobile", async ({ page }, testInfo) => {
   for (const viewport of [
     { width: 1440, height: 900, name: "desktop" },
     { width: 390, height: 844, name: "mobile" },
@@ -17,7 +17,9 @@ test("UX151 capture actual authenticated Studio baselines on desktop and mobile"
       await tour.getByRole("button", { name: "Skip" }).click();
     }
     await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible();
-    await testInfo.attach("BEFORE-actual-Studio-" + viewport.name, {
+    await expect(page.getByRole("heading", { name: "Your CV studio" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Start your first CV|Continue your CV/ })).toBeVisible();
+    await testInfo.attach("AFTER-implemented-Studio-" + viewport.name, {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
     });
