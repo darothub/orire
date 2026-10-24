@@ -64,8 +64,9 @@ export function CommandPalette() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery("");
       setIdx(0);
-      const t = setTimeout(() => inputRef.current?.focus(), 20);
-      return () => clearTimeout(t);
+      // Focus when the actual input mounts, rather than guessing when the
+      // animated palette will be ready using a 20ms timeout.
+      // The input ref callback owns initial focus during AnimatePresence entry.
     }
   }, [open]);
 
@@ -273,7 +274,10 @@ export function CommandPalette() {
             <div className="cmdk-search">
               <span className="cmdk-search-ic" aria-hidden>⌕</span>
               <input
-                ref={inputRef}
+                ref={(node) => {
+                  inputRef.current = node;
+                  if (node && open) node.focus({ preventScroll: true });
+                }}
                 className="cmdk-input"
                 placeholder="Search workspaces, templates, actions…"
                 value={query}
