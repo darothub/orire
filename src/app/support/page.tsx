@@ -31,6 +31,10 @@ export default function SupportPage() {
         setStatus("error");
         return;
       }
+      // The confirmation only needs the reply address; don't retain the
+      // submitted message in component state after a successful send.
+      setName("");
+      setMessage("");
       setStatus("sent");
     } catch {
       setError("Network error. Please try again, or email us directly.");
