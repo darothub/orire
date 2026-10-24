@@ -14,6 +14,7 @@ import {
 import { useCVStore } from "@/lib/store/cvStore";
 import { TEMPLATES, type TemplateMeta } from "./registry";
 import { sampleVariants } from "@/lib/cv/samples";
+import { sampleCV } from "@/lib/cv/sample";
 import type { CVData } from "@/lib/cv/schema";
 
 /**
@@ -47,7 +48,12 @@ export function TemplatePicker({
   // Show each template with a different persona (varied name, title, continent)
   // so the gallery reads as a showcase instead of 20 identical "Ada Okonkwo"
   // cards. Once the user has their own CV (`started`) every card renders it.
-  const gallery = !cvOverride && !started;
+  // Only replace a genuinely untouched showcase document with another persona.
+  // Once the visitor edits the CV, switching templates must preserve their work.
+  const isShowcaseCV = [sampleCV, ...sampleVariants].some(
+    (persona) => JSON.stringify(persona) === JSON.stringify(storeCV),
+  );
+  const gallery = !cvOverride && !started && isShowcaseCV;
 
   return (
     <div className="picker">

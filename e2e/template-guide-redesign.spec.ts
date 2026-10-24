@@ -130,11 +130,12 @@ test("UX107 keyboard section jump and real template destination", async ({ page 
   await expect(page.getByRole("heading", { name: "Oxford CV template" })).toBeVisible();
 });
 
-test("UX107 other unfinished guide remains unchanged", async ({ page }) => {
+test("UX150 completed tailoring guide uses the published editorial layout", async ({ page }) => {
   await page.goto("/guides/tailor-cv-to-job-description", { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", {
     name: "How to tailor your CV to a job description",
   })).toBeVisible();
-  await expect(page.locator(".guide-draft")).toBeVisible();
-  await expect(page.locator(".ux107-card")).toHaveCount(0);
+  await expect(page.locator(".guide-draft")).toHaveCount(0);
+  await expect(page.locator(".ux150-steps > li")).toHaveCount(5);
+  await expect(page.getByRole("link", { name: "Open Orire Studio" })).toBeVisible();
 });

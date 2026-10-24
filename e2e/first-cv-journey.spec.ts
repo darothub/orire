@@ -79,7 +79,16 @@ for (const viewport of [
     if (viewport.width < 800 && (await pane.count())) {
       await pane.getByRole("tab", { name: "Preview" }).click();
     }
-    const paper = page.locator("#cv-paper");
+    // The journey includes choosing a real template, not only editing a name.
+    const templates = page.locator(".picker .pick-card");
+    await expect(templates.first()).toBeVisible();
+    const selected = templates.nth(1);
+    await selected.click();
+    await expect(selected).toHaveAttribute("aria-pressed", "true");
+    // Template transitions temporarily render both outgoing and incoming CVs.
+    // Wait for AnimatePresence to complete before asserting on the unique live preview.
+    const paper = page.locator(".pane-preview #cv-paper");
+    await expect(paper).toHaveCount(1);
     await expect(paper).toBeVisible();
     await expect(paper).toContainText("First Journey Candidate");
 
