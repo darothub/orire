@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, MotionConfig } from "framer-motion";
+import { motion, MotionConfig, useReducedMotion } from "framer-motion";
 import { getTemplate } from "@/components/templates/registry";
 import { sampleVariants } from "@/lib/cv/samples";
 import type { CVData } from "@/lib/cv/schema";
@@ -20,23 +20,24 @@ const SHOWCASE_COLUMNS: { ids: string[]; dur: number; dir: 1 | -1 }[] = [
  * so there is one source of truth for the signature backdrop.
  */
 export function CvShowcase() {
+  const reducedMotion = useReducedMotion();
   return (
     <motion.div
       className="auth-showcase"
       aria-hidden
-      initial={{ opacity: 0 }}
+      initial={reducedMotion ? false : { opacity: 0 }}
       animate={{ opacity: 0.5 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.9, ease: EASE }}
+      transition={reducedMotion ? { duration: 0 } : { duration: 0.9, ease: EASE }}
     >
       <MotionConfig reducedMotion="always">
         {SHOWCASE_COLUMNS.map((col, i) => (
           <div
             key={i}
-            className={`sc-col ${col.dir > 0 ? "sc-up" : "sc-down"}`}
+            className={`sc-col ${reducedMotion ? "" : col.dir > 0 ? "sc-up" : "sc-down"}`}
             style={{ ["--dur" as string]: `${col.dur}s` }}
           >
-            {[...col.ids, ...col.ids].map((id, j) => (
+            {(reducedMotion ? col.ids : [...col.ids, ...col.ids]).map((id, j) => (
               <ShowcaseCard key={`${id}-${j}`} id={id} cv={sampleVariants[(i * 3 + j) % sampleVariants.length]} />
             ))}
           </div>
