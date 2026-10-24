@@ -55,11 +55,20 @@ for (const viewport of [
         layoutShiftScore: Number(cls.toFixed(4)),
         observedLcpMs: Math.round((window as Window & { __orireLCP?: { ms: number } }).__orireLCP?.ms ?? 0),
         resourcesLoaded: performance.getEntriesByType("resource").length,
+        jsTransferBytes: performance.getEntriesByType("resource")
+          .filter((resource) => resource.name.includes("/_next/static/") && resource.name.includes(".js"))
+          .reduce((total, resource) => total + (resource as PerformanceResourceTiming).transferSize, 0),
+        showcaseCardCount: document.querySelectorAll(".auth-showcase .sc-card").length,
+        domElementCount: document.getElementsByTagName("*").length,
       };
     });
     expect(metrics.navigationMs).toBeGreaterThanOrEqual(0);
     expect(metrics.layoutShiftScore).toBeGreaterThanOrEqual(0);
     expect(metrics.observedLcpMs).toBeGreaterThanOrEqual(0);
+    await testInfo.attach(`landing-screenshot-${viewport.label}.png`, {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
     await testInfo.attach(`landing-metrics-${viewport.label}.json`, {
       body: Buffer.from(JSON.stringify(metrics, null, 2)),
       contentType: "application/json",
