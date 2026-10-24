@@ -35,9 +35,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Malformed request." }, { status: 400 });
   }
 
+  // Reject oversized submissions rather than silently removing part of a
+  // support request (which can drop the details needed to help a customer).
+  if (typeof body?.name !== "undefined" && typeof body.name !== "string") {
+    return NextResponse.json({ error: "Please enter a valid name." }, { status: 400 });
+  }
+  if (typeof body?.message !== "string") {
+    return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
+  }
+  const name = (body.name ?? "").trim();
+  const message = body.message.trim();
+  if (name.length > MAX_NAME || message.length > MAX_MESSAGE) {
+    return NextResponse.json({ error: "Your message is too long. Please shorten it and try again." }, { status: 400 });
+  }
   const email = String(body?.email ?? "").trim().toLowerCase();
-  const name = String(body?.name ?? "").trim().slice(0, MAX_NAME);
-  const message = String(body?.message ?? "").trim().slice(0, MAX_MESSAGE);
 
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Please enter a valid email so we can reply." }, { status: 400 });
