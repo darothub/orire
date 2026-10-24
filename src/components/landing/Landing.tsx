@@ -12,7 +12,12 @@ import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { beforeAfterLines } from "@/components/landing/beforeAfter";
-import { LiveDemo } from "@/components/landing/LiveDemo";
+import dynamic from "next/dynamic";
+
+// Keep the fictional demo in a separate client chunk instead of bundling its
+// template-switching interaction into the critical landing route module.
+// SSR remains enabled: HTML and page geometry are unchanged.
+const LiveDemo = dynamic(() => import("@/components/landing/LiveDemo").then((m) => m.LiveDemo));
 import { LandingMobileNav } from "@/components/landing/LandingMobileNav";
 import { demoTemplates } from "@/components/landing/demo";
 import { getTemplate } from "@/components/templates/registry";
