@@ -17,6 +17,7 @@ export function LiveDemo() {
   const options = demoTemplates();
   const [activeId, setActiveId] = useState(options[0].id);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
   const expandRef = useRef<HTMLButtonElement>(null);
   const reducedMotion = useReducedMotion();
   const openAuth = useUIStore((s) => s.openAuth);
@@ -64,7 +65,7 @@ export function LiveDemo() {
               type="button"
               className="landing-demo-expand"
               ref={expandRef}
-              onClick={() => dialogRef.current?.showModal()}
+              onClick={() => { setFullPreviewOpen(true); dialogRef.current?.showModal(); }}
               aria-label={`Enlarge ${active.name} CV preview`}
             >
               <span aria-hidden="true">⤢</span>
@@ -92,7 +93,7 @@ export function LiveDemo() {
           <dialog
             ref={dialogRef}
             className="landing-demo-dialog"
-            onClose={() => expandRef.current?.focus({ preventScroll: true })}
+            onClose={() => { setFullPreviewOpen(false); expandRef.current?.focus({ preventScroll: true }); }}
             aria-labelledby="landing-demo-dialog-heading"
             aria-describedby="landing-demo-dialog-description"
             onKeyDown={(event) => {
@@ -176,7 +177,7 @@ export function LiveDemo() {
               tabIndex={0}
             >
               <div className="paper landing-demo-full-paper" aria-hidden="true" inert>
-                <Component cv={sampleCV} />
+                {fullPreviewOpen && <Component cv={sampleCV} />}
               </div>
             </div>
           </dialog>
