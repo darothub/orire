@@ -93,7 +93,7 @@ export function LiveDemo() {
           <dialog
             ref={dialogRef}
             className="landing-demo-dialog"
-            onClose={() => { setFullPreviewOpen(false); expandRef.current?.focus({ preventScroll: true }); }}
+            onClose={() => { setFullPreviewOpen(false); expandRef.current?.focus({ preventScroll: true }); }}\n            onCancel={() => { setFullPreviewOpen(false); }}
             aria-labelledby="landing-demo-dialog-heading"
             aria-describedby="landing-demo-dialog-description"
             onKeyDown={(event) => {
