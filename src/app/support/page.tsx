@@ -35,6 +35,7 @@ export default function SupportPage() {
       // submitted message in component state after a successful send.
       setName("");
       setMessage("");
+      setError(null);
       setStatus("sent");
     } catch {
       setError("Network error. Please try again, or email us directly.");
