@@ -26,10 +26,10 @@ export function LiveDemo() {
     <section id="demo" className="landing-section landing-demo" aria-label="Try Orire">
       <motion.div
         className="landing-about-head"
-        initial={{ opacity: 0, y: 16 }}
+        initial={reducedMotion ? false : { opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.4 }}
-        transition={{ duration: 0.5, ease: EASE }}
+        transition={reducedMotion ? { duration: 0 } : { duration: 0.5, ease: EASE }}
       >
         <span className="landing-eyebrow">See it live</span>
         <h2 className="landing-h2">Preview a fictional example CV — choose a template and watch its layout change.</h2>
