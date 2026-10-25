@@ -25,7 +25,7 @@ export function CvShowcase() {
     <motion.div
       className="auth-showcase"
       aria-hidden
-      initial={reducedMotion ? false : { opacity: 0 }}
+      initial={false}
       animate={{ opacity: 0.5 }}
       exit={{ opacity: 0 }}
       transition={reducedMotion ? { duration: 0 } : { duration: 0.9, ease: EASE }}
