@@ -55,9 +55,11 @@ export default async function TemplateDetail({
       </ul>
 
       <p style={{ marginTop: 28 }}>
-        Orire offers PDF exports and editable CV designs. Orire re-frames
-        your real experience into the design — it never invents anything that
-        is not already in your CV.
+        This is a browser preview using fictional CV details, not a downloadable
+        sample file. In the Studio, Orire supports PDF and editable Word
+        (.docx) exports, subject to your plan&apos;s download allowance.
+        You can review and edit the CV before exporting; Orire should not
+        invent experience that is not your own.
       </p>
 
       <Link href="/" className="content-cta">Create your CV with {info.name} →</Link>
