@@ -48,7 +48,7 @@ export async function POST(req: Request) {
   if (name.length > MAX_NAME || message.length > MAX_MESSAGE) {
     return NextResponse.json({ error: "Your message is too long. Please shorten it and try again." }, { status: 400 });
   }
-  const email = String(body?.email ?? "").trim().toLowerCase();
+  if (typeof body?.email !== "string") {\n    return NextResponse.json({ error: "Please enter a valid email so we can reply." }, { status: 400 });\n  }\n  const email = body.email.trim().toLowerCase();
 
   if (!isValidEmail(email)) {
     return NextResponse.json({ error: "Please enter a valid email so we can reply." }, { status: 400 });
