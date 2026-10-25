@@ -17,6 +17,7 @@ export function LiveDemo() {
   const options = demoTemplates();
   const [activeId, setActiveId] = useState(options[0].id);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const expandRef = useRef<HTMLButtonElement>(null);
   const reducedMotion = useReducedMotion();
   const openAuth = useUIStore((s) => s.openAuth);
   const Component = getTemplate(activeId).Component;
@@ -62,6 +63,7 @@ export function LiveDemo() {
             <button
               type="button"
               className="landing-demo-expand"
+              ref={expandRef}
               onClick={() => dialogRef.current?.showModal()}
               aria-label={`Enlarge ${active.name} CV preview`}
             >
@@ -90,6 +92,7 @@ export function LiveDemo() {
           <dialog
             ref={dialogRef}
             className="landing-demo-dialog"
+            onClose={() => expandRef.current?.focus({ preventScroll: true })}
             aria-labelledby="landing-demo-dialog-heading"
             aria-describedby="landing-demo-dialog-description"
             onKeyDown={(event) => {
