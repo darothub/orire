@@ -62,6 +62,16 @@ export default async function TemplateDetail({
         invent experience that is not your own.
       </p>
 
+      <section aria-labelledby="template-export-formats">
+        <h2 id="template-export-formats">What you can export</h2>
+        <p>
+          <strong>PDF:</strong> a fixed-layout document for applications and sharing.
+          <strong> Word (.docx):</strong> an editable document for further adjustments.
+          This on-page fictional preview is not a downloadable sample file.
+          Downloads are available from the Studio, subject to your plan allowance.
+        </p>
+      </section>
+
       <Link href="/" className="content-cta">Create your CV with {info.name} →</Link>
 
       <p style={{ marginTop: 36 }}>
