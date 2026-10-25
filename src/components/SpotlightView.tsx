@@ -89,7 +89,7 @@ function SimulateHero() {
           <span aria-hidden>{VIEW_META.target.icon}</span> {VIEW_META.target.label} the ideal candidate
         </strong>
         <span className="spot-hero-sub">
-          See the CV that would match any job 100% — and exactly where yours falls short. Then close the gap, in your own words, without inventing anything.
+          Explore an illustrative role-match CV and compare its emphasis with your own. The simulation is guidance, not an employer assessment — adapt only what matches your real experience.
         </span>
       </div>
       <div className="spot-hero-actions">
