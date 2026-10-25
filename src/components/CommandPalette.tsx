@@ -66,7 +66,11 @@ export function CommandPalette() {
       setIdx(0);
       // Focus when the actual input mounts, rather than guessing when the
       // animated palette will be ready using a 20ms timeout.
-      // The input ref callback owns initial focus during AnimatePresence entry.
+      // The ref callback focuses on first mount; subsequent opens can reuse
+      // the mounted element while AnimatePresence is exiting. Restore focus
+      // after React commits the open state, without an arbitrary timeout.
+      const frame = requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
+      return () => cancelAnimationFrame(frame);
     }
   }, [open]);
 
