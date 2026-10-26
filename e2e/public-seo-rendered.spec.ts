@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 /**
  * UX94: real rendered HTML rather than metadata-object unit assertions.
