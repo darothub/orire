@@ -78,7 +78,7 @@ export async function waitForShell(page: Page) {
   });
 }
 
-export const test = base.extend<{ appPage: Page; _isolatedE2EUser: void; _onboardingSetup: void }, { showOnboardingTour: boolean }>({
+export const test = base.extend<{ appPage: Page; _isolatedE2EUser: void; _onboardingSetup: void; showOnboardingTour: boolean }>({
   showOnboardingTour: [false, { option: true }],
   _onboardingSetup: [async ({ page, showOnboardingTour }, use) => {
     if (!showOnboardingTour) await seedOnboarded(page);
