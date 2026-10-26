@@ -72,7 +72,7 @@ export function LiveDemo() {
               View full CV
             </button>
             <MotionConfig reducedMotion="user">
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode={reducedMotion ? "sync" : "wait"}>
                 <motion.div
                   key={activeId}
                   className="landing-demo-paper-scale"
