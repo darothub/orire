@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 /**
  * UX91 public preview/export-confidence baseline, isolated from real accounts.
