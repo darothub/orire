@@ -6,6 +6,7 @@ import "../../content.css";
 import { TEMPLATE_CATALOG, getTemplateInfo } from "@/lib/templates/catalog";
 import { getTemplateCopy } from "@/lib/seo/templatesContent";
 import { TemplateDetailPreview } from "@/components/templates/TemplateDetailPreview";
+import { PublicWordSample } from "@/components/templates/PublicWordSample";
 
 export function generateStaticParams() {
   return TEMPLATE_CATALOG.map((t) => ({ id: t.id }));
@@ -67,12 +68,14 @@ export default async function TemplateDetail({
         <p>
           <strong>PDF:</strong> a fixed-layout document for applications and sharing.
           <strong> Word (.docx):</strong> an editable document for further adjustments.
-          This on-page fictional preview is not a downloadable sample file.
-          Downloads are available from the Studio, subject to your plan allowance.\n          For an interactive example before signing up, use the free public live demo on the homepage.
+          The fictional Word sample below is downloadable without an account; the visual PDF-style preview above remains browser-only.
+          Downloads of your own CV are available from the Studio, subject to your plan allowance.\n          For an interactive example before signing up, use the free public live demo on the homepage.
         </p>
       </section>
 
-      <p><Link href="/#demo">Try the interactive fictional CV demo</Link></p>\n\n      <Link href="/" className="content-cta">Create your CV with {info.name} →</Link>
+      <p><Link href="/#demo">Try the interactive fictional CV demo</Link></p>\n\n      <PublicWordSample />
+
+      <Link href="/" className="content-cta">Create your CV with {info.name} →</Link>
 
       <p style={{ marginTop: 36 }}>
         See <Link href="/templates">all {TEMPLATE_CATALOG.length} templates</Link>{" "}
