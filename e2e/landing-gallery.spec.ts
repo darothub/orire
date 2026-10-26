@@ -40,7 +40,10 @@ test("public detail page renders the actual fictional CV and readable CTA", asyn
   await page.goto("/templates/aurora", { waitUntil: "domcontentloaded" });
 
   await expect(page.getByRole("heading", { name: "Aurora CV template" })).toBeVisible();
-  await expect(page.getByRole("img", { name: "Fictional CV example in the Aurora template" })).toBeVisible();
+  // The public CV is now explained by semantic text, not an opaque image role.
+  // Keep the visual render check and assert the accessible fictional summary.
+  await expect(page.locator(".tpl-detail-preview .sr-only")).toContainText("Ada Okonkwo");
+  await expect(page.locator(".tpl-detail-preview .sr-only")).toContainText("Example candidate:");
   await expect(page.locator(".tpl-detail-preview-paper")).toContainText("Ada Okonkwo");
 
   const cta = page.getByRole("link", { name: /Create your CV with Aurora/ });
