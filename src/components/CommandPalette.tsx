@@ -269,6 +269,7 @@ export function CommandPalette() {
             role="dialog"
             aria-modal="true"
             aria-label="Command palette"
+            aria-keyshortcuts="Control+K Meta+K"
             initial={{ opacity: 0, y: -12, scale: 0.98, filter: "blur(6px)" }}
             animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -8, scale: 0.985, filter: "blur(4px)" }}
