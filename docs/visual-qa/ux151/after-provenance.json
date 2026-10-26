@@ -1,0 +1,97 @@
+{
+  "commit": "c9745210ad43ff7aafc2a816ed90d7dc58937e41",
+  "buildID": "0Ppxls1O0mcVW1tNEam_e",
+  "browser": "153.0.8010.12",
+  "capturedAt": "2026-10-26T23:07:21.551Z",
+  "sourceSha256": {
+    "src/components/SpotlightView.tsx": "b5b8e199c16d2118f5438e985e142ac90ad877a6696f9fbabf1b708376da73ba",
+    "src/app/globals.css": "1c7db02b1980e6ce24cdba0aeeb25cf96910fb0c51e047f36861cec559982b03"
+  },
+  "captures": [
+    {
+      "file": "AFTER-actual-studio-desktop-dark.png",
+      "fullPage": "AFTER-actual-full-studio-desktop-dark.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "dark",
+      "url": "http://localhost:3100/",
+      "httpStatus": 200,
+      "pageErrors": [],
+      "state": "Actual fresh fictional account; no CV or library record fabricated"
+    },
+    {
+      "file": "AFTER-actual-studio-desktop-light.png",
+      "fullPage": "AFTER-actual-full-studio-desktop-light.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "light",
+      "url": "http://localhost:3100/",
+      "httpStatus": 200,
+      "pageErrors": [],
+      "state": "Actual fresh fictional account; no CV or library record fabricated"
+    },
+    {
+      "file": "AFTER-actual-studio-mobile-dark.png",
+      "fullPage": "AFTER-actual-full-studio-mobile-dark.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "dark",
+      "url": "http://localhost:3100/",
+      "httpStatus": 200,
+      "pageErrors": [],
+      "state": "Actual fresh fictional account; no CV or library record fabricated"
+    },
+    {
+      "file": "AFTER-actual-studio-mobile-light.png",
+      "fullPage": "AFTER-actual-full-studio-mobile-light.png",
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "light",
+      "url": "http://localhost:3100/",
+      "httpStatus": 200,
+      "pageErrors": [],
+      "state": "Actual fresh fictional account; no CV or library record fabricated"
+    },
+    {
+      "file": "AFTER-actual-studio-narrow-dark.png",
+      "fullPage": null,
+      "viewport": {
+        "width": 320,
+        "height": 844,
+        "name": "narrow"
+      },
+      "theme": "dark",
+      "url": "http://localhost:3100/",
+      "httpStatus": 200,
+      "pageErrors": [],
+      "state": "Actual fresh fictional account; no CV or library record fabricated"
+    },
+    {
+      "file": "AFTER-actual-studio-narrow-light.png",
+      "fullPage": null,
+      "viewport": {
+        "width": 320,
+        "height": 844,
+        "name": "narrow"
+      },
+      "theme": "light",
+      "url": "http://localhost:3100/",
+      "httpStatus": 200,
+      "pageErrors": [],
+      "state": "Actual fresh fictional account; no CV or library record fabricated"
+    }
+  ],
+  "evidence": "Actual local production build; owner authorized local screenshots for this batch. No injected DOM or CSS."
+}
