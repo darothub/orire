@@ -29,7 +29,7 @@ export function PublicWordSample() {
         {busy ? "Preparing fictional Word sample…" : "Download fictional Word (.docx) sample"}
       </button>
       {error && <p role="alert">Could not generate the sample. Please try again.</p>}
-      <p>This file contains fictional details and demonstrates Orire's editable, single-column Word export. Word does not reproduce the decorative PDF template layout.</p>
+      <p>This file contains fictional details and demonstrates Orire&apos;s editable, single-column Word export. Word does not reproduce the decorative PDF template layout.</p>
     </div>
   );
 }
