@@ -135,7 +135,7 @@ function PickCard({
       aria-pressed={isActive}
     >
       <span className="pick-swatch" style={{ background: t.swatch }} />
-      <div className="pick-thumb" aria-hidden>
+      <div className="pick-thumb" aria-hidden inert>
         <div className="pick-scale">
           <div className="paper pick-paper">
             <MotionConfig reducedMotion="always">

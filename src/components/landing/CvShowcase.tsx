@@ -26,6 +26,7 @@ export function CvShowcase() {
     <motion.div
       className="auth-showcase"
       aria-hidden
+      inert
       initial={false}
       animate={{ opacity: 0.5 }}
       exit={{ opacity: 0 }}

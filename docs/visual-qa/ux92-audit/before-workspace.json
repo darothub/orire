@@ -1,0 +1,2383 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "view": "Edit",
+    "violations": [
+      {
+        "id": "aria-hidden-focus",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".is-active.pick-card > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(2) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Role</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Company</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Location</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-bullets > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Role</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Company</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Location</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-bullets > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Degree</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Field</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Institution</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-field > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Details</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Category</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(5) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Skills (comma separated)</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Category</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Skills (comma separated)</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(3) > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Category</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(3) > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Skills (comma separated)</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Name</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Role</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">URL</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-bullets > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Name</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Role</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">URL</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-bullets > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Name</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Issuer</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Date</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">URL</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Name</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Issuer</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Date</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">URL</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(2) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Dark luxe · oversized serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Swiss minimal · mono labels</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Bold gradient sidebar</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Corporate blue · accent rail</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Warm cream · centered serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Dark tech · cyan mono</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Soft peach · friendly</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Near-black · uppercase</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Deep green · gold serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Royal blue · banner header</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Amber editorial · big serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Icy blue-gray · calm</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Bold red · condensed caps</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Muted · airy whitespace</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Monochrome typewriter</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Purple · modern sidebar</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Desert neutral · warm</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Teal · rounded chips</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Grayscale · orange accent</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Navy + bronze · double-rule crest</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Oxblood wine · classic serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Charcoal + steel · tracked caps</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Black + champagne gold banner</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Graphite + deep teal · serif</span>"
+          }
+        ]
+      },
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".is-active.pick-card"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card is-active\" aria-pressed=\"true\" tabindex=\"0\" style=\"transform: perspective(900px) scale(1.03);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1246
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "view": "Grade",
+    "violations": [
+      {
+        "id": "aria-hidden-focus",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".is-active.pick-card > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(2) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".pick-card:nth-child(2) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Dark luxe · oversized serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Swiss minimal · mono labels</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Bold gradient sidebar</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Corporate blue · accent rail</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Warm cream · centered serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Dark tech · cyan mono</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Soft peach · friendly</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Near-black · uppercase</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Deep green · gold serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Royal blue · banner header</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Amber editorial · big serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Icy blue-gray · calm</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Bold red · condensed caps</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Muted · airy whitespace</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Monochrome typewriter</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Purple · modern sidebar</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Desert neutral · warm</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Teal · rounded chips</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Grayscale · orange accent</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Navy + bronze · double-rule crest</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Oxblood wine · classic serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Charcoal + steel · tracked caps</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Black + champagne gold banner</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Graphite + deep teal · serif</span>"
+          }
+        ]
+      },
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".is-active.pick-card"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card is-active\" aria-pressed=\"true\" tabindex=\"0\" style=\"transform: perspective(900px) scale(1.03);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1173
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "view": "AI Settings",
+    "violations": [
+      {
+        "id": "aria-hidden-focus",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".is-active.pick-card > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(2) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25) > .pick-thumb[aria-hidden=\"true\"]"
+            ],
+            "summary": "Fix all of the following:\n  Focusable content should have tabindex=\"-1\" or be removed from the DOM",
+            "html": "<div class=\"pick-thumb\" aria-hidden=\"true\">"
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".is-default > .conn-field > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Quality</span>"
+          },
+          {
+            "target": [
+              ".is-default > .conn-field > .conn-quality > .conn-hint"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #6b736d, background color: #1b1e1c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"conn-hint\">included with Free</span>"
+          },
+          {
+            "target": [
+              ".conn-card:nth-child(2) > .conn-field > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Quality</span>"
+          },
+          {
+            "target": [
+              ".conn-card:nth-child(2) > .conn-field > .conn-quality > .conn-hint"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #6b736d, background color: #1b1e1c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"conn-hint\">included with Free</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(2) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Dark luxe · oversized serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Swiss minimal · mono labels</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Bold gradient sidebar</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Corporate blue · accent rail</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Warm cream · centered serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Dark tech · cyan mono</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Soft peach · friendly</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Near-black · uppercase</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Deep green · gold serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Royal blue · banner header</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Amber editorial · big serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Icy blue-gray · calm</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Bold red · condensed caps</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Muted · airy whitespace</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Monochrome typewriter</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Purple · modern sidebar</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Desert neutral · warm</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Teal · rounded chips</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Grayscale · orange accent</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Navy + bronze · double-rule crest</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Oxblood wine · classic serif</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Charcoal + steel · tracked caps</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Black + champagne gold banner</span>"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25) > .pick-meta > .pick-blurb"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"pick-blurb\">Graphite + deep teal · serif</span>"
+          }
+        ]
+      },
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".is-active.pick-card"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card is-active\" aria-pressed=\"true\" tabindex=\"0\" style=\"transform: perspective(900px) scale(1.03);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(2)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(3)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(4)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(5)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(6)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(7)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(8)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(9)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(10)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(11)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(12)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(13)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(14)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(15)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(16)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(17)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(18)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(19)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(20)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(21)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(22)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(23)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(24)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          },
+          {
+            "target": [
+              ".pick-card:nth-child(25)"
+            ],
+            "summary": "Fix any of the following:\n  Element has focusable descendants",
+            "html": "<button class=\"pick-card \" aria-pressed=\"false\" tabindex=\"0\" style=\"transform: perspective(900px);\">"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 1162
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "view": "Edit",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Role</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Company</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Location</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-bullets > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Role</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Company</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Location</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(3) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-bullets > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Degree</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Field</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Institution</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(4) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"] > .ed-field > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Details</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Category</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(5) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Skills (comma separated)</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Category</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Skills (comma separated)</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(3) > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Category</span>"
+          },
+          {
+            "target": [
+              ".ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(3) > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Skills (comma separated)</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Name</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Role</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">URL</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-bullets > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Name</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Role</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">URL</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Start</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(5) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">End</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(6) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-bullets > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Name</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Issuer</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Date</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(1) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">URL</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(1) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Name</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(2) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Issuer</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(3) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Date</span>"
+          },
+          {
+            "target": [
+              ".ed-section:nth-child(7) > .ed-list[role=\"list\"] > .ed-card[aria-roledescription=\"reorderable card\"][role=\"listitem\"]:nth-child(2) > .ed-grid2 > .ed-field:nth-child(4) > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">URL</span>"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 119
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "view": "Grade",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 46
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "view": "AI Settings",
+    "violations": [
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": [
+          {
+            "target": [
+              ".is-default > .conn-field > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Quality</span>"
+          },
+          {
+            "target": [
+              ".is-default > .conn-field > .conn-quality > .conn-hint"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #6b736d, background color: #1b1e1c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"conn-hint\">included with Free</span>"
+          },
+          {
+            "target": [
+              ".conn-card:nth-child(2) > .conn-field > .ed-label"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.68 (foreground color: #6b736d, background color: #151716, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"ed-label\">Quality</span>"
+          },
+          {
+            "target": [
+              ".conn-card:nth-child(2) > .conn-field > .conn-quality > .conn-hint"
+            ],
+            "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.44 (foreground color: #6b736d, background color: #1b1e1c, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1",
+            "html": "<span class=\"conn-hint\">included with Free</span>"
+          }
+        ]
+      }
+    ],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 25
+      }
+    ]
+  }
+]

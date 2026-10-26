@@ -1,0 +1,592 @@
+{
+  "axeScans": 50,
+  "totalViolations": 0,
+  "incompleteRuleOccurrences": {
+    "color-contrast": 50,
+    "link-in-text-block": 8
+  },
+  "cases": [
+    {
+      "case": "accessibility-audit-WCAG-a-05df1-token-fictional-audit-token-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-0eae1-ght-public-templates-aurora-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 21
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-1868c-token-fictional-audit-token-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-19f5f--dark-workspace-AI-Settings-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 99
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-1d9d3--dark-workspace-AI-Settings-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 25
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-319f0-ark-public-templates-aurora-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 21
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-5f9d5-reveal-modal-focus-and-WCAG-chromium",
+      "state": "axe-signup",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 62
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-61bea-token-fictional-audit-token-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-69192-token-fictional-audit-token-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-769c2-ark-public-templates-aurora-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 21
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-813f6-light-workspace-AI-Settings-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 26
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-95750-reveal-modal-focus-and-WCAG-chromium",
+      "state": "axe-signup",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 74
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-9eeb7-ght-public-templates-aurora-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 21
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-a0fbf-reveal-modal-focus-and-WCAG-chromium",
+      "state": "axe-signup",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 58
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-db7da-reveal-modal-focus-and-WCAG-chromium",
+      "state": "axe-signup",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 73
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-a-e7d4d-light-workspace-AI-Settings-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 100
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-public--chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 50
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-public-forgot-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-public-support-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 14
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-public-templates-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 55
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-workspace-Edit-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 183
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-workspace-Export-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 140
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-workspace-Grade-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 110
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-workspace-Home-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 55
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-public--chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 51
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-public-forgot-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-public-support-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 14
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-public-templates-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 55
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-workspace-Edit-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 184
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-workspace-Export-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 141
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-workspace-Grade-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 111
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-workspace-Home-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 56
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-public--chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 37
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-public-forgot-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-public-support-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 14
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-public-templates-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 55
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-workspace-Edit-chromium",
+      "state": "axe-preview",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 99
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-workspace-Edit-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 119
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-workspace-Export-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 69
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-workspace-Grade-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 46
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-workspace-Home-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 52
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-public--chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 38
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-public-forgot-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-public-support-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 14
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-public-templates-chromium",
+      "state": "axe-public",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 55
+        },
+        {
+          "id": "link-in-text-block",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-workspace-Edit-chromium",
+      "state": "axe-preview",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 100
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-workspace-Edit-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 120
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-workspace-Export-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 70
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-workspace-Grade-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 47
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-workspace-Home-chromium",
+      "state": "axe-workspace",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 53
+        }
+      ]
+    }
+  ]
+}

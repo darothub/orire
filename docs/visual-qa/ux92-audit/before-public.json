@@ -1,0 +1,162 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 50
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/templates",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 55
+      },
+      {
+        "id": "link-in-text-block",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/templates/aurora",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 21
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/support",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      },
+      {
+        "id": "link-in-text-block",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "signup-dialog",
+    "violations": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 35
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/templates",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 55
+      },
+      {
+        "id": "link-in-text-block",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/templates/aurora",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "aria-prohibited-attr",
+        "nodes": 1
+      },
+      {
+        "id": "color-contrast",
+        "nodes": 21
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/support",
+    "violations": [],
+    "incomplete": [
+      {
+        "id": "color-contrast",
+        "nodes": 14
+      },
+      {
+        "id": "link-in-text-block",
+        "nodes": 1
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "signup-dialog",
+    "violations": []
+  }
+]
