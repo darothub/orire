@@ -76,6 +76,8 @@ export default function SupportPage() {
               <span>Your email</span>
               <input
                 type="email"
+                aria-invalid={status === "error"}
+                aria-describedby={status === "error" ? "support-form-error" : undefined}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -96,7 +98,7 @@ export default function SupportPage() {
             </label>
 
             {status === "error" && error && (
-              <p className="support-error" role="alert">{error}</p>
+              <p id="support-form-error" className="support-error" role="alert">{error}</p>
             )}
 
             <button type="submit" className="content-cta" disabled={status === "sending"}>
