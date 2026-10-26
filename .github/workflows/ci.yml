@@ -103,6 +103,11 @@ jobs:
       - name: Apply Prisma schema to CI Postgres
         if: steps.docs.outputs.skip != 'true'
         run: npx prisma migrate deploy
+      - name: Seed isolated Playwright identity fixture
+        if: steps.docs.outputs.skip != 'true'
+        env:
+          ORIRE_E2E_BYPASS: "1"
+        run: node scripts/seed-e2e-user.mjs
       - name: Cache Playwright browsers
         if: steps.docs.outputs.skip != 'true'
         uses: actions/cache@v4
