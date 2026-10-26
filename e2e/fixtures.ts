@@ -1,5 +1,6 @@
 import { test as base, expect, type Page } from "@playwright/test";
 import { addSessionCookie } from "./session";
+import { PrismaClient } from "@prisma/client";
 
 /**
  * Shared E2E fixtures for orire.
@@ -77,7 +78,22 @@ export async function waitForShell(page: Page) {
   });
 }
 
-export const test = base.extend<{ appPage: Page }>({
+export const test = base.extend<{ appPage: Page; _isolatedE2EUser: void }>({
+  _isolatedE2EUser: [async ({}, use) => {
+    if (process.env.CI === "true") {
+      const db = new PrismaClient();
+      try {
+        // Every fixture-backed test begins with a clean synthetic account.
+        // CI uses one worker to prevent cross-worker deletions.
+        await db.user.deleteMany({ where: { id: "e2e-user" } });
+        await db.user.create({ data: { id: "e2e-user", name: "E2E Tester", email: "e2e@orire.test" } });
+      } finally {
+        await db.$disconnect();
+      }
+    }
+    await use();
+  }, { auto: true }],
+
   appPage: async ({ page }, use) => {
     await seedOnboarded(page);
     await signIn(page);
