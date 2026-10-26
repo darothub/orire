@@ -82,6 +82,9 @@ export async function waitForShell(page: Page) {
   await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible({
     timeout: SHELL_READY_TIMEOUT,
   });
+  // The server-rendered rail can be visible before client keyboard handlers
+  // attach. The template pill replaces its SSR dash after the mount effect.
+  await expect(page.locator(".template-pill")).toHaveText(/^(?!—$).+/);
 }
 
 export const test = base.extend<{
