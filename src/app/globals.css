@@ -508,7 +508,7 @@ body {
 }
 .ed-label {
   font-size: 11px;
-  color: var(--faint);
+  color: var(--muted);
   letter-spacing: 0.4px;
 }
 .ed-input {
@@ -3005,7 +3005,8 @@ body {
 }
 .pw-toggle:hover { color: var(--text); background: var(--surface-soft); }
 .pw-toggle:focus-visible {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   color: var(--text);
   box-shadow: 0 0 0 3px rgba(58, 217, 180,0.18);
 }
@@ -4541,7 +4542,7 @@ html[data-theme="light"] .landing-scrim {
 
 /* Public template discovery: intentional compact previews, not fake CV screenshots. */
 .landing-gallery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 28px; }
-.landing-gallery-card { display: flex; flex-direction: column; gap: 9px; min-width: 0; padding: 14px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--panel); color: var(--text); text-decoration: none; transition: border-color .2s, transform .2s; }
+.landing-gallery-card { display: flex; flex-direction: column; gap: 9px; min-width: 0; padding: 14px; border: 1px solid var(--line-2); border-radius: var(--radius); background: var(--panel); color: #e8ebe8; text-decoration: none; transition: border-color .2s, transform .2s; }
 .landing-gallery-card:hover { transform: translateY(-3px); border-color: var(--accent); }
 .landing-gallery-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .landing-gallery-art { min-height: 190px; display: grid; place-items: center; border-radius: 9px; overflow: hidden; padding: 18px; }
@@ -4551,7 +4552,7 @@ html[data-theme="light"] .landing-scrim {
 .landing-gallery-line.short { width: 44%; }
 .landing-gallery-rule { height: 1px; width: 100%; background: #d8dce0; margin: 5px 0; }
 .landing-gallery-name { font-weight: 700; font-size: 17px; }
-.landing-gallery-description { color: var(--muted); font-size: 13px; }
+.landing-gallery-description { color: #9aa29c; font-size: 13px; }
 .landing-gallery-action { margin-top: auto; padding-top: 9px; color: var(--accent-2); font-weight: 600; font-size: 13px; }
 .landing-gallery-more { margin-top: 20px; text-align: center; }
 .landing-gallery-more a { color: var(--accent-2); }
@@ -5229,4 +5230,20 @@ html[data-theme="light"] .landing-scrim {
   .spot-studio-next { align-items: stretch; flex-direction: column; border-radius: 17px; }
   .spot-studio-actions { flex-direction: column; }
   .spot-studio-actions button { width: 100%; justify-content: center; }
+}
+
+/* Readable action text on the light workspace's pale surfaces. Backgrounds,
+   borders and primary button fills retain the existing brand tokens. */
+html[data-theme="light"] .app :is(
+  .spot-card-toggle.in,
+  .spot-card-next,
+  .pick-ats.safe,
+  .conn-tag.default,
+  .conn-ok,
+  .ed-evidence-btn,
+  .ed-improve,
+  .ed-add,
+  .ed-coach-flag.info .ed-coach-label
+) {
+  color: #08775c;
 }

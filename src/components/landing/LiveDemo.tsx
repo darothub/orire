@@ -60,7 +60,7 @@ export function LiveDemo() {
         </div>
 
         <div className="landing-demo-preview">
-          <div className="landing-demo-frame" aria-label="Fictional example CV preview">
+          <div className="landing-demo-frame" role="group" aria-label="Fictional example CV preview">
             <button
               type="button"
               className="landing-demo-expand"

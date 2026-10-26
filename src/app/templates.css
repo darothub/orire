@@ -97,7 +97,7 @@
 }
 .pick-blurb {
   font-size: 11px;
-  color: var(--faint);
+  color: var(--muted);
 }
 .pick-ats {
   flex: 0 0 auto;

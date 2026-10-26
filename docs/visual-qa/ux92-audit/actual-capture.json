@@ -1,0 +1,16 @@
+{
+  "phase": "actual",
+  "browser": "153.0.8010.12",
+  "baseUrl": "http://localhost:3100",
+  "pageErrors": [],
+  "sourceSha256": {
+    "src/app/globals.css": "62f4bfd2c91c3a8ed94c8925316f0349d83a8ea4442b2553b27e4f95532d1a68",
+    "src/app/ingest.css": "b4583013909b617afb51732d1574dd0b3ff6d6eb634b7043b4e7457450946218",
+    "src/app/templates.css": "2e344b0f12723268685a40d1c82a41fef62c0b5defb7722317b92fed550266f2",
+    "src/components/auth/PasswordInput.tsx": "719e39359bb1ad7c03aabc913ae4be1026d789a269172c31b856dd00bfb885dd",
+    "src/components/templates/TemplatePicker.tsx": "13f6d3c9571e396adbf59f7e51fb3c127c743f21731c08b05dd3b168bb90c62a",
+    "src/components/landing/CvShowcase.tsx": "dc19d81758c67f6a02b866560fb704e5add2955bd54e7865d277631c430b2689",
+    "src/components/landing/LiveDemo.tsx": "da0acfd0f116c5bdc29590ece83247599358a1766e93eb52b3f844486fe8941c",
+    "src/components/templates/TemplateDetailPreview.tsx": "fc36101717297298af6df208a6b9f6839480495b12eed5c9db085f374078c996"
+  }
+}

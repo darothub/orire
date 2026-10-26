@@ -11,7 +11,7 @@ export function TemplateDetailPreview({ id, name }: { id: string; name: string }
   const Template = getTemplate(id).Component;
 
   return (
-    <div className="tpl-detail-preview" aria-label={`Fictional CV example in the ${name} template`}>
+    <div className="tpl-detail-preview" role="region" aria-label={`Fictional CV example in the ${name} template`}>
       <div className="tpl-detail-preview-window" aria-hidden="true" inert>
         <div className="paper tpl-detail-preview-paper">
           <Template cv={sampleCV} />

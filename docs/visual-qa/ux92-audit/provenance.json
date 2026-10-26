@@ -1,0 +1,15 @@
+{
+  "baseCommit": "a43a2d3c7309d3d70325f4d746d12d8a5ed98824",
+  "browser": "Chromium 153.0.8010.12",
+  "viewports": [
+    "1440x900",
+    "390x844"
+  ],
+  "data": "fictional sample CVs and temporary isolated E2E users only",
+  "initialProposal": "Browser-only style overrides, captured before corresponding source changes. Explicit user approval in this chat on 26 October 2026.",
+  "additionalProposal": "Light-theme action text/gallery contrast and password focus ring approved by user message \"approved\". Temporary screenshots were recreated and archived from the preserved first-pass build after interruption; the additions were not present in that running build.",
+  "preservedProposalBuildId": "bHdC1eqt5SguAa11kU7IL",
+  "screenshots": "before/proposed are approval comparisons; actual is the final production build. They are never treated interchangeably.",
+  "initialPublicAuditSource": "Clean main production baseline at a43a2d3",
+  "initialWorkspaceBeforeSource": "a43a2d3 plus the visually unchanged workspace split later committed as 65a5218 (PR #189), before any #92 accessibility edits"
+}

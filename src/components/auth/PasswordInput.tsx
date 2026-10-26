@@ -8,8 +8,8 @@ import { useId, useState, type InputHTMLAttributes } from "react";
  * exposes an accessible eye button. Keeps the shared `.auth-input` styling.
  *
  * Pass `id` from a visible <label htmlFor> so screen-reader and click labels
- * target the real control. The toggle stays out of the Tab order (tabIndex=-1)
- * so Tab moves Email → Password → Submit without an extra stop.
+ * target the real control. The reveal button participates in normal keyboard
+ * navigation so Enter/Space offers the same functionality as a pointer click.
  */
 export function PasswordInput({
   className = "auth-input",
@@ -38,7 +38,6 @@ export function PasswordInput({
         aria-controls={inputId}
         aria-pressed={show}
         title={show ? "Hide password" : "Show password"}
-        tabIndex={-1}
       >
         {show ? <EyeOff /> : <Eye />}
       </button>
