@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { expect, test, signIn, waitForShell } from "./fixtures";
 
 /**
  * UX93 measurement-only baseline. Captures browser metrics for the real
@@ -75,3 +75,24 @@ for (const viewport of [
     });
   });
 }
+
+test("anonymous landing defers workspace JavaScript and still resumes paid plan intent", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("orire-consent", "denied"));
+  await page.goto("/", { waitUntil: "networkidle" });
+  const scriptBytes = await page.evaluate(() => performance.getEntriesByType("resource")
+    .filter((entry) => entry.name.includes("/_next/static/") && entry.name.endsWith(".js"))
+    .reduce((total, entry) => total + (entry as PerformanceResourceTiming).decodedBodySize, 0));
+  // Before splitting the workspace this was 1,885,282 bytes. The measured
+  // landing is ~757 KB; allow growth while catching the eager workspace bundle.
+  expect(scriptBytes).toBeGreaterThan(0);
+  expect(scriptBytes).toBeLessThan(1_200_000);
+  const pro = page.locator(".landing-price-card").filter({
+    has: page.getByRole("heading", { name: "Pro", exact: true }),
+  });
+  await pro.getByRole("button").click();
+  await expect(page.getByRole("dialog", { name: "Create your account" })).toBeVisible();
+  await signIn(page);
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await waitForShell(page);
+  await expect(page.getByRole("heading", { name: "Plans", exact: true })).toBeVisible();
+});
