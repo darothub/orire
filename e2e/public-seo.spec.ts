@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 const publicPages = ["/", "/templates", "/templates/aurora", "/guides", "/guides/choose-the-right-cv-template", "/privacy", "/terms", "/support"];
 
