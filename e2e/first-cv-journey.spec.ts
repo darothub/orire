@@ -9,6 +9,8 @@ import { test, expect, signIn, waitForShell } from "./fixtures";
  * This is an integration test of the ONBOARDING/EDITOR experience, not a test
  * claiming that the external signup/verification provider works end to end.
  */
+test.describe.configure({ mode: "serial" });
+
 for (const viewport of [
   { name: "desktop-1440", width: 1440, height: 900 },
   { name: "mobile-390", width: 390, height: 844 },
@@ -96,6 +98,10 @@ for (const viewport of [
       path: "test-results/ux87-journey/ACTUAL-first-CV-preview-" + viewport.name + ".png",
       animations: "disabled",
     });
+
+    // Wait for debounced cloud persistence before reloading; otherwise a
+    // concurrent browser can still read the previous server snapshot.
+    await expect(page.getByText("Saved", { exact: true }).first()).toBeVisible({ timeout: 15_000 });
 
     // The edited CV should persist across a reload in the same test account.
     await page.reload({ waitUntil: "domcontentloaded" });
