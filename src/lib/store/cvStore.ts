@@ -131,7 +131,7 @@ export const useCVStore = create<CVState>()(
       ignoredSkills: [],
 
       setBasics: (patch) =>
-        set((s) => ({ cv: { ...s.cv, basics: { ...s.cv.basics, ...patch } } })),
+        set((s) => ({ cv: { ...s.cv, basics: { ...s.cv.basics, ...patch } }, started: true })),
 
       addExperience: () =>
         set((s) => ({ cv: { ...s.cv, experience: [...s.cv.experience, emptyExperience()] } })),
