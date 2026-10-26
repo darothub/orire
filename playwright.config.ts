@@ -1,22 +1,23 @@
 import { defineConfig, devices } from "@playwright/test";
 import { E2E_AUTH_SECRET } from "./e2e/session";
+import { e2eDatabaseUrl } from "./e2e/database";
 
 /**
  * orire — end-to-end test configuration.
  *
  * Tests run against a dedicated dev server on port 3100 (kept off the default
  * 3001 so a developer's running `npm run dev` is never disturbed). The suite is
- * hermetic: tests are signed in with a minted Auth.js session cookie (see
- * e2e/session.ts) and every `/api/ai/*` call is stubbed per-test, so no
- * database, SMTP or real provider key is required. See e2e/fixtures.ts.
+ * isolated: each minted Auth.js session owns a fresh database user. A migrated
+ * disposable local PostgreSQL database is required. AI calls are intercepted
+ * by the relevant tests; no SMTP or real provider key is needed.
  */
 const PORT = Number(process.env.E2E_PORT ?? 3100);
+const databaseUrl = e2eDatabaseUrl();
 
 /**
- * Env for the e2e web server. A dummy datasource is enough for `prisma
- * generate` and `next build` (no connection is opened at build time, and the
- * JWT session strategy decodes the auth cookie without touching the DB). The
- * fixed AUTH_SECRET must match the one used to mint the session cookie.
+ * Env for the E2E server. Explicitly validate the disposable database before
+ * fixtures or server actions can write. The fixed AUTH_SECRET must match
+ * the one used to mint each test session.
  */
 const serverEnv: Record<string, string> = {
   ...(process.env as Record<string, string>),
@@ -26,7 +27,7 @@ const serverEnv: Record<string, string> = {
   // Prod (Vercel) trusts its own host automatically; the e2e server must be
   // told explicitly so this does not depend on a developer's shell/.env.
   AUTH_TRUST_HOST: "true",
-  // Unlock hermetic signup→export for minted e2e-user only (src/lib/e2e/bypass.ts).
+  // Unlock hermetic signup→export for minted UUID-scoped test users only (src/lib/e2e/bypass.ts).
   // Never set ORIRE_E2E_BYPASS in production.
   ORIRE_E2E_BYPASS: "1",
   // Email/password form is gated by NEXT_PUBLIC_PASSWORD_AUTH (AuthOverlay).
@@ -35,12 +36,8 @@ const serverEnv: Record<string, string> = {
   // Keep signup UI path free of Turnstile in hermetic CI.
   TURNSTILE_SECRET_KEY: "",
   NEXT_PUBLIC_TURNSTILE_SITE_KEY: "",
-  DATABASE_URL:
-    process.env.DATABASE_URL ?? "postgresql://ci:ci@localhost:5432/ci?schema=public",
-  DIRECT_URL:
-    process.env.DIRECT_URL ??
-    process.env.DATABASE_URL ??
-    "postgresql://ci:ci@localhost:5432/ci?schema=public",
+  DATABASE_URL: databaseUrl,
+  DIRECT_URL: databaseUrl,
 };
 
 export default defineConfig({
@@ -48,9 +45,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  // Synthetic E2E sessions share a single database identity; serialize CI until
-  // each test can use a distinct authenticated user.
-  workers: process.env.CI ? 1 : undefined,
+  // Each test/retry owns its database rows; exercise parallel isolation locally too.
+  workers: 2,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   timeout: 30_000,
   expect: { timeout: 7_000 },
@@ -71,8 +67,7 @@ export default defineConfig({
   ],
   webServer: {
     // Run against a production build: no dev-overlay portal intercepting
-    // clicks, and closer to what ships. Reuses an already-running server
-    // locally so repeat runs are fast.
+    // clicks, and closer to what ships. Always launch our own isolated server.
     // In GitHub Actions the E2E job builds once before launching Playwright.
     // For local runs retain the build-and-start convenience.
     command: process.env.E2E_PREBUILT === "1"
@@ -80,7 +75,8 @@ export default defineConfig({
       : `npx next build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}`,
     env: serverEnv,
-    reuseExistingServer: !process.env.CI,
+    // A pre-existing server may point at a different database or auth secret.
+    reuseExistingServer: false,
     timeout: 180_000,
     stdout: "pipe",
     stderr: "pipe",

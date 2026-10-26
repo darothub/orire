@@ -10,12 +10,6 @@ test("UX151 capture implemented Studio after images on desktop and mobile", asyn
     await signIn(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForShell(page);
-    // Capture the real initial Studio only after its standard first-run tour
-    // has been dismissed; no production identity or real CV is used.
-    const tour = page.getByRole("dialog", { name: "Getting started tour" });
-    if (await tour.isVisible().catch(() => false)) {
-      await tour.getByRole("button", { name: "Skip" }).click();
-    }
     await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Your CV studio" })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Start your first CV|Continue your CV/ })).toBeVisible();

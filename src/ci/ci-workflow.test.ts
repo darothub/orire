@@ -60,6 +60,17 @@ describe("GitHub Actions CI workflow", () => {
     expect(e2e).toContain("Choose PR smoke or full regression");
   });
 
+  it("selects full regression when shared fixtures or any E2E spec changes", () => {
+    const selection = stepBlock(workflow, "Choose PR smoke or full regression");
+    const expression = selection.match(/grep -Eq '([^']+)'/);
+    expect(expression).not.toBeNull();
+    const fullSuite = new RegExp(expression![1]);
+    for (const path of ["e2e/fixtures.ts", "e2e/session.ts", "e2e/database.ts", "e2e/onboarding-tour-a11y.spec.ts", "playwright.config.ts"]) {
+      expect(fullSuite.test(path), path).toBe(true);
+    }
+    expect(fullSuite.test("src/lib/content/guides.ts")).toBe(false);
+  });
+
   it("preserves the required E2E job for documentation-only PRs", () => {
     expect(workflow).toContain("name: Classify documentation-only PR");
     expect(workflow).toContain("id: docs");

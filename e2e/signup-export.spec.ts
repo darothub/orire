@@ -1,5 +1,5 @@
 import { test, expect, signIn, waitForShell, SHELL_READY_TIMEOUT } from "./fixtures";
-import { test as rawTest, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 
 /**
  * Signup → edit → export journey (critique backlog: manual signup→export QA).
@@ -54,8 +54,8 @@ async function showMobileWork(page: Page) {
   await switcher.getByRole("tab", { name: "Edit" }).click();
 }
 
-rawTest.describe("guest signup entry", () => {
-  rawTest("landing opens Create account dialog with accessible fields", async ({ page }) => {
+test.describe("guest signup entry", () => {
+  test("landing opens Create account dialog with accessible fields", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await dismissCookies(page);
     await expect(guestCta(page)).toBeVisible({ timeout: SHELL_READY_TIMEOUT });
@@ -86,7 +86,7 @@ rawTest.describe("guest signup entry", () => {
     expect(tooShort || errVisible).toBe(true);
   });
 
-  rawTest("mocked signup API then failed auto sign-in still confirms account create path", async ({
+  test("mocked signup API then failed auto sign-in still confirms account create path", async ({
     page,
   }) => {
     await page.route("**/api/auth/signup", async (route) => {
@@ -166,16 +166,9 @@ test.describe("signed-in edit → export", () => {
   });
 });
 
-rawTest.describe("mobile viewport export surfaces", () => {
-  rawTest("export actions remain reachable on a phone-sized screen", async ({ page }) => {
+test.describe("mobile viewport export surfaces", () => {
+  test("export actions remain reachable on a phone-sized screen", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.addInitScript(() => {
-      try {
-        window.localStorage.setItem("orire-onboarded", "1");
-      } catch {
-        /* ignore */
-      }
-    });
     await signIn(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForShell(page);

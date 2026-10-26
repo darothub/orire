@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 const GUIDE = "/guides/choose-the-right-cv-template";
 const cases = [

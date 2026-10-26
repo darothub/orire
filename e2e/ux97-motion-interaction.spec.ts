@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 
 /** UX97 reduced-motion and interactive-state regression at real viewports. */
 for (const viewport of [

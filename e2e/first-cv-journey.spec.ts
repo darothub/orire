@@ -1,5 +1,4 @@
 import { test, expect, signIn, waitForShell } from "./fixtures";
-import { PrismaClient } from "@prisma/client";
 
 /**
  * UX #87 — hermetic first-CV journey: a REAL browser renders the anonymous
@@ -10,13 +9,14 @@ import { PrismaClient } from "@prisma/client";
  * This is an integration test of the ONBOARDING/EDITOR experience, not a test
  * claiming that the external signup/verification provider works end to end.
  */
-test.describe.configure({ mode: "serial" });
+// This spec deliberately verifies the first-run onboarding experience.
+test.use({ showOnboardingTour: true });
 
 for (const viewport of [
   { name: "desktop-1440", width: 1440, height: 900 },
   { name: "mobile-390", width: 390, height: 844 },
 ]) {
-  test("@smoke UX87 anonymous visitor to first edited CV " + viewport.name, async ({ page }) => {
+  test("@smoke UX87 anonymous visitor to first edited CV " + viewport.name, async ({ page, db, e2eUser }) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -103,17 +103,12 @@ for (const viewport of [
     // Wait for debounced cloud persistence before reloading; otherwise a
     // concurrent browser can still read the previous server snapshot.
     // Await the actual persisted CV rather than a layout-dependent sync label.
-    if (process.env.CI === "true") {
-      const db = new PrismaClient();
-      try {
-        await expect.poll(async () => {
-          const doc = await db.document.findFirst({ where: { userId: "e2e-user" }, orderBy: { updatedAt: "desc" } });
-          return (doc?.data as { basics?: { fullName?: string } } | undefined)?.basics?.fullName;
-        }, { timeout: 20_000 }).toBe("First Journey Candidate");
-      } finally {
-        await db.$disconnect();
-      }
-    }
+    await expect.poll(async () => {
+      const doc = await db.document.findFirst({
+        where: { userId: e2eUser.id }, orderBy: { updatedAt: "desc" },
+      });
+      return (doc?.data as { basics?: { fullName?: string } } | undefined)?.basics?.fullName;
+    }, { timeout: 20_000 }).toBe("First Journey Candidate");
 
     // The edited CV should persist across a reload in the same test account.
     await page.reload({ waitUntil: "domcontentloaded" });

@@ -1,5 +1,4 @@
-import { test, expect } from "@playwright/test";
-import { test as authenticatedTest } from "./fixtures";
+import { test, expect } from "./fixtures";
 
 /**
  * UX #92 first accessibility pass: keyboard navigation and text alternatives.
@@ -93,7 +92,7 @@ for (const viewport of [
   });
 }
 
-authenticatedTest("authenticated CV workspace has keyboard skip-to-main link", async ({ appPage }) => {
+test("authenticated CV workspace has keyboard skip-to-main link", async ({ appPage }) => {
   const skip = appPage.getByRole("link", { name: "Skip to main content" });
   await expect(skip).toHaveCount(1);
   await expect(skip).toHaveAttribute("href", "#main-content");

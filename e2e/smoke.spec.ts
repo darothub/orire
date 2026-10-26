@@ -1,5 +1,4 @@
 import { test, expect, stubAI, signIn, waitForShell } from "./fixtures";
-import { test as rawTest } from "@playwright/test";
 
 /**
  * orire smoke suite — exercises the core, launch-critical user journeys with no
@@ -77,8 +76,9 @@ test.describe("theme", () => {
   });
 });
 
-rawTest.describe("onboarding tour", () => {
-  rawTest("auto-opens for a new user, then skipping persists so it stays closed", async ({
+test.describe("onboarding tour", () => {
+  test.use({ showOnboardingTour: true });
+  test("auto-opens for a new user, then skipping persists so it stays closed", async ({
     page,
   }) => {
     // Sign in (cookie) but DON'T seed the onboarded flag — so this behaves like
