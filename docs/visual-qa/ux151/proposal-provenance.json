@@ -1,0 +1,116 @@
+{
+  "status": "AFTER proposed mockup, NOT implemented. Same real Orire page state as corresponding BEFORE capture.",
+  "baseCommit": "a86d65c1c267927b1b1b26c529e59e964a061d2e",
+  "baseBuildID": "cpjbIOE3tVdzeLOcB00A7",
+  "baselineSourceSha256": {
+    "src/components/SpotlightView.tsx": "c6dbbaf3ccd78327f2887c22f008d19182980db9b410944b12d3f7d152c60569",
+    "src/components/WorkspaceRail.tsx": "4cf40644bdf92ac9cd3de4dbe505f24d4174d2397dfd7cb419293dab572a1bab",
+    "src/components/WorkspaceApp.tsx": "dba1886f41ff87214d88d2d5f1c5b79f3d9eb84942a975d7afe1955270c19c15",
+    "src/app/page.tsx": "9e4319bb35ec49530636f498c29d39e9be620e3e3c40a49533dbe218fbd729a2",
+    "src/app/globals.css": "62f4bfd2c91c3a8ed94c8925316f0349d83a8ea4442b2553b27e4f95532d1a68"
+  },
+  "browser": "153.0.8010.12",
+  "pageErrors": [],
+  "changes": [
+    "Retain Studio heading, existing Orire fonts/palette and all app/rail controls; shorten introductory copy.",
+    "Expose actual current template and real fresh-CV state; implementation must derive continued-CV state from existing store, never fabricate saved records.",
+    "Compact existing next-action panel; preserve Create/Continue editing and Library routes.",
+    "Place existing CV tool cards immediately after next action, with a named section and plain instruction.",
+    "Move existing flow coach and truthful Simulate card below tools; retain their actions and plan restrictions.",
+    "Scope all layout adjustments to Studio; preserve mobile rail/header, editor/live-preview and billing."
+  ],
+  "captures": [
+    {
+      "before": "BEFORE-actual-for-proposal-studio-desktop-dark.png",
+      "proposed": "AFTER-proposed-NOT-implemented-studio-desktop-dark.png",
+      "fullProposal": "AFTER-proposed-NOT-implemented-full-studio-desktop-dark.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "theme": "dark",
+      "browser": "153.0.8010.12",
+      "url": "http://localhost:3100/",
+      "baseCommit": "a86d65c1c267927b1b1b26c529e59e964a061d2e",
+      "baseBuildID": "cpjbIOE3tVdzeLOcB00A7",
+      "pageErrors": [],
+      "httpStatus": 200,
+      "blockedExternalOrigins": [
+        "https://js.stripe.com"
+      ],
+      "currentTemplate": "Aurora",
+      "state": "Actual fresh-account Start your first CV state; no CV seeded, no saved records invented",
+      "proposedStatus": "Temporary browser-only DOM/CSS injection. NOT implemented; no application source files edited.",
+      "capturedAt": "2026-10-26T22:37:32.673Z"
+    },
+    {
+      "before": "BEFORE-actual-for-proposal-studio-desktop-light.png",
+      "proposed": "AFTER-proposed-NOT-implemented-studio-desktop-light.png",
+      "fullProposal": "AFTER-proposed-NOT-implemented-full-studio-desktop-light.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "theme": "light",
+      "browser": "153.0.8010.12",
+      "url": "http://localhost:3100/",
+      "baseCommit": "a86d65c1c267927b1b1b26c529e59e964a061d2e",
+      "baseBuildID": "cpjbIOE3tVdzeLOcB00A7",
+      "pageErrors": [],
+      "httpStatus": 200,
+      "blockedExternalOrigins": [
+        "https://js.stripe.com"
+      ],
+      "currentTemplate": "Aurora",
+      "state": "Actual fresh-account Start your first CV state; no CV seeded, no saved records invented",
+      "proposedStatus": "Temporary browser-only DOM/CSS injection. NOT implemented; no application source files edited.",
+      "capturedAt": "2026-10-26T22:37:33.216Z"
+    },
+    {
+      "before": "BEFORE-actual-for-proposal-studio-mobile-dark.png",
+      "proposed": "AFTER-proposed-NOT-implemented-studio-mobile-dark.png",
+      "fullProposal": "AFTER-proposed-NOT-implemented-full-studio-mobile-dark.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "dark",
+      "browser": "153.0.8010.12",
+      "url": "http://localhost:3100/",
+      "baseCommit": "a86d65c1c267927b1b1b26c529e59e964a061d2e",
+      "baseBuildID": "cpjbIOE3tVdzeLOcB00A7",
+      "pageErrors": [],
+      "httpStatus": 200,
+      "blockedExternalOrigins": [
+        "https://js.stripe.com"
+      ],
+      "currentTemplate": "Aurora",
+      "state": "Actual fresh-account Start your first CV state; no CV seeded, no saved records invented",
+      "proposedStatus": "Temporary browser-only DOM/CSS injection. NOT implemented; no application source files edited.",
+      "capturedAt": "2026-10-26T22:37:33.585Z"
+    },
+    {
+      "before": "BEFORE-actual-for-proposal-studio-mobile-light.png",
+      "proposed": "AFTER-proposed-NOT-implemented-studio-mobile-light.png",
+      "fullProposal": "AFTER-proposed-NOT-implemented-full-studio-mobile-light.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "theme": "light",
+      "browser": "153.0.8010.12",
+      "url": "http://localhost:3100/",
+      "baseCommit": "a86d65c1c267927b1b1b26c529e59e964a061d2e",
+      "baseBuildID": "cpjbIOE3tVdzeLOcB00A7",
+      "pageErrors": [],
+      "httpStatus": 200,
+      "blockedExternalOrigins": [
+        "https://js.stripe.com"
+      ],
+      "currentTemplate": "Aurora",
+      "state": "Actual fresh-account Start your first CV state; no CV seeded, no saved records invented",
+      "proposedStatus": "Temporary browser-only DOM/CSS injection. NOT implemented; no application source files edited.",
+      "capturedAt": "2026-10-26T22:37:33.953Z"
+    }
+  ]
+}

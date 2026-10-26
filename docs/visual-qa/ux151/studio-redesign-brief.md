@@ -1,6 +1,6 @@
-# Orire Studio home redesign — design brief, approval pending
+# Orire Studio home redesign — historical initial brief
 
-**Status:** proposal only. No authenticated UI code/CSS changes have been approved or implemented.
+This initial brief predates the shipped #155/#171 Studio entry changes and the further screenshot-based design approved by the owner on 26 October. See [current implementation and evidence](README.md) and [the approved further proposal](PROPOSAL.md). The requirements below are retained as the original planning record, not a statement of current approval or implementation status.
 
 ## Existing application constraints verified
 The authenticated route is handled by `src/app/page.tsx` and its workspace switcher. It composes `SpotlightView` for the default home workspace, `WorkspaceRail` navigation, CV editor, rebrand/refine tools, plan/account controls, live preview and onboarding. Paid-plan choice must survive OAuth return (merged #146). A redesign must preserve those contracts, existing keyboard behavior and the functional editor.

@@ -5192,6 +5192,30 @@ html[data-theme="light"] .landing-scrim {
 
 
 /* UX151 — refreshed Studio entry point, retaining existing workspace actions. */
+.spotlight-view .ws-head { margin-bottom: 10px; }
+.spotlight-view .ws-head p { max-width: 64ch; margin-bottom: 0; }
+.spot-studio-context {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.spot-studio-context span {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 28px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--panel);
+}
+.spot-studio-context strong { color: var(--text); font-weight: 600; }
 .spot-studio-eyebrow {
   display: inline-block;
   margin-bottom: 8px;
@@ -5205,31 +5229,58 @@ html[data-theme="light"] .landing-scrim {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
-  padding: clamp(20px, 4vw, 34px);
-  margin: 12px 0 24px;
+  gap: 20px;
+  padding: 24px;
+  margin: 0 0 22px;
   border: 1px solid var(--line-2);
-  border-radius: 22px;
+  border-radius: 18px;
   background: radial-gradient(ellipse at 100% 0%, rgba(58, 217, 180, .15), transparent 58%), linear-gradient(125deg, var(--panel-2), var(--panel));
 }
 .spot-studio-next h3 {
-  font-size: clamp(22px, 2.7vw, 32px);
+  font-size: 28px;
   line-height: 1.18;
   letter-spacing: -.035em;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 .spot-studio-next p {
   color: var(--muted);
-  max-width: 54ch;
-  line-height: 1.6;
+  max-width: 58ch;
+  font-size: 13px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
   margin: 0;
 }
 .spot-studio-actions { display: flex; gap: 9px; flex-wrap: wrap; flex-shrink: 0; }
-.spot-studio-next button:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; }
+.spotlight-view button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.spot-studio-tools-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin: 0 0 14px;
+}
+.spot-studio-tools-head h3 { margin: 0; font-size: 17px; font-weight: 650; color: var(--text); }
+.spot-studio-tools-head p { margin: 0; font-size: 12px; color: var(--muted); }
+.spot-studio-tools .spot-grid { margin-top: 0; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.spot-studio-tools .spot-card { min-height: 124px; }
+.spotlight-view .spot-coach { margin-top: 20px; margin-bottom: 16px; }
+.spotlight-view .spot-hero { margin-top: 0; }
 @media (max-width: 760px) {
-  .spot-studio-next { align-items: stretch; flex-direction: column; border-radius: 17px; }
-  .spot-studio-actions { flex-direction: column; }
+  .spotlight-view .ws-head p { font-size: 13px; line-height: 1.5; }
+  .spot-studio-context { gap: 6px; margin-bottom: 14px; }
+  .spot-studio-next { align-items: stretch; flex-direction: column; border-radius: 17px; padding: 20px; gap: 16px; }
+  .spot-studio-next h3 { font-size: 24px; line-height: 1.2; }
+  .spot-studio-next p { line-height: 1.5; }
+  .spot-studio-actions { flex-direction: column; gap: 8px; }
   .spot-studio-actions button { width: 100%; justify-content: center; }
+  .spotlight-view .spot-studio-eyebrow { margin-bottom: 7px; }
+  .spot-studio-tools-head { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .spot-studio-tools .spot-card { min-height: 112px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlight-view { opacity: 1 !important; transform: none !important; filter: none !important; }
+  .spotlight-view .spot-card { transition: none; }
+  .spotlight-view .spot-card:hover { transform: none; }
 }
 
 /* Readable action text on the light workspace's pale surfaces. Backgrounds,
