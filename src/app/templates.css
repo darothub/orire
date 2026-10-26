@@ -1,4 +1,55 @@
 /* ============ Template picker ============ */
+/* Public export examples: scoped so the Studio picker and CV paper stay intact. */
+.public-export-panel {
+  margin: 0 0 24px;
+  padding: 24px 26px;
+  border: 1px solid var(--line-2);
+  border-radius: 18px;
+  background: var(--panel);
+}
+.content .public-export-panel h2 { margin: 0 0 4px; }
+.public-export-panel p { margin: 0; color: var(--muted); font-size: 14px; }
+.public-export-actions {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  align-items: start;
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+.content .public-export-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 11px 22px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--panel-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.4;
+  text-decoration: none;
+  cursor: pointer;
+}
+.content .public-export-preview {
+  border-color: #38d9bb;
+  background: #38d9bb;
+  color: #072018;
+}
+.public-export-button:hover:not(:disabled) { border-color: var(--text); }
+.public-export-button:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.public-export-button:disabled { cursor: wait; opacity: 0.65; }
+.public-export-panel .public-export-note { font-size: 12px; }
+.public-word-sample [role="alert"] { margin-top: 8px; }
+@media (max-width: 600px) {
+  .public-export-panel { padding: 20px; }
+  .public-export-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .public-export-actions > .public-export-preview { grid-column: 1 / -1; }
+  .public-export-actions .public-export-button { width: 100%; padding-inline: 12px; }
+}
+
 .picker {
   padding: 16px 22px 10px;
   border-bottom: 1px solid var(--line);

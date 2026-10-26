@@ -1,7 +1,7 @@
 "use client";
 
 import { getTemplate } from "@/components/templates/registry";
-import { sampleCV } from "@/lib/cv/sample";
+import { publicSampleCV } from "@/lib/cv/publicSample";
 
 /**
  * Render the real CV design, not a color swatch. This is a fictional, inert
@@ -14,10 +14,10 @@ export function TemplateDetailPreview({ id, name }: { id: string; name: string }
     <div className="tpl-detail-preview" role="region" aria-label={`Fictional CV example in the ${name} template`}>
       <div className="tpl-detail-preview-window" aria-hidden="true" inert>
         <div className="paper tpl-detail-preview-paper">
-          <Template cv={sampleCV} />
+          <Template cv={publicSampleCV} />
         </div>
       </div>
-      <p className="sr-only">Example candidate: {sampleCV.basics.fullName}, {sampleCV.basics.title}. {sampleCV.basics.summary}</p>
+      <p className="sr-only">Example candidate: {publicSampleCV.basics.fullName}, {publicSampleCV.basics.title}. {publicSampleCV.basics.summary}</p>
       <p className="tpl-detail-preview-caption">Illustrative preview with fictional CV information</p>
     </div>
   );
