@@ -27,7 +27,7 @@ export function LiveDemo() {
   return (
     <section id="demo" className="landing-section landing-demo" aria-label="Try Orire">
       <motion.div
-        className="landing-about-head"
+        className="landing-motion-reveal landing-about-head"
         initial={reducedMotion ? false : { opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.4 }}

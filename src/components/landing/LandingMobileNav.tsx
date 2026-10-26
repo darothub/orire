@@ -16,7 +16,7 @@ const SECTIONS = [
  * Disclosure menu: Escape and outside press dismiss it, links dismiss on
  * navigation, and reduced-motion users do not receive transform animations.
  */
-export function LandingMobileNav() {
+export function LandingMobileNav({ interactiveReady }: { interactiveReady: boolean }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -54,6 +54,7 @@ export function LandingMobileNav() {
       <button
         ref={toggleRef}
         type="button"
+        disabled={!interactiveReady}
         className={`landing-mobile-menu-toggle${open ? " is-open" : ""}`}
         aria-label={open ? "Close section menu" : "Open section menu"}
         aria-expanded={open}
@@ -74,7 +75,7 @@ export function LandingMobileNav() {
             aria-label="Mobile page sections"
             initial={reducedMotion ? false : { opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.98 }}
+            exit={reducedMotion ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: -6, scale: 0.98 }}
             transition={reducedMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}
           >
             {SECTIONS.map(({ href, label }) => (

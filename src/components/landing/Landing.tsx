@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useConsent } from "@/lib/consent/consent";
 import { funnel, type CtaPlacement } from "@/lib/analytics/funnel";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
 import { useUIStore } from "@/lib/store/uiStore";
@@ -74,7 +74,14 @@ const FEATURES: Feature[] = [
  */
 export function Landing() {
   const openAuth = useUIStore((s) => s.openAuth);
-  const { consent } = useConsent();
+  const { consent, ready } = useConsent();
+  const reducedMotion = useReducedMotion();
+  const reveal = (distance = 16, delay = 0, amount = 0.4) => ({
+    initial: reducedMotion ? false as const : { opacity: 0, y: distance },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, amount },
+    transition: { duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : delay, ease: EASE },
+  });
   useEffect(() => {
     if (consent === "granted") funnel.landingViewed();
   }, [consent]);
@@ -101,26 +108,23 @@ export function Landing() {
             <a href="#pricing">Pricing</a>
           </nav>
           <ThemeToggle />
-          <button className="landing-ghost" onClick={() => openAuth("signin")}>
+          <button className="landing-ghost" disabled={!ready} onClick={() => openAuth("signin")}>
             Sign in
           </button>
-          <button className="landing-cta landing-header-cta" aria-label="Get started" onClick={() => startSignup("header")}>
+          <button className="landing-cta landing-header-cta" disabled={!ready} aria-label="Get started" onClick={() => startSignup("header")}>
             <span className="landing-header-cta-long">Get started</span>
             <span className="landing-header-cta-short" aria-hidden="true">Start</span>
           </button>
-          <LandingMobileNav />
+          <LandingMobileNav interactiveReady={ready} />
         </div>
       </header>
 
       <main id="main-content" className="landing-main" tabIndex={-1}>
         <section className="landing-hero">
           <div className="landing-hero-grid landing-hero-centered">
-            <motion.div
-              className="landing-hero-inner"
-              initial={{ opacity: 0, y: 24, filter: "blur(10px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              transition={{ duration: 0.7, ease: EASE }}
-            >
+            {/* The primary message is readable in server HTML, before scripts
+                hydrate. Actions enable only after their handlers attach. */}
+            <div className="landing-hero-inner">
               <span className="landing-eyebrow">Your experience, clearly presented</span>
               <h1 className="landing-title">
                 Build a CV that makes your experience stand out.
@@ -131,24 +135,21 @@ export function Landing() {
                 accurate and choose the final wording yourself.
               </p>
               <div className="landing-hero-cta">
-                <button className="landing-cta lg" onClick={() => startSignup("hero")}>
+                <button className="landing-cta lg" disabled={!ready} onClick={() => startSignup("hero")}>
                   Create your CV →
                 </button>
                 <a className="landing-ghost lg" href="#templates">
                   Explore templates
                 </a>
               </div>
-            </motion.div>
+            </div>
           </div>
         </section>
 
         <section id="how" className="landing-section landing-how landing-how-compact" aria-label="How it works">
           <motion.div
-            className="landing-about-head"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
+            className="landing-motion-reveal landing-about-head"
+            {...reveal()}
           >
             <span className="landing-eyebrow">How it works</span>
             <h2 className="landing-h2">Three simple steps to a stronger CV</h2>
@@ -157,11 +158,8 @@ export function Landing() {
             {howItWorksSteps().map((step, i) => (
               <motion.li
                 key={step.n}
-                className="landing-step"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: i * 0.1, duration: 0.5, ease: EASE }}
+                className="landing-motion-reveal landing-step"
+                {...reveal(18, i * 0.08, 0.3)}
               >
                 <span className="landing-step-n" aria-hidden>{String(step.n).padStart(2, "0")}</span>
                 <h3 className="landing-step-title">{["Add your details", "Refine with AI", "Download your CV"][i]}</h3>
@@ -208,11 +206,8 @@ export function Landing() {
 
         <section className="landing-section landing-ba" aria-label="Before and after writing examples">
           <motion.div
-            className="landing-about-head"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
+            className="landing-motion-reveal landing-about-head"
+            {...reveal()}
           >
             <span className="landing-eyebrow">Same facts, sharper story</span>
             <h2 className="landing-h2">See how clearer writing strengthens your experience.</h2>
@@ -226,11 +221,8 @@ export function Landing() {
             {beforeAfterLines().map((line, i) => (
               <motion.li
                 key={line.after}
-                className="landing-ba-row"
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: i * 0.08, duration: 0.5, ease: EASE }}
+                className="landing-motion-reveal landing-ba-row"
+                {...reveal(16, i * 0.08, 0.3)}
               >
                 <span className="landing-ba-before">
                   <span className="landing-ba-tag" aria-hidden>Before</span>
@@ -248,11 +240,8 @@ export function Landing() {
 
         <section className="landing-section landing-features" aria-label="Features">
           <motion.h2
-            className="landing-h2"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
+            className="landing-motion-reveal landing-h2"
+            {...reveal()}
           >
             Tools to help you create a confident, professional CV
           </motion.h2>
@@ -260,11 +249,8 @@ export function Landing() {
             {FEATURES.map((f, i) => (
               <motion.div
                 key={f.title}
-                className="landing-card"
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: (i % 3) * 0.08, duration: 0.5, ease: EASE }}
+                className="landing-motion-reveal landing-card"
+                {...reveal(18, (i % 3) * 0.08, 0.3)}
               >
                 <span className="landing-card-icon" aria-hidden>{f.icon}</span>
                 <h3 className="landing-card-title">{f.title}</h3>
@@ -278,11 +264,8 @@ export function Landing() {
 
         <section id="pricing" className="landing-section landing-pricing" aria-label="Pricing">
           <motion.div
-            className="landing-about-head"
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5, ease: EASE }}
+            className="landing-motion-reveal landing-about-head"
+            {...reveal()}
           >
             <span className="landing-eyebrow">Simple, honest pricing</span>
             <h2 className="landing-h2">Start free. Choose a plan when you need more.</h2>
@@ -295,11 +278,8 @@ export function Landing() {
             {landingPlans().map((p, i) => (
               <motion.div
                 key={p.id}
-                className={`landing-price-card${p.highlighted ? " is-featured" : ""}`}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: i * 0.08, duration: 0.5, ease: EASE }}
+                className={`landing-motion-reveal landing-price-card${p.highlighted ? " is-featured" : ""}`}
+                {...reveal(18, i * 0.08, 0.3)}
               >
                 {p.highlighted && <span className="landing-price-badge">Recommended</span>}
                 <h3 className="landing-price-name">{p.label}</h3>
@@ -319,6 +299,7 @@ export function Landing() {
                 </ul>
                 <button
                   className={p.highlighted ? "landing-cta" : "landing-ghost"}
+                  disabled={!ready}
                   onClick={() => startSignup("pricing", p.id)}
                 >
                   {p.cta}
@@ -331,17 +312,14 @@ export function Landing() {
 
         <section className="landing-section landing-final">
           <motion.div
-            className="landing-final-card"
-            initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
-            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.6, ease: EASE }}
+            className="landing-motion-reveal landing-final-card"
+            {...reveal(20, 0, 0.5)}
           >
             <h2 className="landing-h2">Ready to re-brand your CV?</h2>
             <p className="landing-final-sub">
               Start with your experience, choose a template, and refine your CV at your own pace.
             </p>
-            <button className="landing-cta lg" onClick={() => startSignup("footer")}>
+            <button className="landing-cta lg" disabled={!ready} onClick={() => startSignup("footer")}>
               Get started free
             </button>
           </motion.div>
