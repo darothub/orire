@@ -1,0 +1,371 @@
+{
+  "capturedAt": "2026-10-26T22:45:18.448Z",
+  "sourceCommit": "bd08b799750db91b152cb8c881bcd4fb3cba2bbb",
+  "sourceSha256": {
+    "src/components/landing/Landing.tsx": "78ce9652cafe6c369d6744dd1b6c43d03e538a2aaa17da1d9430860248624d52",
+    "src/components/landing/LandingMobileNav.tsx": "252992b50c23ec320024d68f5e15eb700e0ce027899dc2c0e4ccd4d417a00be5",
+    "src/components/landing/LiveDemo.tsx": "1001f2bd40a30afa691fd6c615b834a71480687e37c83ad8e26ebdd02d240370",
+    "src/app/globals.css": "4dc701d54e1d67dc3c06a0c4a191ae96bb5a2bf6866b7a2e92cf363d3089cc66"
+  },
+  "buildId": "m3NyEyEVUpRaahGIEmnw-",
+  "url": "http://localhost:3100",
+  "browser": "153.0.8010.12",
+  "theme": "dark",
+  "reducedMotion": "reduce",
+  "proposalCSSInjected": false,
+  "description": "Actual local production-build screenshots. First-paint captures deliberately hold application JavaScript, then release it. Fictional public CV content only; no deployed preview claim.",
+  "cases": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "images": [
+        "AFTER-actual-reduced-first-paint-desktop.png",
+        "AFTER-actual-focused-CTA-desktop.png"
+      ],
+      "errors": [],
+      "consoleErrors": [],
+      "preHydrationHero": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "none",
+        "outlineColor": "rgb(244, 246, 251)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "preHydrationCta": {
+        "opacity": "0.65",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "none",
+        "outlineColor": "rgb(11, 13, 18)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "heldRequests": 14,
+      "focusedCta": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "solid",
+        "outlineColor": "rgb(58, 217, 180)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "pressedCta": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "brightness(0.92)",
+        "outlineStyle": "solid",
+        "outlineColor": "rgb(58, 217, 180)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "hoveredDemo": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "none",
+        "outlineColor": "rgb(244, 246, 251)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "reducedRevealStyles": [
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        }
+      ]
+    },
+    {
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "images": [
+        "AFTER-actual-reduced-first-paint-mobile.png",
+        "AFTER-actual-focused-CTA-mobile.png"
+      ],
+      "errors": [],
+      "consoleErrors": [],
+      "preHydrationHero": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "none",
+        "outlineColor": "rgb(244, 246, 251)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "preHydrationCta": {
+        "opacity": "0.65",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "none",
+        "outlineColor": "rgb(11, 13, 18)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "heldRequests": 14,
+      "focusedCta": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "solid",
+        "outlineColor": "rgb(58, 217, 180)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "pressedCta": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "brightness(0.92)",
+        "outlineStyle": "solid",
+        "outlineColor": "rgb(58, 217, 180)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "hoveredDemo": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "none",
+        "outlineColor": "rgb(244, 246, 251)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "menuAfterSingleClick": {
+        "opacity": "1",
+        "transform": "none",
+        "filter": "none",
+        "outlineStyle": "none",
+        "outlineColor": "rgb(244, 246, 251)",
+        "outlineWidth": "3px",
+        "transitionDuration": "0s"
+      },
+      "menuRemovedAfterEscape": true,
+      "reducedRevealStyles": [
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        },
+        {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none"
+        }
+      ]
+    }
+  ]
+}

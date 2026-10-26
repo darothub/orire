@@ -48,10 +48,21 @@ reduced motion. Reduced-motion CSS also applies before hydration.
 
 ## AFTER — implemented screenshot (issue branch)
 
-Pending the issue branch's production build and actual browser capture. The
-proposal images above must not be used as implemented evidence. Final captures
-will identify the source commit/hashes, use matching viewports/theme, and record
-console errors. No deployed preview verification is claimed here.
+Actual production-build captures from source commit
+`bd08b799750db91b152cb8c881bcd4fb3cba2bbb` are separate from the proposals:
+
+| Viewport | Actual delayed-script first paint | Actual keyboard focus |
+| --- | --- | --- |
+| Desktop 1440×900 | ![Implemented desktop first paint](AFTER-actual-reduced-first-paint-desktop.png) | ![Implemented desktop focus](AFTER-actual-focused-CTA-desktop.png) |
+| Mobile 390×844 | ![Implemented mobile first paint](AFTER-actual-reduced-first-paint-mobile.png) | ![Implemented mobile focus](AFTER-actual-focused-CTA-mobile.png) |
+
+[Actual capture provenance](after-provenance.json) records source fingerprints,
+build ID, browser and computed states. Both contexts had zero page or console
+errors. The hero is immediately readable; temporarily disabled JavaScript-only
+buttons additionally communicate readiness before hydration. Native links stay
+usable. Once enabled, one menu/CTA activation works. The local production-build
+evidence policy was explicitly approved by the owner for this batch; no deployed
+preview verification is claimed.
 
 ## Verification
 
@@ -59,5 +70,12 @@ Implementation adds regression coverage for server-rendered hero visibility
 while scripts are held, disabled-to-enabled action readiness, a single first
 menu/CTA activation, keyboard focus/pressed feedback, reduced-motion section
 styles, template selection, and mobile menu entrance/exit. Verification results
-will be recorded only after commands actually execute against the final build.
-No test is disabled and no timeout is increased.
+are in [the command record](verification.json): `npm run lint`, `npx next typegen`,
+`npx tsc --noEmit`, `npm test`, `npm run build` and `npm run test:e2e` all exited 0
+on the isolated issue branch. Unit tests: **560 passed, 80 files**. Full E2E:
+**139 passed, one unchanged mobile download skip, 1.4m, no retries**. Lint has one
+pre-existing unused `ProviderId` warning. Verification used the disposable local
+PostgreSQL database with unique fictional fixture identities; no production
+database, external AI or payment call was used. No test is disabled and no
+timeout is increased. The existing mobile-menu reduced-motion regression also
+passed on its first attempt.
