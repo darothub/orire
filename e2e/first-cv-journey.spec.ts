@@ -1,4 +1,5 @@
 import { test, expect, signIn, waitForShell } from "./fixtures";
+import { PrismaClient } from "@prisma/client";
 
 /**
  * UX #87 — hermetic first-CV journey: a REAL browser renders the anonymous
@@ -9,6 +10,8 @@ import { test, expect, signIn, waitForShell } from "./fixtures";
  * This is an integration test of the ONBOARDING/EDITOR experience, not a test
  * claiming that the external signup/verification provider works end to end.
  */
+test.describe.configure({ mode: "serial" });
+
 for (const viewport of [
   { name: "desktop-1440", width: 1440, height: 900 },
   { name: "mobile-390", width: 390, height: 844 },
@@ -96,6 +99,21 @@ for (const viewport of [
       path: "test-results/ux87-journey/ACTUAL-first-CV-preview-" + viewport.name + ".png",
       animations: "disabled",
     });
+
+    // Wait for debounced cloud persistence before reloading; otherwise a
+    // concurrent browser can still read the previous server snapshot.
+    // Await the actual persisted CV rather than a layout-dependent sync label.
+    if (process.env.CI === "true") {
+      const db = new PrismaClient();
+      try {
+        await expect.poll(async () => {
+          const doc = await db.document.findFirst({ where: { userId: "e2e-user" }, orderBy: { updatedAt: "desc" } });
+          return (doc?.data as { basics?: { fullName?: string } } | undefined)?.basics?.fullName;
+        }, { timeout: 20_000 }).toBe("First Journey Candidate");
+      } finally {
+        await db.$disconnect();
+      }
+    }
 
     // The edited CV should persist across a reload in the same test account.
     await page.reload({ waitUntil: "domcontentloaded" });
