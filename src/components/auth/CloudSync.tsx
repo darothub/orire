@@ -40,6 +40,8 @@ export function CloudSync() {
   const hydratedFor = useRef<string | null>(null);
   const migratedFor = useRef<string | null>(null);
   const savesReady = useRef(false);
+  const pendingEdit = useRef(false);
+  const schedulePendingSave = useRef<(() => void) | null>(null);
   const prevStatus = useRef<typeof status | null>(null);
   const pendingWipe = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,7 +71,15 @@ export function CloudSync() {
       } catch {
         // Adopt hiccup must not wedge the session — autosave still arms.
       } finally {
-        if (!cancelled) savesReady.current = true;
+        if (!cancelled) {
+          savesReady.current = true;
+          // A user may edit before the initial cloud read completes. Do not
+          // silently drop that edit: the subscription queues it for saving.
+          if (pendingEdit.current) {
+            pendingEdit.current = false;
+            schedulePendingSave.current?.();
+          }
+        }
       }
     })();
     return () => {
@@ -148,18 +158,27 @@ export function CloudSync() {
       useSyncStore.getState().setStatus(res.ok ? "saved" : "error");
     };
 
+    const scheduleSave = () => {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => void runSave(), 1500);
+    };
+    schedulePendingSave.current = scheduleSave;
     const unsub = useCVStore.subscribe((s, prev) => {
       if (s.cv === prev.cv && s.activeTemplate === prev.activeTemplate && s.baseline === prev.baseline) {
         return;
       }
-      if (!savesReady.current) return;
       // Never autosave the untouched demo persona into a new account.
       if (!s.started) return;
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => void runSave(), 1500);
+      if (!savesReady.current) {
+        pendingEdit.current = true;
+        return;
+      }
+      scheduleSave();
     });
     return () => {
       unsub();
+      schedulePendingSave.current = null;
+      pendingEdit.current = false;
       if (timer.current) clearTimeout(timer.current);
     };
   }, [status, scopeReady, sessionUserId, scope.generation]);
