@@ -31,7 +31,12 @@ for (const viewport of [
       await expect(tour).toBeHidden();
     }
     const rail = page.getByRole("navigation", { name: "Workspaces" });
-    await rail.getByRole("button", { name: "Home", exact: true }).click();
+    // The Home brand button is intentionally hidden at <=820px; mobile users
+    // return to Studio through the visible Add blocks entry in the rail.
+    await rail.getByRole("button", {
+      name: viewport.name === "mobile" ? "Add blocks" : "Home",
+      exact: true,
+    }).click();
     await expect(next).toBeVisible();
     await next.getByRole("button", { name: "Your library" }).click();
     await expect(page.getByRole("heading", { name: /Library|History|Your CVs/ })).toBeVisible();
