@@ -68,11 +68,11 @@ export default async function TemplateDetail({
           <strong>PDF:</strong> a fixed-layout document for applications and sharing.
           <strong> Word (.docx):</strong> an editable document for further adjustments.
           This on-page fictional preview is not a downloadable sample file.
-          Downloads are available from the Studio, subject to your plan allowance.
+          Downloads are available from the Studio, subject to your plan allowance.\n          For an interactive example before signing up, use the free public live demo on the homepage.
         </p>
       </section>
 
-      <Link href="/" className="content-cta">Create your CV with {info.name} →</Link>
+      <p><Link href="/#demo">Try the interactive fictional CV demo</Link></p>\n\n      <Link href="/" className="content-cta">Create your CV with {info.name} →</Link>
 
       <p style={{ marginTop: 36 }}>
         See <Link href="/templates">all {TEMPLATE_CATALOG.length} templates</Link>{" "}
