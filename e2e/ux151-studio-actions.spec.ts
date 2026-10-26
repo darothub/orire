@@ -23,6 +23,13 @@ for (const viewport of [
     });
     await next.getByRole("button", { name: /Create your CV|Continue editing/ }).click();
     await expect(page.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
+    // Entering the editor can launch the first-run tour asynchronously.
+    // Dismiss it before navigating via the rail; its modal backdrop correctly
+    // blocks pointer events while visible.
+    if (await tour.waitFor({ state: "visible", timeout: 2500 }).then(() => true).catch(() => false)) {
+      await tour.getByRole("button", { name: "Skip" }).click();
+      await expect(tour).toBeHidden();
+    }
     const rail = page.getByRole("navigation", { name: "Workspaces" });
     await rail.getByRole("button", { name: "Home", exact: true }).click();
     await expect(next).toBeVisible();
