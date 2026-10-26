@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import JSZip from "jszip";
+import { readFile } from "node:fs/promises";
 
 /**
  * Regression for the public gallery containing actual CV template renderers.
@@ -66,4 +68,19 @@ test("gallery preview preserves original template text alignment", async ({ page
   for (const doc of await documents.all()) {
     await expect(doc).toHaveCSS("text-align", "left");
   }
+});
+
+test("public template Word sample downloads a real fictional DOCX without signup", async ({ page }) => {
+  await page.goto("/templates/aurora", { waitUntil: "domcontentloaded" });
+  const button = page.getByRole("button", { name: "Download fictional Word (.docx) sample" });
+  await expect(button).toBeVisible();
+  const download = page.waitForEvent("download");
+  await button.click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/fictional CV sample[.]docx$/i);
+  const archive = await JSZip.loadAsync(await readFile(await file.path()));
+  const documentXml = await archive.file("word/document.xml")?.async("string");
+  expect(documentXml).toContain("Ada Okonkwo");
+  expect(documentXml).toContain("w:document");
+  await expect(page.getByText("Word does not reproduce the decorative PDF template layout.", { exact: false })).toBeVisible();
 });
