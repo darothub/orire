@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, MotionConfig, useReducedMotion } from "framer-motion";
+import { memo } from "react";
 import { getTemplate } from "@/components/templates/registry";
 import { sampleVariants } from "@/lib/cv/samples";
 import type { CVData } from "@/lib/cv/schema";
@@ -47,7 +48,7 @@ export function CvShowcase() {
   );
 }
 
-function ShowcaseCard({ id, cv }: { id: string; cv: CVData }) {
+const ShowcaseCard = memo(function ShowcaseCard({ id, cv }: { id: string; cv: CVData }) {
   const t = getTemplate(id);
   const Component = t.Component;
   return (
@@ -59,4 +60,4 @@ function ShowcaseCard({ id, cv }: { id: string; cv: CVData }) {
       </div>
     </div>
   );
-}
+});
