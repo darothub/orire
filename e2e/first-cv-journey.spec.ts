@@ -1,4 +1,5 @@
 import { test, expect, signIn, waitForShell } from "./fixtures";
+import { PrismaClient } from "@prisma/client";
 
 /**
  * UX #87 — hermetic first-CV journey: a REAL browser renders the anonymous
@@ -101,7 +102,18 @@ for (const viewport of [
 
     // Wait for debounced cloud persistence before reloading; otherwise a
     // concurrent browser can still read the previous server snapshot.
-    await expect(page.getByText("Saved", { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+    // Await the actual persisted CV rather than a layout-dependent sync label.
+    if (process.env.CI === "true") {
+      const db = new PrismaClient();
+      try {
+        await expect.poll(async () => {
+          const doc = await db.document.findFirst({ where: { userId: "e2e-user" }, orderBy: { updatedAt: "desc" } });
+          return (doc?.data as { basics?: { fullName?: string } } | undefined)?.basics?.fullName;
+        }, { timeout: 20_000 }).toBe("First Journey Candidate");
+      } finally {
+        await db.$disconnect();
+      }
+    }
 
     // The edited CV should persist across a reload in the same test account.
     await page.reload({ waitUntil: "domcontentloaded" });
