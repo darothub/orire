@@ -1,6 +1,8 @@
-import { test as base, expect, type Page } from "@playwright/test";
-import { addSessionCookie } from "./session";
+import { test as base, expect, type BrowserContext, type Page } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { addSessionCookie, type E2EUser } from "./session";
 import { PrismaClient } from "@prisma/client";
+import { e2eDatabaseUrl } from "./database";
 
 /**
  * Shared E2E fixtures for orire.
@@ -8,16 +10,16 @@ import { PrismaClient } from "@prisma/client";
  * `appPage` opens the app already signed in: a valid Auth.js session cookie is
  * added to the browser context (see e2e/session.ts) so the server authenticates
  * on first paint and the mandatory auth overlay never appears. The suite stays
- * hermetic — the JWT session strategy decodes the cookie statelessly, so no
- * database, email or OAuth provider is required. Core CV flows are entirely
- * client-side (zustand).
+ * isolated: each test gets a fresh synthetic database user and browser context.
+ * JWT authentication needs no email or OAuth provider. Cloud persistence uses
+ * only an explicitly configured disposable local PostgreSQL database.
  */
 
 /** Seed localStorage before any app script runs: mark onboarding as seen so the
  *  guided tour doesn't auto-open and intercept clicks in the core-flow tests
  *  (the tour has its own dedicated spec). */
-async function seedOnboarded(page: Page) {
-  await page.addInitScript(() => {
+async function seedOnboarded(context: BrowserContext) {
+  await context.addInitScript(() => {
     try {
       window.localStorage.setItem("orire-onboarded", "1");
     } catch {
@@ -31,8 +33,12 @@ async function seedOnboarded(page: Page) {
  * valid Auth.js session cookie. Call before navigating. Exported so specs that
  * build their own `page` (outside the `appPage` fixture) can opt in too.
  */
+const contextUsers = new WeakMap<BrowserContext, E2EUser>();
+
 export async function signIn(page: Page) {
-  await addSessionCookie(page.context());
+  const user = contextUsers.get(page.context());
+  if (!user) throw new Error("Import test from ./fixtures to use an isolated E2E session.");
+  await addSessionCookie(page.context(), user);
 }
 
 /**
@@ -78,25 +84,39 @@ export async function waitForShell(page: Page) {
   });
 }
 
-export const test = base.extend<{ appPage: Page; _isolatedE2EUser: void; _onboardingSetup: void; showOnboardingTour: boolean }>({
-  showOnboardingTour: [false, { option: true }],
-  _onboardingSetup: [async ({ page, showOnboardingTour }, use) => {
-    if (!showOnboardingTour) await seedOnboarded(page);
+export const test = base.extend<{
+  appPage: Page;
+  db: PrismaClient;
+  e2eUser: E2EUser;
+  _onboardingSetup: void;
+  showOnboardingTour: boolean;
+}>({
+  showOnboardingTour: [false, { option: true, scope: "test" }],
+  _onboardingSetup: [async ({ context, showOnboardingTour }, use) => {
+    if (!showOnboardingTour) await seedOnboarded(context);
     await use();
   }, { auto: true }],
-  _isolatedE2EUser: [async ({}, use) => {
-    if (process.env.CI === "true") {
-      const db = new PrismaClient();
-      try {
-        // Every fixture-backed test begins with a clean synthetic account.
-        // CI uses one worker to prevent cross-worker deletions.
-        await db.user.deleteMany({ where: { id: "e2e-user" } });
-        await db.user.create({ data: { id: "e2e-user", name: "E2E Tester", email: "e2e@orire.test" } });
-      } finally {
-        await db.$disconnect();
-      }
+  db: async ({}, use) => {
+    const db = new PrismaClient({ datasourceUrl: e2eDatabaseUrl() });
+    try {
+      await use(db);
+    } finally {
+      await db.$disconnect();
     }
-    await use();
+  },
+  e2eUser: [async ({ db, context }, use) => {
+    const id = `e2e-user-${randomUUID()}`;
+    const user = { id, name: "E2E Tester", email: `${id}@orire.test` };
+    await db.user.create({ data: user });
+    contextUsers.set(context, user);
+    try {
+      await use(user);
+    } finally {
+      // Stop browser requests before cascading only this test's rows.
+      await context.close();
+      contextUsers.delete(context);
+      await db.user.delete({ where: { id } });
+    }
   }, { auto: true }],
 
   appPage: async ({ page }, use) => {

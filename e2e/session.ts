@@ -20,14 +20,20 @@ export const E2E_AUTH_SECRET =
 /** Cookie name Auth.js uses over http (no `__Secure-` prefix without https). */
 export const SESSION_COOKIE = "authjs.session-token";
 
-/** Add a valid Auth.js session cookie to the browser context. */
-export async function addSessionCookie(context: BrowserContext) {
+export interface E2EUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+/** Add a valid Auth.js cookie for this test's database identity. */
+export async function addSessionCookie(context: BrowserContext, user: E2EUser) {
   const token = await encode({
     token: {
-      id: "e2e-user",
-      sub: "e2e-user",
-      name: "E2E Tester",
-      email: "e2e@orire.test",
+      id: user.id,
+      sub: user.id,
+      name: user.name,
+      email: user.email,
     },
     secret: E2E_AUTH_SECRET,
     salt: SESSION_COOKIE,

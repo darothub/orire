@@ -1,5 +1,7 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { E2E_USER_ID, e2eBypassEnabled, isE2eBypassUser } from "./bypass";
+import { e2eBypassEnabled, isE2eBypassUser } from "./bypass";
+
+const E2E_USER_ID = "e2e-user-12345678-1234-4123-8123-123456789abc";
 
 describe("e2e bypass", () => {
   const prev = process.env.ORIRE_E2E_BYPASS;
@@ -19,6 +21,9 @@ describe("e2e bypass", () => {
     expect(e2eBypassEnabled()).toBe(true);
     expect(isE2eBypassUser(E2E_USER_ID)).toBe(true);
     expect(isE2eBypassUser("someone-else")).toBe(false);
+    expect(isE2eBypassUser("e2e-user")).toBe(false);
+    expect(isE2eBypassUser("e2e-user-customer")).toBe(false);
+    expect(isE2eBypassUser(E2E_USER_ID + "-extra")).toBe(false);
     expect(isE2eBypassUser(null)).toBe(false);
   });
 });

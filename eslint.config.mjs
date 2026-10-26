@@ -13,6 +13,18 @@ const eslintConfig = defineConfig([
       "react-hooks/rules-of-hooks": "off",
     },
   },
+  {
+    files: ["e2e/**/*.spec.ts"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        paths: [{
+          name: "@playwright/test",
+          importNames: ["test", "expect"],
+          message: "Import test and expect from ./fixtures for onboarding and database isolation.",
+        }],
+      }],
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

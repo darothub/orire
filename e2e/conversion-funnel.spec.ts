@@ -6,7 +6,6 @@ async function observe(page: import("@playwright/test").Page, consent: "granted"
   await page.route("**/static.cloudflareinsights.com/**", (route) => route.abort());
   await page.addInitScript((choice) => {
     localStorage.setItem("orire-consent", choice);
-    localStorage.setItem("orire-onboarded", "1");
     const w = window as unknown as { va: (event: string, payload: unknown) => void; capturedFunnel: unknown[] };
     w.capturedFunnel = [];
     w.va = (event, payload) => { if (event === "event") w.capturedFunnel.push(payload); };

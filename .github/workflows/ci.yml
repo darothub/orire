@@ -3,14 +3,14 @@
 # Runs on every pull request and on pushes to main:
 #   • checks  — eslint, tsc (typecheck) and vitest unit tests
 #   • build   — a full production `next build`
-#   • e2e     — Playwright smoke suite (hermetic: stubs /api/ai/*, no DB/SMTP)
+#   • e2e     — Playwright smoke/full suite with disposable PostgreSQL
 #
 # Deploys are NOT handled here. Production (main) and PR preview deploys run
 # through Vercel's native GitHub integration, which builds with
 # `prisma migrate deploy && next build` (see vercel.json / docs/deploy.md).
 #
-# The build/e2e steps never touch a real database; a dummy connection string is
-# enough for `prisma generate` and `next build`, which don't open a connection.
+# Builds need no live database. Browser tests use only the disposable local
+# PostgreSQL service below; no production DB, SMTP or AI provider is needed.
 
 name: CI
 
@@ -61,11 +61,11 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
+          POSTGRES_DB: orire_e2e_ci
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres -d postgres"
+          --health-cmd="pg_isready -U postgres -d orire_e2e_ci"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -74,8 +74,8 @@ jobs:
       E2E_PREBUILT: "1"
       NEXT_PUBLIC_PASSWORD_AUTH: "true"
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ""
-      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
-      DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/orire_e2e_ci?schema=public"
+      DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/orire_e2e_ci?schema=public"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -103,11 +103,6 @@ jobs:
       - name: Apply Prisma schema to CI Postgres
         if: steps.docs.outputs.skip != 'true'
         run: npx prisma migrate deploy
-      - name: Seed isolated Playwright identity fixture
-        if: steps.docs.outputs.skip != 'true'
-        env:
-          ORIRE_E2E_BYPASS: "1"
-        run: node scripts/seed-e2e-user.mjs
       - name: Cache Playwright browsers
         if: steps.docs.outputs.skip != 'true'
         uses: actions/cache@v4
@@ -166,7 +161,7 @@ jobs:
             # application paths, with a safe fallback if diff inspection fails.
             if ! git diff --name-only "$BASE_SHA"...HEAD > /tmp/orire-changed-files; then
               MODE=full
-            elif grep -Eq '^(src/app/api/|src/lib/(auth|payments|stripe|e2e)/|src/components/ai/|src/components/templates/|prisma/|package(-lock)?[.]json|playwright[.]config[.]ts|[.]github/workflows/)' /tmp/orire-changed-files; then
+            elif grep -Eq '^(e2e/|src/app/api/|src/lib/(auth|payments|stripe|e2e)/|src/components/ai/|src/components/templates/|prisma/|package(-lock)?[.]json|playwright[.]config[.]ts|[.]github/workflows/)' /tmp/orire-changed-files; then
               MODE=full
             fi
           fi
