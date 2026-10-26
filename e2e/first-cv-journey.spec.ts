@@ -11,6 +11,8 @@ import { PrismaClient } from "@prisma/client";
  * claiming that the external signup/verification provider works end to end.
  */
 test.describe.configure({ mode: "serial" });
+// This spec deliberately verifies the first-run onboarding experience.
+test.use({ showOnboardingTour: true });
 
 for (const viewport of [
   { name: "desktop-1440", width: 1440, height: 900 },
