@@ -10,7 +10,7 @@ Base: current main `a43a2d3c7309d3d70325f4d746d12d8a5ed98824`. Work is independe
 - Small editor labels, template descriptions and AI hints used a faint token with contrast around 3.44–3.68:1 in dark mode. They use the existing readable muted text token.
 - The Grade upload button used white on #6366f1 (4.46:1). The approved slightly darker #5d60e8 fill preserves the button hierarchy while passing the audit.
 - Light-mode green action text and small status labels had contrast around 3.51–4.06:1. Scoped light-workspace text now uses #08775c. Backgrounds, primary button fills, typography and layout remain unchanged.
-- Public landing cards deliberately retain their dark branding in light mode, but descriptions inherited light-theme dark text (about 2.47:1). Descriptions now retain the existing dark-mode readable #9aa29c in both themes.
+- Public landing cards deliberately retain their dark branding in light mode, but descriptions inherited light-theme dark text (about 2.47:1). Descriptions retain the existing dark-mode readable #9aa29c and card names retain #e8ebe8 in both themes.
 
 ## Approval and real-screen evidence
 
@@ -47,7 +47,9 @@ Final `actual-*.png` files come from the verified production build on this branc
 - Signup: initial email focus, Tab to reveal, visible focus, Enter/Space reveal/hide, pressed state, Escape dismissal and opener restoration; no real signup or email.
 - Five authenticated views: Studio, editor, Grade, export and AI settings. Mobile editor also audits the visible preview tab. Template selection is exercised with focus and Enter.
 
-That is 48 test cases and 50 axe scans, in addition to the existing onboarding, palette, support, keyboard, reduced-motion and CV/export regression. Audit JSONs are attached to browser reports; the durable summary records violations and incomplete checks. Before raw public/workspace findings are included as `before-public.json` / `before-workspace.json`.
+That is 48 test cases and 54 axe scans (including an explicit scrolled-gallery state in all four combinations), in addition to the existing onboarding, palette, support, keyboard, reduced-motion and CV/export regression. Audit JSONs are attached to browser reports; the durable summary records violations and incomplete checks. Before raw public/workspace findings are included as `before-public.json` / `before-workspace.json`.
+
+The first GitHub run on `101e042` failed two mobile light-mode cases: the template name inherited dark `--text` on the permanently dark card (1.03:1). Initial macOS axe scans did not flag that name; adding a direct WCAG calculation from actual computed heading/background colors reproduced it locally. Card ink is now explicitly the existing light color, and all viewport/theme combinations visit the scrolled gallery and assert a minimum 4.5:1 name contrast. No audit rule is suppressed. [Initial failure evidence](https://github.com/darothub/orire/actions/runs/40379068465).
 
 The audit waits for actual entrance opacity to settle before measuring colors. Initial exploratory runs exposed further small light-theme labels and an initial-focus timing race; tests gained an explicit initial-email-focus assertion. No timeout was increased and no assertion was removed to achieve green. Shared shell hydration readiness and generated-report lint ignores match the independently verified fixes in PR #189.
 
@@ -66,7 +68,7 @@ Local verification commands all succeeded:
 | `npm run build` | Production build succeeded. |
 | `npm run test:e2e` | 134 passed, 1 unchanged mobile download skip, 1.4 minutes; no retries. |
 
-All 48 new accessibility cases executed, producing 50 distinct axe scans (the two mobile preview scans are additional states). Zero violations, zero `aria-prohibited-attr` incomplete items and zero `aria-hidden-focus` incomplete items. Remaining incomplete reports involve non-text symbols and contrast/links over complex backgrounds; see `audit-summary.json`. They are not silently marked passed. Initial exploratory failures and the additional production fixes are described above. Browser captures are checked after opacity/focus settle; final actual screenshots assert the reveal button itself is keyboard-focused.
+All 48 new accessibility cases executed, producing 54 distinct axe scans (two mobile preview states plus four scrolled-gallery states). Zero violations, zero `aria-prohibited-attr` incomplete items and zero `aria-hidden-focus` incomplete items. Remaining incomplete reports involve non-text symbols and contrast/links over complex backgrounds; see `audit-summary.json`. They are not silently marked passed. Initial exploratory failures and the additional production fixes are described above. Browser captures are checked after opacity/focus settle; final actual screenshots assert the reveal button itself is keyboard-focused.
 
 GitHub CI and protected-preview results are recorded in the PR.
 

@@ -1,8 +1,8 @@
 {
-  "axeScans": 50,
+  "axeScans": 54,
   "totalViolations": 0,
   "incompleteRuleOccurrences": {
-    "color-contrast": 50,
+    "color-contrast": 54,
     "link-in-text-block": 8
   },
   "cases": [
@@ -134,7 +134,7 @@
       "incomplete": [
         {
           "id": "color-contrast",
-          "nodes": 74
+          "nodes": 71
         }
       ]
     },
@@ -179,6 +179,17 @@
         {
           "id": "color-contrast",
           "nodes": 100
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-dark-public--chromium",
+      "state": "axe-public-gallery",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 50
         }
       ]
     },
@@ -280,6 +291,17 @@
     },
     {
       "case": "accessibility-audit-WCAG-audit-1440px-light-public--chromium",
+      "state": "axe-public-gallery",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 51
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-1440px-light-public--chromium",
       "state": "axe-public",
       "violations": 0,
       "incomplete": [
@@ -371,6 +393,17 @@
         {
           "id": "color-contrast",
           "nodes": 56
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-dark-public--chromium",
+      "state": "axe-public-gallery",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 38
         }
       ]
     },
@@ -478,6 +511,17 @@
         {
           "id": "color-contrast",
           "nodes": 52
+        }
+      ]
+    },
+    {
+      "case": "accessibility-audit-WCAG-audit-390px-light-public--chromium",
+      "state": "axe-public-gallery",
+      "violations": 0,
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 39
         }
       ]
     },

@@ -4,7 +4,7 @@
   "baseUrl": "http://localhost:3100",
   "pageErrors": [],
   "sourceSha256": {
-    "src/app/globals.css": "04a7d4d23991038ffae5fafd783a44a714171ac7e3142700553134af0e40b959",
+    "src/app/globals.css": "62f4bfd2c91c3a8ed94c8925316f0349d83a8ea4442b2553b27e4f95532d1a68",
     "src/app/ingest.css": "b4583013909b617afb51732d1574dd0b3ff6d6eb634b7043b4e7457450946218",
     "src/app/templates.css": "2e344b0f12723268685a40d1c82a41fef62c0b5defb7722317b92fed550266f2",
     "src/components/auth/PasswordInput.tsx": "719e39359bb1ad7c03aabc913ae4be1026d789a269172c31b856dd00bfb885dd",
