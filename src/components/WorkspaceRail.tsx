@@ -2,7 +2,7 @@
 
 import { workspaceBusy } from "@/lib/store/busy";
 import { useEffect, useState } from "react";
-import { motion, Reorder } from "framer-motion";
+import { motion, Reorder, useReducedMotion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { useRefineStore } from "@/lib/store/refineStore";
@@ -38,6 +38,7 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
   const locked = useUsageStore((s) => (metric ? s.exhausted(metric) : false));
   const meta = VIEW_META[item];
   const active = view === item;
+  const reducedMotion = useReducedMotion();
   const hint = locked ? "Free limit reached — upgrade to Pro to keep using this." : meta.hint;
   return (
     <Tooltip title={meta.label} hint={hint} placement="right">
@@ -54,7 +55,7 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
           <motion.span
             layoutId="rail-active"
             className="rail-active"
-            transition={{ type: "spring", stiffness: 500, damping: 38 }}
+            transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
           />
         )}
         <span className="rail-icon" aria-hidden>{meta.icon}</span>
