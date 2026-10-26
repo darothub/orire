@@ -5,6 +5,8 @@ import { test, expect, signIn } from "./fixtures";
  * The test uses a fake E2E Auth.js session and fictional sample CV, never live
  * authentication or user content.
  */
+test.describe("first-run tour", () => {
+  test.use({ showOnboardingTour: true });
 for (const viewport of [
   { name: "mobile-390", width: 390, height: 844 },
   { name: "desktop-1440", width: 1440, height: 900 },
@@ -52,6 +54,7 @@ for (const viewport of [
     expect(errors).toEqual([]);
   });
 }
+});
 
 test("replaying a tour restores keyboard focus after Skip", async ({ appPage }) => {
   await appPage.keyboard.press("Control+k");
