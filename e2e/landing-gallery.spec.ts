@@ -67,3 +67,14 @@ test("gallery preview preserves original template text alignment", async ({ page
     await expect(doc).toHaveCSS("text-align", "left");
   }
 });
+
+test("public template Word sample downloads a real fictional DOCX without signup", async ({ page }) => {
+  await page.goto("/templates/aurora", { waitUntil: "domcontentloaded" });
+  const button = page.getByRole("button", { name: "Download fictional Word (.docx) sample" });
+  await expect(button).toBeVisible();
+  const download = page.waitForEvent("download");
+  await button.click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/fictional CV sample[.]docx$/i);
+  await expect(page.getByText("Word does not reproduce the decorative PDF template layout.", { exact: false })).toBeVisible();
+});
