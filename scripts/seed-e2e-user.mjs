@@ -10,7 +10,14 @@ if (process.env.CI !== "true" || process.env.ORIRE_E2E_BYPASS !== "1") {
   process.exit(1);
 }
 const databaseUrl = process.env.DATABASE_URL ?? "";
-if (!/localhost|127\.0\.0\.1/.test(databaseUrl)) {
+let hostname;
+try {
+  hostname = new URL(databaseUrl).hostname;
+} catch {
+  console.error("Refusing to seed an invalid database URL.");
+  process.exit(1);
+}
+if (hostname !== "localhost" && hostname !== "127.0.0.1") {
   console.error("Refusing to seed a nonlocal database.");
   process.exit(1);
 }
