@@ -11,12 +11,13 @@ export function TemplateDetailPreview({ id, name }: { id: string; name: string }
   const Template = getTemplate(id).Component;
 
   return (
-    <div className="tpl-detail-preview" role="img" aria-label={`Fictional CV example in the ${name} template`}>
+    <div className="tpl-detail-preview" aria-label={`Fictional CV example in the ${name} template`}>
       <div className="tpl-detail-preview-window" aria-hidden="true" inert>
         <div className="paper tpl-detail-preview-paper">
           <Template cv={sampleCV} />
         </div>
       </div>
+      <p className="sr-only">Example candidate: {sampleCV.basics.fullName}, {sampleCV.basics.title}. {sampleCV.basics.summary}</p>
       <p className="tpl-detail-preview-caption">Illustrative preview with fictional CV information</p>
     </div>
   );
