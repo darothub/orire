@@ -1,6 +1,8 @@
-# #91 — public export confidence proposal
+# #91 — public export confidence and verified samples
 
 The original 23 October proposal is retained below as historical evidence; its images are **PROPOSAL ONLY**, not implemented screenshots. The owner explicitly approved the panel and local production-build screenshot acceptance for this batch in the task chat on 26 October. See the [implementation and sample-output record](#26-october-implementation-and-sample-output-record) after the original proposal.
+
+Current result: the export-information panel and genuine public PDF/Word samples are implemented. [Actual after renders and complete local verification](#actual-after-renders-and-complete-local-verification) are distinct from the historical proposal.
 
 ## Intent
 
@@ -120,3 +122,32 @@ The generator temporarily creates a local-only route, binds the development serv
 Targeted ESLint passed. `npx vitest run src/lib/cv/publicSample.test.ts` executed **2 tests, both passed**, covering reserved destinations and preservation of the Studio seed. Generation itself checked real PDF text/metadata and Word XML, and all sample-output pages were inspected as above.
 
 `e2e/export-samples.spec.ts` adds six cases: panel keyboard/focus/axe checks at 1440×900 and 390×844 in dark/light themes, actual anonymous PDF download/content/metadata validation, and actual anonymous DOCX content validation. Download cases also assert no export/usage rows for the isolated fixture user. The parent verification run supplies the complete lint/type generation/typecheck/unit/build/E2E results and actual production-build page screenshots; this generation record alone does not claim those checks passed. The original proposal images above remain labeled as proposals, distinct from sample-file renders and the final application screenshots.
+
+## Actual after renders and complete local verification
+
+The owner approved the existing proposal before implementation and explicitly accepted local production-build screenshots for this batch. Actual screenshots below come from isolated source commit `a265a23e264d58d974cf40ae84eb96d0ffb10163`, not browser CSS modifications. [After provenance](after-provenance.json) records the build ID, Chromium version, URLs, themes, source hashes and zero browser page errors. No deployed-preview inspection is claimed.
+
+| Viewport | Actual dark export panel | Actual light export panel |
+| --- | --- | --- |
+| Desktop 1440×900 | ![Implemented desktop panel dark](AFTER-actual-templates-desktop-dark.png) | ![Implemented desktop panel light](AFTER-actual-templates-desktop-light.png) |
+| Mobile 390×844 | ![Implemented mobile panel dark](AFTER-actual-templates-mobile-dark.png) | ![Implemented mobile panel light](AFTER-actual-templates-mobile-light.png) |
+
+The approved panel sits between the unchanged introduction and catalog. Desktop controls share a row; mobile uses a full-width preview action followed by paired PDF/Word controls. Existing template-card styling is preserved. The genuine preview now shares the sanitized sample destinations with the downloaded files; fictional CV facts remain unchanged.
+
+| State | Desktop dark / light | Mobile dark / light |
+| --- | --- | --- |
+| Actual Aurora preview | [Dark](AFTER-actual-aurora-desktop-dark.png) / [Light](AFTER-actual-aurora-desktop-light.png) | [Dark](AFTER-actual-aurora-mobile-dark.png) / [Light](AFTER-actual-aurora-mobile-light.png) |
+| Actual download controls | [Dark](AFTER-actual-aurora-downloads-desktop-dark.png) / [Light](AFTER-actual-aurora-downloads-desktop-light.png) | [Dark](AFTER-actual-aurora-downloads-mobile-dark.png) / [Light](AFTER-actual-aurora-downloads-mobile-light.png) |
+
+All required commands executed on the independent issue branch with disposable loopback PostgreSQL and isolated fictional fixture identities. [Exact command/exit/timestamp record](verification.json):
+
+| Command | Result |
+| --- | --- |
+| `npm run lint` | Exit 0; one pre-existing unused `ProviderId` warning |
+| `npx next typegen` | Exit 0 |
+| `npx tsc --noEmit` | Exit 0 |
+| `npm test` | Exit 0; **562 passed, 81 files** |
+| `npm run build` | Exit 0 |
+| `npm run test:e2e` | Exit 0; **141 passed, one unchanged mobile download skip, 1.5m, no retries** |
+
+All six new cases ran successfully, including four viewport/theme keyboard/axe checks and both real download-content checks. Existing signed-in PDF/Word exports and allowance/authorization regressions also passed. No tests were disabled, assertions loosened or timeouts increased. No production database, customer record, AI provider or real payment was used.

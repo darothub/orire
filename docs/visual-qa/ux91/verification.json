@@ -1,0 +1,44 @@
+[
+  {
+    "command": "npm run lint",
+    "code": 0,
+    "started": "2026-10-26T22:46:26.573Z",
+    "finished": "2026-10-26T22:46:32.497Z",
+    "logPath": "/private/tmp/orire-ux91-lint-delivery.log"
+  },
+  {
+    "command": "npx next typegen",
+    "code": 0,
+    "started": "2026-10-26T22:46:32.497Z",
+    "finished": "2026-10-26T22:46:33.051Z",
+    "logPath": "/private/tmp/orire-ux91-typegen-delivery.log"
+  },
+  {
+    "command": "npx tsc --noEmit",
+    "code": 0,
+    "started": "2026-10-26T22:46:33.051Z",
+    "finished": "2026-10-26T22:46:35.783Z",
+    "logPath": "/private/tmp/orire-ux91-typecheck-delivery.log"
+  },
+  {
+    "command": "npm test",
+    "code": 0,
+    "started": "2026-10-26T22:46:35.783Z",
+    "finished": "2026-10-26T22:46:38.695Z",
+    "logPath": "/private/tmp/orire-ux91-unit-delivery.log"
+  },
+  {
+    "command": "npm run build",
+    "code": 0,
+    "started": "2026-10-26T22:46:38.695Z",
+    "finished": "2026-10-26T22:46:43.599Z",
+    "logPath": "/private/tmp/orire-ux91-build-delivery.log"
+  },
+  {
+    "command": "npm run test:e2e",
+    "code": 0,
+    "started": "2026-10-26T22:46:43.599Z",
+    "finished": "2026-10-26T22:48:11.241Z",
+    "logPath": "/private/tmp/orire-ux91-e2e-delivery.log"
+  }
+]
