@@ -2,6 +2,7 @@ import { publicMetadata } from "@/lib/seo/metadata";
 import Link from "next/link";
 import "../content.css";
 import { TEMPLATE_CATALOG, TEMPLATE_COUNT } from "@/lib/templates/catalog";
+import { PublicExportPanel } from "@/components/templates/PublicExportPanel";
 
 export const metadata = publicMetadata(
   `CV templates — ${TEMPLATE_COUNT} ATS-ready designs | Orire`,
@@ -20,6 +21,7 @@ export default function TemplatesIndex() {
         already have, and Orire re-lays it into the design, then exports a clean
         PDF. Your facts stay yours; only the presentation changes.
       </p>
+      <PublicExportPanel />
       <div className="tpl-grid">
         {TEMPLATE_CATALOG.map((t) => (
           <Link key={t.id} href={`/templates/${t.id}`} className="tpl-card">

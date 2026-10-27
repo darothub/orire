@@ -7,6 +7,7 @@ import { TEMPLATE_CATALOG, getTemplateInfo } from "@/lib/templates/catalog";
 import { getTemplateCopy } from "@/lib/seo/templatesContent";
 import { TemplateDetailPreview } from "@/components/templates/TemplateDetailPreview";
 import { PublicWordSample } from "@/components/templates/PublicWordSample";
+import { PUBLIC_PDF_SAMPLE_URL } from "@/lib/cv/publicSample";
 
 export function generateStaticParams() {
   return TEMPLATE_CATALOG.map((t) => ({ id: t.id }));
@@ -56,8 +57,9 @@ export default async function TemplateDetail({
       </ul>
 
       <p style={{ marginTop: 28 }}>
-        This is a browser preview using fictional CV details, not a downloadable
-        sample file. In the Studio, Orire supports PDF and editable Word
+        This browser preview uses fictional CV details. You can also inspect
+        the Aurora PDF and single-column Word samples below without an account.
+        In the Studio, Orire supports PDF and editable Word
         (.docx) exports, subject to your plan&apos;s download allowance.
         You can review and edit the CV before exporting; Orire should not
         invent experience that is not your own.
@@ -68,12 +70,16 @@ export default async function TemplateDetail({
         <p>
           <strong>PDF:</strong> a fixed-layout document for applications and sharing.
           <strong> Word (.docx):</strong> an editable document for further adjustments.
-          The fictional Word sample below is downloadable without an account; the visual PDF-style preview above remains browser-only.
-          Downloads of your own CV are available from the Studio, subject to your plan allowance.\n          For an interactive example before signing up, use the free public live demo on the homepage.
+          Word uses a clean, single-column layout rather than reproducing the decorative PDF template.
+          The public PDF demonstrates Aurora; the preview above shows {info.name}.
+          Downloads of your own CV are available from the Studio, subject to your plan allowance.
+          For an interactive example before signing up, use the free public live demo on the homepage.
         </p>
+        <p><a className="public-export-button" href={PUBLIC_PDF_SAMPLE_URL} download="Orire-fictional-Aurora-CV.pdf">Download fictional Aurora PDF sample</a></p>
       </section>
 
-      <p><Link href="/#demo">Try the interactive fictional CV demo</Link></p>\n\n      <PublicWordSample />
+      <p><Link href="/#demo">Try the interactive fictional CV demo</Link></p>
+      <PublicWordSample />
 
       <Link href="/" className="content-cta">Create your CV with {info.name} →</Link>
 

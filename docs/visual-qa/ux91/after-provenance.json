@@ -1,0 +1,167 @@
+{
+  "sourceCommit": "a265a23e264d58d974cf40ae84eb96d0ffb10163",
+  "build": "Q6WZfI-9w0KJmiPQrUQwd",
+  "browser": "153.0.8010.12",
+  "capturedAt": "2026-10-26T22:49:16.434Z",
+  "environment": "isolated local production build; fictional public samples only; local evidence authorized by owner for this batch",
+  "captures": [
+    {
+      "url": "http://localhost:3100/templates",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "dark",
+      "file": "AFTER-actual-templates-desktop-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/templates/aurora",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "dark",
+      "file": "AFTER-actual-aurora-desktop-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/templates/aurora",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "dark",
+      "file": "AFTER-actual-aurora-downloads-desktop-dark.png",
+      "pageErrors": [],
+      "state": "download controls"
+    },
+    {
+      "url": "http://localhost:3100/templates",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "light",
+      "file": "AFTER-actual-templates-desktop-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/templates/aurora",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "light",
+      "file": "AFTER-actual-aurora-desktop-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/templates/aurora",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "light",
+      "file": "AFTER-actual-aurora-downloads-desktop-light.png",
+      "pageErrors": [],
+      "state": "download controls"
+    },
+    {
+      "url": "http://localhost:3100/templates",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "dark",
+      "file": "AFTER-actual-templates-mobile-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/templates/aurora",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "dark",
+      "file": "AFTER-actual-aurora-mobile-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/templates/aurora",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "dark",
+      "file": "AFTER-actual-aurora-downloads-mobile-dark.png",
+      "pageErrors": [],
+      "state": "download controls"
+    },
+    {
+      "url": "http://localhost:3100/templates",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "light",
+      "file": "AFTER-actual-templates-mobile-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/templates/aurora",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "light",
+      "file": "AFTER-actual-aurora-mobile-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/templates/aurora",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "light",
+      "file": "AFTER-actual-aurora-downloads-mobile-light.png",
+      "pageErrors": [],
+      "state": "download controls"
+    }
+  ],
+  "sourceSha256": {
+    "src/app/templates.css": "0058617ab6b8939b80a70c9269028100ce046691617254ff7ad0b88df1e90480",
+    "src/app/templates/page.tsx": "5be54a4ca1366c1c81f28c4b632e17327c738feb4371c1752bac8b7376dd1b20",
+    "src/app/templates/[id]/page.tsx": "0c83f647092b29c0237fa4272f7a85eb56d38360de273638c3878a6d1713963c",
+    "src/components/templates/PublicExportPanel.tsx": "2685e5455a78942d8a967e44d05abd50d0e6f907c741d32b8b5bb88a132f9095",
+    "src/components/templates/PublicWordSample.tsx": "860ef437bafa7c49b41382b91d192a32bd419679c565c69f25b73e42692e5317",
+    "src/components/templates/TemplateDetailPreview.tsx": "d750e9a3e6e479be4f454266f6fa7ce1c6e93f1f75fb63d479c0c28aeb3a3d5b",
+    "src/lib/cv/publicSample.ts": "b331f3e711e7177abbabcd6e7af0b92a3f420fa0d37af84a748e004d636d3779",
+    "public/samples/orire-fictional-aurora-cv.pdf": "a46d337809bb137f7971e86c4b802bb6102adad6fc0da302e344723ac5afc9ca"
+  }
+}

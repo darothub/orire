@@ -1,0 +1,185 @@
+{
+  "capturedAt": "2026-10-26T22:40:15.580Z",
+  "baseCommit": "bd08b799750db91b152cb8c881bcd4fb3cba2bbb",
+  "sourceNote": "Working-tree source fingerprints below identify the actual generator inputs; base commit alone does not describe uncommitted implementation.",
+  "url": "http://127.0.0.1:3102/local-export-generation",
+  "browser": "153.0.8010.12",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "theme": "dark",
+  "reducedMotion": true,
+  "renderer": "Aurora",
+  "pdfExporter": "exportCVtoPDF(paged, ..., publicSampleCV, {embedData:false})",
+  "wordExporter": "exportCVtoDocx(..., publicSampleCV)",
+  "sourceFingerprints": {
+    "src/lib/cv/publicSample.ts": "b331f3e711e7177abbabcd6e7af0b92a3f420fa0d37af84a748e004d636d3779",
+    "src/lib/cv/sample.ts": "7f5fb3dbcd3ec2fb79ca56e102ce4b7dff17134d3212b4b97a78583d1e4371de",
+    "src/lib/export/pdf.ts": "544f9275991bdad1d1a2004f3ae9280e2a676b634a41ff7b218a1014d1e73707",
+    "src/lib/export/docx.ts": "b906d9480c0b8aeeca1ad39e9a894396296bb5e75e41ec055c305cf7a3fed87f",
+    "src/lib/export/orireEmbed.ts": "b831d9abfa459512408de4b8a6e38539ce18b618da0ce94c81c6b66f8c031c74",
+    "src/components/templates/Aurora.tsx": "3435d7f7e062c7f17dd976f81232f33b68eee884d1700b129f540de4df529b62",
+    "src/components/templates/shared.ts": "2f4da6155acb783ed898d21d93ccfd637cd7b15527050bb0e388997c75dfb17d",
+    "src/app/resume.css": "a973effb814ca296ab0a30cd3d51fb688d3867903b478877f626b04d161115dc",
+    "src/app/globals.css": "4dc701d54e1d67dc3c06a0c4a191ae96bb5a2bf6866b7a2e92cf363d3089cc66",
+    "src/app/templates.css": "0058617ab6b8939b80a70c9269028100ce046691617254ff7ad0b88df1e90480"
+  },
+  "pdf": {
+    "path": "public/samples/orire-fictional-aurora-cv.pdf",
+    "sha256": "a46d337809bb137f7971e86c4b802bb6102adad6fc0da302e344723ac5afc9ca",
+    "bytes": 454146,
+    "pages": 2,
+    "structuredDataMetadata": false,
+    "readableTextVerified": true
+  },
+  "word": {
+    "path": "docs/visual-qa/ux91/sample-generated-word.docx",
+    "sha256": "18a4550123fee1966a74b971c81373700a2d4021d7eadd889692fefc06197bfe",
+    "bytes": 11009,
+    "documentXmlVerified": true
+  },
+  "cv": {
+    "basics": {
+      "fullName": "Ada Okonkwo",
+      "title": "Senior Product Designer",
+      "email": "ada.okonkwo@example.com",
+      "phone": "+44 20 7946 0958",
+      "location": "London, UK",
+      "summary": "Product designer with 8+ years shaping data-dense fintech and healthcare products. I turn ambiguous problems into calm, usable systems — pairing rigorous research with a strong craft bar. Comfortable leading end-to-end from discovery to shipped, measured outcomes.",
+      "links": [
+        {
+          "id": "sample_portfolio",
+          "label": "Portfolio",
+          "url": "https://example.com/ada"
+        },
+        {
+          "id": "sample_profile",
+          "label": "Profile",
+          "url": "https://example.com/ada-profile"
+        }
+      ]
+    },
+    "experience": [
+      {
+        "id": "exp_1",
+        "company": "Monzo",
+        "role": "Senior Product Designer",
+        "location": "London",
+        "startDate": "2021",
+        "endDate": "",
+        "current": true,
+        "highlights": [
+          "Led the redesign of the shared-tabs experience, lifting weekly active use of the feature by 34%.",
+          "Built and documented the accessibility patterns now used across three squads.",
+          "Mentored two mid-level designers, both promoted within the year."
+        ]
+      },
+      {
+        "id": "exp_2",
+        "company": "Babylon Health",
+        "role": "Product Designer",
+        "location": "London",
+        "startDate": "2018",
+        "endDate": "2021",
+        "current": false,
+        "highlights": [
+          "Owned the triage flow used by 1.2M patients, reducing drop-off at symptom entry by 21%.",
+          "Ran a fortnightly research cadence that fed a prioritised, evidence-backed backlog."
+        ]
+      }
+    ],
+    "education": [
+      {
+        "id": "edu_1",
+        "institution": "University College London",
+        "degree": "BSc",
+        "field": "Human Sciences",
+        "startDate": "2011",
+        "endDate": "2014",
+        "details": "First-class honours. Dissertation on decision-making under uncertainty."
+      }
+    ],
+    "skills": [
+      {
+        "id": "skl_1",
+        "category": "Design",
+        "items": [
+          "Product strategy",
+          "Interaction design",
+          "Prototyping",
+          "Design systems"
+        ]
+      },
+      {
+        "id": "skl_2",
+        "category": "Research",
+        "items": [
+          "Usability testing",
+          "Interviews",
+          "Survey design"
+        ]
+      },
+      {
+        "id": "skl_3",
+        "category": "Tools",
+        "items": [
+          "Figma",
+          "Framer",
+          "Maze",
+          "Dovetail"
+        ]
+      }
+    ],
+    "projects": [
+      {
+        "id": "prj_1",
+        "name": "Open Banking Design Kit",
+        "role": "Creator & maintainer",
+        "url": "https://example.com/projects/1",
+        "startDate": "2022",
+        "endDate": "",
+        "highlights": [
+          "Published an accessible component library adopted by 4 fintech teams.",
+          "Documented usage patterns with live, testable examples."
+        ]
+      },
+      {
+        "id": "prj_2",
+        "name": "Calm Money — concept app",
+        "role": "Design & research",
+        "url": "https://example.com/projects/2",
+        "startDate": "2021",
+        "endDate": "2022",
+        "highlights": [
+          "Explored anxiety-reducing spending flows validated with 30 users."
+        ]
+      }
+    ],
+    "certifications": [
+      {
+        "id": "crt_1",
+        "name": "Certified Professional in Accessibility Core Competencies (CPACC)",
+        "issuer": "IAAP",
+        "date": "2023",
+        "url": ""
+      },
+      {
+        "id": "crt_2",
+        "name": "NN/g UX Certification",
+        "issuer": "Nielsen Norman Group",
+        "date": "2020",
+        "url": ""
+      }
+    ],
+    "order": [
+      "summary",
+      "experience",
+      "projects",
+      "education",
+      "skills",
+      "certifications"
+    ]
+  },
+  "pageErrors": []
+}
