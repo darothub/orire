@@ -1,0 +1,435 @@
+{
+  "capturedAt": "2026-10-26T22:11:03.751Z",
+  "url": "http://localhost:3100",
+  "branch": "",
+  "sourceCommit": "a86d65c1c267927b1b1b26c529e59e964a061d2e",
+  "browser": "153.0.8010.12",
+  "sourceSha256": {
+    "src/components/landing/Landing.tsx": "aa94ef38f0a6df84699c33d602a23c95ab78c551e9513140f0a662767f8fcafd",
+    "src/components/landing/LandingMobileNav.tsx": "bae229c5be0930fa114b7db8a0788ae43ee96e1cf4bd31d429635eeb2d6cb7a7",
+    "src/components/landing/LiveDemo.tsx": "da0acfd0f116c5bdc29590ece83247599358a1766e93eb52b3f844486fe8941c",
+    "src/app/globals.css": "62f4bfd2c91c3a8ed94c8925316f0349d83a8ea4442b2553b27e4f95532d1a68"
+  },
+  "theme": "dark",
+  "reducedMotion": "reduce",
+  "consent": "denied",
+  "fictionalPublicCVsOnly": true,
+  "build": "parent-started local production build from current main; not deployed preview",
+  "proposal": "Browser CSS injections only, NOT implemented. No application source edits. First-paint proposal removes opacity/transform/blur from the actual hero; focused/pressed states use current emerald. Normal settled layout and typography preserved.",
+  "cases": [
+    {
+      "viewport": {
+        "name": "desktop",
+        "width": 1440,
+        "height": 900
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "heldScriptRequests": [
+        "/_next/static/chunks/0jvhpaew_uadu.js",
+        "/_next/static/chunks/3o27dzsjtfwwk.js",
+        "/_next/static/chunks/2bub_m4veo3fm.js",
+        "/_next/static/chunks/3_0hkryqtvmrk.js",
+        "/_next/static/chunks/0ay527mnq1105.js",
+        "/_next/static/chunks/turbopack-0_fxtnewg1nqo.js",
+        "/_next/static/chunks/0h2qsuyze9ds1.js",
+        "/_next/static/chunks/2j3rb1fndz0z8.js",
+        "/_next/static/chunks/39y8ph48g2_lw.js",
+        "/_next/static/chunks/01639gzkd4c89.js",
+        "/_next/static/chunks/2y_yf8txdsd_p.js",
+        "/_next/static/chunks/3reenmhjvn01v.js",
+        "/_next/static/chunks/22jps7a5doopn.js",
+        "/_next/static/chunks/2ht28n72dotgb.js"
+      ],
+      "captures": [
+        "BEFORE-actual-reduced-first-paint-desktop.png",
+        "AFTER-proposed-NOT-implemented-reduced-first-paint-desktop.png",
+        "BEFORE-actual-focused-CTA-desktop.png",
+        "AFTER-proposed-NOT-implemented-focused-CTA-desktop.png"
+      ],
+      "preHydrationMenuClick": null,
+      "initialActual": {
+        "hero": {
+          "opacity": "0",
+          "transform": "matrix(1, 0, 0, 1, 0, 24)",
+          "filter": "blur(10px)",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 240,
+            "y": 212,
+            "width": 960,
+            "height": 346.5625
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(11, 13, 18)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0.18s, 0.22s, 0.18s, 0.18s, 0.18s",
+          "box": {
+            "x": 528.609375,
+            "y": 505.3125,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<body class=\"min-h-full\"><div hidden=\"\"><!--$--><!--/$--></div><div class=\"landing\"><a class=\"skip-to-main\" href=\"#main-content\">Skip to main content</a><header class=\"landing-nav\"><div class=\"landing-brand\"><span class=",
+        "menuExpanded": "false",
+        "menuPresent": false
+      },
+      "initialProposed": {
+        "hero": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 240,
+            "y": 188,
+            "width": 960,
+            "height": 346.5625
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(11, 13, 18)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 528.609375,
+            "y": 481.3125,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<body class=\"min-h-full\"><div hidden=\"\"><!--$--><!--/$--></div><div class=\"landing\"><a class=\"skip-to-main\" href=\"#main-content\">Skip to main content</a><header class=\"landing-nav\"><div class=\"landing-brand\"><span class=",
+        "menuExpanded": "false",
+        "menuPresent": false
+      },
+      "settledFocusedActual": {
+        "hero": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "blur(0px)",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 240,
+            "y": 188,
+            "width": 960,
+            "height": 346.5625
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "auto",
+          "outlineColor": "rgb(153, 200, 255)",
+          "outlineWidth": "1px",
+          "transitionDuration": "0.18s, 0.22s, 0.18s, 0.18s, 0.18s",
+          "box": {
+            "x": 528.609375,
+            "y": 481.3125,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<button class=\"landing-cta lg\">Create your CV →</button>",
+        "menuExpanded": "false",
+        "menuPresent": false
+      },
+      "settledFocusedProposed": {
+        "hero": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 240,
+            "y": 188,
+            "width": 960,
+            "height": 346.5625
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(58, 217, 180)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 528.609375,
+            "y": 481.3125,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<button class=\"landing-cta lg\">Create your CV →</button>",
+        "menuExpanded": "false",
+        "menuPresent": false
+      }
+    },
+    {
+      "viewport": {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "heldScriptRequests": [
+        "/_next/static/chunks/0jvhpaew_uadu.js",
+        "/_next/static/chunks/3o27dzsjtfwwk.js",
+        "/_next/static/chunks/2bub_m4veo3fm.js",
+        "/_next/static/chunks/3_0hkryqtvmrk.js",
+        "/_next/static/chunks/0ay527mnq1105.js",
+        "/_next/static/chunks/turbopack-0_fxtnewg1nqo.js",
+        "/_next/static/chunks/0h2qsuyze9ds1.js",
+        "/_next/static/chunks/2j3rb1fndz0z8.js",
+        "/_next/static/chunks/39y8ph48g2_lw.js",
+        "/_next/static/chunks/01639gzkd4c89.js",
+        "/_next/static/chunks/2y_yf8txdsd_p.js",
+        "/_next/static/chunks/3reenmhjvn01v.js",
+        "/_next/static/chunks/22jps7a5doopn.js",
+        "/_next/static/chunks/2ht28n72dotgb.js"
+      ],
+      "captures": [
+        "BEFORE-actual-reduced-first-paint-mobile.png",
+        "AFTER-proposed-NOT-implemented-reduced-first-paint-mobile.png",
+        "BEFORE-actual-focused-CTA-mobile.png",
+        "AFTER-proposed-NOT-implemented-focused-CTA-mobile.png"
+      ],
+      "preHydrationMenuClick": {
+        "hero": {
+          "opacity": "0",
+          "transform": "matrix(1, 0, 0, 1, 0, 24)",
+          "filter": "blur(10px)",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 16,
+            "y": 154,
+            "width": 358,
+            "height": 426.21875
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(11, 13, 18)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0.18s, 0.22s, 0.18s, 0.18s, 0.18s",
+          "box": {
+            "x": 103.125,
+            "y": 463.71875,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<button type=\"button\" class=\"landing-mobile-menu-toggle\" aria-label=\"Open section menu\" aria-expanded=\"false\" aria-controls=\"landing-mobile-section-links\"><span class=\"landing-mobile-menu-icon\" aria-hidden=\"true\"><span><",
+        "menuExpanded": "false",
+        "menuPresent": false,
+        "explanation": "All application .js requests still held. Exactly one click dispatched to the visible server-rendered menu button. No click retry. This is a controlled delayed-JavaScript reproduction, not a real-network benchmark."
+      },
+      "initialActual": {
+        "hero": {
+          "opacity": "0",
+          "transform": "matrix(1, 0, 0, 1, 0, 24)",
+          "filter": "blur(10px)",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 16,
+            "y": 154,
+            "width": 358,
+            "height": 426.21875
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(11, 13, 18)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0.18s, 0.22s, 0.18s, 0.18s, 0.18s",
+          "box": {
+            "x": 103.125,
+            "y": 463.71875,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<body class=\"min-h-full\"><div hidden=\"\"><!--$--><!--/$--></div><div class=\"landing\"><a class=\"skip-to-main\" href=\"#main-content\">Skip to main content</a><header class=\"landing-nav\"><div class=\"landing-brand\"><span class=",
+        "menuExpanded": "false",
+        "menuPresent": false
+      },
+      "initialProposed": {
+        "hero": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 16,
+            "y": 130,
+            "width": 358,
+            "height": 426.21875
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(11, 13, 18)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 103.125,
+            "y": 439.71875,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<body class=\"min-h-full\"><div hidden=\"\"><!--$--><!--/$--></div><div class=\"landing\"><a class=\"skip-to-main\" href=\"#main-content\">Skip to main content</a><header class=\"landing-nav\"><div class=\"landing-brand\"><span class=",
+        "menuExpanded": "false",
+        "menuPresent": false
+      },
+      "settledFocusedActual": {
+        "hero": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "blur(0px)",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 16,
+            "y": 130,
+            "width": 358,
+            "height": 426.21875
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "auto",
+          "outlineColor": "rgb(153, 200, 255)",
+          "outlineWidth": "1px",
+          "transitionDuration": "0.18s, 0.22s, 0.18s, 0.18s, 0.18s",
+          "box": {
+            "x": 103.125,
+            "y": 439.71875,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<button class=\"landing-cta lg\">Create your CV →</button>",
+        "menuExpanded": "false",
+        "menuPresent": false
+      },
+      "settledFocusedProposed": {
+        "hero": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 16,
+            "y": 130,
+            "width": 358,
+            "height": 426.21875
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(58, 217, 180)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 103.125,
+            "y": 439.71875,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<button class=\"landing-cta lg\">Create your CV →</button>",
+        "menuExpanded": "false",
+        "menuPresent": false
+      },
+      "postHydrationMenuClick": {
+        "hero": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "blur(0px)",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(244, 246, 251)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0s",
+          "box": {
+            "x": 16,
+            "y": 130,
+            "width": 358,
+            "height": 426.21875
+          }
+        },
+        "heroCta": {
+          "opacity": "1",
+          "transform": "none",
+          "filter": "none",
+          "outlineStyle": "none",
+          "outlineColor": "rgb(11, 13, 18)",
+          "outlineWidth": "3px",
+          "transitionDuration": "0.18s, 0.22s, 0.18s, 0.18s, 0.18s",
+          "box": {
+            "x": 103.125,
+            "y": 439.71875,
+            "width": 183.734375,
+            "height": 53.25
+          }
+        },
+        "activeElement": "<button type=\"button\" class=\"landing-mobile-menu-toggle is-open\" aria-label=\"Close section menu\" aria-expanded=\"true\" aria-controls=\"landing-mobile-section-links\"><span class=\"landing-mobile-menu-icon\" aria-hidden=\"true\"",
+        "menuExpanded": "true",
+        "menuPresent": true
+      }
+    }
+  ]
+}

@@ -3531,13 +3531,25 @@ html[data-theme="light"] .landing-scrim {
   background: linear-gradient(120deg, #3ad9b4, #17b892 60%, #0c8f6e);
   box-shadow: 0 16px 40px -18px rgba(138, 212, 255, 0.8);
 }
-.landing-cta:hover { transform: translateY(-2px); box-shadow: 0 22px 50px -18px rgba(138, 212, 255, 0.95); }
+.landing-cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 22px 50px -18px rgba(138, 212, 255, 0.95); }
 .landing-ghost {
   color: #f4f6fb;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.16);
 }
-.landing-ghost:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.3); }
+.landing-ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.3); }
+.landing :is(.landing-cta,.landing-ghost,.landing-demo-swatch):focus-visible {
+  outline: 3px solid #3ad9b4;
+  outline-offset: 4px;
+}
+.landing :is(.landing-cta,.landing-ghost,.landing-demo-swatch):active:not(:disabled) {
+  filter: brightness(.92);
+  box-shadow: inset 0 2px 4px #0004;
+}
+.landing :is(.landing-cta,.landing-ghost,.landing-mobile-menu-toggle):disabled {
+  cursor: wait;
+  opacity: .65;
+}
 .landing-cta.lg,
 .landing-ghost.lg { padding: 14px 26px; font-size: 15.5px; border-radius: 13px; }
 
@@ -5139,6 +5151,14 @@ html[data-theme="light"] .landing-scrim {
   .landing-demo-dialog-scroll { padding: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  /* CSS also covers server HTML, before the motion preference hook hydrates. */
+  .landing-motion-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  .landing :is(.landing-cta,.landing-ghost,.landing-demo-swatch) { transition: none; }
+  .landing :is(.landing-cta,.landing-ghost,.landing-demo-swatch):hover { transform: none; }
   .landing-mobile-menu-toggle,
   .landing-mobile-menu-icon span,
   .landing-mobile-menu-panel :is(a,button),
