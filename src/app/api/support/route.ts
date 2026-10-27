@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     await sendMail({ to: inbox, subject, html, text, replyTo: email });
   } catch {
     return NextResponse.json(
-      { error: "Your message could not be sent right now. Please try again later or email support directly." },
+      { error: "Your message could not be sent right now. Please try again later or contact @orire.app on Instagram." },
       { status: 502 },
     );
   }

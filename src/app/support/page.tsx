@@ -27,7 +27,7 @@ export default function SupportPage() {
       });
       const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) {
-        setError(data.error || "Couldn’t send your message. Please try again, or email us directly.");
+        setError(data.error || "Couldn’t send your message. Please try again, or contact us on Instagram.");
         setStatus("error");
         return;
       }
@@ -38,7 +38,7 @@ export default function SupportPage() {
       setError(null);
       setStatus("sent");
     } catch {
-      setError("Network error. Please try again, or email us directly.");
+      setError("Network error. Please try again, or contact us on Instagram.");
       setStatus("error");
     }
   }
@@ -56,9 +56,11 @@ export default function SupportPage() {
       ) : (
         <>
           <p className="content-lede">
-            Question, bug, or feedback? Send us a message and we’ll get back to
-            you by email. You can also reach us directly at{" "}
-            <a href={`mailto:${COMPANY.supportEmail}`}>{COMPANY.supportEmail}</a>.
+            Question, bug, or feedback? Contact us on Instagram at{" "}
+            <a href={COMPANY.contactUrl}>{COMPANY.contactLabel}</a> for support
+            or an initial privacy enquiry. Do not send CVs, passwords, identity
+            documents or payment details through Instagram. You can also use
+            the form below to request an email reply.
           </p>
 
           <form className="support-form" onSubmit={submit}>

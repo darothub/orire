@@ -35,7 +35,8 @@ export default function TermsPage() {
       <p>
         You are responsible for the accuracy of your account details, for keeping
         your password secure, and for all activity under your account. Tell us
-        promptly at {COMPANY.supportEmail} if you suspect unauthorised use.
+        promptly through <a href={COMPANY.contactUrl}>{COMPANY.contactLabel}</a>
+        {" "}if you suspect unauthorised use. Do not send passwords or payment details.
       </p>
 
       <h2>4. Plans, pricing and billing</h2>
@@ -148,13 +149,13 @@ export default function TermsPage() {
         These Terms are governed by the laws of {COMPANY.jurisdiction}, and the
         courts of {COMPANY.jurisdiction} have jurisdiction, without affecting any
         mandatory consumer protections in your country of residence. EU consumers
-        may also use the European Commission&rsquo;s Online Dispute Resolution
-        platform at{" "}
-        <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener noreferrer">ec.europa.eu/consumers/odr</a>.
+        can find information about out-of-court dispute resolution through the
+        European Commission&rsquo;s{" "}
+        <a href="https://consumer-redress.ec.europa.eu/dispute-resolution-bodies" target="_blank" rel="noopener noreferrer">consumer dispute resolution directory</a>.
       </p>
 
       <p className="legal-foot">
-        {COMPANY.legalEntity || "Orire"} · {COMPANY.supportEmail}
+        {COMPANY.legalEntity || "Orire"} · <a href={COMPANY.contactUrl}>{COMPANY.contactLabel}</a>
         {COMPANY.address ? ` · ${COMPANY.address}` : ""}
       </p>
     </main>
