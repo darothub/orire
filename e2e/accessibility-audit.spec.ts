@@ -86,6 +86,13 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
             }
           }
           await audit(appPage, testInfo, "workspace");
+          // Capture the same document that axe audited. Choosing a showcase
+          // template below replaces its persona and animates old editor cards
+          // out; scrolling one of those departing cards can race its removal.
+          if (colorScheme === "dark" && ["Edit", "Grade", "AI Settings"].includes(view)) {
+            if (view === "Edit") await appPage.locator(".ed-card .ed-label").first().scrollIntoViewIfNeeded();
+            await appPage.screenshot({ path: testInfo.outputPath(`actual-${view}-${viewport.width}.png`), animations: "disabled" });
+          }
           if (view === "Edit") {
             const pane = appPage.getByRole("tablist", { name: "Switch pane" });
             if (viewport.width < 800) {
@@ -98,13 +105,10 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
             await second.focus();
             await appPage.keyboard.press("Enter");
             await expect(second).toHaveAttribute("aria-pressed", "true");
-          }
-          if (colorScheme === "dark" && ["Edit", "Grade", "AI Settings"].includes(view)) {
-            if (view === "Edit" && viewport.width < 800) {
-              await appPage.getByRole("tablist", { name: "Switch pane" }).getByRole("tab", { name: "Edit" }).click();
+            if (viewport.width < 800) {
+              await pane.getByRole("tab", { name: "Edit" }).click();
+              await expect(pane.getByRole("tab", { name: "Edit" })).toHaveAttribute("aria-selected", "true");
             }
-            if (view === "Edit") await appPage.locator(".ed-card .ed-label").first().scrollIntoViewIfNeeded();
-            await appPage.screenshot({ path: testInfo.outputPath(`actual-${view}-${viewport.width}.png`), animations: "disabled" });
           }
         });
       }
