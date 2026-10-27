@@ -16,15 +16,17 @@ describe("public privacy and support discoverability", () => {
     }
   });
 
-  it("maintains valid, separate privacy and support contact channels", () => {
-    expect(COMPANY.privacyEmail).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-    expect(COMPANY.supportEmail).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-    expect(COMPANY.privacyEmail).not.toBe(COMPANY.supportEmail);
-    const support = source("src/app/support/page.tsx");
-    expect(support).toContain("COMPANY.supportEmail");
-    expect(support).toContain('href={`mailto:${COMPANY.supportEmail}`}');
-    expect(support).toContain('href="/privacy"');
-    expect(support).toContain('href="/terms"');
+  it("uses the owner-confirmed contact without publishing unverified mailboxes", () => {
+    expect(COMPANY.legalEntity).toBe("Bogini");
+    expect(COMPANY.address).toBe("Porto, Portugal");
+    expect(COMPANY.contactUrl).toBe("https://www.instagram.com/orire.app/");
+    expect(COMPANY.contactLabel).toBe("@orire.app");
+    for (const path of ["privacy", "terms", "support"]) {
+      const page = source(`src/app/${path}/page.tsx`);
+      expect(page).toContain("COMPANY.contactUrl");
+      expect(page).not.toContain("COMPANY.supportEmail");
+      expect(page).not.toContain("COMPANY.privacyEmail");
+    }
   });
 
   it("preserves distinct canonical URLs for the two policies", () => {

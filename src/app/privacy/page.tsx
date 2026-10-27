@@ -22,11 +22,12 @@ export default function PrivacyPage() {
         &ldquo;our&rdquo;) is an AI CV studio
         {COMPANY.legalEntity ? ` operated by ${COMPANY.legalEntity}` : ""}
         {COMPANY.legalEntity && COMPANY.registrationNumber ? `, registered in ${COMPANY.jurisdiction} under number ${COMPANY.registrationNumber}` : ""}
-        {COMPANY.legalEntity && COMPANY.address ? `, with registered office at ${COMPANY.address}` : ""}.
+        {COMPANY.legalEntity && COMPANY.address ? `, based in ${COMPANY.address}` : ""}.
         We are the <strong>data controller</strong> for the personal data
         processed through this website (the &ldquo;Service&rdquo;). For any
-        privacy question or to exercise your rights, contact us at{" "}
-        {COMPANY.privacyEmail}.
+        privacy question or to exercise your rights, start an enquiry through Instagram at{" "}
+        <a href={COMPANY.contactUrl}>{COMPANY.contactLabel}</a>. Do not send CVs,
+        passwords, identity documents or payment details through Instagram.
       </p>
 
       <h2>2. Scope</h2>
@@ -61,51 +62,94 @@ export default function PrivacyPage() {
       <h2>5. How your CV is processed by AI</h2>
       <p>
         To re-brand, tailor, compare and score your CV, we send your CV content
-        and any job description you provide to AI model providers that act as our
-        processors under contract. We currently use {COMPANY.aiProviders}. These
-        providers process the content only to return a result to us and do not
-        use data submitted via their APIs to train their models. The
+        and any job description you provide to AI model providers. We currently use {COMPANY.aiProviders};
+        a request may be routed to
+        either provider, including when the other provider is unavailable. The
         deterministic rating runs on our own systems and involves no AI model
         call.
       </p>
 
+      <p>
+        Uploaded PDF, DOCX and LinkedIn ZIP files are read on our server to extract
+        their text or CV fields. The parsing step does not save the original file.
+        Extracted content can become a draft; AI features may send that content
+        to the providers above. Drafts can be stored in your browser; while
+        signed in, edits can also be saved automatically to your account.
+        Library saves retain versions. AI responses may also be temporarily
+        cached to avoid repeating a request.
+      </p>
+      <p>
+        The providers describe their API data handling in their own policies:
+        {" "}<a href="https://openai.com/business-data/">OpenAI business data</a> and
+        {" "}<a href="https://privacy.anthropic.com/">Anthropic Privacy Center</a>.
+        Their published commercial defaults do not use API inputs and outputs
+        for model training. This is not a promise of zero retention; provider
+        retention, safety processing and any applicable exceptions are governed
+        by the relevant service terms.
+      </p>
+
       <h2>6. Who we share data with</h2>
       <p>
-        We share personal data only with service providers who process it on our
-        behalf under written data-processing agreements: hosting/infrastructure,
+        Service providers involved in operating Orire include hosting/infrastructure,
         our AI model providers ({COMPANY.aiProviders}), payment processing
         ({COMPANY.paymentProvider}), authentication and email delivery, and
-        analytics. We do <strong>not</strong> sell your personal data.
+        analytics. If you contact us through Instagram, your message is also
+        processed by Instagram under its own privacy policy. Use it for an
+        initial enquiry, not for sending sensitive documents. We do
+        <strong> not</strong> sell your personal data.
       </p>
 
       <h2>7. International transfers</h2>
       <p>
-        Where a provider processes data outside the European Economic Area, we
-        rely on appropriate safeguards such as the European Commission&rsquo;s
-        Standard Contractual Clauses or an adequacy decision. Request a copy at{" "}
-        {COMPANY.privacyEmail}.
+        Providers may process data outside the European Economic Area. For
+        information about the providers involved in your request and applicable
+        transfer safeguards, start a privacy enquiry at{" "}
+        <a href={COMPANY.contactUrl}>{COMPANY.contactLabel}</a>.
       </p>
 
       <h2>8. How long we keep your data</h2>
       <ul>
         <li><strong>Account data:</strong> while your account is active, then deleted within {COMPANY.retention.account} of account closure.</li>
         <li><strong>CV content:</strong> kept so you can access your drafts; deleted when you delete it, or within {COMPANY.retention.account} of account closure.</li>
-        <li><strong>Billing records:</strong> kept for {COMPANY.retention.billingYears} to meet Portuguese tax and accounting obligations.</li>
+        <li><strong>Billing records:</strong> our policy is to retain these for {COMPANY.retention.billingYears} for accounting purposes.</li>
         <li><strong>Logs:</strong> kept for {COMPANY.retention.logs}.</li>
       </ul>
+
+      <p>
+        These are our retention periods, not a claim that account deletion
+        immediately removes every copy. Backups, provider records and support
+        messages are separate from the active account database; ask us about
+        their retention and deletion when making a privacy request.
+      </p>
 
       <h2>9. Your rights</h2>
       <p>
         Under the GDPR you have the right to access, rectification, erasure,
         restriction, data portability, and to object to certain processing, as
-        well as to withdraw consent at any time. You can download all your data
-        as a JSON file (&ldquo;Export my data&rdquo;), and delete your account
-        and all associated data, directly from your account settings — or email{" "}
-        {COMPANY.privacyEmail}; we respond within one month. You may also lodge a
+        well as to withdraw consent at any time. For an initial privacy
+        enquiry, contact <a href={COMPANY.contactUrl}>{COMPANY.contactLabel}</a>
+        {" "}on Instagram without sending sensitive documents. You may also lodge a
         complaint with the Portuguese supervisory authority, the Comissão
         Nacional de Proteção de Dados (CNPD) —{" "}
         <a href="https://www.cnpd.pt" target="_blank" rel="noopener noreferrer">www.cnpd.pt</a>.
       </p>
+
+      <ul>
+        <li><strong>Export my data:</strong> sign in with a verified account and
+          open the account menu. This downloads a JSON file containing your
+          account profile, saved CVs, refinement records, plan and usage records,
+          and export history. It excludes passwords and authentication secrets,
+          and does not include external billing records or service logs.</li>
+        <li><strong>Delete account:</strong> open the account menu and choose
+          Delete account. After confirmation, the app removes your account and
+          associated records from its active database. It also attempts to cancel
+          an active subscription. If cancellation fails or you see a later charge,
+          contact support; account deletion is not itself a refund.</li>
+        <li><strong>Browser copies:</strong> drafts in browser storage and downloaded files
+          are separate. Signing out or deleting your account does not erase all
+          local copies. Clear Orire&rsquo;s site data in your browser settings
+          and remove downloaded files if you want to remove those copies.</li>
+      </ul>
 
       <h2>10. Cookies</h2>
       <p>
@@ -135,7 +179,7 @@ export default function PrivacyPage() {
       </p>
 
       <p className="legal-foot">
-        {COMPANY.legalEntity || "Orire"} · {COMPANY.privacyEmail}
+        {COMPANY.legalEntity || "Orire"} · <a href={COMPANY.contactUrl}>{COMPANY.contactLabel}</a>
         {COMPANY.address ? ` · ${COMPANY.address}` : ""}
       </p>
     </main>
