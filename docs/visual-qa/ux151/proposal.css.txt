@@ -1,0 +1,28 @@
+
+.spotlight-view .ws-head { margin-bottom: 10px; }
+.spotlight-view .ws-head p { max-width: 64ch; margin-bottom: 0; }
+.spotlight-view .studio-proposal-context { display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 16px;color:var(--muted);font-size:12px; }
+.spotlight-view .studio-proposal-context span { display:inline-flex;gap:5px;align-items:center;min-height:28px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--panel); }
+.spotlight-view .studio-proposal-context strong { color:var(--text);font-weight:600; }
+.spotlight-view .spot-studio-next { margin:0 0 22px;padding:24px;gap:20px;border-radius:18px; }
+.spotlight-view .spot-studio-next h3 { font-size:28px;margin-bottom:8px; }
+.spotlight-view .spot-studio-next p { max-width:58ch;font-size:13px;line-height:1.55; }
+.spotlight-view .studio-proposal-tools-head { display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin:0 0 14px; }
+.spotlight-view .studio-proposal-tools-head h3 { margin:0;font-size:17px;font-weight:650;color:var(--text); }
+.spotlight-view .studio-proposal-tools-head p { margin:0;font-size:12px;color:var(--muted); }
+.spotlight-view .studio-proposal-tools .spot-grid { margin-top:0;grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); }
+.spotlight-view .studio-proposal-tools .spot-card { min-height:124px; }
+.spotlight-view .spot-coach { margin-top:20px;margin-bottom:16px; }
+.spotlight-view .spot-hero { margin-top:0; }
+@media(max-width:760px) {
+ .spotlight-view .ws-head { margin-bottom:10px; }
+ .spotlight-view .ws-head p { font-size:13px;line-height:1.5; }
+ .spotlight-view .studio-proposal-context { gap:6px;margin-bottom:14px; }
+ .spotlight-view .spot-studio-next { padding:20px;gap:16px;margin-bottom:22px;border-radius:17px; }
+ .spotlight-view .spot-studio-next h3 { font-size:24px;line-height:1.2; }
+ .spotlight-view .spot-studio-next p { font-size:13px;line-height:1.5; }
+ .spotlight-view .spot-studio-actions { gap:8px; }
+ .spotlight-view .spot-studio-eyebrow { margin-bottom:7px; }
+ .spotlight-view .studio-proposal-tools-head { align-items:flex-start;flex-direction:column;gap:4px;margin-bottom:14px; }
+ .spotlight-view .studio-proposal-tools .spot-card { min-height:112px;gap:10px; }
+}

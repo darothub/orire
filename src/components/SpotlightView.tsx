@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { useFlowStore, COMPOSABLE_BLOCKS } from "@/lib/store/flowStore";
@@ -8,6 +8,7 @@ import { useUsageStore } from "@/lib/store/usageStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useLibraryStore } from "@/lib/store/libraryStore";
 import { recommendedNextBlock } from "@/lib/cv/recommendedNext";
+import { getTemplateInfo } from "@/lib/templates/catalog";
 import type { Metric } from "@/lib/plan/plan";
 
 /** Metered blocks that grey out / route to Plans once the free cap is spent. */
@@ -72,8 +73,7 @@ function BlockCard({ view, number, recommended }: { view: WorkspaceView; number:
   );
 }
 
-/** Featured hero for Simulate — the differentiator, spotlighted above the grid
- *  (critique §3: spotlight the next best action, not an equal grid). */
+/** Simulate stays available alongside the user's existing CV workflow. */
 function SimulateHero() {
   const setView = useViewStore((s) => s.setView);
   const inFlow = useFlowStore((s) => s.sequence.includes("target"));
@@ -119,26 +119,34 @@ export function SpotlightView() {
   const setView = useViewStore((s) => s.setView);
   const cvName = useCVStore((s) => s.cv.basics.fullName);
   const started = useCVStore((s) => s.started);
+  const activeTemplate = useCVStore((s) => s.activeTemplate);
+  const templateName = getTemplateInfo(activeTemplate)?.name ?? "Aurora";
+  const currentName = cvName.trim();
+  const reducedMotion = useReducedMotion();
 
   return (
     <motion.div
       className="ws-view spotlight-view"
-      initial={{ opacity: 0, y: 16, filter: "blur(6px)" }}
+      initial={reducedMotion ? false : { opacity: 0, y: 16, filter: "blur(6px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: reducedMotion ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] }}
     >
       <header className="ws-head">
         <div>
-          <span className="spot-studio-eyebrow">Your workspace · Orire Studio</span>
+          <span className="spot-studio-eyebrow">Orire Studio</span>
           <h2>Your CV studio</h2>
-          <p>Shape your experience into a CV you&apos;re proud to share. Start with your draft, then refine and export when you&apos;re ready.</p>
+          <p>Create, refine and export your CV in one workspace.</p>
         </div>
       </header>
+      <div className="spot-studio-context" role="group" aria-label="Current CV context">
+        <span>{started ? `Current CV: ${currentName || "Untitled CV"}` : "New CV"}</span>
+        <span>Template: <strong>{templateName}</strong></span>
+      </div>
       <section className="spot-studio-next" aria-label="Continue your CV">
         <div>
           <span className="spot-studio-eyebrow">Your next step</span>
           <h3>{started ? "Continue your CV" : "Start your first CV"}</h3>
-          <p>{started ? `Pick up where you left off${cvName ? ` — ${cvName}` : ""}. Your existing edits remain in your workspace.` : "Add your experience, choose a template and see the live preview as you work."}</p>
+          <p>{started ? `Pick up where you left off${currentName ? ` — ${currentName}` : ""}. Your existing edits remain in your workspace.` : "Add your experience, choose a template and see the live preview as you work."}</p>
         </div>
         <div className="spot-studio-actions">
           <button type="button" className="flow-btn primary" onClick={() => setView("edit")}>{started ? "Continue editing →" : "Create your CV →"}</button>
@@ -146,23 +154,29 @@ export function SpotlightView() {
         </div>
       </section>
 
+      <section className="spot-studio-tools" aria-labelledby="spot-studio-tools-title">
+        <div className="spot-studio-tools-head">
+          <h3 id="spot-studio-tools-title">Your CV tools</h3>
+          <p>Open a tool or add it to your flow.</p>
+        </div>
+        <div className="spot-grid">
+          {gridBlocks.map((v, i) => (
+            <BlockCard key={v} view={v} number={i + 1} recommended={v === recommendedNext} />
+          ))}
+        </div>
+      </section>
+
       {!coachSeen && (
         <div className="spot-coach" role="note">
           <span className="spot-coach-text">
-            <strong>Make it yours.</strong> The left panel is your flow — drag blocks to reorder
-            them, and use the cards below (or the <b>＋</b> button) to add or remove blocks.
+            <strong>Make it yours.</strong> The workspace navigation is your flow — drag blocks to reorder
+            them, and use the cards above (or the <b>＋</b> button) to add or remove blocks.
           </span>
           <button type="button" className="flow-btn sm" onClick={dismissCoach}>Got it</button>
         </div>
       )}
 
       <SimulateHero />
-
-      <div className="spot-grid">
-        {gridBlocks.map((v, i) => (
-          <BlockCard key={v} view={v} number={i + 1} recommended={v === recommendedNext} />
-        ))}
-      </div>
 
       <div className="spot-foot">
         <button type="button" className="flow-btn ghost sm" onClick={resetFlow}>
