@@ -1,0 +1,159 @@
+{
+  "sourceCommit": "f0fdedd74ea811558f1e988c140c817ba24ae9f8",
+  "build": "luWnoOfkZNI3GPQ3FWfmj",
+  "browser": "153.0.8010.12",
+  "capturedAt": "2026-10-27T04:46:33.304Z",
+  "environment": "isolated local production build; external requests blocked",
+  "captures": [
+    {
+      "url": "http://localhost:3100/privacy",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "dark",
+      "file": "before-actual-privacy-desktop-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/terms",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "dark",
+      "file": "before-actual-terms-desktop-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/support",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "dark",
+      "file": "before-actual-support-desktop-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/privacy",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "light",
+      "file": "before-actual-privacy-desktop-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/terms",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "light",
+      "file": "before-actual-terms-desktop-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/support",
+      "status": 200,
+      "viewport": {
+        "width": 1440,
+        "height": 900,
+        "name": "desktop"
+      },
+      "theme": "light",
+      "file": "before-actual-support-desktop-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/privacy",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "dark",
+      "file": "before-actual-privacy-mobile-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/terms",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "dark",
+      "file": "before-actual-terms-mobile-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/support",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "dark",
+      "file": "before-actual-support-mobile-dark.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/privacy",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "light",
+      "file": "before-actual-privacy-mobile-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/terms",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "light",
+      "file": "before-actual-terms-mobile-light.png",
+      "pageErrors": []
+    },
+    {
+      "url": "http://localhost:3100/support",
+      "status": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844,
+        "name": "mobile"
+      },
+      "theme": "light",
+      "file": "before-actual-support-mobile-light.png",
+      "pageErrors": []
+    }
+  ],
+  "sourceSha256": {
+    "src/lib/legal/company.ts": "9c7891367a7e636a0f193f18cb82740d8c7032b7044a0797770a5f45b9168ba2",
+    "src/app/privacy/page.tsx": "e760b6ab0ace5f71edaa401d5d202de49f762ba8e025f6a3abdd363f51150d83",
+    "src/app/terms/page.tsx": "727377aaa14a8356883f1e7df8c9f8ba4dfd1aef7b5ff79bff43dfc9e2146fa4",
+    "src/app/support/page.tsx": "1dea05aa7af6598bd49b69fd70f2f74cbf53c20766fd931e738ed77163e3b398"
+  }
+}
