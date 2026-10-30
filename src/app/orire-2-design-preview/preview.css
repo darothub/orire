@@ -1,0 +1,29 @@
+.orire2-preview{color-scheme:light;background:#f7f8f3;color:#15382e;min-height:100vh}
+.orire2-preview *{box-sizing:border-box}
+.orire2-ribbon{background:#dcece2;text-align:center;padding:10px 16px;font-size:12px;font-weight:700}
+.orire2-shell{max-width:1220px;margin:auto;padding:26px 24px 80px}
+.orire2-topline{display:flex;justify-content:space-between;gap:16px;color:#426354;font-size:13px}
+.orire2-topline a{color:#174e3d;text-decoration:underline}
+.orire2-intro{padding:45px 0 28px;max-width:780px}
+.orire2-eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#24694b;font-weight:700}
+.orire2-intro h1{font-size:clamp(36px,5vw,64px);letter-spacing:-.055em;line-height:1.08;margin:12px 0 18px;color:#15382e}
+.orire2-intro>p:last-child{color:#587165;line-height:1.65;font-size:17px}
+.orire2-picks{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:25px}
+.orire2-choice{text-align:left;border:1px solid #d5e1d9;border-radius:14px;background:white;padding:12px;display:flex;flex-direction:column;gap:6px;min-height:100px;color:#15382e;cursor:pointer}
+.orire2-choice.selected{outline:3px solid #28795b;outline-offset:1px}
+.orire2-choice strong{font-size:15px}.orire2-choice small{font-size:11px;color:#62796e}
+.orire2-swatch{height:7px;border-radius:5px;width:100%}
+.orire2-stage{background:white;border:1px solid #d5e1d9;border-radius:18px;overflow:hidden}
+.orire2-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid #d5e1d9;color:#15382e}
+.orire2-type{margin-left:12px;font-size:12px;color:#597265}
+.orire2-tools{display:flex;align-items:center;gap:10px}
+.orire2-tools select,.orire2-tools button{border:1px solid #b9cdc1;border-radius:9px;background:white;color:#15382e;padding:10px;min-height:44px;font:inherit}
+.orire2-canvas{overflow:auto;max-height:880px;padding:24px;background:#e9eeeb;display:flex;justify-content:center;align-items:flex-start}
+.orire2-canvas.expanded{max-height:none}
+.orire2-sheet-frame{position:relative;flex:none}
+.orire2-sheet{width:794px;min-height:1123px;position:absolute;top:0;left:0;transform-origin:top left;background:#fff;color:#111;box-shadow:0 14px 42px #10251b20;overflow:visible;border-radius:0;padding:0}
+.orire2-note{font-size:12px;color:#5b7267;padding:12px 20px;margin:0}
+.orire2-preview button:focus-visible,.orire2-preview select:focus-visible,.orire2-preview a:focus-visible{outline:3px solid #174e3d;outline-offset:3px}
+@media(max-width:850px){.orire2-picks{grid-template-columns:repeat(3,minmax(0,1fr))}.orire2-toolbar{flex-wrap:wrap}.orire2-canvas{justify-content:flex-start}}
+@media(max-width:460px){.orire2-picks{grid-template-columns:repeat(2,minmax(0,1fr))}.orire2-shell{padding-inline:15px}.orire2-tools{flex-wrap:wrap}.orire2-canvas{padding:12px}}
+@media(prefers-reduced-motion:reduce){.orire2-preview *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
