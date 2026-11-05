@@ -92,18 +92,30 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     skipped=$((skipped + 1)); continue
   fi
 
-  # Replace any existing value, then add the current one.
-  vercel env rm "$key" "$TARGET" --yes >/dev/null 2>&1 || true
-  # NEXT_PUBLIC_* variables must be explicitly marked as config (public).
-  type_flag=""
+  # A forced add replaces the existing key in place without a remove/add outage.
+  # Explicit types prevent secrets from becoming readable Config variables.
+  type_flag="--type secret"
   if [[ "$key" == NEXT_PUBLIC_* ]]; then
     type_flag="--type config"
   fi
   # shellcheck disable=SC2086
-  printf '%s' "$value" | vercel env add "$key" "$TARGET" $type_flag --yes >/dev/null 2>&1
+  if ! printf '%s' "$value" | vercel env add "$key" "$TARGET" --force $type_flag --yes >/dev/null 2>&1; then
+    echo "error: could not sync $key; attestation NOT updated." >&2
+    exit 1
+  fi
   echo "  ✓ $key"
   pushed=$((pushed + 1))
 done <"$TMP_ENV"
 
+# Publish attestation LAST: any failed variable write leaves old marker and
+# causes the deployment preflight to fail closed.
+if [[ "$TARGET" == "production" ]]; then
+  attestation="$(node "$REPO_ROOT/scripts/config-attestation.mjs" "$TMP_ENV")"
+  if ! printf '%s' "$attestation" | vercel env add ORIRE_CONFIG_ATTESTATION "$TARGET" --force --type config --yes >/dev/null 2>&1; then
+    echo "error: failed to record sync attestation; deployment is blocked." >&2
+    exit 1
+  fi
+  echo "  ✓ ORIRE_CONFIG_ATTESTATION"
+fi
 echo "✓ synced $pushed vars to Vercel ($TARGET); skipped $skipped."
 echo "  Trigger a redeploy for the changes to take effect:  vercel --prod"
