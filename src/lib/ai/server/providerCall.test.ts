@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import {
   resilientJsonFetch,
   runProvider,
+  safeProviderError,
   type ResilienceConfig,
   type ResilienceDeps,
 } from "@/lib/ai/server/providerCall";
@@ -134,7 +135,7 @@ describe("runProvider", () => {
     expect(out).toEqual({ ok: true, content: "hello" });
   });
 
-  it("returns the provider error body VERBATIM (req 12)", async () => {
+  it("never exposes an upstream provider error body to the client", async () => {
     const raw = '{"error":{"message":"You exceeded your quota"}}';
     const { deps } = makeDeps(async () => new Response(raw, { status: 429 }));
     // 429 is retryable; with 1 attempt it returns the terminal body immediately.
@@ -144,7 +145,28 @@ describe("runProvider", () => {
       deps: { ...deps, sleep: deps.sleep },
     });
     expect(out.ok).toBe(false);
-    if (!out.ok) expect(out.body).toBe(raw);
+    if (!out.ok) {
+      expect(out.body).toBe(safeProviderError(429));
+      expect(out.body).not.toContain("quota");
+      expect(out.status).toBe(429);
+    }
+  });
+
+  it("masks expired API credentials and preserves status for server-side handling", async () => {
+    const raw = JSON.stringify({error:{message:"Your API key has expired. Create a new API key to continue.",type:"invalid_request_error",code:"expired_secret_key"}});
+    for (const provider of ["openai", "anthropic"] as const) {
+      const {deps}=makeDeps(async () => new Response(raw,{status:401}));
+      const out=await runProvider({provider,...base,deps});
+      expect(out).toEqual({ok:false,status:401,body:safeProviderError(401)});
+      expect(JSON.stringify(out)).not.toContain("expired_secret_key");
+      expect(JSON.stringify(out)).not.toContain("API key");
+    }
+  });
+
+  it("does not leak internal transport exception strings",async()=>{
+    const {deps}=makeDeps(async()=>{throw new Error("Internal token sk-secret and private hostname");});
+    const out=await runProvider({provider:"openai",...base,deps});
+    expect(out).toEqual({ok:false,body:safeProviderError()});
   });
 
   it("caches deterministic results and serves the second call without a provider fetch", async () => {
