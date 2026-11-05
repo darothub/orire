@@ -24,6 +24,7 @@ const run=(cmd,args,cwd)=>{
 };
 let tmp;
 try{
+ if(env!=="prod")throw new Error("Production preflight must use SOPS_ENV=prod.");
  if(!existsSync(path.join(repo,".vercel/project.json")))throw new Error("Link the correct Orire Vercel project with vercel link first.");
  if(!existsSync(path.join(cfg,"scripts/pull.sh")))throw new Error("central-config checkout not found; set CENTRAL_CONFIG_DIR.");
  const values=deployedValues(run("sh",[path.join(cfg,"scripts/pull.sh"),project,env],cfg),target);
