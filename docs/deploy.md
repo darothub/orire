@@ -63,14 +63,46 @@ tests (see "CI" below).
 ## 4. Sync config into Vercel, then deploy
 
 ```bash
-npm run vercel:env           # pushes SOPS prod → Vercel "production"
-vercel --prod                # first production deploy
+npm run vercel:env           # sync merged SOPS prod → Vercel production
+npm run config:check:prod    # fail closed on missing variables/stale sync
+npm run deploy:prod:safe     # checked deploy from clean, current main only
 ```
 
 `scripts/sync-vercel-env.sh` decrypts the merged bundle and mirrors every var
 (including `NEXT_PUBLIC_*`, which must exist **before** the build so they inline
-correctly). It skips dev-only `MAIL_SMTP_*` for production. Re-run
-`npm run vercel:env` any time a value changes in SOPS, then redeploy.
+correctly). It skips dev-only `MAIL_SMTP_*` for production. It now updates
+variables in place (`vercel env add --force`) rather than removing the old value
+first. After **all** writes succeed, it publishes a nonsecret
+`ORIRE_CONFIG_ATTESTATION` token.
+
+The production preflight reads the effective merged central-config bundle,
+checks that every nonempty managed key is listed in Vercel Production, and
+checks the attestation token against that bundle. It reports only variable
+names, not values, and refuses a stale or missing attestation. Run it after
+every SOPS change, then deploy from a clean, up-to-date `main` checkout:
+
+```bash
+npm run vercel:env
+npm run config:check:prod
+npm run deploy:prod:safe
+```
+
+**Important limits:** Vercel's Secret values are not retrievable after being
+saved. The attestation verifies that the *last completed managed sync* used the
+current merged configuration; it cannot detect someone subsequently changing
+an individual Secret directly in Vercel while leaving the attestation intact,
+and it does not inspect the variables captured in an already-running deployment.
+Audit manual changes separately and redeploy after any environment update.
+The preflight needs local SOPS/age access, a linked Vercel project, the Vercel
+CLI and the `central-config` sibling checkout. Never put decryption keys or
+production secrets in ordinary PR/CI environments.
+
+**Auto-deploy caveat:** Vercel's GitHub integration deploys pushes to main
+independently and currently **does not invoke** this local preflight. Use
+`npm run deploy:prod:safe` for manual deploys; enforcing the gate on *all*
+production deployments requires a separate deployment approval/CI integration
+with securely provisioned SOPS and Vercel access. Do not regard a green GitHub
+unit-test run as a production secrets consistency check.
 
 Database migrations run automatically: `vercel.json` sets the build command to
 `prisma migrate deploy` (production only, so Preview builds never touch the prod DB) then `next build`.
