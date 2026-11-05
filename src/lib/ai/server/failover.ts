@@ -8,9 +8,9 @@
  * the same prompt on the other managed provider and serve that instead —
  * instead of surfacing "assistant is down" to the user.
  *
- * We fail over ONLY on availability failures. A 4xx (bad request, auth, a
- * plan/validation error) is deterministic — the other provider would reject it
- * too — so we return it immediately without a wasted second call.
+ * We fail over on availability failures, including provider credential
+ * failures (401/403) that may be isolated to one provider. Bad requests (400)
+ * remain non-retryable. These are upstream statuses, not user auth errors.
  *
  * Refine is intentionally NOT routed through here: it is gated by a signed run
  * token that authorizes specific user-selected providers, so its failover is a
@@ -34,12 +34,12 @@ export interface ServedCall {
   noKey?: boolean;
 }
 
-const AVAILABILITY_STATUS = new Set([408, 409, 425, 429, 500, 502, 503, 504, 529]);
+const AVAILABILITY_STATUS = new Set([401, 403, 408, 409, 425, 429, 500, 502, 503, 504, 529]);
 
 /**
  * Whether a failed call is worth retrying on the other provider: transport
- * errors/timeouts (no status) and transient/5xx statuses. A deterministic 4xx
- * is not.
+ * errors/timeouts (no status), provider auth errors (401/403) and transient
+ * 5xx statuses. Invalid input (400) is not.
  */
 export function isAvailabilityFailure(call: ProviderCall): boolean {
   if (call.ok) return false;

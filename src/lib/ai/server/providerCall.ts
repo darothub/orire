@@ -12,9 +12,8 @@
  * provider sends one. Non-transient failures (4xx other than 429) return
  * immediately. Without this, one slow or flapping provider stalls a whole run.
  *
- * Every failure path returns the provider's own message VERBATIM (req 12); we
- * never paraphrase provider errors. Timeouts and network drops have no provider
- * message, so we surface a clear, honest description instead.
+ * Provider failures are classified server-side. Raw upstream response bodies,
+ * exception strings and credential diagnostics must never reach the user.
  */
 
 import { type ProviderId } from "@/lib/ai/types";
@@ -238,15 +237,20 @@ async function callOpenAI(
     deps ?? realDeps,
     { provider: "openai", model },
   );
-  if (outcome.kind === "error") return { ok: false, body: outcome.message };
+  if (outcome.kind === "error") {
+    logger.error("ai.provider.transport_error", { provider: "openai", model });
+    return { ok: false, body: safeProviderError() };
+  }
   if (outcome.status < 200 || outcome.status >= 300) {
-    return { ok: false, status: outcome.status, body: outcome.text };
+    logger.warn("ai.provider.rejected", { status: outcome.status, model });
+    return { ok: false, status: outcome.status, body: safeProviderError(outcome.status) };
   }
   let data: unknown;
   try {
     data = JSON.parse(outcome.text);
   } catch {
-    return { ok: false, status: outcome.status, body: outcome.text };
+    logger.warn("ai.provider.rejected", { status: outcome.status, model });
+    return { ok: false, status: outcome.status, body: safeProviderError(outcome.status) };
   }
   const content: string =
     (data as { choices?: { message?: { content?: string } }[] })?.choices?.[0]?.message?.content ?? "";
@@ -282,19 +286,43 @@ async function callAnthropic(
     deps ?? realDeps,
     { provider: "anthropic", model },
   );
-  if (outcome.kind === "error") return { ok: false, body: outcome.message };
+  if (outcome.kind === "error") {
+    logger.error("ai.provider.transport_error", { provider: "anthropic", model });
+    return { ok: false, body: safeProviderError() };
+  }
   if (outcome.status < 200 || outcome.status >= 300) {
-    return { ok: false, status: outcome.status, body: outcome.text };
+    logger.warn("ai.provider.rejected", { status: outcome.status, model });
+    return { ok: false, status: outcome.status, body: safeProviderError(outcome.status) };
   }
   let data: unknown;
   try {
     data = JSON.parse(outcome.text);
   } catch {
-    return { ok: false, status: outcome.status, body: outcome.text };
+    logger.warn("ai.provider.rejected", { status: outcome.status, model });
+    return { ok: false, status: outcome.status, body: safeProviderError(outcome.status) };
   }
   const blocks = (data as { content?: { text?: string }[] })?.content;
   const content: string = Array.isArray(blocks) ? blocks.map((b) => b?.text ?? "").join("") : "";
   return { ok: true, content };
+}
+
+/**
+ * Never expose upstream provider response bodies in Orire's public API.
+ * The status is retained for routing/failover; messages are generic and safe.
+ * Do not log the raw body: it may contain credentials, request content or
+ * internal account/billing details.
+ */
+export function safeProviderError(status?: number): string {
+  if (status === 401 || status === 403) {
+    return "The AI assistant is temporarily unavailable. Please try again later.";
+  }
+  if (status === 429) {
+    return "The AI assistant is busy right now. Please try again shortly.";
+  }
+  if (status != null && status >= 500) {
+    return "The AI assistant is experiencing a temporary issue. Please try again shortly.";
+  }
+  return "The AI assistant could not complete this request. Please try again or contact support.";
 }
 
 /** Dispatch a prompt to the given provider, regardless of transport. */
