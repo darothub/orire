@@ -13,5 +13,9 @@ git fetch origin main --quiet
 if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]]; then
   echo "ERROR: local main is not the current origin/main." >&2; exit 1
 fi
+echo "→ Synchronizing central-config to Vercel production"
+npm run vercel:env
+echo "→ Checking production configuration consistency"
 npm run config:check:prod
+echo "→ Deploying Orire production"
 vercel --prod
