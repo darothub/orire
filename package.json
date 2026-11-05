@@ -28,6 +28,7 @@
     "vercel:env": "bash scripts/sync-vercel-env.sh",
     "config:check:prod": "node scripts/check-central-config.mjs",
     "config:check:test": "node --test scripts/lib/config-consistency.test.mjs",
+    "deploy:prod": "bash scripts/deploy-production.sh",
     "deploy:prod:safe": "bash scripts/deploy-production.sh"
   },
   "dependencies": {
