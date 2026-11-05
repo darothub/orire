@@ -63,9 +63,7 @@ tests (see "CI" below).
 ## 4. Sync config into Vercel, then deploy
 
 ```bash
-npm run vercel:env           # sync merged SOPS prod → Vercel production
-npm run config:check:prod    # fail closed on missing variables/stale sync
-npm run deploy:prod:safe     # checked deploy from clean, current main only
+npm run deploy:prod         # verify main → sync SOPS → check Vercel → deploy
 ```
 
 `scripts/sync-vercel-env.sh` decrypts the merged bundle and mirrors every var
@@ -78,14 +76,20 @@ first. After **all** writes succeed, it publishes a nonsecret
 The production preflight reads the effective merged central-config bundle,
 checks that every nonempty managed key is listed in Vercel Production, and
 checks the attestation token against that bundle. It reports only variable
-names, not values, and refuses a stale or missing attestation. Run it after
-every SOPS change, then deploy from a clean, up-to-date `main` checkout:
+names, not values, and refuses a stale or missing attestation.
+
+Run **one command** from a clean, up-to-date `main` checkout:
 
 ```bash
-npm run vercel:env
-npm run config:check:prod
-npm run deploy:prod:safe
+npm run deploy:prod
 ```
+
+The wrapper first verifies the current branch and clean working tree, fetches
+`origin/main` and confirms the checkout is current. **Only after these checks**
+does it synchronize merged SOPS production configuration, run the consistency
+preflight, and trigger `vercel --prod`. Any failed step stops the command.
+`npm run vercel:env` and `npm run config:check:prod` remain available for
+targeted diagnostics.
 
 **Important limits:** Vercel's Secret values are not retrievable after being
 saved. The attestation verifies that the *last completed managed sync* used the
@@ -99,7 +103,7 @@ production secrets in ordinary PR/CI environments.
 
 **Auto-deploy caveat:** Vercel's GitHub integration deploys pushes to main
 independently and currently **does not invoke** this local preflight. Use
-`npm run deploy:prod:safe` for manual deploys; enforcing the gate on *all*
+`npm run deploy:prod` for manual deploys; enforcing the gate on *all*
 production deployments requires a separate deployment approval/CI integration
 with securely provisioned SOPS and Vercel access. Do not regard a green GitHub
 unit-test run as a production secrets consistency check.
