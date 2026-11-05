@@ -31,7 +31,15 @@ try{
  if(!values.has("OPENAI_API_KEY")&&!values.has("ANTHROPIC_API_KEY"))throw new Error("Neither managed AI provider key is configured in the merged bundle.");
  // Fail before contacting Vercel if local secrets cannot produce an attestation.
  attest(values);
- const names=metadataNames(JSON.parse(run("vercel",["env","ls",target,"--format","json"],repo)));
+ let metadata;
+ try{
+   metadata=JSON.parse(run("vercel",["env","ls",target,"--format","json"],repo));
+ }catch{
+   // JSON parse exceptions may quote input; never print them in case CLI
+   // output unexpectedly includes readable Config variable values.
+   throw new Error("Could not parse Vercel environment metadata; check CLI version.");
+ }
+ const names=metadataNames(metadata);
  tmp=mkdtempSync(path.join(tmpdir(),"orire-config-check-"));
  const exported=path.join(tmp,"vercel.env");
  run("vercel",["env","pull",exported,"--environment=production","--yes"],repo);
