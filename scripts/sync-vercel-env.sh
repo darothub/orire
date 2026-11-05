@@ -41,6 +41,11 @@ if [[ -z "${SOPS_ENV:-}" ]]; then
     *)          SOPS_ENV="dev" ;;
   esac
 fi
+# Do not accidentally sync a dev bundle to the production target.
+if [[ "$TARGET" == "production" && "$SOPS_ENV" != "prod" ]]; then
+  echo "error: production must use the prod SOPS bundle." >&2
+  exit 1
+fi
 
 if ! command -v vercel >/dev/null 2>&1; then
   echo "error: vercel CLI not found. Install it: npm i -g vercel" >&2
@@ -118,4 +123,4 @@ if [[ "$TARGET" == "production" ]]; then
   echo "  ✓ ORIRE_CONFIG_ATTESTATION"
 fi
 echo "✓ synced $pushed vars to Vercel ($TARGET); skipped $skipped."
-echo "  Trigger a redeploy for the changes to take effect:  vercel --prod"
+echo "  Verify drift and deploy safely: npm run config:check:prod && npm run deploy:prod:safe"
