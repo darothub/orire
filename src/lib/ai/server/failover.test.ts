@@ -26,14 +26,15 @@ beforeEach(() => {
 });
 
 describe("isAvailabilityFailure", () => {
-  it("treats transport errors and 5xx/429 as availability failures", () => {
+  it("treats transport, provider credential errors, and 5xx/429 as availability failures", () => {
     expect(isAvailabilityFailure(failCall(undefined))).toBe(true);
     expect(isAvailabilityFailure(failCall(503))).toBe(true);
     expect(isAvailabilityFailure(failCall(429))).toBe(true);
+    expect(isAvailabilityFailure(failCall(401))).toBe(true);
+    expect(isAvailabilityFailure(failCall(403))).toBe(true);
   });
   it("treats deterministic 4xx and success as non-failover", () => {
     expect(isAvailabilityFailure(failCall(400))).toBe(false);
-    expect(isAvailabilityFailure(failCall(401))).toBe(false);
     expect(isAvailabilityFailure(okCall("x"))).toBe(false);
   });
 });
@@ -53,6 +54,14 @@ describe("runRoutedWithFailover", () => {
     expect(res.provider).toBe("anthropic");
     expect(res.fellBack).toBe(true);
     expect(res.call.ok).toBe(true);
+    expect(runProvider).toHaveBeenCalledTimes(2);
+  });
+
+  it("falls back when the primary managed provider's API key is expired", async () => {
+    runProvider.mockResolvedValueOnce({ok:false,status:401,body:"AI temporarily unavailable"}).mockResolvedValueOnce(okCall("backup"));
+    const res=await runRoutedWithFailover("simulate",{system:"s",user:"u"});
+    expect(res.call).toEqual(okCall("backup"));
+    expect(res.provider).toBe("anthropic");
     expect(runProvider).toHaveBeenCalledTimes(2);
   });
 
