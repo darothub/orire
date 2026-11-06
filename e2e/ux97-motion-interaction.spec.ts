@@ -33,7 +33,7 @@ for (const viewport of [
     await expect(cta).toBeFocused();
     await expect(cta).toHaveCSS("outline-style", "solid");
     await expect(cta).toHaveCSS("outline-width", "3px");
-    await expect(cta).toHaveCSS("outline-color", "rgb(58, 217, 180)");
+    await expect(cta).toHaveCSS("outline-color", "rgb(47, 224, 255)");
     await page.keyboard.down("Space");
     await expect(cta).toHaveCSS("filter", "brightness(0.92)");
     await page.keyboard.up("Space");
