@@ -17,7 +17,7 @@ for (const viewport of [
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(page.getByRole("heading", {
-      name: "Build a CV that makes your experience stand out.",
+      name: "Let AI turn your experience into a CV that stands out.",
     })).toBeVisible();
 
     const skip = page.getByRole("link", { name: "Skip to main content" });

@@ -84,7 +84,7 @@ export function AiStudioHero() {
         <ul className="lx-keywords" aria-label="Keywords the rewrite emphasises">
           {role.keywords.map((k) => <li key={k}>{k}</li>)}
         </ul>
-        <div className="lx-score" aria-label={`Illustrative role match ${role.match} percent`}>
+        <div className="lx-score" role="img" aria-label={`Illustrative role match ${role.match} percent`}>
           <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
             <circle cx="32" cy="32" r="28" className="lx-ring-bg" />
             <circle
