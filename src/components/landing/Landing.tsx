@@ -8,7 +8,7 @@ import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { AiStudioHero } from "@/components/landing/AiStudioHero";
 import { landingPlans } from "@/components/landing/pricing";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 import { beforeAfterLines } from "@/components/landing/beforeAfter";
@@ -27,6 +27,7 @@ import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 interface Feature {
+  viz: "ring" | "brand" | "chips" | "compare" | "meter" | "grid";
   icon: string;
   title: string;
   body: string;
@@ -37,35 +38,59 @@ interface Feature {
 const FEATURES: Feature[] = [
   {
     icon: "◎",
+    viz: "ring",
     title: "Explore simulated role-match guidance",
     body: "Explore a simulated role-match profile, compare it with your CV, and identify experience and wording you may want to highlight. The simulation is guidance, not an employer decision.",
   },
   {
     icon: "⟳",
+    viz: "brand",
     title: "Re-brand any CV",
     body: "Upload a PDF or DOCX and Orire restructures it into a clean, out-of-this-world template — your facts, elegantly re-laid.",
   },
   {
     icon: "✦",
+    viz: "chips",
     title: "Tailor to the job",
     body: "Paste a job description and refine your CV to match it — sharpened wording and ordering, never invented experience.",
   },
   {
     icon: "⟂",
+    viz: "compare",
     title: "Compare, then pick the best",
     body: "Run two assistants in parallel, see them side by side, and let Orire pick the stronger draft — with the reasoning shown.",
   },
   {
     icon: "⚖",
+    viz: "meter",
     title: "A clear CV score",
     body: "Use Orire’s internal writing-quality rubric to review changes. It is guidance, not an employer or ATS rating.",
   },
   {
     icon: "❖",
+    viz: "grid",
     title: `${TEMPLATE_COUNT} standout templates`,
     body: "Explore distinct CV layouts, then see your changes in a live preview as you edit.",
   },
 ];
+
+function FeatureViz({ kind }: { kind: Feature["viz"] }) {
+  return (
+    <div className={`lx-viz lx-viz-${kind}`} aria-hidden="true">
+      {kind === "ring" && (
+        <svg viewBox="0 0 64 64" width="72" height="72">
+          <circle cx="32" cy="32" r="26" className="lx-ring-bg" />
+          <circle cx="32" cy="32" r="26" className="lx-ring lx-ring-loop" strokeDasharray="163" />
+        </svg>
+      )}
+      {kind === "brand" && <><i /><i /><i /><b /></>}
+      {kind === "chips" && ["keywords", "tone", "order"].map((c) => <em key={c}>{c}</em>)}
+      {kind === "compare" && <><span><i /></span><span><i /></span></>}
+      {kind === "meter" && <span className="lx-meter"><i /></span>}
+      {kind === "grid" && Array.from({ length: 6 }, (_, i) => <u key={i} />)}
+    </div>
+  );
+}
 
 /**
  * Public, pre-auth landing page. Advertises the product and routes visitors
@@ -107,7 +132,6 @@ export function Landing() {
             <a href="#demo">Live demo</a>
             <a href="#pricing">Pricing</a>
           </nav>
-          <ThemeToggle />
           <button className="landing-ghost" disabled={!ready} onClick={() => openAuth("signin")}>
             Sign in
           </button>
@@ -120,28 +144,36 @@ export function Landing() {
       </header>
 
       <main id="main-content" className="landing-main" tabIndex={-1}>
-        <section className="landing-hero">
-          <div className="landing-hero-grid landing-hero-centered">
-            {/* The primary message is readable in server HTML, before scripts
-                hydrate. Actions enable only after their handlers attach. */}
-            <div className="landing-hero-inner">
-              <span className="landing-eyebrow">Your experience, clearly presented</span>
-              <h1 className="landing-title">
-                Build a CV that makes your experience stand out.
+        <section className="landing-hero lx-hero">
+          <div className="lx-hero-grid">
+            {/* Primary message stays in server HTML; actions enable after hydration. */}
+            <div className="lx-hero-copy">
+              <span className="lx-pill"><i aria-hidden="true" />AI-powered CV studio</span>
+              <h1 className="lx-title">
+                Let AI turn your experience into a CV that <em>stands out.</em>
               </h1>
-              <p className="landing-sub">
-                Create, refine and download a professional CV with AI-powered
-                assistance and carefully designed templates. Keep your experience
-                accurate and choose the final wording yourself.
+              <p className="lx-sub">
+                Orire reads the job, rewrites your wording to fit it, and lays it out in a
+                designer template. Your facts stay yours. You approve every word.
               </p>
-              <div className="landing-hero-cta">
-                <button className="landing-cta lg" disabled={!ready} onClick={() => startSignup("hero")}>
-                  Create your CV →
+              <div className="lx-cta-row">
+                <button className="lx-cta" disabled={!ready} onClick={() => startSignup("hero")}>
+                  <span aria-hidden="true">✦</span> Create your CV with AI
                 </button>
-                <a className="landing-ghost lg" href="#templates">
-                  Explore templates
-                </a>
+                <a className="lx-link" href="#templates">Explore templates<span aria-hidden="true"> →</span></a>
               </div>
+              <p className="lx-note">Free to start · No card required</p>
+            </div>
+            <AiStudioHero />
+          </div>
+          <div className="lx-marquee" aria-hidden="true">
+            <div className="lx-marquee-track">
+              {[0, 1].map((k) => (
+                <span key={k}>
+                  <b>Tailor to any job</b><b>Role-match guidance</b><b>Rewrite weak bullets</b>
+                  <b>{TEMPLATE_COUNT} templates</b><b>PDF &amp; DOCX in</b><b>Side-by-side assistants</b>
+                </span>
+              ))}
             </div>
           </div>
         </section>
@@ -161,6 +193,7 @@ export function Landing() {
                 className="landing-motion-reveal landing-step"
                 {...reveal(18, i * 0.08, 0.3)}
               >
+                <span className="lx-step-badge" aria-hidden>{step.icon}</span>
                 <span className="landing-step-n" aria-hidden>{String(step.n).padStart(2, "0")}</span>
                 <h3 className="landing-step-title">{["Add your details", "Refine with AI", "Download your CV"][i]}</h3>
                 <p className="landing-step-body">{step.body}</p>
@@ -221,7 +254,7 @@ export function Landing() {
             {beforeAfterLines().map((line, i) => (
               <motion.li
                 key={line.after}
-                className="landing-motion-reveal landing-ba-row"
+                className="landing-motion-reveal landing-ba-row" tabIndex={0}
                 {...reveal(16, i * 0.08, 0.3)}
               >
                 <span className="landing-ba-before">
@@ -255,6 +288,7 @@ export function Landing() {
                 <span className="landing-card-icon" aria-hidden>{f.icon}</span>
                 <h3 className="landing-card-title">{f.title}</h3>
                 <p className="landing-card-body">{f.body}</p>
+                <FeatureViz kind={f.viz} />
               </motion.div>
             ))}
           </div>
@@ -315,7 +349,7 @@ export function Landing() {
             className="landing-motion-reveal landing-final-card"
             {...reveal(20, 0, 0.5)}
           >
-            <h2 className="landing-h2">Ready to re-brand your CV?</h2>
+            <h2 className="landing-h2">Ready to let AI sharpen your CV?</h2>
             <p className="landing-final-sub">
               Start with your experience, choose a template, and refine your CV at your own pace.
             </p>

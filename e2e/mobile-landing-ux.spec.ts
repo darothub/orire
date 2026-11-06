@@ -19,7 +19,7 @@ for (const viewport of viewports) {
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Build a CV that makes your experience stand out." }),
+      page.getByRole("heading", { name: "Let AI turn your experience into a CV that stands out." }),
     ).toBeVisible({ timeout: 20_000 });
 
     const consent = page.getByRole("dialog", { name: "Cookie consent" });
@@ -33,12 +33,12 @@ for (const viewport of viewports) {
     if (isMobileMenu) {
       await expect(menu).toBeVisible();
       await expect(page.getByRole("button", { name: "Get started", exact: true })).toBeVisible();
-      const sizes = await page.locator(".landing-mobile-menu-toggle, .landing-nav-actions > .theme-toggle, .landing-nav-actions > .landing-header-cta")
+      const sizes = await page.locator(".landing-mobile-menu-toggle, .landing-nav-actions > .landing-header-cta")
         .evaluateAll((nodes) => nodes.map((el) => {
           const box = el.getBoundingClientRect();
           return { width: box.width, height: box.height };
         }));
-      expect(sizes).toHaveLength(3);
+      expect(sizes).toHaveLength(2);
       for (const size of sizes) {
         expect(size.width).toBeGreaterThanOrEqual(44);
         expect(size.height).toBeGreaterThanOrEqual(44);

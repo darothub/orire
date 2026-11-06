@@ -15,9 +15,9 @@ for (const viewport of [
     const cta = page.getByRole("button", { name: /Create your CV/ }).first();
     await expect(cta).toBeVisible();
     await expect(cta).toBeEnabled();
-    await expect(page.locator(".landing-hero-inner")).toHaveCSS("opacity", "1");
-    await expect(page.locator(".landing-hero-inner")).toHaveCSS("transform", "none");
-    await expect(page.locator(".landing-hero-inner")).toHaveCSS("filter", "none");
+    await expect(page.locator(".lx-hero-copy")).toHaveCSS("opacity", "1");
+    await expect(page.locator(".lx-hero-copy")).toHaveCSS("transform", "none");
+    await expect(page.locator(".lx-hero-copy")).toHaveCSS("filter", "none");
     const animatedSections = await page.locator(".landing-motion-reveal").evaluateAll((nodes) => nodes.map((node) => {
       const style = getComputedStyle(node);
       return { opacity: style.opacity, transform: style.transform, filter: style.filter };
@@ -33,7 +33,7 @@ for (const viewport of [
     await expect(cta).toBeFocused();
     await expect(cta).toHaveCSS("outline-style", "solid");
     await expect(cta).toHaveCSS("outline-width", "3px");
-    await expect(cta).toHaveCSS("outline-color", "rgb(58, 217, 180)");
+    await expect(cta).toHaveCSS("outline-color", "rgb(47, 224, 255)");
     await page.keyboard.down("Space");
     await expect(cta).toHaveCSS("filter", "brightness(0.92)");
     await page.keyboard.up("Space");
@@ -90,7 +90,7 @@ for (const viewport of [
       });
       try {
         await page.goto("/", { waitUntil: "commit" });
-        const hero = page.locator(".landing-hero-inner");
+        const hero = page.locator(".lx-hero-copy");
         await expect(hero).toBeVisible();
         await expect(hero).toHaveCSS("opacity", "1");
         await expect(hero).toHaveCSS("transform", "none");

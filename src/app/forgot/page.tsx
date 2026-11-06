@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 export default function ForgotPage() {
   const [email, setEmail] = useState("");
@@ -36,7 +37,7 @@ export default function ForgotPage() {
     <main className="authpage">
       <div className="authpage-card">
         <div className="authpage-brand">
-          <span aria-hidden>✦</span> orire
+          <BrandMark size={30} /> Orire
         </div>
         {done ? (
           <>

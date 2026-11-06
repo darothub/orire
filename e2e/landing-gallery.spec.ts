@@ -21,7 +21,7 @@ test("anonymous homepage template gallery has valid anchors and hydrates cleanly
   });
 
   await page.goto("/", { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: "Build a CV that makes your experience stand out." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Let AI turn your experience into a CV that stands out." })).toBeVisible();
 
   const cards = page.locator(".landing-gallery-card");
   await expect(cards).toHaveCount(3);
