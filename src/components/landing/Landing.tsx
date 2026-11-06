@@ -160,7 +160,7 @@ export function Landing() {
                 <button className="lx-cta" disabled={!ready} onClick={() => startSignup("hero")}>
                   <span aria-hidden="true">✦</span> Create your CV with AI
                 </button>
-                <a className="lx-link" href="#templates">Browse templates →</a>
+                <a className="lx-link" href="#templates">Explore templates<span aria-hidden="true"> →</span></a>
               </div>
               <p className="lx-note">Free to start · No card required</p>
             </div>

@@ -5542,6 +5542,8 @@ html[data-theme="light"] .app :is(
 @media (prefers-reduced-motion: reduce) {
   .lx-studio, .lx-studio::after, .lx-title em, .lx-pill i, .lx-marquee-track, .lx-caret { animation: none; }
   .landing-card:hover, .landing-step:hover, .landing-gallery-card:hover, .lx-cta:hover:not(:disabled) { transform: none; }
+  .lx-cta, .lx-cta span { transition: none; }
+  .lx-cta:hover:not(:disabled) span { transform: none; }
 }
 
 /* ---- How it works: connected flow ---- */
