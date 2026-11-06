@@ -16,8 +16,6 @@ for (const viewport of [
     test.beforeEach(async ({ page }) => {
       await page.addInitScript(() => {
         localStorage.setItem("orire-consent", "denied");
-        // Preserve a later explicit theme choice across reloads.
-        if (!localStorage.getItem("orire-theme")) localStorage.setItem("orire-theme", "dark");
       });
       await page.goto("/", { waitUntil: "domcontentloaded" });
       await page.evaluate(() => document.fonts.ready);
@@ -41,59 +39,13 @@ for (const viewport of [
       }
     });
 
-    test("@smoke keyboard theme choice preserves actual theme surface after reload", async ({ page }) => {
-      const header = page.locator(".landing-nav");
-      const theme = page.getByRole("button", { name: "Switch to light theme" });
+    test("@smoke stays dark with no theme toggle, even if a light choice was stored", async ({ page }) => {
       await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-      await theme.focus();
-      await expect(theme).toBeFocused();
-      const darkBaseline = await theme.screenshot({ animations: "disabled", caret: "hide", scale: "css" });
-      const darkColors = await theme.evaluate((button) => {
-        const style = getComputedStyle(button);
-        return { background: style.backgroundColor, text: style.color, border: style.borderColor };
-      });
-      await expect(page.locator(".landing-hero-inner")).toHaveCSS("transform", "none");
-      const dark = await page.screenshot({ path: `test-results/ux96/BEFORE-theme-toggle-${viewport.name}.png`, animations: "disabled", caret: "hide", scale: "css" });
-      await test.info().attach("BEFORE actual dark landing " + viewport.name, { body: dark, contentType: "image/png" });
+      await expect(page.getByRole("button", { name: /Switch to (light|dark) theme/ })).toHaveCount(0);
 
-      await page.keyboard.press("Enter");
-      await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-      const lightToggle = page.getByRole("button", { name: "Switch to dark theme" });
-      await expect(lightToggle).toBeFocused();
-      expect(await page.evaluate(() => localStorage.getItem("orire-theme"))).toBe("light");
-      const lightHeader = await header.screenshot({ animations: "disabled", caret: "hide", scale: "css" });
-      const lightBaseline = await lightToggle.screenshot({ animations: "disabled", caret: "hide", scale: "css" });
-      expect(lightBaseline.equals(darkBaseline), "Theme choice must change the actual rendered theme control").toBe(false);
-      const lightColors = await lightToggle.evaluate((button) => {
-        const style = getComputedStyle(button);
-        return { background: style.backgroundColor, text: style.color, border: style.borderColor };
-      });
-      // The landing deliberately retains its dark branding in both themes.
-      // Check the theme-aware control's actual colors so an icon swap alone
-      // cannot satisfy the screenshot-difference assertion above.
-      expect(lightColors.background).not.toBe(darkColors.background);
-      expect(lightColors.text).not.toBe(darkColors.text);
-      expect(lightColors.border).not.toBe(darkColors.border);
-      const light = await page.screenshot({ path: `test-results/ux96/AFTER-theme-toggle-${viewport.name}.png`, animations: "disabled", caret: "hide", scale: "css" });
-      await test.info().attach("AFTER actual light landing " + viewport.name, { body: light, contentType: "image/png" });
-
+      await page.evaluate(() => localStorage.setItem("orire-theme", "light"));
       await page.reload({ waitUntil: "domcontentloaded" });
-      await page.evaluate(() => document.fonts.ready);
-      await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-      const restoredToggle = page.getByRole("button", { name: "Switch to dark theme" });
-      await restoredToggle.focus();
-      const restoredHeader = await header.screenshot({ animations: "disabled", caret: "hide", scale: "css" });
-      const restored = await restoredToggle.screenshot({ animations: "disabled", caret: "hide", scale: "css" });
-      const restoredColors = await restoredToggle.evaluate((button) => {
-        const style = getComputedStyle(button);
-        return { background: style.backgroundColor, text: style.color, border: style.borderColor };
-      });
-      expect(restoredColors).toEqual(lightColors);
-      await test.info().attach("Light header before reload", { body: lightHeader, contentType: "image/png" });
-      await test.info().attach("Light header after reload", { body: restoredHeader, contentType: "image/png" });
-      await test.info().attach("Light theme-control baseline", { body: lightBaseline, contentType: "image/png" });
-      await test.info().attach("Light theme control after reload", { body: restored, contentType: "image/png" });
-      expect(restored.equals(lightBaseline), "Reload must retain the same-browser light theme-control screenshot baseline").toBe(true);
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     });
   });
 }

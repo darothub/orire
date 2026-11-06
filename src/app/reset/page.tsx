@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 import { useSearchParams } from "next/navigation";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 
@@ -114,7 +115,7 @@ export default function ResetPage() {
     <main className="authpage">
       <div className="authpage-card">
         <div className="authpage-brand">
-          <span aria-hidden>✦</span> orire
+          <BrandMark size={30} /> Orire
         </div>
         <Suspense fallback={<p className="authpage-sub">Loading…</p>}>
           <ResetForm />

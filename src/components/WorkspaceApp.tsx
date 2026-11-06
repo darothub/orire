@@ -22,7 +22,6 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
 import { SyncStatus } from "@/components/auth/SyncStatus";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { CloudSync } from "@/components/auth/CloudSync";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { useOnboardingStore, hasSeenOnboarding } from "@/lib/store/onboardingStore";
@@ -313,7 +312,6 @@ export default function WorkspaceApp() {
           <button className="btn-ghost" onClick={reset}>Reset</button>
           <button className="btn-primary" onClick={() => setView("export")}>Export PDF</button>
           <SyncStatus />
-          <ThemeToggle />
           <AccountButton />
         </div>
       </header>

@@ -61,18 +61,12 @@ test.describe("live editing", () => {
 });
 
 test.describe("theme", () => {
-  test("toggles the theme and persists the choice", async ({ appPage }) => {
-    const html = appPage.locator("html");
-    const start = await html.getAttribute("data-theme");
-    const flipped = start === "dark" ? "light" : "dark";
+  test("is always dark and exposes no theme toggle", async ({ appPage }) => {
+    await expect(appPage.locator("html")).toHaveAttribute("data-theme", "dark");
+    await expect(appPage.getByRole("button", { name: /Switch to (light|dark) theme/ })).toHaveCount(0);
 
-    const toggle = appPage.getByRole("button", { name: /Switch to (light|dark) theme/ });
-    await toggle.click();
-    await expect(html).toHaveAttribute("data-theme", flipped);
-
-    // The choice survives a reload (persisted + applied with no flash).
     await appPage.reload();
-    await expect(appPage.locator("html")).toHaveAttribute("data-theme", flipped);
+    await expect(appPage.locator("html")).toHaveAttribute("data-theme", "dark");
   });
 });
 

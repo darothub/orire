@@ -40,9 +40,9 @@ export default function OpengraphImage() {
           justifyContent: "space-between",
           padding: "0 90px",
           color: "#f4f5f8",
-          backgroundColor: "#0b0d12",
+          backgroundColor: "#07060f",
           backgroundImage:
-            "radial-gradient(circle at 12% 18%, rgba(23, 184, 146,0.22), rgba(11,13,18,0) 45%), radial-gradient(circle at 88% 85%, rgba(217, 164, 65,0.18), rgba(11,13,18,0) 45%), radial-gradient(circle at 60% 30%, rgba(58, 217, 180,0.18), rgba(11,13,18,0) 50%)",
+            "radial-gradient(circle at 12% 18%, rgba(139,108,255,0.38), rgba(7,6,15,0) 48%), radial-gradient(circle at 88% 85%, rgba(47,224,255,0.2), rgba(7,6,15,0) 45%), radial-gradient(circle at 60% 30%, rgba(139,108,255,0.14), rgba(7,6,15,0) 50%)",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", width: 640 }}>
@@ -52,7 +52,7 @@ export default function OpengraphImage() {
           </div>
           <div style={{ display: "flex", flexDirection: "column", marginTop: 40, fontSize: 52, fontWeight: 600, lineHeight: 1.15 }}>
             <span>Turn the CV you have into</span>
-            <span style={{ color: "#3ad9b4" }}>the one the role wants.</span>
+            <span style={{ color: "#c8ff3d" }}>the one the role wants.</span>
           </div>
           <div
             style={{
@@ -63,8 +63,8 @@ export default function OpengraphImage() {
               borderRadius: 999,
               fontSize: 28,
               fontWeight: 700,
-              color: "#0b0d12",
-              backgroundImage: "linear-gradient(90deg, #3ad9b4, #17b892)",
+              color: "#0b0a17",
+              backgroundImage: "linear-gradient(90deg, #d9ff6a, #c8ff3d)",
             }}
           >
             orire.app
@@ -79,7 +79,7 @@ export default function OpengraphImage() {
               width: 300,
               height: 380,
               borderRadius: 20,
-              backgroundColor: "#171a22",
+              backgroundColor: "#161430",
               border: "1px solid rgba(255,255,255,0.08)",
               transform: "rotate(-6deg)",
             }}
@@ -101,7 +101,7 @@ export default function OpengraphImage() {
           >
             <div style={{ width: 200, height: 22, borderRadius: 6, backgroundColor: "#1c1d24" }} />
             <div style={{ width: 150, height: 14, borderRadius: 6, backgroundColor: "#4f46e5", marginTop: 14 }} />
-            <div style={{ width: 70, height: 5, borderRadius: 3, backgroundImage: "linear-gradient(90deg,#17b892,#3ad9b4)", marginTop: 12 }} />
+            <div style={{ width: 70, height: 5, borderRadius: 3, backgroundImage: "linear-gradient(90deg,#8b6cff,#2fe0ff)", marginTop: 12 }} />
             <div style={{ width: 90, height: 12, borderRadius: 4, backgroundColor: "#4b5263", marginTop: 34 }} />
             <div style={{ width: 240, height: 8, borderRadius: 4, backgroundColor: "#e6e8ee", marginTop: 16 }} />
             <div style={{ width: 220, height: 8, borderRadius: 4, backgroundColor: "#e6e8ee", marginTop: 10 }} />

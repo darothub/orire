@@ -8,7 +8,6 @@ import { useUIStore } from "@/lib/store/uiStore";
 import { CvShowcase } from "@/components/landing/CvShowcase";
 import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/TurnstileWidget";
 import { PasswordInput } from "@/components/auth/PasswordInput";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { listFocusable, pickInitialFocus } from "@/components/auth/authFocus";
 import { funnel } from "@/lib/analytics/funnel";
 import { useConsent } from "@/lib/consent/consent";
@@ -385,7 +384,6 @@ export function AuthOverlay() {
             >
               ×
             </button>
-            <ThemeToggle className="auth-theme" />
 
             <div className="auth-brand">
               <span className="auth-brand-mark"><BrandMark size={30} /></span>
