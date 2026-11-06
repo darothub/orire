@@ -5449,6 +5449,7 @@ html[data-theme="light"] .app :is(
 }
 .lx-cta span { display: inline-block; transition: transform 0.4s ease; }
 .lx-cta:focus-visible { outline: 3px solid #2fe0ff; outline-offset: 3px; }
+.lx-cta:active:not(:disabled) { filter: brightness(0.92); }
 .lx-cta:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35) inset, 0 26px 64px -14px rgba(200, 255, 61, 0.9); }
 .lx-cta:hover:not(:disabled) span { transform: rotate(180deg) scale(1.2); }
 .lx-cta:disabled { opacity: 0.6; cursor: wait; }
