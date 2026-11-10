@@ -24,6 +24,7 @@ export const VIEW_META: Record<WorkspaceView, ViewMeta> = {
   edit: { label: "Edit", hint: "Two-pane live editor", icon: "✎" },
   rebrand: { label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
   refine: { label: "Refine", hint: "Connect an assistant · import · tailor to a job", icon: "✦" },
+  coach: { label: "Coach", hint: "Close the gap to the ideal candidate — with your real answers", icon: "✧" },
   target: { label: "Simulate", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
   cover: { label: "Cover", hint: "Write, edit & export a cover letter", icon: "✉" },
   export: { label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },

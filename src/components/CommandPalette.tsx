@@ -23,7 +23,7 @@ interface Command {
 
 // Which workspaces the palette's "Go to" group lists, and in what order.
 // Labels/hints/icons come from VIEW_META (the single source of truth).
-const NAV_VIEWS: WorkspaceView[] = ["edit", "refine", "target", "export", "history", "rate", "connect"];
+const NAV_VIEWS: WorkspaceView[] = ["edit", "refine", "coach", "target", "export", "history", "rate", "connect"];
 
 /** ⌘K / Ctrl-K command palette: jump to any workspace, switch template, or fire
  *  a quick action. Fully keyboard-driven, framer-animated, no new deps. */

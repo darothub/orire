@@ -2817,3 +2817,10 @@
 @media (prefers-reduced-motion: reduce) {
   .sim-progress-fill { transition: none; }
 }
+
+.coach-busy { padding: 32px 0; text-align: center; opacity: .8; }
+.coach-questions { display: flex; flex-direction: column; gap: 14px; }
+.coach-target { display: block; font-size: 12px; opacity: .65; margin: 2px 0 4px; }
+.coach-gaps, .coach-remaining { font-size: 13px; margin: 10px 0; }
+.coach-gaps p, .coach-remaining ul { margin: 4px 0; }
+.coach-ats { display: flex; gap: 8px; align-items: baseline; margin-bottom: 10px; font-size: 13px; }
