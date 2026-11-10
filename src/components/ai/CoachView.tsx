@@ -3,6 +3,8 @@
 import { useMemo, useRef, useEffect, useState } from "react";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
+import { usePlanStore } from "@/lib/store/planStore";
+import { allowCoach, nextPlan } from "@/lib/plan/plan";
 import { useViewStore } from "@/lib/store/viewStore";
 import { diffCv, applyReviewed } from "@/lib/ai/cvDiff";
 import { ChangeList } from "@/components/ai/refine/ChangeList";
@@ -57,6 +59,8 @@ export function CoachView() {
   const jd = useTargetStore((s) => s.jd);
   const setJd = useTargetStore((s) => s.setJd);
   const setView = useViewStore((s) => s.setView);
+  const plan = usePlanStore((s) => s.plan);
+  const allowed = allowCoach(plan);
 
   const [phase, setPhase] = useState<Phase>("input");
   const [error, setError] = useState<string | null>(null);
@@ -166,9 +170,17 @@ export function CoachView() {
         {phase !== "input" && <button className="ws-reset" onClick={reset}>Start over</button>}
       </div>
 
+      {!allowed && (
+        <div className="cl-gate">
+          <strong>The CV coach is a {nextPlan("free")?.label ?? "Pro"} feature.</strong>
+          <p>Upgrade to get tailored questions, a fact-grounded rewrite and a recruiter/ATS review.</p>
+          <button className="flow-btn primary" onClick={() => setView("connect")}>See plans</button>
+        </div>
+      )}
+
       {error && <div className="rev-ground review" role="alert"><p>{error}</p></div>}
 
-      {phase === "input" && (
+      {allowed && phase === "input" && (
         <div className="step-body">
           <div className="ai-field">
             <span className="ed-label">Job description</span>

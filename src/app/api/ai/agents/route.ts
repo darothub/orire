@@ -18,6 +18,8 @@ import { routeTask } from "@/lib/ai/server/providerRouter";
 import { runAnalysis, runCritique, runRewrite, type AgentCaller, type AgentName } from "@/lib/ai/server/agentPipeline";
 import { MAX_CRITIC_ROUNDS, sanitizeAnswers, sanitizeCritique, sanitizeGapReport, sanitizeProfile } from "@/lib/ai/agents";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
+import { getPlanId } from "@/lib/entitlement/entitlement";
+import { allowCoach } from "@/lib/plan/plan";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
@@ -58,6 +60,9 @@ export async function POST(req: Request) {
   const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
   if (limited) return limited;
   if (!gate.ok) return json(gate.message, gate.status);
+  if (!allowCoach(await getPlanId(gate.userId))) {
+    return json("The CV coach is a Pro feature. Upgrade your plan to use it.", 402);
+  }
 
   let body: Body;
   try {

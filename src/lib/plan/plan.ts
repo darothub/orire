@@ -292,6 +292,14 @@ export function allowCoverLetter(planId: PlanId): boolean {
 }
 
 /**
+ * CV coach (elicitation Q&A + critic loop). Several model calls per run, so it
+ * is Pro/Career only.
+ */
+export function allowCoach(planId: PlanId): boolean {
+  return planId !== "free";
+}
+
+/**
  * AI bullet Improve — full-sentence spelling, grammar, and impact review.
  * Needs model context (not a local word list), so it is Pro/Career only.
  * Free keeps the deterministic opener coach + browser spellcheck.
