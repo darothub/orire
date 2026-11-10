@@ -18,8 +18,8 @@ import { routeTask } from "@/lib/ai/server/providerRouter";
 import { runAnalysis, runCritique, runRewrite, type AgentCaller, type AgentName } from "@/lib/ai/server/agentPipeline";
 import { MAX_CRITIC_ROUNDS, sanitizeAnswers, sanitizeCritique, sanitizeGapReport, sanitizeProfile } from "@/lib/ai/agents";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
-import { getPlanId } from "@/lib/entitlement/entitlement";
-import { allowCoach } from "@/lib/plan/plan";
+import { consume, getPlanId, getUsed, refund } from "@/lib/entitlement/entitlement";
+import { allowCoach, withinCap } from "@/lib/plan/plan";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
@@ -60,7 +60,8 @@ export async function POST(req: Request) {
   const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
   if (limited) return limited;
   if (!gate.ok) return json(gate.message, gate.status);
-  if (!allowCoach(await getPlanId(gate.userId))) {
+  const plan = await getPlanId(gate.userId);
+  if (!allowCoach(plan)) {
     return json("The CV coach is a Pro feature. Upgrade your plan to use it.", 402);
   }
 
@@ -96,6 +97,15 @@ export async function POST(req: Request) {
     return served.call;
   };
 
+  // One coach run = one analyze call; the follow-up rewrite/critique steps of
+  // that run are covered by it.
+  const metered = body.action !== "rewrite" && body.action !== "critique";
+  if (metered) {
+    const capGate = withinCap(plan, "coach", await getUsed(gate.userId, "coach", plan));
+    if (!capGate.allowed) return json(capGate.reason ?? "Monthly coach limit reached.", 402);
+    await consume(gate.userId, "coach", plan);
+  }
+
   try {
     const profile = sanitizeProfile(body.profile ?? {});
     let result;
@@ -123,10 +133,12 @@ export async function POST(req: Request) {
       result = await runAnalysis(cv, jobDescription, call);
     }
     if (!result.ok) {
+      if (metered) await refund(gate.userId, "coach", plan);
       return json(`The ${result.agent} agent failed: ${result.message}`);
     }
     return NextResponse.json(result);
   } catch (e) {
+    if (metered) await refund(gate.userId, "coach", plan);
     return json((e as Error).message);
   }
 }

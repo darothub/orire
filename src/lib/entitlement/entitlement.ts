@@ -110,7 +110,7 @@ export interface UsageSummary {
   metrics: Record<Metric, MetricUsage>;
 }
 
-const METRICS: Metric[] = ["refine", "simulate", "download"];
+const METRICS: Metric[] = ["refine", "simulate", "download", "coach"];
 
 export async function getUsageSummary(userId: string): Promise<UsageSummary> {
   const plan = await getPlanId(userId);
