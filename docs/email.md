@@ -106,3 +106,16 @@ NEXT_PUBLIC_PASSWORD_AUTH=true
 ```
 
 and restart the dev server (`NEXT_PUBLIC_*` is inlined at build time).
+
+---
+
+## Magic-link sign-in
+
+With `NEXT_PUBLIC_PASSWORD_AUTH=true`, the sign-in card also offers "Email me a
+sign-in link instead". `POST /api/auth/magic` emails a single-use link
+(`/magic?token=…`, 15-minute expiry, only the SHA-256 hash is stored in
+`MagicLinkToken`). The `/magic` page exchanges it through the `magic-link`
+Credentials provider, which creates the account if needed and marks the email
+verified. The endpoint always answers `ok` for any valid address, so it can't be
+used to discover which emails are registered. Run `prisma migrate deploy` for
+the new table.

@@ -5,6 +5,8 @@ import { funnel } from "@/lib/analytics/funnel";
 import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useUIStore } from "@/lib/store/uiStore";
 import { AutoTextarea } from "./AutoTextarea";
 import { EvidenceHelper } from "./EvidenceHelper";
 import { hasMeasurable } from "@/lib/ai/evidence";
@@ -178,7 +180,14 @@ function HighlightItem({
   const [review, setReview] = useState<BulletReview | null>(null);
   const [err, setErr] = useState("");
 
+  const { status: sessionStatus } = useSession();
+  const openAuth = useUIStore((s) => s.openAuth);
+
   async function improve() {
+    if (sessionStatus === "unauthenticated") {
+      openAuth("signup", null, "Sign up to review bullets with AI");
+      return;
+    }
     if (!canAiReview) {
       setErr("AI bullet review (spelling, grammar, impact in context) is on Pro and Career.");
       setView("plans");

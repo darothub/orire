@@ -18,18 +18,12 @@ import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
- * Legacy "explore without an account" flag. Anonymous exploration has been
- * removed (the free quota must be tied to an account so it can't be reset by
- * switching browsers), but sign-out still clears this key to tidy up any value
- * left in storage from older builds.
+ * Guests may explore and edit locally, but AI runs and downloads need an
+ * account so the free quota can't be reset by switching browsers. Sign-out
+ * clears the guest flag so the next visit starts from the landing page.
  */
-const EXPLORED_KEY = "orire.auth.explored";
 export function clearExplored() {
-  try {
-    window.localStorage.removeItem(EXPLORED_KEY);
-  } catch {
-    /* ignore */
-  }
+  useUIStore.getState().setExplored(false);
 }
 
 /** OAuth providers we surface as one-tap buttons, in display order. */
@@ -91,15 +85,20 @@ export function AuthOverlay() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  // True once the server has asked for the security check (repeated failed
+  // sign-ins). Sign-up and magic-link sends always show it.
+  const [challenged, setChallenged] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaReset, setCaptchaReset] = useState(0);
   const [authErr, setAuthErr] = useState<string | null>(null);
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [magicSentTo, setMagicSentTo] = useState<string | null>(null);
   const [lastMethod, setLastMethod] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
+  const authReason = useUIStore((s) => s.authReason);
   const emailId = useId();
   const passwordId = useId();
   const errorId = useId();
@@ -192,6 +191,7 @@ export function AuthOverlay() {
       setAuthErr(null);
       setEmailTouched(false);
       setEmailOpen(false);
+      setMagicSentTo(null);
     }
   }
 
@@ -284,8 +284,28 @@ export function AuthOverlay() {
 
   // Verify the solved Turnstile token server-side (sets the short-lived cookie
   // the auth backend checks). Shared by Google OAuth and email sign-in.
-  const passCaptcha = async (): Promise<boolean> => {
+  const checkChallenged = async (): Promise<boolean> => {
+    try {
+      const r = await fetch("/api/auth/captcha-required", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const j = await r.json().catch(() => ({}));
+      return j?.required === true;
+    } catch {
+      return false;
+    }
+  };
+
+  const passCaptcha = async (kind: "signin" | "signup" | "magic"): Promise<boolean> => {
     if (!captchaOn) return true;
+    const always = kind === "signup" || kind === "magic";
+    if (!always && !challenged) {
+      if (!(await checkChallenged())) return true;
+      setChallenged(true);
+    }
+    if (always && !challenged) setChallenged(true);
     if (!captchaToken) {
       setAuthErr("Please complete the verification challenge.");
       return false;
@@ -310,7 +330,7 @@ export function AuthOverlay() {
     setBusy(id);
     setAuthErr(null);
     try {
-      if (!(await passCaptcha())) return;
+      if (!(await passCaptcha("signin"))) return;
       writeLastMethod(id);
       // OAuth normally navigates away. If initiation fails, tell the user
       // what happened and re-enable the button instead of leaving a spinner.
@@ -329,13 +349,38 @@ export function AuthOverlay() {
     }
   };
 
+  const sendMagicLink = async () => {
+    const target = email.trim();
+    if (!EMAIL_RE.test(target) || busy) return;
+    setBusy("magic");
+    setAuthErr(null);
+    try {
+      if (!(await passCaptcha("magic"))) return;
+      const res = await fetch("/api/auth/magic", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: target }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAuthErr(data?.error ? String(data.error) : "Could not send the link. Please try again.");
+        return;
+      }
+      setMagicSentTo(target);
+    } catch (err) {
+      setAuthErr((err as Error)?.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password || busy) return;
     setBusy("email");
     setAuthErr(null);
     try {
-      if (!(await passCaptcha())) return;
+      if (!(await passCaptcha(signup ? "signup" : "signin"))) return;
 
       // Sign-up first creates the account, then we sign in with the same creds.
       if (signup) {
@@ -365,6 +410,7 @@ export function AuthOverlay() {
         if (captchaOn) {
           setCaptchaToken(null);
           setCaptchaReset((n) => n + 1);
+          if (!signup && (await checkChallenged())) setChallenged(true);
         }
         return;
       }
@@ -508,7 +554,9 @@ export function AuthOverlay() {
               >
                 <h1 id={titleId}>{signup ? "Create your account" : "Welcome back"}</h1>
                 <p>
-                  {signup
+                  {authReason
+                    ? `${authReason} — it’s free, and your work so far comes with you.`
+                    : signup
                     ? "Save your CVs to the cloud, compare assistants and unlock plan features."
                     : "Sign in to sync your CVs and pick up right where you left off."}
                 </p>
@@ -638,7 +686,7 @@ export function AuthOverlay() {
                   </div>
                 )}
               </div>
-              {captchaOn && (
+              {captchaOn && (signup || challenged) && (
                 <div className="auth-captcha-frame">
                   <span className="auth-captcha-label" id={`${panelId}-captcha`}>
                     <span aria-hidden>🛡</span> Quick security check
@@ -659,6 +707,19 @@ export function AuthOverlay() {
                     ? "Create account"
                     : "Sign in"}
               </button>
+              <button
+                type="button"
+                className="auth-magic"
+                onClick={sendMagicLink}
+                disabled={!!busy || !EMAIL_RE.test(email.trim())}
+              >
+                {busy === "magic" ? "Sending…" : magicSentTo ? "Resend sign-in link" : "Email me a sign-in link instead"}
+              </button>
+              {magicSentTo && (
+                <p className="auth-hint ok" role="status">
+                  Link sent to {magicSentTo} — check your inbox. It expires in 15 minutes.
+                </p>
+              )}
               {!signup && (
                 <a className="auth-forgot" href="/forgot">
                   Forgot password?
@@ -667,7 +728,7 @@ export function AuthOverlay() {
             </form>
             )}
 
-            {captchaOn && !PASSWORD_AUTH_ENABLED && (
+            {captchaOn && !PASSWORD_AUTH_ENABLED && challenged && (
               <div className="auth-captcha-frame">
                 <span className="auth-captcha-label">
                   <span aria-hidden>🛡</span> Quick security check

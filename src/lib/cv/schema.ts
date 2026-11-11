@@ -167,3 +167,33 @@ export function emptyCertification(): CertificationItem {
 export function emptyLink(): Link {
   return { id: uid("lnk"), label: "", url: "" };
 }
+
+/** A genuinely empty CV for the from-scratch creator: one blank entry in the
+ *  sections people almost always fill, so each step has something to type into. */
+export function blankCV(): CVData {
+  return {
+    basics: { fullName: "", title: "", email: "", phone: "", location: "", summary: "", links: [] },
+    experience: [emptyExperience()],
+    education: [emptyEducation()],
+    skills: [],
+    projects: [],
+    certifications: [],
+    order: [...ALL_SECTIONS],
+  };
+}
+
+/** Drop entries (and bullets) the user left blank, so templates never render
+ *  empty cards. Pure — used when finishing the creator. */
+export function pruneBlankEntries(cv: CVData): CVData {
+  const t = (v?: string) => !!v && v.trim() !== "";
+  const bullets = (h: string[]) => h.filter(t);
+  return {
+    ...cv,
+    experience: cv.experience.filter((e) => t(e.company) || t(e.role)).map((e) => ({ ...e, highlights: bullets(e.highlights) })),
+    education: cv.education.filter((e) => t(e.institution) || t(e.degree)),
+    skills: cv.skills.map((g) => ({ ...g, items: g.items.filter(t) })).filter((g) => g.items.length > 0),
+    projects: cv.projects.filter((p) => t(p.name)).map((p) => ({ ...p, highlights: bullets(p.highlights) })),
+    certifications: cv.certifications.filter((c) => t(c.name)),
+    basics: { ...cv.basics, links: cv.basics.links.filter((l) => t(l.url)) },
+  };
+}

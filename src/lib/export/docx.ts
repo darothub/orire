@@ -169,7 +169,7 @@ function safeName(name: string): string {
 }
 
 /** Build the Word document from the CV facts. Pure (no DOM) — unit-testable. */
-export function buildCvDocx(cv: CVData): Document {
+export function buildCvDocx(cv: CVData, opts: { watermark?: boolean } = {}): Document {
   const b = cv.basics;
   const header: Paragraph[] = [
     new Paragraph({
@@ -215,16 +215,28 @@ export function buildCvDocx(cv: CVData): Document {
     sections: [
       {
         properties: { page: { margin: { top: 720, bottom: 720, left: 720, right: 720 } } },
-        children: [...header, ...body],
+        children: [
+          ...header,
+          ...body,
+          ...(opts.watermark
+            ? [
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  spacing: { before: 240 },
+                  children: [new TextRun({ text: "Made with Orire", size: 14, color: "9692AF" })],
+                }),
+              ]
+            : []),
+        ],
       },
     ],
   });
 }
 
 /** Generate and download the CV as a .docx. Returns false only on failure. */
-export async function exportCVtoDocx(fileName: string, cv: CVData): Promise<boolean> {
+export async function exportCVtoDocx(fileName: string, cv: CVData, opts: { watermark?: boolean } = {}): Promise<boolean> {
   try {
-    const blob = await Packer.toBlob(buildCvDocx(cv));
+    const blob = await Packer.toBlob(buildCvDocx(cv, opts));
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

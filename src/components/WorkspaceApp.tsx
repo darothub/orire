@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { CreatorFlow } from "@/components/creator/CreatorFlow";
 import { EditorPanel } from "@/components/editor/EditorPanel";
 import { BrandMark } from "@/components/BrandMark";
 import { SectionOrder } from "@/components/editor/SectionOrder";
@@ -29,7 +30,8 @@ import { useOnboardingStore, hasSeenOnboarding } from "@/lib/store/onboardingSto
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore, readPendingPlanIntent } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
-import { VIEW_META } from "@/lib/store/viewMeta";
+import { VIEW_META, ACCOUNT_VIEWS } from "@/lib/store/viewMeta";
+import { useSession } from "next-auth/react";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { targetMatch } from "@/lib/ai/simulate";
@@ -121,6 +123,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
         <motion.div key={view} className="ws-swap" custom={dir}>
           {view === "spotlight" && <SpotlightView />}
           {view === "edit" && <EditView mounted={mounted} />}
+          {view === "create" && <CreatorFlow mounted={mounted} />}
           {view === "rebrand" && <RebrandFlow />}
           {view === "refine" && <RefineFlow />}
           {view === "coach" && <CoachView />}
@@ -170,6 +173,75 @@ function TargetChip({ mounted }: { mounted: boolean }) {
   );
 }
 
+/** Secondary actions kept out of the bar so the header stays quiet. */
+function HeaderMenu({
+  mounted,
+  templateName,
+  previewEdit,
+  onTogglePreviewEdit,
+  onTour,
+  onReset,
+}: {
+  mounted: boolean;
+  templateName: string;
+  previewEdit: boolean;
+  onTogglePreviewEdit: () => void;
+  onTour: () => void;
+  onReset: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const run = (fn: () => void) => () => {
+    setOpen(false);
+    fn();
+  };
+
+  return (
+    <div className="hm-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className="hm-btn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="More actions"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span aria-hidden>⋯</span>
+      </button>
+      {open && (
+        <div className="hm-pop" role="menu" aria-label="More actions">
+          <div className="hm-row" role="presentation">
+            <span>Template</span>
+            <strong>{mounted ? templateName : "—"}</strong>
+          </div>
+          <button type="button" role="menuitemcheckbox" aria-checked={mounted && previewEdit} className="hm-item" onClick={run(onTogglePreviewEdit)}>
+            {mounted && previewEdit ? "Editing preview — turn off" : "Edit on preview"}
+          </button>
+          <button type="button" role="menuitem" className="hm-item" onClick={run(onTour)}>Take the tour</button>
+          <button type="button" role="menuitem" className="hm-item hm-danger" onClick={run(onReset)}>Reset CV</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WorkspaceApp() {
   const [mounted, setMounted] = useState(false);
   // Intentional one-shot hydration guard: render the client-only editor after
@@ -193,6 +265,9 @@ export default function WorkspaceApp() {
   const cv = useCVStore((s) => s.cv);
   const active = useCVStore((s) => s.activeTemplate);
   const reset = useCVStore((s) => s.reset);
+  const { status: sessionStatus } = useSession();
+  const guest = sessionStatus === "unauthenticated";
+  const openAuth = useUIStore((s) => s.openAuth);
   const previewEdit = useUIStore((s) => s.previewEdit);
   const togglePreviewEdit = useUIStore((s) => s.togglePreviewEdit);
   const mobilePane = useUIStore((s) => s.mobilePane);
@@ -215,6 +290,14 @@ export default function WorkspaceApp() {
     setView("plans");
     clearIntendedPlan();
   }, [intendedPlan, setView, clearIntendedPlan]);
+  // Guests reaching an account-only view by any path (palette, restored state)
+  // are sent back to the editor with the sign-up prompt.
+  useEffect(() => {
+    const reason = guest ? ACCOUNT_VIEWS[view] : undefined;
+    if (!reason) return;
+    setView("edit");
+    openAuth("signup", null, reason);
+  }, [guest, view, setView, openAuth]);
   const refStarted = useRefineStore((s) => s.started);
   const refCompare = useRefineStore((s) => s.runProviders.length === 2);
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
@@ -282,13 +365,12 @@ export default function WorkspaceApp() {
   const ActiveTemplate = tpl.Component;
 
   return (
-    <div className="app has-rail">
+    <div className="app has-rail" data-hydrated={mounted}>
           <a className="skip-to-main" href="#main-content">Skip to main content</a>
       <header className="app-bar">
         <div className="brand">
           <span className="brand-dot"><BrandMark size={26} /></span>
           <span className="brand-name">Orire</span>
-          <span className="brand-tag">AI CV Studio</span>
         </div>
         <div className="app-actions">
           <button
@@ -301,18 +383,24 @@ export default function WorkspaceApp() {
             <span className="cmdk-hint-lbl">Search</span>
             <kbd>⌘K</kbd>
           </button>
-          <span className="template-pill">{mounted ? tpl.name : "—"}</span>
           <TargetChip mounted={mounted} />
+          <HeaderMenu
+            mounted={mounted}
+            templateName={tpl.name}
+            previewEdit={previewEdit}
+            onTogglePreviewEdit={togglePreviewEdit}
+            onTour={startTour}
+            onReset={reset}
+          />
           <button
-            className={`btn-ghost${mounted && previewEdit ? " is-active" : ""}`}
-            onClick={togglePreviewEdit}
-            aria-pressed={mounted && previewEdit}
-            title="Click text on the preview to edit it in place"
+            className="btn-primary"
+            onClick={() => {
+              if (guest) openAuth("signup", null, ACCOUNT_VIEWS.export);
+              else setView("export");
+            }}
           >
-            {mounted && previewEdit ? "Editing preview" : "Edit on preview"}
+            Export PDF
           </button>
-          <button className="btn-ghost" onClick={reset}>Reset</button>
-          <button className="btn-primary" onClick={() => setView("export")}>Export PDF</button>
           <SyncStatus />
           <AccountButton />
         </div>

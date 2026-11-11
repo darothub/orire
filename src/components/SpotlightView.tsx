@@ -8,8 +8,10 @@ import { useUsageStore } from "@/lib/store/usageStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useLibraryStore } from "@/lib/store/libraryStore";
 import { recommendedNextBlock } from "@/lib/cv/recommendedNext";
-import { getTemplateInfo } from "@/lib/templates/catalog";
 import type { Metric } from "@/lib/plan/plan";
+import { ViewIcon } from "@/components/ViewIcon";
+import { getTemplateInfo } from "@/lib/templates/catalog";
+import { useSession } from "next-auth/react";
 
 /** Metered blocks that grey out / route to Plans once the free cap is spent. */
 const METRIC_FOR_VIEW: Partial<Record<WorkspaceView, Metric>> = {
@@ -27,7 +29,7 @@ function useRecommendedNext(): WorkspaceView | null {
   return recommendedNextBlock({ started, refined, exported });
 }
 
-function BlockCard({ view, number, recommended }: { view: WorkspaceView; number: number; recommended: boolean }) {
+function BlockCard({ view, recommended }: { view: WorkspaceView; recommended: boolean }) {
   const meta = VIEW_META[view];
   const setView = useViewStore((s) => s.setView);
   const inFlow = useFlowStore((s) => s.sequence.includes(view));
@@ -38,7 +40,6 @@ function BlockCard({ view, number, recommended }: { view: WorkspaceView; number:
 
   return (
     <div className={`spot-card${locked ? " is-locked" : ""}${recommended ? " is-recommended" : ""}`}>
-      <span className="spot-card-num" aria-hidden>{number}</span>
       <button
         type="button"
         className="spot-card-open"
@@ -48,7 +49,7 @@ function BlockCard({ view, number, recommended }: { view: WorkspaceView; number:
           (recommended ? " — recommended next" : "")
         }
       >
-        <span className="spot-card-icon" aria-hidden>{meta.icon}</span>
+        <span className="spot-card-icon" aria-hidden><ViewIcon view={view} /></span>
         <span className="spot-card-text">
           <span className="spot-card-label">
             {meta.label}
@@ -84,12 +85,11 @@ function SimulateHero() {
   return (
     <div className="spot-hero">
       <div className="spot-hero-main">
-        <span className="spot-hero-eyebrow">Start here · the Orire difference</span>
-        <strong className="spot-hero-title">
-          <span aria-hidden>{VIEW_META.target.icon}</span> {VIEW_META.target.label} the ideal candidate
+                <strong className="spot-hero-title">
+          <ViewIcon view="target" /> {VIEW_META.target.label} the ideal candidate
         </strong>
         <span className="spot-hero-sub">
-          Explore an illustrative role-match CV and compare its emphasis with your own. The simulation is guidance, not an employer assessment — adapt only what matches your real experience.
+          See how your CV lines up against an illustrative role profile. It is guidance, not an employer assessment.
         </span>
       </div>
       <div className="spot-hero-actions">
@@ -112,17 +112,23 @@ function SimulateHero() {
 
 export function SpotlightView() {
   const resetFlow = useFlowStore((s) => s.resetFlow);
-  const coachSeen = useFlowStore((s) => s.coachSeen);
-  const dismissCoach = useFlowStore((s) => s.dismissCoach);
   const recommendedNext = useRecommendedNext();
   const gridBlocks = COMPOSABLE_BLOCKS.filter((v) => v !== "target");
   const setView = useViewStore((s) => s.setView);
   const cvName = useCVStore((s) => s.cv.basics.fullName);
   const started = useCVStore((s) => s.started);
+  const currentName = cvName.trim();
   const activeTemplate = useCVStore((s) => s.activeTemplate);
   const templateName = getTemplateInfo(activeTemplate)?.name ?? "Aurora";
-  const currentName = cvName.trim();
   const reducedMotion = useReducedMotion();
+  const { data: session, status } = useSession();
+  const firstName = session?.user?.name?.trim().split(/\s+/)[0];
+  const greeting =
+    status === "authenticated"
+      ? firstName ? `Good to see you, ${firstName}.` : "Welcome back."
+      : started
+        ? "Welcome back — your draft is saved on this device."
+        : "Welcome to Orire. Build your CV free; sign up only for AI or to export.";
 
   return (
     <motion.div
@@ -133,9 +139,8 @@ export function SpotlightView() {
     >
       <header className="ws-head">
         <div>
-          <span className="spot-studio-eyebrow">Orire Studio</span>
           <h2>Your CV studio</h2>
-          <p>Create, refine and export your CV in one workspace.</p>
+          <p>{greeting}</p>
         </div>
       </header>
       <div className="spot-studio-context" role="group" aria-label="Current CV context">
@@ -144,12 +149,12 @@ export function SpotlightView() {
       </div>
       <section className="spot-studio-next" aria-label="Continue your CV">
         <div>
-          <span className="spot-studio-eyebrow">Your next step</span>
           <h3>{started ? "Continue your CV" : "Start your first CV"}</h3>
           <p>{started ? `Pick up where you left off${currentName ? ` — ${currentName}` : ""}. Your existing edits remain in your workspace.` : "Add your experience, choose a template and see the live preview as you work."}</p>
         </div>
         <div className="spot-studio-actions">
           <button type="button" className="flow-btn primary" onClick={() => setView("edit")}>{started ? "Continue editing →" : "Create your CV →"}</button>
+          <button type="button" className="flow-btn" onClick={() => setView("create")}>Build step by step · free</button>
           <button type="button" className="flow-btn" onClick={() => setView("history")}>Your library</button>
         </div>
       </section>
@@ -160,21 +165,11 @@ export function SpotlightView() {
           <p>Open a tool or add it to your flow.</p>
         </div>
         <div className="spot-grid">
-          {gridBlocks.map((v, i) => (
-            <BlockCard key={v} view={v} number={i + 1} recommended={v === recommendedNext} />
+          {gridBlocks.map((v) => (
+            <BlockCard key={v} view={v} recommended={v === recommendedNext} />
           ))}
         </div>
       </section>
-
-      {!coachSeen && (
-        <div className="spot-coach" role="note">
-          <span className="spot-coach-text">
-            <strong>Make it yours.</strong> The workspace navigation is your flow — drag blocks to reorder
-            them, and use the cards above (or the <b>＋</b> button) to add or remove blocks.
-          </span>
-          <button type="button" className="flow-btn sm" onClick={dismissCoach}>Got it</button>
-        </div>
-      )}
 
       <SimulateHero />
 

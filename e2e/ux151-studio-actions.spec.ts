@@ -57,8 +57,7 @@ for (const width of [1440, 390, 320]) {
       await expect(tools).toBeVisible();
       expect(await studio.evaluate((root) => {
         const order = [...root.children];
-        return order.findIndex((el) => el.classList.contains("spot-studio-tools")) < order.findIndex((el) => el.classList.contains("spot-coach"))
-          && order.findIndex((el) => el.classList.contains("spot-studio-tools")) < order.findIndex((el) => el.classList.contains("spot-hero"));
+        return order.findIndex((el) => el.classList.contains("spot-studio-tools")) < order.findIndex((el) => el.classList.contains("spot-hero"));
       })).toBe(true);
       const create = studio.getByRole("button", { name: "Create your CV →", exact: true });
       await create.focus();
@@ -66,6 +65,8 @@ for (const width of [1440, 390, 320]) {
       await page.keyboard.press("Tab");
       await expect(create).toBeFocused();
       await expect(create).toHaveCSS("outline-style", "solid");
+      await page.keyboard.press("Tab");
+      await expect(studio.getByRole("button", { name: /^Build step by step/ })).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(studio.getByRole("button", { name: "Your library", exact: true })).toBeFocused();
       await page.keyboard.press("Tab");
@@ -99,7 +100,7 @@ for (const fullName of ["Fictional Studio Candidate", "   "]) {
   });
 }
 
-test("Studio tool toggles and relocated coach retain their behavior", async ({ appPage: page }) => {
+test("Studio tool toggles retain their behavior", async ({ appPage: page }) => {
   const tools = page.getByRole("region", { name: "Your CV tools" });
   const card = tools.locator(".spot-card").first();
   const toggle = card.getByRole("button", { name: "In your flow ✓", exact: true });
@@ -108,8 +109,6 @@ test("Studio tool toggles and relocated coach retain their behavior", async ({ a
   await expect(add).toHaveAttribute("aria-pressed", "false");
   await add.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Got it", exact: true }).click();
-  await expect(page.locator(".spot-coach")).toHaveCount(0);
   await page.getByRole("button", { name: "Open Simulate →", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Simulate", exact: true })).toBeVisible();
 });

@@ -24,7 +24,7 @@ describe("public SEO routes", () => {
       expect(urls).toContain(`https://orire.app/templates/${template.id}`);
     }
     expect(urls.every((url) => url.startsWith("https://"))).toBe(true);
-    expect(urls.some((url) => /\/(?:api|checkout|reset|forgot)(?:\/|$)/.test(url))).toBe(false);
+    expect(urls.some((url) => /\/(?:api|checkout|reset|forgot|magic)(?:\/|$)/.test(url))).toBe(false);
   });
 
   it("does not fabricate modification dates for pages with unknown update times", () => {
@@ -81,7 +81,7 @@ describe("public SEO routes", () => {
     expect(rules.sitemap).toContain("/sitemap.xml");
     expect(rules.rules).toEqual(expect.objectContaining({
       userAgent: "*",
-      disallow: expect.arrayContaining(["/api/", "/checkout/", "/forgot", "/reset"]),
+      disallow: expect.arrayContaining(["/api/", "/checkout/", "/forgot", "/reset", "/magic"]),
     }));
   });
 

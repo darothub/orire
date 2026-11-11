@@ -4,7 +4,9 @@ import { workspaceBusy } from "@/lib/store/busy";
 import { useEffect, useState } from "react";
 import { motion, Reorder, useReducedMotion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
-import { VIEW_META } from "@/lib/store/viewMeta";
+import { useSession } from "next-auth/react";
+import { useUIStore } from "@/lib/store/uiStore";
+import { VIEW_META, ACCOUNT_VIEWS } from "@/lib/store/viewMeta";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useFlowStore, PINNED_VIEWS } from "@/lib/store/flowStore";
@@ -12,6 +14,7 @@ import type { Metric } from "@/lib/plan/plan";
 import { BrandMark } from "@/components/BrandMark";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { useRunStore } from "@/lib/store/runStore";
+import { ViewIcon } from "@/components/ViewIcon";
 
 type Badge = "warn" | "busy" | null;
 
@@ -39,7 +42,10 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
   const meta = VIEW_META[item];
   const active = view === item;
   const reducedMotion = useReducedMotion();
-  const hint = locked ? "Free limit reached — upgrade to Pro to keep using this." : meta.hint;
+  const { status } = useSession();
+  const openAuth = useUIStore((s) => s.openAuth);
+  const guestReason = status === "unauthenticated" ? ACCOUNT_VIEWS[item] : undefined;
+  const hint = guestReason ? `${guestReason} (free).` : locked ? "Free limit reached — upgrade to Pro to keep using this." : meta.hint;
   return (
     <Tooltip title={meta.label} hint={hint} placement="right">
       <button
@@ -47,8 +53,11 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
         data-tour={`rail-${item}`}
         // When locked, the click routes to Plans (the upgrade path) rather than
         // the spent feature.
-        onClick={() => setView(locked ? "plans" : item)}
-        aria-label={locked ? `${meta.label} — free limit reached, upgrade to continue` : meta.label}
+        onClick={() => {
+          if (guestReason) openAuth("signup", null, guestReason);
+          else setView(locked ? "plans" : item);
+        }}
+        aria-label={locked ? `${meta.label} — free limit reached, upgrade to continue` : guestReason ? `${meta.label} — needs a free account` : meta.label}
         aria-current={active ? "page" : undefined}
       >
         {active && (
@@ -58,9 +67,10 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
             transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
           />
         )}
-        <span className="rail-icon" aria-hidden>{meta.icon}</span>
+        <span className="rail-icon" aria-hidden><ViewIcon view={item} /></span>
         <span className="rail-label">{meta.label}</span>
         {locked && <span className="rail-lock" aria-hidden>🔒</span>}
+        {guestReason && <span className="rail-acct" aria-hidden />}
         {badge && !locked && <span className={`rail-badge ${badge}`} aria-hidden />}
       </button>
     </Tooltip>
@@ -169,7 +179,9 @@ export function WorkspaceRail() {
       <div className="rail-group">
         <Tooltip title="Add blocks" hint="Open your studio to add or remove blocks" placement="right">
           <button className="rail-item rail-add" onClick={() => setView("spotlight")} aria-label="Add blocks">
-            <span className="rail-icon" aria-hidden>＋</span>
+            <span className="rail-icon" aria-hidden>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            </span>
             <span className="rail-label">Add</span>
           </button>
         </Tooltip>

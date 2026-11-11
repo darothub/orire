@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useUIStore } from "@/lib/store/uiStore";
 import { EVIDENCE_QUESTIONS, type EvidenceInput } from "@/lib/ai/evidence";
 
 type Answers = Pick<EvidenceInput, "action" | "scale" | "result" | "timeframe">;
@@ -25,7 +27,14 @@ export function EvidenceHelper({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const { status } = useSession();
+  const openAuth = useUIStore((s) => s.openAuth);
+
   async function draft() {
+    if (status === "unauthenticated") {
+      openAuth("signup", null, "Sign up to draft bullets with AI");
+      return;
+    }
     setBusy(true);
     setError("");
     try {

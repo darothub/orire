@@ -182,6 +182,22 @@ export interface ExportPDFOptions {
    * unaffected either way — it only ever holds what's visibly on the page.
    */
   embedData?: boolean;
+  /** Stamp a small "Made with Orire" credit on every page (guest creator downloads). */
+  watermark?: boolean;
+}
+
+/** Small unobtrusive credit in the bottom-right corner of every page. */
+function stampWatermark(pdf: jsPDF): void {
+  const pages = pdf.getNumberOfPages();
+  for (let n = 1; n <= pages; n++) {
+    pdf.setPage(n);
+    const w = pdf.internal.pageSize.getWidth();
+    const h = pdf.internal.pageSize.getHeight();
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7);
+    pdf.setTextColor(150, 146, 175);
+    pdf.text("Made with Orire", w - 18, h - 12, { align: "right" });
+  }
 }
 
 /**
@@ -225,6 +241,7 @@ export async function exportCVtoPDF(
     writeInvisibleLines(pdf, readableLines(pdf, cv));
     if (embedData) embedCVData(pdf, cv);
     pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, pageW, pageH, undefined, "FAST");
+    if (opts.watermark) stampWatermark(pdf);
     pdf.save(file);
     return true;
   }
@@ -240,6 +257,7 @@ export async function exportCVtoPDF(
     const w = imgW * scale;
     const h = imgH * scale;
     pdf.addImage(canvas.toDataURL("image/png"), "PNG", (A4_W - w) / 2, margin, w, h, undefined, "FAST");
+    if (opts.watermark) stampWatermark(pdf);
     pdf.save(file);
     return true;
   }
@@ -275,6 +293,7 @@ export async function exportCVtoPDF(
     }
   });
 
+  if (opts.watermark) stampWatermark(pdf);
   pdf.save(file);
   return true;
 }
