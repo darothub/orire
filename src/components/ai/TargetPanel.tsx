@@ -22,6 +22,7 @@ import { PROVIDERS, type RefineResponse } from "@/lib/ai/types";
 import { type CVData } from "@/lib/cv/schema";
 import { NoticeSlot, type SimNotice } from "@/components/ai/simulate/NoticeSlot";
 import { VerdictStrip } from "@/components/ai/simulate/VerdictStrip";
+import { DiffView } from "./simulate/DiffView";
 import { GapPanel } from "@/components/ai/simulate/GapPanel";
 
 /** Always read the working CV from the store at call time (edits + applied refine). */
@@ -62,7 +63,7 @@ export function TargetView() {
   const [err, setErr] = useState<{ title: string; body: string; status?: number } | null>(null);
   const [preview, setPreview] = useState<{ cv: CVData; warnings: string[] } | null>(null);
   const [showBefore, setShowBefore] = useState(false);
-  const [compare, setCompare] = useState<"yours" | "ideal" | "both">("both");
+  const [compare, setCompare] = useState<"yours" | "ideal" | "both" | "diff">("both");
   /** Working-CV fingerprint the open retone preview was built from. */
   const previewBaseSig = useRef<string | null>(null);
 
@@ -434,7 +435,7 @@ export function TargetView() {
 
         <div className="sim-main">
           <div className="sim-seg sim-view-seg" role="tablist" aria-label="Compare view">
-            {(["yours", "ideal", "both"] as const).map((m) => (
+            {(["yours", "ideal", "both", "diff"] as const).map((m) => (
               <button
                 key={m}
                 role="tab"
@@ -442,12 +443,22 @@ export function TargetView() {
                 className={compare === m ? "on" : ""}
                 onClick={() => setCompare(m)}
               >
-                {m === "yours" ? "Yours" : m === "ideal" ? "Ideal" : "Side by side"}
+                {m === "yours" ? "Yours" : m === "ideal" ? "Ideal" : m === "both" ? "Side by side" : "Diff"}
               </button>
             ))}
           </div>
 
-          <div className={`tgt-split sim-split ${compare}`}>
+          {compare === "diff" && (
+            <DiffView
+              ideal={ideal}
+              gap={gap}
+              onAddSkill={(s) => useCVStore.getState().acceptSkillSuggestion(s)}
+              onAddSection={(k) => useCVStore.getState().addSuggestedSection(k)}
+              onEdit={() => setView("edit")}
+            />
+          )}
+
+          <div className={`tgt-split sim-split ${compare}`} hidden={compare === "diff"}>
             {compare !== "ideal" && (
               <div className="tgt-col">
                 <div className="tgt-col-head mine">
