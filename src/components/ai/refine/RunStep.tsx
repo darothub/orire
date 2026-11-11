@@ -7,7 +7,7 @@ import { useTargetStore } from "@/lib/store/targetStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useCoverLetterStore } from "@/lib/store/coverLetterStore";
 import { allowCoverLetter, nextPlan } from "@/lib/plan/plan";
-import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
+import { PROVIDERS } from "@/lib/ai/types";
 import { countFacts } from "./shared";
 import { Column } from "./Column";
 import { JudgeBlock } from "./JudgeBlock";
