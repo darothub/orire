@@ -388,16 +388,29 @@ function GapSummary({ report, genuineOnly }: { report: GapReport; genuineOnly?: 
   return (
     <div className="coach-gaps">
       {!genuineOnly && report.matched.length > 0 && (
-        <p><strong>Already strong:</strong> {report.matched.join(" · ")}</p>
+        <section className="coach-gap-group is-strong" aria-label="Already strong">
+          <h4>Already strong <span>{report.matched.length}</span></h4>
+          <ul>{report.matched.map((m, i) => <li key={i}>{m}</li>)}</ul>
+        </section>
       )}
       {!genuineOnly && report.understated.length > 0 && (
-        <p><strong>You likely have, but the CV undersells:</strong> {report.understated.map((g) => g.area).join(" · ")}</p>
+        <section className="coach-gap-group is-under" aria-label="Undersold on your CV">
+          <h4>You likely have, but the CV undersells <span>{report.understated.length}</span></h4>
+          <ul>{report.understated.map((g, i) => <li key={i}>{g.area}</li>)}</ul>
+        </section>
       )}
       {report.genuineGap.length > 0 && (
-        <div>
-          <p><strong>Not shown on your CV (we won’t fake these):</strong></p>
-          <ul>{report.genuineGap.map((g, i) => <li key={i}>{g.area}{g.advice ? ` — ${g.advice}` : ""}</li>)}</ul>
-        </div>
+        <section className="coach-gap-group is-missing" aria-label="Not shown on your CV">
+          <h4>Not shown on your CV <small>we won’t fake these</small></h4>
+          <ul>
+            {report.genuineGap.map((g, i) => (
+              <li key={i}>
+                <strong>{g.area}</strong>
+                {g.advice && <span className="coach-gap-why">{g.advice}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );
