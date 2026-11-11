@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
+import { CreatorFlow } from "@/components/creator/CreatorFlow";
 import { EditorPanel } from "@/components/editor/EditorPanel";
 import { BrandMark } from "@/components/BrandMark";
 import { SectionOrder } from "@/components/editor/SectionOrder";
@@ -121,6 +122,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
         <motion.div key={view} className="ws-swap" custom={dir}>
           {view === "spotlight" && <SpotlightView />}
           {view === "edit" && <EditView mounted={mounted} />}
+          {view === "create" && <CreatorFlow mounted={mounted} />}
           {view === "rebrand" && <RebrandFlow />}
           {view === "refine" && <RefineFlow />}
           {view === "target" && <TargetView />}

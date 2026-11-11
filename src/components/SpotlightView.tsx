@@ -154,6 +154,7 @@ export function SpotlightView() {
         </div>
         <div className="spot-studio-actions">
           <button type="button" className="flow-btn primary" onClick={() => setView("edit")}>{started ? "Continue editing →" : "Create your CV →"}</button>
+          <button type="button" className="flow-btn" onClick={() => setView("create")}>Build step by step · free</button>
           <button type="button" className="flow-btn" onClick={() => setView("history")}>Your library</button>
         </div>
       </section>
