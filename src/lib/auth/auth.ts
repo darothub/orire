@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { CAPTCHA_COOKIE, captchaEnabled, verifyCaptchaProof } from "@/lib/auth/turnstile";
 import { verifyPassword } from "@/lib/auth/password";
+import { consumeMagicLinkToken } from "@/lib/auth/magic";
 // GitHub OAuth is disabled for now. Re-enable by restoring this import, the
 // provider block below, and the GitHub button in AuthOverlay.
 // import GitHub from "next-auth/providers/github";
@@ -52,6 +53,26 @@ function buildProviders(): Provider[] {
         if (!user?.passwordHash) return null;
         const ok = await verifyPassword(password, user.passwordHash);
         if (!ok) return null;
+        return { id: user.id, email: user.email, name: user.name, image: user.image };
+      },
+    }),
+    // Passwordless: exchange a one-time emailed token for a session. Possession
+    // of the inbox proves the address, so the account is created/marked verified.
+    Credentials({
+      id: "magic-link",
+      name: "Email link",
+      credentials: { token: { label: "Token", type: "text" } },
+      async authorize(creds) {
+        const email = await consumeMagicLinkToken(String(creds?.token ?? ""));
+        if (!email) return null;
+        const user = await prisma.user.upsert({
+          where: { email },
+          create: { email, emailVerified: new Date() },
+          update: {},
+        });
+        if (!user.emailVerified) {
+          await prisma.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+        }
         return { id: user.id, email: user.email, name: user.name, image: user.image };
       },
     }),

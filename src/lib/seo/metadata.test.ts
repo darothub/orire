@@ -3,6 +3,7 @@ import { GUIDES } from "@/lib/content/guides";
 import { generateMetadata as guideMetadata } from "@/app/guides/[slug]/page";
 import { metadata as supportMetadata } from "@/app/support/layout";
 import { metadata as forgotMetadata } from "@/app/forgot/layout";
+import { metadata as magicMetadata } from "@/app/magic/layout";
 import { metadata as resetMetadata } from "@/app/reset/layout";
 import { metadata as checkoutMetadata } from "@/app/checkout/layout";
 import { privateMetadata, publicMetadata } from "./metadata";
@@ -41,7 +42,7 @@ describe("route-specific social previews", () => {
 
 describe("private route indexing", () => {
   it("prevents recovery and checkout routes inheriting the homepage canonical", () => {
-    for (const metadata of [forgotMetadata, resetMetadata, checkoutMetadata, privateMetadata("Private")]) {
+    for (const metadata of [forgotMetadata, magicMetadata, resetMetadata, checkoutMetadata, privateMetadata("Private")]) {
       expect(metadata.robots).toMatchObject({ index: false, follow: false, nocache: true });
       expect(metadata.alternates?.canonical).toBeNull();
     }
