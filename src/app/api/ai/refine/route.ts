@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import type { CVData } from "@/lib/cv/schema";
+import { sanitizePromptFacts } from "@/lib/tailor/facts";
 import { PATCH_SYSTEM, buildPatchPrompt } from "@/lib/ai/prompt";
 import { PROVIDERS, type ProviderId, type RefineResponse } from "@/lib/ai/types";
 import { runProvider, DETERMINISTIC, type ProviderCall } from "@/lib/ai/server/providerCall";
@@ -55,6 +56,7 @@ interface Body {
   jobDescription?: string;
   cv?: CVData;
   runToken?: string;
+  facts?: unknown;
 }
 
 function fail(provider: ProviderId, message: string, status?: number): RefineResponse {
@@ -137,7 +139,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const user = buildPatchPrompt(body.cv, body.jobDescription!);
+  const user = buildPatchPrompt(body.cv, body.jobDescription!, sanitizePromptFacts(body.facts));
 
   // One provider attempt on orire's managed key (or the dev mock). The prompt
   // is provider-agnostic and deterministic, so a failover produces a comparable,

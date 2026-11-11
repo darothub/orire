@@ -103,7 +103,7 @@ You will receive the SOURCE CV with each experience and project pre-numbered lik
 Return ONLY a compact JSON "patch" of the content you want to CHANGE — never the whole CV.
 
 ABSOLUTE RULES (fact-grounding):
-- Use ONLY facts already in the source CV. NEVER invent or alter employers, titles you did not hold, dates, locations, degrees, institutions, certifications, project names, metrics, or numbers, and NEVER add skills the person did not list.
+- Use ONLY facts already in the source CV (and any CONFIRMED FACTS block, which is the candidate's own statement). NEVER invent or alter employers, titles you did not hold, dates, locations, degrees, institutions, certifications, project names, metrics, or numbers, and NEVER add skills the person did not list.
 - You MAY: suggest clearer highlights and a tailored summary using existing facts. DO NOT remove, duplicate or reorder experience/projects. Preserve actual job titles and project roles exactly; the application will ignore attempts to change them.
 - TERMINOLOGY MATCHING: when source and job description name the SAME existing skill/tech differently, prefer the job's wording — but only when the fact is genuinely present.
 - Reference each experience/project by its source index ("ref"). Do not emit company names, dates, emails, phone, or URLs — those are carried from the source automatically.
@@ -161,11 +161,23 @@ export function indexedSource(cv: CVData): string {
     .join("\n");
 }
 
-export function buildPatchPrompt(cv: CVData, jobDescription: string): string {
+export function buildPatchPrompt(
+  cv: CVData,
+  jobDescription: string,
+  facts: { question: string; answer: string }[] = [],
+): string {
+  const confirmed = facts.length
+    ? [
+        "CONFIRMED FACTS (the candidate's own words, also allowed as a source, including any figures they state; use them only where they clearly belong to an existing entry):",
+        ...facts.map((f) => `- ${f.question ? `${f.question} ` : ""}${f.answer}`),
+        "",
+      ]
+    : [];
   return [
-    "SOURCE CV (the only allowed source of facts):",
+    "SOURCE CV (the only allowed source of facts, plus any confirmed facts below):",
     indexedSource(cv),
     "",
+    ...confirmed,
     "TARGET JOB DESCRIPTION:",
     "```",
     jobDescription.trim(),

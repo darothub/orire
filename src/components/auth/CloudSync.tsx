@@ -8,6 +8,8 @@ import { usePlanStore } from "@/lib/store/planStore";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useSyncStore } from "@/lib/store/syncStore";
 import { useFlowStore } from "@/lib/store/flowStore";
+import { useFactStore } from "@/lib/store/factStore";
+import { loadFactLedger, saveFactLedger } from "@/app/actions/facts";
 import { loadWorkingCV, saveWorkingCV } from "@/app/actions/cv";
 import { readEntitlement } from "@/app/actions/refine";
 import { useStorageScope } from "@/components/auth/StorageScope";
@@ -123,6 +125,7 @@ export function CloudSync() {
       useLibraryStore.getState().clear();
       useTargetStore.getState().clearTarget();
       useFlowStore.getState().resetFlow();
+      useFactStore.getState().reset();
       useSyncStore.getState().setStatus("idle");
     }
   }, [status, scopeReady, scope.generation, scope.userId]);
@@ -180,6 +183,30 @@ export function CloudSync() {
       schedulePendingSave.current = null;
       pendingEdit.current = false;
       if (timer.current) clearTimeout(timer.current);
+    };
+  }, [status, scopeReady, sessionUserId, scope.generation]);
+
+  // Tailor fact ledger: merge the cloud copy in once per user, then save edits.
+  useEffect(() => {
+    if (status !== "authenticated" || !scopeReady || !sessionUserId) return;
+    let cancelled = false;
+    let factTimer: ReturnType<typeof setTimeout> | null = null;
+    const pushFacts = () => void saveFactLedger(useFactStore.getState().facts);
+    const unsub = useFactStore.subscribe((s, prev) => {
+      if (s.rev === prev.rev) return;
+      if (factTimer) clearTimeout(factTimer);
+      factTimer = setTimeout(pushFacts, 1500);
+    });
+    void (async () => {
+      const remote = await loadFactLedger().catch(() => null);
+      if (cancelled || !remote) return;
+      useFactStore.getState().adopt(remote);
+      if (useFactStore.getState().facts.length > remote.length) pushFacts();
+    })();
+    return () => {
+      cancelled = true;
+      unsub();
+      if (factTimer) clearTimeout(factTimer);
     };
   }, [status, scopeReady, sessionUserId, scope.generation]);
 
