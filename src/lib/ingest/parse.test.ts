@@ -147,3 +147,48 @@ describe("parseCVText — confidence notes (the \"check this\" review step reads
     expect(parsed.notes.some((n) => /institution/i.test(n))).toBe(true);
   });
 });
+
+describe("parseCVText — dates on their own line", () => {
+  const body = (header: string) => `EXPERIENCE
+${header}
+• Led the Android rewrite
+• Cut crash rate
+Software Engineer · Decagon
+October 2019 – February 2022
+• Built payment apps
+EDUCATION
+BSC · Statistics · Federal University of Agriculture
+2010 – 2014`;
+
+  it("keeps a title and a date line below it in one entry", () => {
+    const { experience } = parseCVText(body("Senior Engineer · Mobica\nSeptember 2022 – Jan 2025"));
+    expect(experience).toHaveLength(2);
+    expect(experience[0].company).toBe("Mobica");
+    expect(experience[0].highlights).toHaveLength(2);
+    expect(experience[0].startDate).toBe("September 2022");
+    expect(experience[1].company).toBe("Decagon");
+    expect(experience[1].highlights).toEqual(["Built payment apps"]);
+  });
+
+  it("keeps a date line followed by the title in one entry", () => {
+    const { experience } = parseCVText(body("September 2022 – Jan 2025\nSenior Engineer · Mobica"));
+    expect(experience).toHaveLength(2);
+    expect(experience[0].company).toBe("Mobica");
+    expect(experience[0].highlights).toHaveLength(2);
+  });
+});
+
+describe("parseCVText — dates with a comma after the month", () => {
+  it("reads 'Oct., 2025 – Present' as a date range", () => {
+    const { experience } = parseCVText(`EXPERIENCE
+Senior Engineer @ Mastercard · Porto, Portugal
+Oct., 2025 – Present
+• Built authentication services
+Engineer @ Mobica
+Sept., 2022 – Jan., 2025
+• Shipped Android features`);
+    expect(experience.map((e) => e.company)).toEqual(["Mastercard, Porto, Portugal", "Mobica"]);
+    expect(experience[0].current).toBe(true);
+    expect(experience[1].highlights).toEqual(["Shipped Android features"]);
+  });
+});
