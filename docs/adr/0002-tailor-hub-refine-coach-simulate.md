@@ -89,8 +89,12 @@ keeps everything already accepted.
 
 1. **Hub and navigation**: Tailor view, shared job input, role copy, add Coach
    to `COMPOSABLE_BLOCKS`, suggested-next logic (pure and tested).
-2. **Proposal model**: `baseHash`, stale detection, accept as one undoable
-   version step; migrate Refine and Coach onto it.
+2. **Proposal model** (built): `src/lib/tailor/proposal.ts` hashes the base CV,
+   re-bases a stale proposal onto the live CV (a change applies only if the live
+   CV left that part alone; edited parts are skipped), and Refine and Coach both
+   use it. Open proposals show in the Tailor "Review changes" inbox. Each accept
+   is one undo step held in memory (`proposalStore`), not a library version, and
+   the inbox registers a proposal only once its tool view has loaded it.
 3. **Fact ledger**: persist Coach answers, feed Refine and the guard, seed
    Coach from Simulate gaps.
 4. **Run all**: the guided sequence, before/after score, mid-run cap handling.

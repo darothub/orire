@@ -6,6 +6,7 @@ import { usePlanStore } from "@/lib/store/planStore";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
+import { useProposalStore } from "@/lib/store/proposalStore";
 import { sharedRun } from "@/lib/store/runStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { authorizeRefineRun } from "@/app/actions/refine";
@@ -373,8 +374,10 @@ export const useRefineStore = create<RefineState>((set, get) => ({
 
   keepResults: () => set({ revisited: false }),
 
-  resetRun: () =>
-    set({ started: false, runSig: null, revisited: false, planBlock: null, usageNote: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, appliedProvider: null, reviewProvider: null }),
+  resetRun: () => {
+    useProposalStore.getState().discard("refine");
+    set({ started: false, runSig: null, revisited: false, planBlock: null, usageNote: null, cols: idleCols(), baseMatch: null, baseCV: null, judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false, appliedProvider: null, reviewProvider: null });
+  },
 
   resetJudge: () => set({ judgePhase: "idle", verdict: null, judgeErr: null, judgeFromCache: false }),
 

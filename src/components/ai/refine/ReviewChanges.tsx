@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { scoreGrounding } from "@/lib/ai/guardrails";
-import { diffCv, applyReviewed, type CvChange } from "@/lib/ai/cvDiff";
+import { diffCv } from "@/lib/ai/cvDiff";
+import { applyOffered, rebaseProposal } from "@/lib/tailor/proposal";
+import { useProposalStore } from "@/lib/store/proposalStore";
 import { ChangeList } from "@/components/ai/refine/ChangeList";
 
 /**
@@ -34,29 +36,38 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
   const before = baseCV ?? liveCV;
   const after = result?.cv ?? null;
 
-  const changes = useMemo<CvChange[]>(() => (after ? diffCv(before, after) : []), [before, after]);
+  const registerProposal = useProposalStore((s) => s.register);
+  const recordApplied = useProposalStore((s) => s.recordApplied);
+  useEffect(() => {
+    if (after) registerProposal("refine", before, after);
+  }, [before, after, registerProposal]);
+
+  // Re-based onto the live CV, so a review stays usable after the CV moved on.
+  const rebased = useMemo(
+    () => (after ? rebaseProposal(before, after, liveCV) : { stale: false, changes: [], skipped: [] }),
+    [before, after, liveCV],
+  );
+  const changes = rebased.changes;
   // Safe-by-default: all suggestions are rejected until the user opts in.
   const [rejected, setRejected] = useState<Set<string>>(
     () => new Set(after ? diffCv(before, after).map((change) => change.id) : []),
   );
-  // The comparison is against the CV captured when the run began. If the
-  // editor has changed since, refusing to apply prevents overwriting new work.
-  const sourceChanged = JSON.stringify(before) !== JSON.stringify(liveCV);
-
-  const accepted = changes.length - rejected.size;
+  const accepted = changes.filter((c) => !rejected.has(c.id)).length;
   const grounding = result ? scoreGrounding(result) : null;
   const warnings = result?.warnings ?? [];
 
   const apply = () => {
-    if (!after || sourceChanged) return;
+    if (!after) return;
     if (accepted === 0) {
       closeReview();
       return;
     }
-    // Re-read the store at click time: an edit made since render must never
-    // get overwritten by a stale AI result even if React hasn't rerendered.
-    if (JSON.stringify(useCVStore.getState().cv) !== JSON.stringify(before)) return;
-    applyRefinedCV(applyReviewed(before, after, rejected));
+    // Re-read the store at click time so an edit made since render is kept.
+    const live = useCVStore.getState().cv;
+    const fresh = rebaseProposal(before, after, live);
+    const next = applyOffered(live, after, fresh.changes, rejected);
+    applyRefinedCV(next);
+    recordApplied("refine", live, next);
     markApplied(provider);
     closeReview();
     setView("edit");
@@ -101,11 +112,13 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
         )}
       </div>
 
-      {sourceChanged && (
-        <div className="rev-ground review" role="alert">
-          <strong>Your CV changed since this AI comparison.</strong>{" "}
-          Applying the old result could erase your newer edits. Cancel and run
-          Refine again using the current CV.
+      {rebased.stale && (
+        <div className="rev-ground review" role="status">
+          <strong>Your CV changed since this was made.</strong>{" "}
+          {rebased.skipped.length > 0
+            ? `${rebased.skipped.length} change${rebased.skipped.length > 1 ? "s were" : " was"} skipped because you edited the same part${rebased.skipped.length > 1 ? "s" : ""} (${rebased.skipped.map((c) => c.label).join(", ")}). `
+            : ""}
+          The rest still apply on top of your edits.
         </div>
       )}
 
@@ -119,7 +132,7 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
 
       <div className="rev-foot">
         <button className="flow-btn ghost" onClick={closeReview}>Cancel</button>
-        <button className="flow-btn primary lg" onClick={changes.length === 0 ? closeReview : apply} disabled={sourceChanged}>
+        <button className="flow-btn primary lg" onClick={changes.length === 0 ? closeReview : apply}>
           {changes.length === 0
             ? "Back to comparison"
             : accepted === 0
