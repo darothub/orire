@@ -34,6 +34,17 @@ export const VIEW_META: Record<WorkspaceView, ViewMeta> = {
   connect: { label: "AI Settings", hint: "Assistants", icon: "⚙" },
 };
 
+/** Views that need an account when used as a guest (AI runs, downloads). */
+export const ACCOUNT_VIEWS: Partial<Record<WorkspaceView, string>> = {
+  rebrand: "Sign up to re-brand a CV with AI",
+  refine: "Sign up to refine your CV with AI",
+  target: "Sign up to simulate a match with AI",
+  cover: "Sign up to write a cover letter with AI",
+  rate: "Sign up to grade your CV with AI",
+  connect: "Sign up to set up AI assistants",
+  export: "Sign up to export your CV",
+};
+
 /** Shorthand for the label of a view — handy for panel headings that mirror the
  *  nav word (e.g. the Simulate / Grade / Export page titles). */
 export const viewLabel = (v: WorkspaceView): string => VIEW_META[v].label;
