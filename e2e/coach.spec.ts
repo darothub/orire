@@ -130,6 +130,38 @@ test("tailor inbox: a proposal stays usable after the CV is edited, and keeps th
   await expect(appPage.locator("#cv-paper")).toContainText("Principal Engineer");
 });
 
+test("tailor facts: an answer is kept, reused on the next run, synced to the account, and deletable", async ({ appPage, db, e2eUser }) => {
+  await asPro(appPage, db, e2eUser.id);
+  await stubAgents(appPage);
+  await openCoach(appPage);
+  await appPage.getByLabel("Job description").fill("Senior TypeScript engineer.");
+  await appPage.getByRole("button", { name: "Analyse my CV" }).click();
+  await appPage.getByLabel("By how much did the redesign lift engagement?").fill("34% weekly active use");
+  await appPage.getByRole("button", { name: "Rewrite with 1 answer" }).click();
+  await expect(appPage.getByText("33% → 67%")).toBeVisible();
+
+  const rail = appPage.getByRole("navigation", { name: "Workspaces" });
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  const facts = appPage.getByRole("region", { name: /Your verified facts/ });
+  await expect(facts).toContainText("34% weekly active use");
+
+  await expect
+    .poll(async () => JSON.stringify((await db.user.findUnique({ where: { id: e2eUser.id }, select: { factLedger: true } }))?.factLedger ?? null))
+    .toContain("34% weekly active use");
+
+  // The next Coach run starts with the earlier answer filled in.
+  await appPage.getByRole("button", { name: "Open Coach", exact: true }).click();
+  await appPage.getByRole("button", { name: "Start over" }).click();
+  await appPage.getByLabel("Job description").fill("Another TypeScript role.");
+  await appPage.getByRole("button", { name: "Analyse my CV" }).click();
+  await expect(appPage.getByLabel("By how much did the redesign lift engagement?")).toHaveValue("34% weekly active use");
+  await expect(appPage.getByText("From your earlier answer")).toBeVisible();
+
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByRole("button", { name: /^Delete fact/ }).click();
+  await expect(appPage.getByRole("region", { name: /Your verified facts/ })).toHaveCount(0);
+});
+
 test("coach: a refresh mid-run restores the questions and answers", async ({ appPage, db, e2eUser }) => {
   await asPro(appPage, db, e2eUser.id);
   await stubAgents(appPage);

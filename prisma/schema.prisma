@@ -23,6 +23,8 @@ model User {
   createdAt     DateTime  @default(now())
   /// The library version currently open in the editor (autosave target).
   activeDocumentId String?
+  /// Tailor fact ledger: what the candidate told us, reused across tools.
+  factLedger Json?
 
   accounts    Account[]
   sessions    Session[]
