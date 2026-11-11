@@ -8,7 +8,8 @@ test.describe("guest access", () => {
     const rail = page.getByRole("navigation", { name: "Workspaces" });
     await expect(rail).toBeVisible({ timeout: 30_000 });
 
-    await rail.getByRole("button", { name: /^Refine/ }).click();
+    await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+    await page.getByRole("button", { name: "Open Refine" }).click();
     const dialog = page.getByRole("dialog", { name: "Create your account" });
     await expect(dialog).toBeVisible();
     await expect(dialog).toContainText("Sign up to refine your CV with AI");

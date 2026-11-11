@@ -38,14 +38,14 @@ for (const viewport of [
     await expect(tour.getByRole("button", { name: "Next" })).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(tour.getByRole("heading", { name: "Edit, live" })).toBeFocused();
-    await expect(tour.locator(".tour-step")).toHaveText("Step 2 of 6");
+    await expect(tour.locator(".tour-step")).toHaveText("Step 2 of 5");
 
     // Enter must invoke Back's actual button click rather than triggering an
     // unrelated global advance as happened before this accessibility change.
     await tour.getByRole("button", { name: "Back" }).focus();
     await page.keyboard.press("Enter");
     await expect(tour.getByRole("heading", { name: "Welcome to orire" })).toBeFocused();
-    await expect(tour.locator(".tour-step")).toHaveText("Step 1 of 6");
+    await expect(tour.locator(".tour-step")).toHaveText("Step 1 of 5");
 
     await page.keyboard.press("Escape");
     await expect(tour).toBeHidden();
