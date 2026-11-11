@@ -23,6 +23,7 @@ import { type CVData } from "@/lib/cv/schema";
 import { NoticeSlot, type SimNotice } from "@/components/ai/simulate/NoticeSlot";
 import { VerdictStrip } from "@/components/ai/simulate/VerdictStrip";
 import { rankMissingSections, rankMissingSkills } from "@/lib/ai/simulateImpact";
+import { buildGapReportHtml } from "@/lib/ai/simulateReport";
 import { DiffView } from "./simulate/DiffView";
 import { GapPanel } from "@/components/ai/simulate/GapPanel";
 
@@ -53,6 +54,9 @@ export function TargetView() {
   const resimPrompt = useTargetStore((s) => s.resimPrompt);
   const dismissResim = useTargetStore((s) => s.dismissResim);
   const history = useTargetStore((s) => s.history);
+  const saved = useTargetStore((s) => s.saved);
+  const switchTarget = useTargetStore((s) => s.switchTarget);
+  const removeSaved = useTargetStore((s) => s.removeSaved);
   const recordScore = useTargetStore((s) => s.recordScore);
 
   const provider = useSettingsStore((s) => s.provider);
@@ -233,6 +237,16 @@ export function TargetView() {
 
   const activeTone: ToneLabel = toneLabel ?? detected?.label ?? "Balanced";
 
+  function exportReport() {
+    const html = buildGapReportHtml({ label: label || "Target role", match, baseScore, rankedSkills, rankedSections });
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
+  }
+
   const openResim = () => { setRecompose(true); setGenPhase("input"); setGenErr(null); };
   const notices: SimNotice[] = [];
   if (usageNote) notices.push({ id: "usage", body: usageNote });
@@ -358,10 +372,24 @@ export function TargetView() {
           <summary className="imp-btn" aria-label="More actions">⋯</summary>
           <div className="sim-more-menu">
             <button className="imp-btn" onClick={openResim}>New simulation</button>
+            <button className="imp-btn" onClick={exportReport}>Gap report (PDF)</button>
             <button className="imp-btn danger" onClick={clearTarget}>Clear target</button>
           </div>
         </details>
       </div>
+
+      {saved.length > 0 && (
+        <div className="sim-targets" role="tablist" aria-label="Targets">
+          {saved.map((t) => (
+            <span key={t.id} className="sim-target">
+              <button role="tab" aria-selected={false} onClick={() => { discardRetone(); switchTarget(t.id); }}>{t.label}</button>
+              <button className="sim-target-x" aria-label={`Remove ${t.label}`} onClick={() => removeSaved(t.id)}>×</button>
+            </span>
+          ))}
+          <span className="sim-target on"><button role="tab" aria-selected>{label || "This role"}</button></span>
+          <button className="sim-target new" onClick={openResim}>+ New</button>
+        </div>
+      )}
 
       <NoticeSlot notices={notices} />
 
@@ -383,6 +411,7 @@ export function TargetView() {
         <div className="sim-rail">
           <GapPanel
             match={match}
+            cv={cv}
             rankedSkills={rankedSkills}
             rankedSections={rankedSections}
             onAddSkill={(s) => useCVStore.getState().acceptSkillSuggestion(s)}

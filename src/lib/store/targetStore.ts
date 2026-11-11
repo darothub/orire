@@ -16,6 +16,19 @@ import { appendHistory, type ScorePoint } from "@/lib/ai/simulateImpact";
  * This is a reference only. It must never be merged into the real CV or exported
  * as the user's own.
  */
+export interface SavedTarget {
+  id: string;
+  ideal: CVData;
+  jd: string;
+  idealJd: string;
+  label: string;
+  createdAt: number | null;
+  baseScore: number;
+  history: ScorePoint[];
+}
+
+const MAX_SAVED = 4;
+
 interface TargetState {
   /** The simulated ideal CV, or null when no target is locked. */
   ideal: CVData | null;
@@ -35,7 +48,11 @@ interface TargetState {
   resimPrompt: boolean;
   /** Match score over time (deduped, capped) for the verdict sparkline. */
   history: ScorePoint[];
+  /** Other targets the user has benchmarked against; the active one is the flat fields. */
+  saved: SavedTarget[];
 
+  switchTarget: (id: string) => void;
+  removeSaved: (id: string) => void;
   recordScore: (score: number) => void;
   setJd: (jd: string) => void;
   setTarget: (ideal: CVData, jd: string, baseScore: number, label?: string) => void;
@@ -56,6 +73,14 @@ function deriveLabel(ideal: CVData, jd: string): string {
   return "Target role";
 }
 
+function snapshot(s: TargetState): SavedTarget {
+  return {
+    id: `${s.createdAt ?? 0}-${s.label}`,
+    ideal: s.ideal as CVData, jd: s.jd, idealJd: s.idealJd, label: s.label,
+    createdAt: s.createdAt, baseScore: s.baseScore, history: s.history ?? [],
+  };
+}
+
 export const useTargetStore = create<TargetState>()(
   persist(
     (set) => ({
@@ -67,6 +92,21 @@ export const useTargetStore = create<TargetState>()(
       baseScore: 0,
       resimPrompt: false,
       history: [],
+      saved: [],
+
+      switchTarget: (id) =>
+        set((s) => {
+          const next = s.saved.find((t) => t.id === id);
+          if (!next) return {};
+          const rest = s.saved.filter((t) => t.id !== id);
+          const current = s.ideal ? [snapshot(s)] : [];
+          return {
+            ideal: next.ideal, jd: next.jd, idealJd: next.idealJd, label: next.label,
+            createdAt: next.createdAt, baseScore: next.baseScore, history: next.history,
+            resimPrompt: false, saved: [...rest, ...current].slice(-MAX_SAVED),
+          };
+        }),
+      removeSaved: (id) => set((s) => ({ saved: s.saved.filter((t) => t.id !== id) })),
 
       recordScore: (score) =>
         set((s) => {
@@ -77,26 +117,32 @@ export const useTargetStore = create<TargetState>()(
       setJd: (jd) => set({ jd }),
 
       setTarget: (ideal, jd, baseScore, label) =>
-        set({
+        set((s) => {
+          const nextLabel = label?.trim() || deriveLabel(ideal, jd);
+          const kept = s.saved.filter((t) => t.label !== nextLabel);
+          const stash = s.ideal && s.label !== nextLabel ? [snapshot(s)] : [];
+          return {
+          saved: [...kept, ...stash].slice(-MAX_SAVED),
           ideal,
           jd,
           idealJd: jd,
           baseScore,
-          label: label?.trim() || deriveLabel(ideal, jd),
+          label: nextLabel,
           createdAt: Date.now(),
           resimPrompt: false,
           history: [{ t: Date.now(), score: baseScore }],
+          };
         }),
 
       discardTarget: () => set({ ideal: null, idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false, history: [] }),
-      clearTarget: () => set({ ideal: null, jd: "", idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false, history: [] }),
+      clearTarget: () => set({ saved: [], ideal: null, jd: "", idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false, history: [] }),
       requestResim: () => set((s) => (s.ideal ? { resimPrompt: true } : {})),
       dismissResim: () => set({ resimPrompt: false }),
     }),
     {
       // Anonymous default; StorageScope rebinds per signed-in user id.
       name: "orire-target:anon:v1",
-      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, idealJd: s.idealJd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore, resimPrompt: s.resimPrompt, history: s.history }),
+      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, idealJd: s.idealJd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore, resimPrompt: s.resimPrompt, history: s.history, saved: s.saved }),
     },
   ),
 );

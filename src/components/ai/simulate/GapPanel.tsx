@@ -5,12 +5,15 @@ import { motion } from "framer-motion";
 import { SECTION_LABELS, type SectionKey } from "@/lib/cv/schema";
 import type { TargetMatch } from "@/lib/ai/simulate";
 import type { RankedSection, RankedSkill } from "@/lib/ai/simulateImpact";
+import { skillEvidence } from "@/lib/ai/simulateReport";
+import type { CVData } from "@/lib/cv/schema";
 import { coverageColor } from "./VerdictStrip";
 
 type Tab = "skills" | "sections" | "signals";
 
 export interface GapPanelProps {
   match: TargetMatch;
+  cv: CVData;
   rankedSkills: RankedSkill[];
   rankedSections: RankedSection[];
   onAddSkill: (skill: string) => void;
@@ -20,7 +23,7 @@ export interface GapPanelProps {
 const SKILL_PREVIEW = 6;
 
 /** Tabbed gap view: only one lens is open at a time, so the screen stays quiet. */
-export function GapPanel({ match, rankedSkills, rankedSections, onAddSkill, onAddSection }: GapPanelProps) {
+export function GapPanel({ match, cv, rankedSkills, rankedSections, onAddSkill, onAddSection }: GapPanelProps) {
   const [tab, setTab] = useState<Tab>("skills");
   const [showAll, setShowAll] = useState(false);
   const { gap } = match;
@@ -99,9 +102,14 @@ export function GapPanel({ match, rankedSkills, rankedSections, onAddSkill, onAd
             <details className="sim-matched">
               <summary>{gap.matchedSkills.length} matched</summary>
               <div className="sim-chips">
-                {gap.matchedSkills.map((s) => (
-                  <span key={s} className="sim-chip match">{s}</span>
-                ))}
+                {gap.matchedSkills.map((s) => {
+                  const ev = skillEvidence(cv, s);
+                  return (
+                    <span key={s} className="sim-chip match" title={ev ? `Evidence: ${ev}` : "Listed in your skills"}>
+                      {s}
+                    </span>
+                  );
+                })}
               </div>
             </details>
           )}
