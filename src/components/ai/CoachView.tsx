@@ -23,6 +23,7 @@ interface Draft {
 
 interface Analysis {
   runToken: string;
+  startedAt: number;
   profile: IdealProfile;
   report: GapReport;
   questions: ElicitationQuestion[];
@@ -46,6 +47,37 @@ async function post<T>(body: Record<string, unknown>): Promise<T> {
   return data as unknown as T;
 }
 
+const STORAGE_KEY = "orire-coach-run";
+// Matches the server's run-token lifetime; a saved run older than this can no longer continue.
+const nowMs = () => Date.now();
+const SAVED_RUN_TTL_MS = 30 * 60_000;
+
+interface SavedRun {
+  phase: "questions" | "review";
+  baseCV: CVData;
+  analysis: Analysis;
+  answers: Record<string, string>;
+  draft: Draft | null;
+  rounds: number;
+}
+
+/** Restore an in-progress run after a refresh (never a half-finished request). */
+function loadSavedRun(): SavedRun | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const saved = JSON.parse(raw) as SavedRun;
+    if (!saved.baseCV || !saved.analysis || nowMs() - saved.analysis.startedAt > SAVED_RUN_TTL_MS) {
+      window.sessionStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return saved;
+  } catch {
+    return null;
+  }
+}
+
 const quality = (d: Draft) => ({ warnings: d.warnings.length, atsScore: d.ats.after.score });
 
 /**
@@ -63,20 +95,37 @@ export function CoachView() {
   const plan = usePlanStore((s) => s.plan);
   const allowed = allowCoach(plan);
 
-  const [phase, setPhase] = useState<Phase>("input");
+  const [saved] = useState(loadSavedRun);
+  const restoredReview = saved?.phase === "review" && saved.draft ? saved.draft : null;
+  const [phase, setPhase] = useState<Phase>(saved ? (restoredReview ? "review" : "questions") : "input");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
-  const [baseCV, setBaseCV] = useState<CVData | null>(null);
-  const [analysis, setAnalysis] = useState<Analysis | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [draft, setDraft] = useState<Draft | null>(null);
+  const [baseCV, setBaseCV] = useState<CVData | null>(saved?.baseCV ?? null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(saved?.analysis ?? null);
+  const [answers, setAnswers] = useState<Record<string, string>>(saved?.answers ?? {});
+  const [draft, setDraft] = useState<Draft | null>(restoredReview);
   const [critique, setCritique] = useState<Critique | null>(null);
-  const [rounds, setRounds] = useState(0);
-  const [rejected, setRejected] = useState<Set<string>>(new Set());
+  const [rounds, setRounds] = useState(saved?.rounds ?? 0);
+  const [rejected, setRejected] = useState<Set<string>>(
+    () => new Set(saved && restoredReview ? diffCv(saved.baseCV, restoredReview.cv).map((c) => c.id) : []),
+  );
 
   // Ignore results from a run the user has since restarted or left.
   const runId = useRef(0);
   useEffect(() => () => { runId.current += 1; }, []);
+
+  useEffect(() => {
+    try {
+      if ((phase === "questions" || phase === "review") && baseCV && analysis) {
+        const run: SavedRun = { phase, baseCV, analysis, answers, draft, rounds };
+        window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(run));
+      } else if (phase === "input") {
+        window.sessionStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      /* storage full or unavailable: persistence is best-effort */
+    }
+  }, [phase, baseCV, analysis, answers, draft, rounds]);
 
   const reset = () => {
     runId.current += 1;
@@ -98,10 +147,10 @@ export function CoachView() {
     try {
       const r = await post<Analysis>({ action: "analyze", cv: snapshot, jobDescription: jd });
       if (id !== runId.current) return;
-      setAnalysis({ runToken: r.runToken, profile: r.profile, report: r.report, questions: r.questions });
+      setAnalysis({ runToken: r.runToken, startedAt: nowMs(), profile: r.profile, report: r.report, questions: r.questions });
       setAnswers({});
       if (r.questions.length > 0) setPhase("questions");
-      else await rewrite(id, snapshot, { runToken: r.runToken, profile: r.profile, report: r.report, questions: [] }, {});
+      else await rewrite(id, snapshot, { runToken: r.runToken, startedAt: nowMs(), profile: r.profile, report: r.report, questions: [] }, {});
     } catch (e) {
       if (id !== runId.current) return;
       setError((e as Error).message);
@@ -184,8 +233,9 @@ export function CoachView() {
       {allowed && phase === "input" && (
         <div className="step-body">
           <div className="ai-field">
-            <span className="ed-label">Job description</span>
+            <label className="ed-label" htmlFor="coach-jd">Job description</label>
             <textarea
+              id="coach-jd"
               className="ed-input ai-jd"
               value={jd}
               placeholder="Paste the full job description here…"
@@ -200,7 +250,7 @@ export function CoachView() {
       )}
 
       {(phase === "analyzing" || phase === "rewriting") && (
-        <div className="coach-busy" role="status" aria-live="polite">
+        <div className="coach-busy" role="status" aria-live="polite" aria-busy="true">
           <p>{phase === "analyzing" ? "Modelling the ideal candidate and comparing your CV…" : status}</p>
         </div>
       )}
@@ -209,14 +259,16 @@ export function CoachView() {
         <div className="step-body">
           <GapSummary report={analysis.report} />
           <p className="step-hint">
-            Answer what you can — real numbers and outcomes help most. Only what you type here is added; skip anything that isn’t true or you don’t remember.
+            Answer what you can — real numbers and outcomes help most. Only what you type here is added. We can’t verify your answers, so include only what’s true; skip anything you don’t remember.
           </p>
           <div className="coach-questions">
             {analysis.questions.map((q) => (
               <div key={q.id} className="ai-field">
-                <span className="ed-label">{q.prompt}</span>
-                {q.targets && <span className="coach-target">{q.targets}</span>}
+                <label className="ed-label" htmlFor={`coach-${q.id}`}>{q.prompt}</label>
+                {q.targets && <span className="coach-target" id={`coach-${q.id}-t`}>{q.targets}</span>}
                 <textarea
+                  id={`coach-${q.id}`}
+                  aria-describedby={q.targets ? `coach-${q.id}-t coach-${q.id}-n` : `coach-${q.id}-n`}
                   className="ed-input"
                   rows={3}
                   maxLength={600}
@@ -224,6 +276,7 @@ export function CoachView() {
                   placeholder={q.kind === "metric" ? "e.g. a number, and what it was compared with" : "Your answer (optional)"}
                   onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                 />
+                <span className="coach-count" id={`coach-${q.id}-n`}>{(answers[q.id] ?? "").length}/600</span>
               </div>
             ))}
           </div>

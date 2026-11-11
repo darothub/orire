@@ -19,8 +19,7 @@ import { runAnalysis, runCritique, runRewrite, type AgentCaller, type AgentName 
 import { MAX_CRITIC_ROUNDS, sanitizeAnswers, sanitizeCritique, sanitizeGapReport, sanitizeProfile } from "@/lib/ai/agents";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { claimCoachStep, consume, getPlanId, getUsed, refund, releaseCoachStep } from "@/lib/entitlement/entitlement";
-import { allowCoach, withinCap } from "@/lib/plan/plan";
-import { signCoachToken, verifyCoachToken } from "@/lib/plan/coachToken";
+import { gateCoachCall, type CoachStore } from "@/lib/plan/coachGate";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
@@ -52,6 +51,15 @@ const hasShape = (c: unknown): c is CVData => {
   return !!v && !!v.basics && Array.isArray(v.experience) && Array.isArray(v.projects) && Array.isArray(v.skills) && Array.isArray(v.education) && Array.isArray(v.certifications);
 };
 
+const coachStore: CoachStore = {
+  getPlan: getPlanId,
+  getUsed: (u, plan) => getUsed(u, "coach", plan),
+  consume: async (u, plan) => void (await consume(u, "coach", plan)),
+  refund: (u, plan) => refund(u, "coach", plan),
+  claimStep: claimCoachStep,
+  releaseStep: releaseCoachStep,
+};
+
 const json = (error: string, status = 200) => NextResponse.json({ ok: false, error }, { status });
 
 export async function POST(req: Request) {
@@ -63,11 +71,6 @@ export async function POST(req: Request) {
   const limited = await aiRateLimit(req, provider, gate.ok ? gate.userId : null);
   if (limited) return limited;
   if (!gate.ok) return json(gate.message, gate.status);
-  const plan = await getPlanId(gate.userId);
-  if (!allowCoach(plan)) {
-    return json("The CV coach is a Pro feature. Upgrade your plan to use it.", 402);
-  }
-
   let body: Body;
   try {
     body = (await req.json()) as Body;
@@ -100,28 +103,10 @@ export async function POST(req: Request) {
     return served.call;
   };
 
-  // Analyze starts a run and consumes the monthly unit. Rewrite/critique must
-  // present the token it minted and each spends one of the run's bounded steps.
-  const isAnalyze = body.action !== "rewrite" && body.action !== "critique";
-  let runToken: string | undefined;
-  let stepRun: string | undefined;
-  if (isAnalyze) {
-    const capGate = withinCap(plan, "coach", await getUsed(gate.userId, "coach", plan));
-    if (!capGate.allowed) return json(capGate.reason ?? "Monthly coach limit reached.", 402);
-    await consume(gate.userId, "coach", plan);
-    runToken = signCoachToken(gate.userId).token;
-  } else {
-    const t = verifyCoachToken(body.runToken, gate.userId);
-    if (!t.ok) return json(t.reason, 403);
-    if (!(await claimCoachStep(gate.userId, t.runId))) {
-      return json("This coach run has used all its steps. Start over to run it again.", 429);
-    }
-    stepRun = t.runId;
-  }
-  const undo = async () => {
-    if (isAnalyze) await refund(gate.userId, "coach", plan);
-    else if (stepRun) await releaseCoachStep(gate.userId, stepRun);
-  };
+  const action = body.action === "rewrite" || body.action === "critique" ? body.action : "analyze";
+  const run = await gateCoachCall(gate.userId, action, body.runToken, coachStore);
+  if (!run.ok) return json(run.error, run.status);
+  const { runToken, undo } = run;
 
   try {
     const profile = sanitizeProfile(body.profile ?? {});

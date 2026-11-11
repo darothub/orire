@@ -11,6 +11,9 @@ import { createHmac, timingSafeEqual, randomUUID } from "node:crypto";
 
 const TTL_MS = 30 * 60_000;
 
+/** Max model-calling steps (rewrite + critique) one paid coach run may use. */
+export const COACH_STEPS_PER_RUN = 6;
+
 export interface CoachTokenPayload {
   u: string;
   r: string;

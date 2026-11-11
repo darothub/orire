@@ -16,7 +16,7 @@
 import { prisma } from "@/lib/db/prisma";
 import type { PlanId, Metric } from "@/lib/plan/plan";
 import { meterFor, refineCap } from "@/lib/plan/plan";
-import { coachStepCutoff } from "@/lib/plan/coachToken";
+import { COACH_STEPS_PER_RUN, coachStepCutoff } from "@/lib/plan/coachToken";
 
 const PLAN_IDS = new Set<string>(["free", "pro", "career"]);
 
@@ -78,9 +78,6 @@ export async function refund(userId: string, metric: Metric, plan: PlanId): Prom
     });
   }
 }
-
-/** Max model-calling steps (rewrite + critique) one paid coach run may use. */
-export const COACH_STEPS_PER_RUN = 6;
 
 /**
  * Claim one follow-up step of a paid coach run. Returns false (and claims
