@@ -24,6 +24,7 @@ export const VIEW_META: Record<WorkspaceView, ViewMeta> = {
   create: { label: "Create", hint: "Build a CV from scratch, step by step — free", icon: "✚" },
   edit: { label: "Edit", hint: "Two-pane live editor", icon: "✎" },
   rebrand: { label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
+  tailor: { label: "Tailor", hint: "Simulate, coach and refine your CV for one job", icon: "◎" },
   refine: { label: "Refine", hint: "Connect an assistant · import · tailor to a job", icon: "✦" },
   coach: { label: "Coach", hint: "Close the gap to the ideal candidate — with your real answers", icon: "✧" },
   target: { label: "Simulate", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
@@ -40,6 +41,7 @@ export const VIEW_META: Record<WorkspaceView, ViewMeta> = {
 export const ACCOUNT_VIEWS: Partial<Record<WorkspaceView, string>> = {
   rebrand: "Sign up to re-brand a CV with AI",
   refine: "Sign up to refine your CV with AI",
+  coach: "Sign up to be coached toward a job",
   target: "Sign up to simulate a match with AI",
   cover: "Sign up to write a cover letter with AI",
   rate: "Sign up to grade your CV with AI",

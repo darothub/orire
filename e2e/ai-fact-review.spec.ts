@@ -42,7 +42,8 @@ for (const viewport of [
     });
 
     const rail = appPage.getByRole("navigation", { name: "Workspaces" });
-    await rail.getByRole("button", { name: "Refine", exact: true }).click();
+    await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+    await appPage.getByRole("button", { name: "Open Refine", exact: true }).click();
     await expect(appPage.getByRole("heading", { name: "Refine to a job" })).toBeVisible();
 
     await appPage.locator(".conn-card").first().getByRole("button", { name: "Select", exact: true }).click();

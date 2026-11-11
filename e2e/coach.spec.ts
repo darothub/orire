@@ -66,8 +66,8 @@ async function openCoach(page: Page) {
   await expect(consent).toBeVisible({ timeout: 15_000 });
   await consent.getByRole("button", { name: "Decline" }).click();
   await expect(consent).toBeHidden();
-  await page.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Refine", exact: true }).click();
-  await page.getByRole("button", { name: "Try the CV coach" }).click();
+  await page.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Tailor", exact: true }).click();
+  await page.getByRole("button", { name: "Open Coach", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Coach me to the role" })).toBeVisible();
 }
 
@@ -105,8 +105,8 @@ test("coach: a refresh mid-run restores the questions and answers", async ({ app
 
   await appPage.reload({ waitUntil: "domcontentloaded" });
   await appPage.getByRole("navigation", { name: "Workspaces" }).waitFor();
-  await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Refine", exact: true }).click();
-  await appPage.getByRole("button", { name: "Try the CV coach" }).click();
+  await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByRole("button", { name: "Open Coach", exact: true }).click();
   await expect(appPage.getByLabel("By how much did the redesign lift engagement?")).toHaveValue("34%");
 
   await appPage.getByRole("button", { name: "Start over" }).click();
@@ -147,3 +147,16 @@ for (const width of [390, 320]) {
     expect(overflow).toBeLessThanOrEqual(1);
   });
 }
+
+test("tailor hub: one job description is shared with the tools, and all three are reachable", async ({ appPage, db, e2eUser }) => {
+  await asPro(appPage, db, e2eUser.id);
+  await stubAgents(appPage);
+  await openCoach(appPage);
+  await appPage.getByLabel("Job description").fill("Senior TypeScript engineer.");
+  await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Tailor", exact: true }).click();
+  await expect(appPage.getByRole("heading", { name: "Tailor to a job" })).toBeVisible();
+  await expect(appPage.getByLabel("Job description")).toHaveValue("Senior TypeScript engineer.");
+  for (const tool of ["Simulate", "Coach", "Refine"]) {
+    await expect(appPage.getByRole("button", { name: `Open ${tool}`, exact: true })).toBeVisible();
+  }
+});

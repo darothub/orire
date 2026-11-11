@@ -9,8 +9,7 @@ import type { WorkspaceView } from "@/lib/store/viewStore";
  * Deliberately conservative — only the three steps below have a real,
  * already-tracked completion signal; there is no fabricated progress
  * tracking for Edit, Rate, Cover or History, so they never appear here.
- * `target` (Simulate) is excluded too: it already has its own always-visible
- * hero above the grid.
+ * Tailor (which holds Refine, Coach and Simulate) is the one AI step.
  */
 export function recommendedNextBlock(state: {
   /** `cvStore.started` — flips once a real CV replaces the sample/blank one. */
@@ -21,7 +20,7 @@ export function recommendedNextBlock(state: {
   exported: boolean;
 }): WorkspaceView | null {
   if (!state.started) return "rebrand";
-  if (!state.refined) return "refine";
+  if (!state.refined) return "tailor";
   if (!state.exported) return "export";
   return null;
 }
