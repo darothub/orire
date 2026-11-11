@@ -169,6 +169,75 @@ function TargetChip({ mounted }: { mounted: boolean }) {
   );
 }
 
+/** Secondary actions kept out of the bar so the header stays quiet. */
+function HeaderMenu({
+  mounted,
+  templateName,
+  previewEdit,
+  onTogglePreviewEdit,
+  onTour,
+  onReset,
+}: {
+  mounted: boolean;
+  templateName: string;
+  previewEdit: boolean;
+  onTogglePreviewEdit: () => void;
+  onTour: () => void;
+  onReset: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const run = (fn: () => void) => () => {
+    setOpen(false);
+    fn();
+  };
+
+  return (
+    <div className="hm-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        className="hm-btn"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="More actions"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span aria-hidden>⋯</span>
+      </button>
+      {open && (
+        <div className="hm-pop" role="menu" aria-label="More actions">
+          <div className="hm-row" role="presentation">
+            <span>Template</span>
+            <strong>{mounted ? templateName : "—"}</strong>
+          </div>
+          <button type="button" role="menuitemcheckbox" aria-checked={mounted && previewEdit} className="hm-item" onClick={run(onTogglePreviewEdit)}>
+            {mounted && previewEdit ? "Editing preview — turn off" : "Edit on preview"}
+          </button>
+          <button type="button" role="menuitem" className="hm-item" onClick={run(onTour)}>Take the tour</button>
+          <button type="button" role="menuitem" className="hm-item hm-danger" onClick={run(onReset)}>Reset CV</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WorkspaceApp() {
   const [mounted, setMounted] = useState(false);
   // Intentional one-shot hydration guard: render the client-only editor after
@@ -298,7 +367,6 @@ export default function WorkspaceApp() {
         <div className="brand">
           <span className="brand-dot"><BrandMark size={26} /></span>
           <span className="brand-name">Orire</span>
-          <span className="brand-tag">AI CV Studio</span>
         </div>
         <div className="app-actions">
           <button
@@ -311,17 +379,15 @@ export default function WorkspaceApp() {
             <span className="cmdk-hint-lbl">Search</span>
             <kbd>⌘K</kbd>
           </button>
-          <span className="template-pill">{mounted ? tpl.name : "—"}</span>
           <TargetChip mounted={mounted} />
-          <button
-            className={`btn-ghost${mounted && previewEdit ? " is-active" : ""}`}
-            onClick={togglePreviewEdit}
-            aria-pressed={mounted && previewEdit}
-            title="Click text on the preview to edit it in place"
-          >
-            {mounted && previewEdit ? "Editing preview" : "Edit on preview"}
-          </button>
-          <button className="btn-ghost" onClick={reset}>Reset</button>
+          <HeaderMenu
+            mounted={mounted}
+            templateName={tpl.name}
+            previewEdit={previewEdit}
+            onTogglePreviewEdit={togglePreviewEdit}
+            onTour={startTour}
+            onReset={reset}
+          />
           <button
             className="btn-primary"
             onClick={() => {

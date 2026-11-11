@@ -180,15 +180,6 @@ export function AccountButton() {
   // Signed out
   return (
     <div className="acct-wrap acct-signedout">
-      {process.env.NODE_ENV !== "production" && (
-        <a
-          className="btn-ghost acct-devlogin"
-          title="Dev only — sign in as a full-access (career) account"
-          href="/api/dev/login"
-        >
-          ⚡ Dev login
-        </a>
-      )}
       <button className="btn-ghost" onClick={() => openAuth("signin")}>
         Sign in
       </button>

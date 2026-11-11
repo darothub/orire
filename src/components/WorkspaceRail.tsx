@@ -14,6 +14,7 @@ import type { Metric } from "@/lib/plan/plan";
 import { BrandMark } from "@/components/BrandMark";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { useRunStore } from "@/lib/store/runStore";
+import { ViewIcon } from "@/components/ViewIcon";
 
 type Badge = "warn" | "busy" | null;
 
@@ -66,10 +67,10 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
             transition={reducedMotion ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 38 }}
           />
         )}
-        <span className="rail-icon" aria-hidden>{meta.icon}</span>
+        <span className="rail-icon" aria-hidden><ViewIcon view={item} /></span>
         <span className="rail-label">{meta.label}</span>
         {locked && <span className="rail-lock" aria-hidden>🔒</span>}
-        {guestReason && <span className="rail-acct" aria-hidden>{item === "export" ? "Free" : "AI"}</span>}
+        {guestReason && <span className="rail-acct" aria-hidden />}
         {badge && !locked && <span className={`rail-badge ${badge}`} aria-hidden />}
       </button>
     </Tooltip>
@@ -178,7 +179,9 @@ export function WorkspaceRail() {
       <div className="rail-group">
         <Tooltip title="Add blocks" hint="Open your studio to add or remove blocks" placement="right">
           <button className="rail-item rail-add" onClick={() => setView("spotlight")} aria-label="Add blocks">
-            <span className="rail-icon" aria-hidden>＋</span>
+            <span className="rail-icon" aria-hidden>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            </span>
             <span className="rail-label">Add</span>
           </button>
         </Tooltip>

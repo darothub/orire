@@ -33,9 +33,9 @@ export function BrandMark({
     >
       <defs>
         <linearGradient id={`${id}-g`} x1="10" y1="56" x2="54" y2="8" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#17b892" />
-          <stop offset="0.55" stopColor="#3ad9b4" />
-          <stop offset="1" stopColor="#17b892" />
+          <stop stopColor="#8b6cff" />
+          <stop offset="0.55" stopColor="#5fb4ff" />
+          <stop offset="1" stopColor="#2fe0ff" />
         </linearGradient>
       </defs>
       {badge && (
