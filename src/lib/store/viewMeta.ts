@@ -21,6 +21,7 @@ export interface ViewMeta {
  */
 export const VIEW_META: Record<WorkspaceView, ViewMeta> = {
   spotlight: { label: "Home", hint: "Your building blocks — arrange your CV course", icon: "⌂" },
+  create: { label: "Create", hint: "Build a CV from scratch, step by step — free", icon: "✚" },
   edit: { label: "Edit", hint: "Two-pane live editor", icon: "✎" },
   rebrand: { label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
   refine: { label: "Refine", hint: "Connect an assistant · import · tailor to a job", icon: "✦" },

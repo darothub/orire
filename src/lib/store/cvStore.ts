@@ -12,6 +12,7 @@ import {
   type CertificationItem,
   type SectionKey,
   ALL_SECTIONS,
+  blankCV,
   emptyExperience,
   emptyEducation,
   emptySkillGroup,
@@ -117,6 +118,8 @@ interface CVState {
   setBaseline: (cv: CVData) => void;
   /** Forget the stored baseline. */
   clearBaseline: () => void;
+  /** Begin the from-scratch creator: an empty CV, marked as started. */
+  startBlank: () => void;
   reset: () => void;
 }
 
@@ -427,6 +430,7 @@ export const useCVStore = create<CVState>()(
       setBaseline: (cv) => set({ baseline: cv, started: true }),
       clearBaseline: () => set({ baseline: null }),
 
+      startBlank: () => set({ cv: blankCV(), activeTemplate: "aurora", baseline: null, started: true, skillSuggestions: [], ignoredSkills: [] }),
       reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, started: false, skillSuggestions: [], ignoredSkills: [] }),
     }),
     {

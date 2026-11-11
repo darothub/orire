@@ -3,6 +3,7 @@ import type { WorkspaceView } from "@/lib/store/viewStore";
 
 const PATHS: Record<WorkspaceView, ReactNode> = {
   spotlight: <path d="M3 11l9-8 9 8M5 10v10h14V10" />,
+  create: <path d="M12 5v14M5 12h14" />,
   edit: <path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" />,
   rebrand: <path d="M20 12a8 8 0 10-2.3 5.7M20 5v5h-5" />,
   refine: <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zM18 16l.8 2.2L21 19l-2.2.8L18 22l-.8-2.2L15 19l2.2-.8L18 16z" />,
