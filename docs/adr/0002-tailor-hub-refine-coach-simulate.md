@@ -102,7 +102,13 @@ keeps everything already accepted.
    FACTS block, and figures the candidate typed are accepted by the guard.
    Facts show on Tailor with delete. Seeding Coach from Simulate gaps is
    deferred.
-4. **Run all**: the guided sequence, before/after score, mid-run cap handling.
+4. **Run all** (built): `src/lib/tailor/runAll.ts` and `runAllStore`. A Pro/Career
+   guided pass over Diagnose, Coach and Refine from the Tailor hub, with a bar
+   above each tool to continue or skip. It only sequences the tools, which still
+   meter and ask for approval themselves. If the next step's monthly allowance
+   is spent, the run stops there and keeps what was accepted. The run ends with
+   the keyword match before and after (the same deterministic scorer). Steps are
+   advanced by the user, not auto-detected.
 
 Each phase is shippable alone and leaves all three tools working standalone.
 

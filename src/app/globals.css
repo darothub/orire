@@ -6340,6 +6340,11 @@ body,
 .tailor-tool-name { font-weight: 400; color: var(--muted); }
 .tailor-tool-next, .tailor-tool-plan { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--accent); margin-left: 6px; }
 .tailor-tool .flow-btn { flex: 0 0 auto; }
+.tailor-runall { margin-top: 20px; padding: 14px 16px; border: 1px solid var(--border, rgba(127,127,127,.25)); border-radius: 12px; }
+.tailor-runall-steps { margin: 8px 0; padding-left: 20px; font-size: 14px; }
+.tailor-runall-steps li[data-status="done"] { color: var(--muted); }
+.guided-bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 10px 14px; margin: 0 0 12px; border: 1px solid var(--border, rgba(127,127,127,.25)); border-radius: 10px; font-size: 14px; }
+.guided-bar-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .tailor-facts { margin-top: 20px; }
 .tailor-fact-list { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 8px; }
 .tailor-fact { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border, rgba(127,127,127,.25)); border-radius: 10px; }
