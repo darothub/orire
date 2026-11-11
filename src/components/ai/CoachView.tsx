@@ -22,6 +22,7 @@ interface Draft {
 }
 
 interface Analysis {
+  runToken: string;
   profile: IdealProfile;
   report: GapReport;
   questions: ElicitationQuestion[];
@@ -97,10 +98,10 @@ export function CoachView() {
     try {
       const r = await post<Analysis>({ action: "analyze", cv: snapshot, jobDescription: jd });
       if (id !== runId.current) return;
-      setAnalysis({ profile: r.profile, report: r.report, questions: r.questions });
+      setAnalysis({ runToken: r.runToken, profile: r.profile, report: r.report, questions: r.questions });
       setAnswers({});
       if (r.questions.length > 0) setPhase("questions");
-      else await rewrite(id, snapshot, { profile: r.profile, report: r.report, questions: [] }, {});
+      else await rewrite(id, snapshot, { runToken: r.runToken, profile: r.profile, report: r.report, questions: [] }, {});
     } catch (e) {
       if (id !== runId.current) return;
       setError((e as Error).message);
@@ -114,7 +115,7 @@ export function CoachView() {
     const answerList = a.questions
       .filter((q) => ans[q.id]?.trim())
       .map((q) => ({ questionId: q.id, question: q.prompt, answer: ans[q.id].trim() }));
-    const base = { cv, jobDescription: jd, profile: a.profile, report: a.report, answers: answerList };
+    const base = { cv, jobDescription: jd, runToken: a.runToken, profile: a.profile, report: a.report, answers: answerList };
     try {
       setStatus("Rewriting your CV from your facts…");
       let best = await post<Draft>({ action: "rewrite", ...base });

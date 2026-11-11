@@ -18,8 +18,9 @@ import { routeTask } from "@/lib/ai/server/providerRouter";
 import { runAnalysis, runCritique, runRewrite, type AgentCaller, type AgentName } from "@/lib/ai/server/agentPipeline";
 import { MAX_CRITIC_ROUNDS, sanitizeAnswers, sanitizeCritique, sanitizeGapReport, sanitizeProfile } from "@/lib/ai/agents";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
-import { consume, getPlanId, getUsed, refund } from "@/lib/entitlement/entitlement";
+import { claimCoachStep, consume, getPlanId, getUsed, refund, releaseCoachStep } from "@/lib/entitlement/entitlement";
 import { allowCoach, withinCap } from "@/lib/plan/plan";
+import { signCoachToken, verifyCoachToken } from "@/lib/plan/coachToken";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
@@ -42,6 +43,8 @@ interface Body {
   draft?: CVData;
   critique?: Record<string, unknown>;
   round?: number;
+  /** Minted by analyze; required for rewrite and critique. */
+  runToken?: string;
 }
 
 const hasShape = (c: unknown): c is CVData => {
@@ -97,14 +100,28 @@ export async function POST(req: Request) {
     return served.call;
   };
 
-  // One coach run = one analyze call; the follow-up rewrite/critique steps of
-  // that run are covered by it.
-  const metered = body.action !== "rewrite" && body.action !== "critique";
-  if (metered) {
+  // Analyze starts a run and consumes the monthly unit. Rewrite/critique must
+  // present the token it minted and each spends one of the run's bounded steps.
+  const isAnalyze = body.action !== "rewrite" && body.action !== "critique";
+  let runToken: string | undefined;
+  let stepRun: string | undefined;
+  if (isAnalyze) {
     const capGate = withinCap(plan, "coach", await getUsed(gate.userId, "coach", plan));
     if (!capGate.allowed) return json(capGate.reason ?? "Monthly coach limit reached.", 402);
     await consume(gate.userId, "coach", plan);
+    runToken = signCoachToken(gate.userId).token;
+  } else {
+    const t = verifyCoachToken(body.runToken, gate.userId);
+    if (!t.ok) return json(t.reason, 403);
+    if (!(await claimCoachStep(gate.userId, t.runId))) {
+      return json("This coach run has used all its steps. Start over to run it again.", 429);
+    }
+    stepRun = t.runId;
   }
+  const undo = async () => {
+    if (isAnalyze) await refund(gate.userId, "coach", plan);
+    else if (stepRun) await releaseCoachStep(gate.userId, stepRun);
+  };
 
   try {
     const profile = sanitizeProfile(body.profile ?? {});
@@ -133,12 +150,12 @@ export async function POST(req: Request) {
       result = await runAnalysis(cv, jobDescription, call);
     }
     if (!result.ok) {
-      if (metered) await refund(gate.userId, "coach", plan);
+      await undo();
       return json(`The ${result.agent} agent failed: ${result.message}`);
     }
-    return NextResponse.json(result);
+    return NextResponse.json(runToken ? { ...result, runToken } : result);
   } catch (e) {
-    if (metered) await refund(gate.userId, "coach", plan);
+    await undo();
     return json((e as Error).message);
   }
 }

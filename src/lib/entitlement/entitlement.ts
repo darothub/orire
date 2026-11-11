@@ -78,6 +78,35 @@ export async function refund(userId: string, metric: Metric, plan: PlanId): Prom
   }
 }
 
+/** Max model-calling steps (rewrite + critique) one paid coach run may use. */
+export const COACH_STEPS_PER_RUN = 6;
+
+/**
+ * Claim one follow-up step of a paid coach run. Returns false (and claims
+ * nothing) once the run's step budget is spent, so a single paid analyze can't
+ * be replayed into unlimited rewrites.
+ */
+export async function claimCoachStep(userId: string, runId: string): Promise<boolean> {
+  const where = { userId_metric_period: { userId, metric: "coach-steps", period: runId } };
+  const row = await prisma.usageCounter.upsert({
+    where,
+    create: { userId, metric: "coach-steps", period: runId, count: 1 },
+    update: { count: { increment: 1 } },
+  });
+  if (row.count > COACH_STEPS_PER_RUN) {
+    await prisma.usageCounter.update({ where, data: { count: { decrement: 1 } } });
+    return false;
+  }
+  return true;
+}
+
+export async function releaseCoachStep(userId: string, runId: string): Promise<void> {
+  await prisma.usageCounter.updateMany({
+    where: { userId, metric: "coach-steps", period: runId, count: { gt: 0 } },
+    data: { count: { decrement: 1 } },
+  });
+}
+
 /**
  * Refine-shaped entitlement summary, kept for the client mirror / profile which
  * currently surface the refine counter. (E2 widens this to all metrics.)
