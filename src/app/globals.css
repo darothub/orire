@@ -6318,7 +6318,6 @@ body,
   .landing-nav { z-index: 10; }
 }
 
-<<<<<<< Updated upstream
 /* ── Tailor hub ─────────────────────────────────────────────────────── */
 .tailor-view .step-body { display: flex; flex-direction: column; gap: 18px; }
 .tailor-match { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); padding: 16px 18px; }
@@ -6357,7 +6356,7 @@ body,
   .tailor-tool { flex-wrap: wrap; }
   .tailor-tool .flow-btn { flex: 1 1 100%; }
 }
-=======
+
 /* Coach gap report: grouped, bulleted */
 .coach-gaps { display: grid; gap: 18px; }
 .coach-gap-group h4 { margin: 0 0 8px; font-size: 13px; letter-spacing: .02em; display: flex; align-items: baseline; gap: 8px; }
@@ -6371,4 +6370,3 @@ body,
 .coach-gap-group.is-under li::before { background: #f5b942; }
 .coach-gap-group.is-missing li::before { background: #f87171; }
 .coach-gap-why { display: block; color: var(--muted); font-size: 12.5px; }
->>>>>>> Stashed changes
