@@ -16,7 +16,7 @@ import { allTemplatesPerk } from "@/lib/templates/catalog";
 export type PlanId = "free" | "pro" | "career";
 
 /** A metered action — one unit of spend/quota on orire's managed keys. */
-export type Metric = "refine" | "simulate" | "download";
+export type Metric = "refine" | "simulate" | "download" | "coach";
 
 /**
  * How a metric is capped for a plan.
@@ -120,16 +120,19 @@ export const PLAN_METERS: Record<PlanId, Record<Metric, MeterRule>> = {
     refine: { cap: 3, scope: "lifetime" },
     simulate: { cap: 1, scope: "lifetime" },
     download: { cap: 3, scope: "lifetime" },
+    coach: { cap: 0, scope: "lifetime" },
   },
   pro: {
     refine: { cap: 30, scope: "monthly" },
     simulate: { cap: null, scope: "lifetime" },
     download: { cap: null, scope: "lifetime" },
+    coach: { cap: 10, scope: "monthly" },
   },
   career: {
     refine: { cap: null, scope: "lifetime" },
     simulate: { cap: null, scope: "lifetime" },
     download: { cap: null, scope: "lifetime" },
+    coach: { cap: 40, scope: "monthly" },
   },
 };
 
@@ -237,6 +240,7 @@ const METRIC_NOUNS: Record<Metric, { one: string; many: string }> = {
   refine: { one: "refine", many: "refines" },
   simulate: { one: "simulation", many: "simulations" },
   download: { one: "download", many: "downloads" },
+  coach: { one: "coach run", many: "coach runs" },
 };
 
 /** Plain-language plural for a metric, used in cap/upsell copy. */
@@ -288,6 +292,14 @@ export function nextPlan(planId: PlanId): Plan | null {
  * Cover letters are a paid add-on: every plan except Free includes them.
  */
 export function allowCoverLetter(planId: PlanId): boolean {
+  return planId !== "free";
+}
+
+/**
+ * CV coach (elicitation Q&A + critic loop). Several model calls per run, so it
+ * is Pro/Career only.
+ */
+export function allowCoach(planId: PlanId): boolean {
   return planId !== "free";
 }
 

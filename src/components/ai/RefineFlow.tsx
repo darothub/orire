@@ -7,6 +7,7 @@ import { Stepper, STEP_INDEX } from "@/components/ai/refine/Stepper";
 import { ConnectStep } from "@/components/ai/refine/ConnectStep";
 import { SourcesStep } from "@/components/ai/refine/SourcesStep";
 import { JobStep } from "@/components/ai/refine/JobStep";
+import { useViewStore } from "@/lib/store/viewStore";
 import { RunStep } from "@/components/ai/refine/RunStep";
 
 const stepVariants = {
@@ -19,6 +20,7 @@ export function RefineFlow() {
   const step = useRefineStore((s) => s.step);
   const setStep = useRefineStore((s) => s.setStep);
   const reset = useRefineStore((s) => s.reset);
+  const setView = useViewStore((s) => s.setView);
   const [dir, setDir] = useState(1);
 
   const go = (next: RefineStep) => {
@@ -33,7 +35,10 @@ export function RefineFlow() {
           <h2>Refine to a job</h2>
           <p>Connect an assistant, bring your CVs, add the role — then compare tailored results. Only your own facts are used.</p>
         </div>
-        <button className="ws-reset" onClick={reset} title="Start the flow over">Restart</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="ws-reset" onClick={() => setView("coach")} title="Answer a few questions to close gaps to the role">Try the CV coach</button>
+          <button className="ws-reset" onClick={reset} title="Start the flow over">Restart</button>
+        </div>
       </div>
 
       <Stepper step={step} onJump={go} />

@@ -4,7 +4,7 @@ import { create } from "zustand";
 
 /** The workspaces the left rail can switch between. The right pane always shows
  *  the live CV preview, so every workspace edits the same document in context. */
-export type WorkspaceView = "spotlight" | "edit" | "rebrand" | "refine" | "rate" | "target" | "cover" | "connect" | "history" | "export" | "plans" | "profile" | "create";
+export type WorkspaceView = "spotlight" | "edit" | "rebrand" | "refine" | "coach" | "rate" | "target" | "cover" | "connect" | "history" | "export" | "plans" | "profile" | "create";
 
 /** Optional section to scroll/focus once a view mounts (e.g. open the Plans
  *  view straight at its billing controls vs. its plan cards). */
@@ -20,7 +20,7 @@ interface ViewState {
   clearFocus: () => void;
 }
 
-const ORDER: WorkspaceView[] = ["spotlight", "create", "edit", "rebrand", "refine", "rate", "target", "cover", "export", "history", "plans", "connect", "profile"];
+const ORDER: WorkspaceView[] = ["spotlight", "create", "edit", "rebrand", "refine", "coach", "rate", "target", "cover", "export", "history", "plans", "connect", "profile"];
 
 export const useViewStore = create<ViewState>((set, get) => ({
   view: "spotlight",
