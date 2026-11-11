@@ -9,6 +9,7 @@ import { SectionOrder } from "@/components/editor/SectionOrder";
 import { TemplatePicker } from "@/components/templates/TemplatePicker";
 import { WorkspaceRail } from "@/components/WorkspaceRail";
 import { RefineFlow } from "@/components/ai/RefineFlow";
+import { TailorView } from "@/components/ai/TailorView";
 import { CoachView } from "@/components/ai/CoachView";
 import { RebrandFlow } from "@/components/ai/RebrandFlow";
 import { ProviderSetup } from "@/components/ai/ProviderSetup";
@@ -125,6 +126,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
           {view === "edit" && <EditView mounted={mounted} />}
           {view === "create" && <CreatorFlow mounted={mounted} />}
           {view === "rebrand" && <RebrandFlow />}
+          {view === "tailor" && <TailorView />}
           {view === "refine" && <RefineFlow />}
           {view === "coach" && <CoachView />}
           {view === "target" && <TargetView />}

@@ -6317,3 +6317,31 @@ body,
 @media (max-width: 860px) {
   .landing-nav { z-index: 10; }
 }
+
+/* ── Tailor hub ─────────────────────────────────────────────────────── */
+.tailor-view .step-body { display: flex; flex-direction: column; gap: 18px; }
+.tailor-match { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); padding: 16px 18px; }
+.tailor-match h3, .tailor-tools-title { font-size: 14px; margin: 0 0 8px; }
+.tailor-score { margin: 0 0 6px; font-size: 14px; }
+.tailor-score strong { font-size: 20px; }
+.tailor-note { color: var(--muted); font-size: 12px; }
+.tailor-sub { margin: 8px 0; font-size: 13px; color: var(--muted); }
+.tailor-chips { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.tailor-chips li { font-size: 12px; padding: 3px 10px; border: 1px solid var(--line-2); border-radius: 999px; }
+.tailor-chips li.more { color: var(--muted); border-style: dashed; }
+.tailor-suggest { margin: 0; font-size: 14px; font-weight: 600; }
+.tailor-tools { display: flex; flex-direction: column; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.tailor-tool { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+.tailor-tool.is-suggested { border-color: var(--accent); }
+.tailor-tool.is-locked { opacity: .75; }
+.tailor-tool-icon { flex: 0 0 auto; display: grid; place-items: center; color: var(--accent); }
+.tailor-tool-main { flex: 1 1 auto; min-width: 0; }
+.tailor-tool-main p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.tailor-tool-name { font-weight: 400; color: var(--muted); }
+.tailor-tool-next, .tailor-tool-plan { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--accent); margin-left: 6px; }
+.tailor-tool .flow-btn { flex: 0 0 auto; }
+.tailor-link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
+@media (max-width: 560px) {
+  .tailor-tool { flex-wrap: wrap; }
+  .tailor-tool .flow-btn { flex: 1 1 100%; }
+}

@@ -39,15 +39,9 @@ const STEPS: Step[] = [
     place: "right",
   },
   {
-    sel: '[data-tour="rail-refine"]',
-    title: "Refine with AI",
-    body: "Tailor your CV to a job description. Compare two assistants side by side and let Orire pick the best of the two.",
-    place: "right",
-  },
-  {
-    sel: '[data-tour="rail-target"]',
-    title: "Simulate a role",
-    body: "Simulate what a 100%-match CV for a job would look like, then edit yours toward it.",
+    sel: '[data-tour="rail-tailor"]',
+    title: "Tailor to a job",
+    body: "Enter a job once, see where your CV stands, then simulate the ideal match, answer coaching questions, or refine the wording. You approve every change.",
     place: "right",
   },
   {

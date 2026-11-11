@@ -15,8 +15,6 @@ import { useSession } from "next-auth/react";
 
 /** Metered blocks that grey out / route to Plans once the free cap is spent. */
 const METRIC_FOR_VIEW: Partial<Record<WorkspaceView, Metric>> = {
-  refine: "refine",
-  target: "simulate",
   export: "download",
 };
 
@@ -74,36 +72,25 @@ function BlockCard({ view, recommended }: { view: WorkspaceView; recommended: bo
   );
 }
 
-/** Simulate stays available alongside the user's existing CV workflow. */
-function SimulateHero() {
+/** The one AI entry point: Tailor holds Simulate, Coach and Refine. */
+function TailorHero({ recommended }: { recommended: boolean }) {
   const setView = useViewStore((s) => s.setView);
-  const inFlow = useFlowStore((s) => s.sequence.includes("target"));
-  const addBlock = useFlowStore((s) => s.addBlock);
-  const removeBlock = useFlowStore((s) => s.removeBlock);
-  const locked = useUsageStore((s) => s.exhausted("simulate"));
 
   return (
     <div className="spot-hero">
       <div className="spot-hero-main">
-                <strong className="spot-hero-title">
-          <ViewIcon view="target" /> {VIEW_META.target.label} the ideal candidate
+        {recommended && <span className="spot-hero-eyebrow">Recommended next</span>}
+        <strong className="spot-hero-title">
+          <ViewIcon view="tailor" /> Tailor your CV to a job
         </strong>
         <span className="spot-hero-sub">
-          See how your CV lines up against an illustrative role profile. It is guidance, not an employer assessment.
+          Simulate the ideal match, answer a few coaching questions, and refine the wording. One job, three tools,
+          and nothing changes without your approval.
         </span>
       </div>
       <div className="spot-hero-actions">
-        <button type="button" className="flow-btn primary" onClick={() => setView(locked ? "plans" : "target")}>
-          {locked ? "Upgrade to simulate" : "Open Simulate →"}
-        </button>
-        <button
-          type="button"
-          className={`spot-card-toggle${inFlow ? " in" : ""}`}
-          aria-pressed={inFlow}
-          onClick={() => (inFlow ? removeBlock("target") : addBlock("target"))}
-          title={inFlow ? "Remove from your flow" : "Add to your flow"}
-        >
-          {inFlow ? "In your flow ✓" : "Add +"}
+        <button type="button" className="flow-btn primary" onClick={() => setView("tailor")}>
+          Open Tailor →
         </button>
       </div>
     </div>
@@ -113,7 +100,7 @@ function SimulateHero() {
 export function SpotlightView() {
   const resetFlow = useFlowStore((s) => s.resetFlow);
   const recommendedNext = useRecommendedNext();
-  const gridBlocks = COMPOSABLE_BLOCKS.filter((v) => v !== "target");
+  const gridBlocks = COMPOSABLE_BLOCKS.filter((v) => v !== "tailor");
   const setView = useViewStore((s) => s.setView);
   const cvName = useCVStore((s) => s.cv.basics.fullName);
   const started = useCVStore((s) => s.started);
@@ -171,7 +158,7 @@ export function SpotlightView() {
         </div>
       </section>
 
-      <SimulateHero />
+      <TailorHero recommended={recommendedNext === "tailor"} />
 
       <div className="spot-foot">
         <button type="button" className="flow-btn ghost sm" onClick={resetFlow}>

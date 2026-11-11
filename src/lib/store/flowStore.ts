@@ -20,8 +20,7 @@ export const PINNED_VIEWS: WorkspaceView[] = ["profile", "plans", "connect"];
 export const COMPOSABLE_BLOCKS: WorkspaceView[] = [
   "rebrand",
   "edit",
-  "refine",
-  "target",
+  "tailor",
   "rate",
   "cover",
   "export",
@@ -32,8 +31,7 @@ export const COMPOSABLE_BLOCKS: WorkspaceView[] = [
 export const RECOMMENDED_FLOW: WorkspaceView[] = [
   "rebrand",
   "edit",
-  "refine",
-  "target",
+  "tailor",
   "rate",
   "cover",
   "export",
@@ -42,11 +40,17 @@ export const RECOMMENDED_FLOW: WorkspaceView[] = [
 
 const COMPOSABLE_SET = new Set(COMPOSABLE_BLOCKS);
 
-/** Keep a sequence valid: only known blocks, no duplicates. */
-function sanitize(seq: WorkspaceView[]): WorkspaceView[] {
+/** Refine, Coach and Simulate were separate blocks before the Tailor hub
+ *  replaced them; saved or cloud-synced sequences still carry the old keys. */
+const LEGACY_TO_TAILOR = new Set<string>(["refine", "coach", "target"]);
+
+/** Keep a sequence valid: only known blocks, no duplicates, legacy
+ *  Refine/Coach/Simulate entries folded into a single Tailor block. */
+export function sanitizeSequence(seq: readonly string[]): WorkspaceView[] {
   const seen = new Set<WorkspaceView>();
   const out: WorkspaceView[] = [];
-  for (const v of seq) {
+  for (const raw of seq) {
+    const v = (LEGACY_TO_TAILOR.has(raw) ? "tailor" : raw) as WorkspaceView;
     if (COMPOSABLE_SET.has(v) && !seen.has(v)) {
       seen.add(v);
       out.push(v);
@@ -83,7 +87,7 @@ export const useFlowStore = create<FlowState>()(
       addBlock: (v) =>
         set((s) => (COMPOSABLE_SET.has(v) && !s.sequence.includes(v) ? { sequence: [...s.sequence, v] } : s)),
       removeBlock: (v) => set((s) => ({ sequence: s.sequence.filter((x) => x !== v) })),
-      setSequence: (seq) => set({ sequence: sanitize(seq) }),
+      setSequence: (seq) => set({ sequence: sanitizeSequence(seq) }),
       resetFlow: () => set({ sequence: [...RECOMMENDED_FLOW] }),
       inFlow: (v) => get().sequence.includes(v),
       dismissCoach: () => set({ coachSeen: true }),
@@ -97,7 +101,7 @@ export const useFlowStore = create<FlowState>()(
       // a view is renamed or retired), falling back to the Recommended Flow.
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<FlowState>;
-        const seq = sanitize(Array.isArray(p.sequence) ? p.sequence : []);
+        const seq = sanitizeSequence(Array.isArray(p.sequence) ? p.sequence : []);
         return {
           ...current,
           ...p,

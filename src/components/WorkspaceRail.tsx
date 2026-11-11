@@ -90,8 +90,7 @@ export function WorkspaceRail() {
   });
 
   const badgeFor = (v: WorkspaceView): Badge => {
-    if (v === "refine") return busy.refine ? "busy" : null;
-    if (v === "target") return busy.simulate ? "busy" : null;
+    if (v === "tailor") return busy.refine || busy.simulate ? "busy" : null;
     return null;
   };
 

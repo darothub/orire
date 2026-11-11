@@ -109,7 +109,9 @@ test("Studio tool toggles retain their behavior", async ({ appPage: page }) => {
   await expect(add).toHaveAttribute("aria-pressed", "false");
   await add.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Open Simulate →", exact: true }).click();
+  await page.getByRole("button", { name: "Open Tailor →", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Tailor to a job", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Open Simulate", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Simulate", exact: true })).toBeVisible();
 });
 
@@ -125,7 +127,8 @@ test("Studio still routes exhausted Simulate access to Plans", async ({ page, db
     await addSessionCookie(page.context(), user);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForShell(page);
-    await page.getByRole("button", { name: "Upgrade to simulate", exact: true }).click();
+    await page.getByRole("button", { name: "Open Tailor →", exact: true }).click();
+    await page.getByRole("button", { name: "Simulate — free limit reached, upgrade to continue", exact: true }).click();
     await expect(page.locator(".plan-panel")).toBeVisible();
   } finally {
     await page.context().close();
