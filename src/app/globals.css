@@ -6270,3 +6270,7 @@ body,
 .tour-pop .btn-primary,
 [role="dialog"] .btn-primary { background: var(--grad); color: #07060f; border: 0; font-weight: 700; }
 .spot-grid { margin-bottom: 18px; }
+
+@media (max-width: 860px) {
+  .landing-nav { z-index: 10; }
+}
