@@ -341,7 +341,7 @@ function metricDensity(cv: CVData): number {
   return Math.round((withNum / bullets.length) * 100);
 }
 
-const MATCH_WEIGHTS: Record<TargetMatchMetric["key"], number> = {
+export const MATCH_WEIGHTS: Record<TargetMatchMetric["key"], number> = {
   skills: 0.4,
   keywords: 0.25,
   sections: 0.15,
