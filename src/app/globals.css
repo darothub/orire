@@ -6356,3 +6356,17 @@ body,
   .tailor-tool { flex-wrap: wrap; }
   .tailor-tool .flow-btn { flex: 1 1 100%; }
 }
+
+/* Coach gap report: grouped, bulleted */
+.coach-gaps { display: grid; gap: 18px; }
+.coach-gap-group h4 { margin: 0 0 8px; font-size: 13px; letter-spacing: .02em; display: flex; align-items: baseline; gap: 8px; }
+.coach-gap-group h4 span { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: rgba(139, 108, 255, .18); }
+.coach-gap-group h4 small { font-size: 12px; font-weight: 400; color: var(--muted); }
+.coach-gap-group ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.coach-gap-group li { position: relative; padding-left: 20px; font-size: 13.5px; line-height: 1.5; }
+.coach-gap-group li::before { content: ""; position: absolute; left: 4px; top: .62em; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
+.coach-gap-group.is-strong ul { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 18px; }
+.coach-gap-group.is-strong li::before { background: #34d399; }
+.coach-gap-group.is-under li::before { background: #f5b942; }
+.coach-gap-group.is-missing li::before { background: #f87171; }
+.coach-gap-why { display: block; color: var(--muted); font-size: 12.5px; }
