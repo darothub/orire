@@ -97,7 +97,9 @@ for (const viewport of [
         await expect(hero).toHaveCSS("filter", "none");
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
         const cta = page.getByRole("button", { name: /Create your CV/ }).first();
+        const guestCta = page.getByRole("button", { name: "Try it as a guest" });
         await expect(cta).toBeDisabled();
+        await expect(guestCta).toBeDisabled();
         await expect.poll(() => heldRequests).toBeGreaterThan(0);
         if (viewport.name === "mobile") {
           await expect(page.getByRole("button", { name: "Open section menu" })).toBeDisabled();
@@ -105,13 +107,19 @@ for (const viewport of [
         await testInfo.attach(`REAL-first-paint-${viewport.name}-${reducedMotion}`, {
           body: await page.screenshot(), contentType: "image/png",
         });
-        await page.getByRole("link", { name: "Explore templates", exact: true }).click();
-        await expect(page).toHaveURL(/#templates$/);
+        if (viewport.name === "desktop") {
+          const templatesLink = page.getByRole("navigation", { name: "Sections" })
+            .getByRole("link", { name: "Templates" });
+          await templatesLink.click();
+          await expect(page).toHaveURL(/#templates$/);
+        }
       } finally {
         releaseScripts();
       }
       const cta = page.getByRole("button", { name: /Create your CV/ }).first();
       await expect(cta).toBeEnabled();
+      const guestCta = page.getByRole("button", { name: "Try it as a guest" });
+      await expect(guestCta).toBeEnabled();
       if (viewport.name === "mobile") {
         const menu = page.getByRole("button", { name: "Open section menu" });
         await menu.click();
@@ -123,6 +131,9 @@ for (const viewport of [
       }
       await cta.click();
       await expect(page.getByRole("dialog", { name: "Create your account" })).toBeVisible();
+      await page.keyboard.press("Escape");
+      await guestCta.click();
+      await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible({ timeout: 30_000 });
     });
   }
 }

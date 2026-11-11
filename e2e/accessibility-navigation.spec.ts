@@ -59,7 +59,7 @@ for (const viewport of [
     await expect(dialog).toBeVisible();
     const textAlternative = dialog.getByRole("region", { name: "Fictional CV text alternative" });
     await expect(textAlternative).toBeAttached();
-    await expect(textAlternative).toContainText("Ada Okonkwo");
+    await expect(textAlternative).toContainText("Lola Lee");
     await expect(textAlternative).toContainText("Senior Product Designer");
     await expect(textAlternative).toContainText("Experience");
     await expect(textAlternative).toContainText("Education");

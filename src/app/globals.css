@@ -6313,3 +6313,7 @@ body,
 .cr-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; }
 .cr-nav-r { display: flex; gap: 8px; }
 @media (max-width: 600px) { .cr-row { grid-template-columns: 1fr; } }
+
+@media (max-width: 860px) {
+  .landing-nav { z-index: 10; }
+}

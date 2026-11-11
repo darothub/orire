@@ -363,7 +363,7 @@ export default function WorkspaceApp() {
   const ActiveTemplate = tpl.Component;
 
   return (
-    <div className="app has-rail">
+    <div className="app has-rail" data-hydrated={mounted}>
           <a className="skip-to-main" href="#main-content">Skip to main content</a>
       <header className="app-bar">
         <div className="brand">
