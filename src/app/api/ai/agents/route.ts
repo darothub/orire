@@ -24,6 +24,9 @@ import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
 export const runtime = "nodejs";
+// Analyse runs three sequential model calls and a rewrite can take 90s on a
+// slow model, so the platform default would cut runs off mid-step.
+export const maxDuration = 300;
 
 interface Body {
   /**
