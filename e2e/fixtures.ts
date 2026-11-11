@@ -83,8 +83,8 @@ export async function waitForShell(page: Page) {
     timeout: SHELL_READY_TIMEOUT,
   });
   // The server-rendered rail can be visible before client keyboard handlers
-  // attach. The template pill replaces its SSR dash after the mount effect.
-  await expect(page.locator(".template-pill")).toHaveText(/^(?!—$).+/);
+  // attach. The shell marks hydration complete after the mount effect.
+  await expect(page.locator(".app.has-rail")).toHaveAttribute("data-hydrated", "true");
 }
 
 export const test = base.extend<{
