@@ -13,7 +13,7 @@ export function ChangeList({
   rejected: Set<string>;
   setRejected: (next: Set<string>) => void;
 }) {
-  const accepted = changes.length - rejected.size;
+  const accepted = changes.filter((c) => !rejected.has(c.id)).length;
   const toggle = (id: string) => {
     const next = new Set(rejected);
     if (next.has(id)) next.delete(id);
@@ -26,8 +26,8 @@ export function ChangeList({
       <div className="rev-bulk">
         <span>{accepted} of {changes.length} suggestion{changes.length > 1 ? "s" : ""} explicitly accepted</span>
         <div className="rev-bulk-btns">
-          <button onClick={() => setRejected(new Set())} disabled={rejected.size === 0}>Accept all</button>
-          <button onClick={() => setRejected(new Set(changes.map((c) => c.id)))} disabled={rejected.size === changes.length}>Reject all</button>
+          <button onClick={() => setRejected(new Set())} disabled={accepted === changes.length}>Accept all</button>
+          <button onClick={() => setRejected(new Set(changes.map((c) => c.id)))} disabled={accepted === 0}>Reject all</button>
         </div>
       </div>
 

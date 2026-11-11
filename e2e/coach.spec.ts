@@ -95,6 +95,41 @@ test("coach: answer questions, review the diff, apply only what is accepted", as
   expect(calls).toEqual(["analyze", "rewrite", "critique"]);
 });
 
+test("tailor inbox: a proposal stays usable after the CV is edited, and keeps the edit", async ({ appPage, db, e2eUser }) => {
+  await asPro(appPage, db, e2eUser.id);
+  await stubAgents(appPage);
+  await openCoach(appPage);
+  await appPage.getByLabel("Job description").fill("Senior TypeScript engineer.");
+  await appPage.getByRole("button", { name: "Analyse my CV" }).click();
+  await appPage.getByLabel("By how much did the redesign lift engagement?").fill("34% weekly active use");
+  await appPage.getByRole("button", { name: "Rewrite with 1 answer" }).click();
+  await expect(appPage.getByText("33% → 67%")).toBeVisible();
+
+  // Edit a different part of the CV while the proposal is still open.
+  const rail = appPage.getByRole("navigation", { name: "Workspaces" });
+  await rail.getByRole("button", { name: "Edit", exact: true }).click();
+  await appPage.getByLabel("Title", { exact: true }).fill("Principal Engineer");
+
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  const inbox = appPage.getByRole("region", { name: "Review changes" });
+  await expect(inbox).toContainText("Coach: 1 change ready to review");
+  await expect(inbox).toContainText("Your CV changed since this was made");
+  await inbox.getByRole("button", { name: "Review" }).click();
+
+  await expect(appPage.getByText("Your CV changed since this was made.")).toBeVisible();
+  await appPage.getByRole("button", { name: "Accept all" }).click();
+  await appPage.getByRole("button", { name: /Apply 1 change/ }).click();
+  await expect(appPage.locator("#cv-paper")).toContainText("Lifted engagement 34% (from your answer).");
+  await expect(appPage.locator("#cv-paper")).toContainText("Principal Engineer");
+
+  // One accept is one undo step.
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByRole("button", { name: "Undo" }).click();
+  await rail.getByRole("button", { name: "Edit", exact: true }).click();
+  await expect(appPage.locator("#cv-paper")).not.toContainText("Lifted engagement 34%");
+  await expect(appPage.locator("#cv-paper")).toContainText("Principal Engineer");
+});
+
 test("coach: a refresh mid-run restores the questions and answers", async ({ appPage, db, e2eUser }) => {
   await asPro(appPage, db, e2eUser.id);
   await stubAgents(appPage);

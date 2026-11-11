@@ -6,7 +6,9 @@ import { useTargetStore } from "@/lib/store/targetStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { allowCoach, nextPlan } from "@/lib/plan/plan";
 import { useViewStore } from "@/lib/store/viewStore";
-import { diffCv, applyReviewed } from "@/lib/ai/cvDiff";
+import { diffCv } from "@/lib/ai/cvDiff";
+import { applyOffered, rebaseProposal } from "@/lib/tailor/proposal";
+import { useProposalStore } from "@/lib/store/proposalStore";
 import { ChangeList } from "@/components/ai/refine/ChangeList";
 import { isBetterDraft } from "@/lib/ai/coachLoop";
 import { MAX_CRITIC_ROUNDS, shouldContinue, type Critique, type ElicitationQuestion, type GapReport, type IdealProfile } from "@/lib/ai/agents";
@@ -196,15 +198,30 @@ export function CoachView() {
     }
   };
 
-  const changes = useMemo(() => (baseCV && draft ? diffCv(baseCV, draft.cv) : []), [baseCV, draft]);
-  const accepted = changes.length - rejected.size;
-  const sourceChanged = !!baseCV && JSON.stringify(baseCV) !== JSON.stringify(liveCV);
+  const registerProposal = useProposalStore((s) => s.register);
+  const discardProposal = useProposalStore((s) => s.discard);
+  const recordApplied = useProposalStore((s) => s.recordApplied);
+  useEffect(() => {
+    if (phase === "review" && baseCV && draft) registerProposal("coach", baseCV, draft.cv);
+    else discardProposal("coach");
+  }, [phase, baseCV, draft, registerProposal, discardProposal]);
+
+  // Re-based onto the live CV, so the review survives edits made meanwhile.
+  const rebased = useMemo(
+    () => (baseCV && draft ? rebaseProposal(baseCV, draft.cv, liveCV) : { stale: false, changes: [], skipped: [] }),
+    [baseCV, draft, liveCV],
+  );
+  const changes = rebased.changes;
+  const accepted = changes.filter((c) => !rejected.has(c.id)).length;
 
   const apply = () => {
     if (!baseCV || !draft || accepted === 0) return;
-    // Never overwrite edits made while the coach was running.
-    if (JSON.stringify(useCVStore.getState().cv) !== JSON.stringify(baseCV)) return;
-    applyRefinedCV(applyReviewed(baseCV, draft.cv, rejected));
+    // Re-read at click time so an edit made since render is kept.
+    const live = useCVStore.getState().cv;
+    const fresh = rebaseProposal(baseCV, draft.cv, live);
+    const next = applyOffered(live, draft.cv, fresh.changes, rejected);
+    applyRefinedCV(next);
+    recordApplied("coach", live, next);
     setView("edit");
   };
 
@@ -308,9 +325,13 @@ export function CoachView() {
             )}
           </div>
 
-          {sourceChanged && (
-            <div className="rev-ground review" role="alert">
-              <strong>Your CV changed while the coach was running.</strong> Applying this result could erase newer edits. Start over to use the current CV.
+          {rebased.stale && (
+            <div className="rev-ground review" role="status">
+              <strong>Your CV changed since this was made.</strong>{" "}
+              {rebased.skipped.length > 0
+                ? `${rebased.skipped.length} change${rebased.skipped.length > 1 ? "s were" : " was"} skipped because you edited the same part${rebased.skipped.length > 1 ? "s" : ""} (${rebased.skipped.map((c) => c.label).join(", ")}). `
+                : ""}
+              The rest still apply on top of your edits.
             </div>
           )}
 
@@ -334,7 +355,7 @@ export function CoachView() {
 
           <div className="rev-foot">
             <button className="flow-btn ghost" onClick={reset}>Discard</button>
-            <button className="flow-btn primary lg" onClick={apply} disabled={sourceChanged || accepted === 0}>
+            <button className="flow-btn primary lg" onClick={apply} disabled={accepted === 0}>
               {accepted === 0 ? "Select changes to apply" : `Apply ${accepted} change${accepted > 1 ? "s" : ""} to my CV`}
             </button>
           </div>
