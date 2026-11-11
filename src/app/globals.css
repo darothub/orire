@@ -6369,3 +6369,7 @@ body,
 .coach-gap-group.is-under li::before { background: #f5b942; }
 .coach-gap-group.is-missing li::before { background: #f87171; }
 .coach-gap-why { display: block; color: var(--muted); font-size: 12.5px; }
+
+.ed-suggest-group { margin-top: 10px; }
+.ed-suggest-cat { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+.ed-suggest-new { font-weight: 500; color: var(--muted); }

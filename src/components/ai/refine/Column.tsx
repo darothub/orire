@@ -101,7 +101,7 @@ function IdealGap({ gap }: { gap: GapAnalysis }) {
   const delta = baseGap ? gap.coverage - baseGap.coverage : null;
   const deltaTone = delta == null ? "" : delta > 0 ? "up" : delta < 0 ? "down" : "flat";
   const sendToEditor = () => {
-    setSkillSuggestions(gap.missingSkills);
+    setSkillSuggestions(gap.missingSkills, ideal?.skills);
     setView("edit");
   };
   const addSection = (k: SectionKey) => {

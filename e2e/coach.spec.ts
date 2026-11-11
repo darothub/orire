@@ -331,3 +331,37 @@ for (const theme of ["dark", "light"] as const) {
     await scan("run complete");
   });
 }
+
+test("skill suggestions land in their own category, creating it when the CV has none", async ({ appPage }) => {
+  const ideal = {
+    basics: { name: "Ideal", title: "Platform Engineer", email: "", phone: "", location: "", summary: "", links: [] },
+    experience: [],
+    education: [],
+    skills: [{ category: "Cloud Platform", items: ["Terraform", "Kubernetes"] }],
+    projects: [],
+  };
+  await appPage.route("**/api/ai/simulate", (route) =>
+    route.fulfill({ json: { ok: true, provider: "stub", model: "stub", raw: JSON.stringify(ideal) } }),
+  );
+  const consent = appPage.getByRole("dialog", { name: "Cookie consent" });
+  await expect(consent).toBeVisible({ timeout: 15_000 });
+  await consent.getByRole("button", { name: "Decline" }).click();
+  const rail = appPage.getByRole("navigation", { name: "Workspaces" });
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByLabel("Job description").fill("Platform engineer. Terraform, Kubernetes.");
+  await appPage.getByRole("button", { name: "Open Simulate", exact: true }).click();
+  await appPage.getByRole("button", { name: "Generate role-target example" }).click();
+  await expect(appPage.getByRole("button", { name: "Generate role-target example" })).toHaveCount(0);
+
+  await rail.getByRole("button", { name: "Edit", exact: true }).click();
+  const group = appPage.getByRole("group", { name: "Suggested for Cloud Platform" });
+  await expect(group).toContainText("new category");
+  await group.getByRole("button", { name: "＋ Terraform" }).click();
+    const categories = appPage.locator('input[value="Cloud Platform"]');
+  await expect(categories).toHaveCount(1);
+  await expect(appPage.getByRole("group", { name: "Suggested for Cloud Platform" })).toContainText("Kubernetes");
+  await expect(appPage.getByRole("group", { name: "Suggested for Cloud Platform" })).not.toContainText("Terraform");
+  // Kubernetes now joins the group that holds Terraform instead of creating another.
+  await appPage.getByRole("group", { name: "Suggested for Cloud Platform" }).getByRole("button", { name: "＋ Kubernetes" }).click();
+  await expect(categories).toHaveCount(1);
+});
