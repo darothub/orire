@@ -49,6 +49,33 @@ describe("extractKeywords", () => {
   });
 });
 
+describe("extractKeywords noise", () => {
+  it("keeps CI/CD whole instead of splitting it into ci and cd", () => {
+    const kw = extractKeywords("Own our CI/CD pipelines with Kubernetes.");
+    expect(kw).toContain("ci/cd");
+    expect(kw).not.toContain("cd");
+    expect(kw).not.toContain("ci");
+  });
+
+  it("drops generic single words but keeps recurring phrases built from them", () => {
+    const kw = extractKeywords(
+      "Software engineer to review code and build REST API services. Design a REST API. Review PRs.",
+    );
+    expect(kw).not.toContain("rest");
+    expect(kw).not.toContain("review");
+    expect(kw).not.toContain("engineer");
+    expect(kw).toContain("rest api");
+  });
+});
+
+describe("jdMatch CI/CD", () => {
+  it("matches CI/CD against a CV that writes it with spaces", () => {
+    const c = cv();
+    c.skills[0].items.push("CI / CD");
+    expect(jdMatch(c, "CI/CD experience").matched).toContain("ci/cd");
+  });
+});
+
 describe("cvText", () => {
   it("flattens every section into one lowercase haystack", () => {
     const t = cvText(cv());

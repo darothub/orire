@@ -34,9 +34,35 @@ const STOPWORDS = new Set([
   "need","needs","want","wants","looking","seeking","join","apply","hire",
 ]);
 
+// Generic on their own ("review", "rest", "engineer") but meaningful inside a
+// recurring phrase such as "rest api" or "code review".
+const WEAK_UNIGRAMS = new Set([
+  "rest","review","reviews","engineer","engineers","engineering","software","developer",
+  "developers","application","applications","code","system","systems","service","services",
+  "solution","solutions","tools","tool","process","processes","practices","practice",
+  "projects","project","quality","performance","technical","technology","technologies",
+  "platform","platforms","feature","features","data","senior","junior","staff","position",
+  "opportunity","join","salary","benefits","remote","hybrid","location","based","like",
+  "get","make","take","ensuring","provide","providing","create","creating","write",
+  "writing","maintain","maintaining","implement","implementing","contribute","contributing",
+  "participate","identify","improve","improving","understand","able","fast","paced",
+  "passionate","excited","love","fun","culture","values","mission","impact","growth",
+  "opportunities","industry","world","people","everyone","every","each","both","own",
+  "while","where","what","when","how","why","which","these","those","there","here",
+  "just","very","really","much","many","some","one","two","three","first","next",
+]);
+
+// "CI/CD" would otherwise be split into the meaningless tokens "ci" and "cd".
+function normalize(text: string): string {
+  return text.toLowerCase().replace(/\bci\s*\/\s*cd\b/g, "cicd");
+}
+
+function display(term: string): string {
+  return term.replace(/\bcicd\b/g, "ci/cd");
+}
+
 function words(text: string): string[] {
-  return text
-    .toLowerCase()
+  return normalize(text)
     .split(/[^a-z0-9+#.]+/)
     .map((w) => w.replace(/^[.]+|[.]+$/g, ""))
     .filter(Boolean);
@@ -47,6 +73,10 @@ function isMeaningful(w: string): boolean {
   if (STOPWORDS.has(w)) return false;
   if (/^\d+$/.test(w)) return false;
   return true;
+}
+
+function isMeaningfulUnigram(w: string): boolean {
+  return isMeaningful(w) && !WEAK_UNIGRAMS.has(w);
 }
 
 export interface JDMatch {
@@ -68,7 +98,7 @@ export function extractKeywords(jd: string, limit = 28): string[] {
 
   for (let i = 0; i < toks.length; i++) {
     const w = toks[i];
-    if (w && isMeaningful(w)) uni.set(w, (uni.get(w) ?? 0) + 1);
+    if (w && isMeaningfulUnigram(w)) uni.set(w, (uni.get(w) ?? 0) + 1);
     const next = toks[i + 1];
     if (w && next && isMeaningful(w) && isMeaningful(next)) {
       const bg = `${w} ${next}`;
@@ -86,7 +116,7 @@ export function extractKeywords(jd: string, limit = 28): string[] {
     .sort((a, b) => (b[1] - a[1]) || a[0].localeCompare(b[0]))
     .map(([t]) => t);
 
-  return [...unigrams, ...bigrams].slice(0, limit);
+  return [...unigrams, ...bigrams].slice(0, limit).map(display);
 }
 
 /** Flatten every piece of CV text into one lowercase haystack. */
@@ -108,16 +138,17 @@ export function jdMatch(cv: CVData, jobDescription: string): JDMatch {
   const keywords = extractKeywords(jobDescription);
   if (keywords.length === 0) return { score: 0, matched: [], missing: [] };
 
-  const hay = cvText(cv);
+  const hay = normalize(cvText(cv));
   const hayTokens = new Set(words(hay));
   const matched: string[] = [];
   const missing: string[] = [];
 
-  for (const kw of keywords) {
+  for (const shown of keywords) {
+    const kw = normalize(shown);
     const present = kw.includes(" ")
       ? hay.includes(kw)
       : hayTokens.has(kw) || hay.includes(kw);
-    (present ? matched : missing).push(kw);
+    (present ? matched : missing).push(shown);
   }
 
   const score = Math.round((matched.length / keywords.length) * 100);
