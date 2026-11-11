@@ -5945,6 +5945,14 @@ body,
   background: #c8ff3d; color: #07060f; font-size: 10px; font-weight: 800;
   border-radius: 999px; padding: 2px 8px;
 }
+.auth-email-toggle {
+  width: 100%; padding: 11px 14px; border-radius: 11px; cursor: pointer;
+  background: transparent; color: inherit; font-size: 14px; font-weight: 600;
+  border: 1px solid var(--line-2);
+}
+.auth-email-toggle:hover { border-color: rgba(139, 108, 255, 0.6); }
+.auth-submit:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.auth-side-trust { margin: 0; font-size: 12px; color: var(--muted); letter-spacing: 0.02em; }
 .auth-hint { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
 .auth-hint.bad { color: #ff7a90; }
 .auth-strength { display: grid; gap: 6px; margin-top: 8px; }

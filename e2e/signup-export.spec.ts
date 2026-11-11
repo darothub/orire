@@ -68,22 +68,21 @@ test.describe("guest signup entry", () => {
     await expect(dialog.getByRole("tab", { name: "Create account" })).toBeVisible();
     await expect(dialog.getByRole("tab", { name: "Sign in" })).toBeVisible();
 
+    await expect(dialog.locator('input[type="email"]')).toHaveCount(0);
+    await dialog.getByRole("button", { name: "Continue with email" }).click();
     const email = dialog.locator('input[type="email"]');
     const password = dialog.locator('input[type="password"]');
+    await expect(email).toBeFocused();
     await expect(email).toBeVisible();
     await expect(password).toBeVisible();
     await expect(password).toHaveAttribute("minLength", "8");
 
     await email.fill("qa-guest@orire.test");
     await password.fill("short");
-    await dialog.getByRole("button", { name: "Create account", exact: true }).click();
-    const tooShort = await password.evaluate((el: HTMLInputElement) => !el.checkValidity());
-    const errVisible = await dialog
-      .locator(".auth-error, [role='alert']")
-      .first()
-      .isVisible()
-      .catch(() => false);
-    expect(tooShort || errVisible).toBe(true);
+    await expect(dialog.getByRole("button", { name: "Create account", exact: true })).toBeDisabled();
+    expect(await password.evaluate((el: HTMLInputElement) => !el.checkValidity())).toBe(true);
+    await password.fill("longenough1");
+    await expect(dialog.getByRole("button", { name: "Create account", exact: true })).toBeEnabled();
   });
 
   test("mocked signup API then failed auto sign-in still confirms account create path", async ({
@@ -103,6 +102,7 @@ test.describe("guest signup entry", () => {
     const dialog = page.getByRole("dialog", { name: "Create your account" });
     await expect(dialog).toBeVisible({ timeout: SHELL_READY_TIMEOUT });
 
+    await dialog.getByRole("button", { name: "Continue with email" }).click();
     await dialog.locator('input[type="email"]').fill("new-user@orire.test");
     await dialog.locator('input[type="password"]').fill("password123");
     await dialog.getByRole("button", { name: "Create account", exact: true }).click();

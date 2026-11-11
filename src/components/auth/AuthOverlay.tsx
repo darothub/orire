@@ -95,6 +95,7 @@ export function AuthOverlay() {
   const [captchaReset, setCaptchaReset] = useState(0);
   const [authErr, setAuthErr] = useState<string | null>(null);
   const [emailTouched, setEmailTouched] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
   const [lastMethod, setLastMethod] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -103,6 +104,7 @@ export function AuthOverlay() {
   const passwordId = useId();
   const errorId = useId();
   const emailMsgId = useId();
+  const emailFormId = useId();
   const strengthId = useId();
   const panelId = useId();
 
@@ -189,6 +191,7 @@ export function AuthOverlay() {
       setCaptchaToken(null);
       setAuthErr(null);
       setEmailTouched(false);
+      setEmailOpen(false);
     }
   }
 
@@ -275,6 +278,8 @@ export function AuthOverlay() {
   const signup = mode === "signup";
   const emailInvalid = emailTouched && email.trim() !== "" && !EMAIL_RE.test(email.trim());
   const strength = passwordStrength(password);
+  const canSubmit =
+    EMAIL_RE.test(email.trim()) && password.length >= (signup ? 8 : 1);
   const captchaOn = !!TURNSTILE_SITE_KEY;
 
   // Verify the solved Turnstile token server-side (sets the short-lived cookie
@@ -414,6 +419,7 @@ export function AuthOverlay() {
                 <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
                 <li><span aria-hidden>❖</span> {TEMPLATE_COUNT} standout templates, live preview as you edit</li>
               </ul>
+              <p className="auth-side-trust">Trusted by job seekers worldwide</p>
             </aside>
             <div className="auth-form">
             <button
@@ -521,7 +527,7 @@ export function AuthOverlay() {
                     onClick={() => ready && oauth(p.id)}
                     disabled={!!busy || !ready}
                     data-auth-initial-focus={
-                      !PASSWORD_AUTH_ENABLED && ready ? true : undefined
+                      (!PASSWORD_AUTH_ENABLED || !emailOpen) && ready ? true : undefined
                     }
                     title={ready ? `Continue with ${p.label}` : `${p.label} sign-in isn't configured on this server`}
                     aria-label={
@@ -553,8 +559,23 @@ export function AuthOverlay() {
               <span>or use email</span>
             </div>
 
-            {PASSWORD_AUTH_ENABLED && (
-            <form className="auth-email" onSubmit={submitEmail}>
+            {PASSWORD_AUTH_ENABLED && !emailOpen && (
+              <button
+                type="button"
+                className="auth-email-toggle"
+                aria-expanded={false}
+                aria-controls={emailFormId}
+                onClick={() => {
+                  setEmailOpen(true);
+                  requestAnimationFrame(() => document.getElementById(emailId)?.focus());
+                }}
+              >
+                Continue with email
+              </button>
+            )}
+
+            {PASSWORD_AUTH_ENABLED && emailOpen && (
+            <form id={emailFormId} className="auth-email" onSubmit={submitEmail}>
               <div className="auth-field">
                 <label className="auth-label" htmlFor={emailId}>
                   Email
@@ -629,7 +650,7 @@ export function AuthOverlay() {
                   />
                 </div>
               )}
-              <button className="auth-submit" type="submit" disabled={busy === "email"}>
+              <button className="auth-submit" type="submit" disabled={busy === "email" || !canSubmit}>
                 {busy === "email"
                   ? signup
                     ? "Creating account…"
