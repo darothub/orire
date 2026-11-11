@@ -1,5 +1,6 @@
 "use client";
 
+import { GuidedBar } from "@/components/ai/RunAll";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { CreatorFlow } from "@/components/creator/CreatorFlow";
@@ -122,6 +123,7 @@ function Workspace({ mounted }: { mounted: boolean }) {
     <MotionConfig reducedMotion="user">
       <AnimatePresence mode="wait" custom={dir} initial={false}>
         <motion.div key={view} className="ws-swap" custom={dir}>
+          <GuidedBar />
           {view === "spotlight" && <SpotlightView />}
           {view === "edit" && <EditView mounted={mounted} />}
           {view === "create" && <CreatorFlow mounted={mounted} />}

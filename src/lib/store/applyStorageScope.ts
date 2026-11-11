@@ -20,6 +20,7 @@ import { useLibraryStore } from "@/lib/store/libraryStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useFlowStore } from "@/lib/store/flowStore";
+import { useFactStore } from "@/lib/store/factStore";
 import { isSampleCV } from "@/lib/cv/sample";
 import {
   migrateAllLegacyKeys,
@@ -91,6 +92,7 @@ function resetSensitiveStores(): void {
   useTargetStore.getState().clearTarget();
   usePlanStore.getState().clearServer();
   useFlowStore.getState().resetFlow();
+  useFactStore.getState().reset();
 }
 
 /**
@@ -172,6 +174,13 @@ async function runBind(userId: StorageAccountId): Promise<void> {
   await rebindPersistName(useTargetStore, targetName);
   await rebindPersistName(usePlanStore, planName);
   await rebindPersistName(useFlowStore, flowName);
+  const factsName = scopedNameFor("facts", userId);
+  const hadUserFacts = !!(storage && storageHasPayload(storage, factsName));
+  await rebindPersistName(useFactStore, factsName);
+  // Facts never carry across accounts or from a guest session.
+  if (!hadUserFacts && (switchingAccounts || fromGuest || leavingAccount || lastBound === undefined)) {
+    useFactStore.getState().reset();
+  }
 
   if (leavingAccount) {
     resetSensitiveStores();

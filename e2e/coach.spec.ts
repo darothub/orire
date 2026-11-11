@@ -130,6 +130,38 @@ test("tailor inbox: a proposal stays usable after the CV is edited, and keeps th
   await expect(appPage.locator("#cv-paper")).toContainText("Principal Engineer");
 });
 
+test("tailor facts: an answer is kept, reused on the next run, synced to the account, and deletable", async ({ appPage, db, e2eUser }) => {
+  await asPro(appPage, db, e2eUser.id);
+  await stubAgents(appPage);
+  await openCoach(appPage);
+  await appPage.getByLabel("Job description").fill("Senior TypeScript engineer.");
+  await appPage.getByRole("button", { name: "Analyse my CV" }).click();
+  await appPage.getByLabel("By how much did the redesign lift engagement?").fill("34% weekly active use");
+  await appPage.getByRole("button", { name: "Rewrite with 1 answer" }).click();
+  await expect(appPage.getByText("33% → 67%")).toBeVisible();
+
+  const rail = appPage.getByRole("navigation", { name: "Workspaces" });
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  const facts = appPage.getByRole("region", { name: /Your verified facts/ });
+  await expect(facts).toContainText("34% weekly active use");
+
+  await expect
+    .poll(async () => JSON.stringify((await db.user.findUnique({ where: { id: e2eUser.id }, select: { factLedger: true } }))?.factLedger ?? null))
+    .toContain("34% weekly active use");
+
+  // The next Coach run starts with the earlier answer filled in.
+  await appPage.getByRole("button", { name: "Open Coach", exact: true }).click();
+  await appPage.getByRole("button", { name: "Start over" }).click();
+  await appPage.getByLabel("Job description").fill("Another TypeScript role.");
+  await appPage.getByRole("button", { name: "Analyse my CV" }).click();
+  await expect(appPage.getByLabel("By how much did the redesign lift engagement?")).toHaveValue("34% weekly active use");
+  await expect(appPage.getByText("From your earlier answer")).toBeVisible();
+
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByRole("button", { name: /^Delete fact/ }).click();
+  await expect(appPage.getByRole("region", { name: /Your verified facts/ })).toHaveCount(0);
+});
+
 test("coach: a refresh mid-run restores the questions and answers", async ({ appPage, db, e2eUser }) => {
   await asPro(appPage, db, e2eUser.id);
   await stubAgents(appPage);
@@ -194,4 +226,36 @@ test("tailor hub: one job description is shared with the tools, and all three ar
   for (const tool of ["Simulate", "Coach", "Refine"]) {
     await expect(appPage.getByRole("button", { name: `Open ${tool}`, exact: true })).toBeVisible();
   }
+});
+
+test("tailor run all: guided steps can be skipped, then the before and after shows", async ({ appPage, db, e2eUser }) => {
+  await asPro(appPage, db, e2eUser.id);
+  await stubAgents(appPage);
+  await openCoach(appPage);
+  const rail = appPage.getByRole("navigation", { name: "Workspaces" });
+  // Touch the CV so it counts as the candidate's own.
+  await rail.getByRole("button", { name: "Edit", exact: true }).click();
+  await appPage.getByLabel("Title", { exact: true }).fill("Staff TypeScript Engineer");
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByLabel("Job description").fill("Senior TypeScript engineer. React, GraphQL, AWS.");
+
+  await appPage.getByRole("button", { name: "Start guided run" }).click();
+  const bar = appPage.getByRole("region", { name: "Guided run" });
+  await expect(bar).toContainText("step 1 of 3: Diagnose");
+  await bar.getByRole("button", { name: "Skip this step" }).click();
+  await expect(bar).toContainText("step 2 of 3: Coach");
+  await bar.getByRole("button", { name: "Skip this step" }).click();
+  await expect(bar).toContainText("step 3 of 3: Refine");
+  await bar.getByRole("button", { name: "Done, next step" }).click();
+
+  const panel = appPage.getByRole("region", { name: "Run complete" });
+  await expect(panel).toContainText("Diagnose: skipped");
+  await expect(panel).toContainText("Refine: done");
+  await expect(panel).toContainText("Match before:");
+});
+
+test("tailor run all: Free users see the plans prompt, not the run", async ({ appPage }) => {
+  await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Tailor", exact: true }).click();
+  await expect(appPage.getByRole("button", { name: /Run all is a Pro feature/ })).toBeVisible();
+  await expect(appPage.getByRole("button", { name: "Start guided run" })).toHaveCount(0);
 });

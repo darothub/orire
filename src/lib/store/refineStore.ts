@@ -7,6 +7,8 @@ import { useUsageStore } from "@/lib/store/usageStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useProposalStore } from "@/lib/store/proposalStore";
+import { useFactStore } from "@/lib/store/factStore";
+import { acceptTypedFigures, factLines } from "@/lib/tailor/facts";
 import { sharedRun } from "@/lib/store/runStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { authorizeRefineRun } from "@/app/actions/refine";
@@ -198,6 +200,7 @@ export const useRefineStore = create<RefineState>((set, get) => ({
       return;
     }
     const runToken = authz.token;
+    const facts = factLines(useFactStore.getState().facts, 12);
 
     resetStarted();
     analytics.refineRun(runProviders.length, runProviders.length === 1 ? "single" : "compare");
@@ -232,12 +235,14 @@ export const useRefineStore = create<RefineState>((set, get) => ({
             const res = await fetch("/api/ai/refine", {
               method: "POST",
               headers: { "content-type": "application/json" },
-              body: JSON.stringify({ provider, model: models[provider], jobDescription: jd, cv, runToken }),
+              body: JSON.stringify({ provider, model: models[provider], jobDescription: jd, cv, runToken, facts }),
             });
             const data = (await res.json()) as RefineResponse;
 
             if (data.ok && data.raw) {
-              const grounded = factGround(cv, applyRefinePatch(cv, parseModelJSON(data.raw)));
+              const g = factGround(cv, applyRefinePatch(cv, parseModelJSON(data.raw)));
+              const warnings = acceptTypedFigures(g.warnings, facts);
+              const grounded: GroundingResult = { cv: g.cv, warnings };
               const match = jdMatch(grounded.cv, jd);
               set((s) => ({
                 cols: {

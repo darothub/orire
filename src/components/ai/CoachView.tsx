@@ -1,5 +1,7 @@
 "use client";
 
+import { useFactStore } from "@/lib/store/factStore";
+import { factForArea } from "@/lib/tailor/facts";
 import { useMemo, useRef, useEffect, useState } from "react";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
@@ -105,6 +107,8 @@ export function CoachView() {
   const [baseCV, setBaseCV] = useState<CVData | null>(saved?.baseCV ?? null);
   const [analysis, setAnalysis] = useState<Analysis | null>(saved?.analysis ?? null);
   const [answers, setAnswers] = useState<Record<string, string>>(saved?.answers ?? {});
+  // Question id -> the earlier answer it was prefilled with.
+  const [prefilled, setPrefilled] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState<Draft | null>(restoredReview);
   const [critique, setCritique] = useState<Critique | null>(null);
   const [rounds, setRounds] = useState(saved?.rounds ?? 0);
@@ -150,7 +154,14 @@ export function CoachView() {
       const r = await post<Analysis>({ action: "analyze", cv: snapshot, jobDescription: jd });
       if (id !== runId.current) return;
       setAnalysis({ runToken: r.runToken, startedAt: nowMs(), profile: r.profile, report: r.report, questions: r.questions });
-      setAnswers({});
+      const known = useFactStore.getState().facts;
+      const fill: Record<string, string> = {};
+      for (const q of r.questions) {
+        const f = factForArea(known, q.targets);
+        if (f) fill[q.id] = f.answer;
+      }
+      setAnswers(fill);
+      setPrefilled(fill);
       if (r.questions.length > 0) setPhase("questions");
       else await rewrite(id, snapshot, { runToken: r.runToken, startedAt: nowMs(), profile: r.profile, report: r.report, questions: [] }, {});
     } catch (e) {
@@ -166,6 +177,10 @@ export function CoachView() {
     const answerList = a.questions
       .filter((q) => ans[q.id]?.trim())
       .map((q) => ({ questionId: q.id, question: q.prompt, answer: ans[q.id].trim() }));
+    useFactStore.getState().record(
+      a.questions.filter((q) => ans[q.id]?.trim()).map((q) => ({ area: q.targets, question: q.prompt, answer: ans[q.id] })),
+      jd.trim().split("\n")[0] ?? "",
+    );
     const base = { cv, jobDescription: jd, runToken: a.runToken, profile: a.profile, report: a.report, answers: answerList };
     try {
       setStatus("Rewriting your CV from your facts…");
@@ -241,7 +256,7 @@ export function CoachView() {
         <div className="cl-gate">
           <strong>The CV coach is a {nextPlan("free")?.label ?? "Pro"} feature.</strong>
           <p>Upgrade to get tailored questions, a fact-grounded rewrite and a recruiter/ATS review.</p>
-          <button className="flow-btn primary" onClick={() => setView("connect")}>See plans</button>
+          <button className="flow-btn primary" onClick={() => setView("plans")}>See plans</button>
         </div>
       )}
 
@@ -293,6 +308,9 @@ export function CoachView() {
                   placeholder={q.kind === "metric" ? "e.g. a number, and what it was compared with" : "Your answer (optional)"}
                   onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                 />
+                {prefilled[q.id] && answers[q.id] === prefilled[q.id] && (
+                  <span className="coach-prefill">From your earlier answer — edit if it has changed.</span>
+                )}
                 <span className="coach-count" id={`coach-${q.id}-n`}>{(answers[q.id] ?? "").length}/600</span>
               </div>
             ))}
