@@ -1,0 +1,132 @@
+"use client";
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { SECTION_LABELS, type SectionKey } from "@/lib/cv/schema";
+import type { TargetMatch } from "@/lib/ai/simulate";
+import { coverageColor } from "./VerdictStrip";
+
+type Tab = "skills" | "sections" | "signals";
+
+export interface GapPanelProps {
+  match: TargetMatch;
+  onAddSkill: (skill: string) => void;
+  onAddSection: (key: SectionKey) => void;
+}
+
+const SKILL_PREVIEW = 6;
+
+/** Tabbed gap view: only one lens is open at a time, so the screen stays quiet. */
+export function GapPanel({ match, onAddSkill, onAddSection }: GapPanelProps) {
+  const [tab, setTab] = useState<Tab>("skills");
+  const [showAll, setShowAll] = useState(false);
+  const { gap } = match;
+  const missingSkills = showAll ? gap.missingSkills : gap.missingSkills.slice(0, SKILL_PREVIEW);
+  const hidden = gap.missingSkills.length - missingSkills.length;
+
+  const tabs: { key: Tab; label: string; count?: number }[] = [
+    { key: "skills", label: "Skills", count: gap.missingSkills.length },
+    { key: "sections", label: "Sections", count: gap.missingSections.length },
+    { key: "signals", label: "Signals" },
+  ];
+
+  return (
+    <aside className="sim-gaps" aria-label="Gaps">
+      <div className="sim-seg" role="tablist" aria-label="Gap view">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
+            className={tab === t.key ? "on" : ""}
+            onClick={() => setTab(t.key)}
+          >
+            {t.label}
+            {t.count ? <span className="sim-seg-count">{t.count}</span> : null}
+          </button>
+        ))}
+      </div>
+
+      {tab === "skills" && (
+        <div role="tabpanel">
+          {gap.missingSkills.length === 0 ? (
+            <p className="sim-perfect">You cover every skill in the target. 🎯</p>
+          ) : (
+            <>
+              <p className="sim-gap-hint">Add only what you genuinely have.</p>
+              <ul className="sim-gap-list">
+                {missingSkills.map((s) => (
+                  <li key={s} className="sim-gap-row">
+                    <span className="sim-gap-name">{s}</span>
+                    <button className="sim-add" onClick={() => onAddSkill(s)} aria-label={`Add ${s} to my skills`}>
+                      Add
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {hidden > 0 && (
+                <button className="ai-link" onClick={() => setShowAll(true)}>Show {hidden} more</button>
+              )}
+              {showAll && gap.missingSkills.length > SKILL_PREVIEW && (
+                <button className="ai-link" onClick={() => setShowAll(false)}>Show fewer</button>
+              )}
+            </>
+          )}
+          {gap.matchedSkills.length > 0 && (
+            <details className="sim-matched">
+              <summary>{gap.matchedSkills.length} matched</summary>
+              <div className="sim-chips">
+                {gap.matchedSkills.map((s) => (
+                  <span key={s} className="sim-chip match">{s}</span>
+                ))}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
+
+      {tab === "sections" && (
+        <div role="tabpanel">
+          {gap.missingSections.length === 0 ? (
+            <p className="sim-perfect">Your CV has every section the target has.</p>
+          ) : (
+            <ul className="sim-gap-list">
+              {gap.missingSections.map((k) => (
+                <li key={k} className="sim-gap-row">
+                  <span className="sim-gap-name">{SECTION_LABELS[k as SectionKey]}</span>
+                  <button
+                    className="sim-add"
+                    onClick={() => onAddSection(k as SectionKey)}
+                    aria-label={`Add ${SECTION_LABELS[k as SectionKey]} section`}
+                  >
+                    Add
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {tab === "signals" && (
+        <div role="tabpanel" className="tgt-signals">
+          {match.metrics.map((m) => (
+            <div key={m.key} className="tgt-signal" title={m.hint}>
+              <span className="tgt-signal-label">{m.label}</span>
+              <span className="tgt-signal-bar">
+                <motion.span
+                  className="tgt-signal-fill"
+                  style={{ background: coverageColor(m.score) }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${m.score}%` }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                />
+              </span>
+              <span className="tgt-signal-val">{m.score}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </aside>
+  );
+}
