@@ -105,9 +105,21 @@ Each phase is shippable alone and leaves all three tools working standalone.
 - Risk: more surface on Home. Mitigation: the hub is one card; the three tools
   stay reachable from the rail.
 
-## Open questions
+## Decisions (owner, 2026-11-11)
 
-- Should the fact ledger persist to the cloud for signed-in users, or stay
-  local to the browser at first?
-- Should "Run all" be gated to Pro/Career, or only the metered steps inside it?
-- Does the hub replace the three rail items, or sit next to them?
+- The fact ledger syncs to the cloud for signed-in users; guests stay local.
+- Run all is Pro/Career only. Free users see the score and gap list.
+- The hub replaces the three rail items (Refine, Coach, Simulate). Each tool
+  stays reachable as a "run just this" entry in the hub and in the command palette.
+
+## Refinements
+
+- **Gap-centred, not tool-centred.** The hub opens on the match score and the
+  gap list. Each gap offers its best action: a missing metric goes to Coach,
+  weak wording goes to Refine, and a genuine gap is flagged and never faked.
+- **One proposal inbox.** Every tool's changes land in a single "Review
+  changes" list with one accept/reject and stale handling.
+- **One primary action.** "Tailor all" is the default; the single-tool runs are
+  secondary.
+- **Free-tier value.** The deterministic score and gap list are free. Coach and
+  Run all show what they would unlock.
