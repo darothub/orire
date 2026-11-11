@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { signCoachToken, verifyCoachToken } from "./coachToken";
+import { coachStepCutoff, signCoachToken, verifyCoachToken } from "./coachToken";
 
 beforeAll(() => {
   process.env.AUTH_SECRET = "test-secret";
@@ -17,5 +17,11 @@ describe("coach token", () => {
     expect(verifyCoachToken(token, "u1", 1000 + 31 * 60_000).ok).toBe(false);
     expect(verifyCoachToken(undefined, "u1").ok).toBe(false);
     expect(verifyCoachToken("a.b", "u1").ok).toBe(false);
+  });
+
+  it("sorts run ids below the cutoff only after the token has expired", () => {
+    const { runId } = signCoachToken("u1", 1_000_000);
+    expect(runId < coachStepCutoff(1_000_000 + 29 * 60_000)).toBe(false);
+    expect(runId < coachStepCutoff(1_000_000 + 31 * 60_000)).toBe(true);
   });
 });

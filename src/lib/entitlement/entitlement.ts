@@ -16,6 +16,7 @@
 import { prisma } from "@/lib/db/prisma";
 import type { PlanId, Metric } from "@/lib/plan/plan";
 import { meterFor, refineCap } from "@/lib/plan/plan";
+import { coachStepCutoff } from "@/lib/plan/coachToken";
 
 const PLAN_IDS = new Set<string>(["free", "pro", "career"]);
 
@@ -98,6 +99,14 @@ export async function claimCoachStep(userId: string, runId: string): Promise<boo
     return false;
   }
   return true;
+}
+
+/** Delete step counters of coach runs whose token has expired. Returns rows removed. */
+export async function purgeExpiredCoachSteps(now = Date.now()): Promise<number> {
+  const r = await prisma.usageCounter.deleteMany({
+    where: { metric: "coach-steps", period: { lt: coachStepCutoff(now) } },
+  });
+  return r.count;
 }
 
 export async function releaseCoachStep(userId: string, runId: string): Promise<void> {

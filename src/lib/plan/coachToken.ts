@@ -27,10 +27,19 @@ const b64url = (buf: Buffer) => buf.toString("base64").replace(/\+/g, "-").repla
 const fromB64url = (s: string) => Buffer.from(s.replace(/-/g, "+").replace(/_/g, "/"), "base64");
 const mac = (body: string) => createHmac("sha256", secret()).update(`coach:${body}`).digest();
 
+/**
+ * The run id leads with the zero-padded expiry so step-counter rows can be
+ * purged with a plain string comparison once their token can no longer be used.
+ */
+const runKey = (p: CoachTokenPayload) => `${String(p.exp).padStart(15, "0")}-${p.r}`;
+
+/** Period-key cutoff: step counters sorting below this belong to expired runs. */
+export const coachStepCutoff = (now = Date.now()) => String(now).padStart(15, "0");
+
 export function signCoachToken(userId: string, now = Date.now()): { token: string; runId: string } {
   const payload: CoachTokenPayload = { u: userId, r: randomUUID(), exp: now + TTL_MS };
   const body = b64url(Buffer.from(JSON.stringify(payload), "utf8"));
-  return { token: `${body}.${b64url(mac(body))}`, runId: payload.r };
+  return { token: `${body}.${b64url(mac(body))}`, runId: runKey(payload) };
 }
 
 export function verifyCoachToken(
@@ -53,5 +62,5 @@ export function verifyCoachToken(
   }
   if (payload.u !== userId) return { ok: false, reason: "Invalid coach session. Start over." };
   if (typeof payload.exp !== "number" || now > payload.exp) return { ok: false, reason: "This coach session expired. Start over." };
-  return { ok: true, runId: payload.r };
+  return { ok: true, runId: runKey(payload) };
 }
