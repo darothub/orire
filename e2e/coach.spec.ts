@@ -1,4 +1,5 @@
 import { test, expect, waitForShell } from "./fixtures";
+import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";
 import type { PrismaClient } from "@prisma/client";
 
@@ -294,3 +295,39 @@ test("tailor seeds: Simulate's missing skills reach Coach as hints", async ({ ap
   await appPage.getByRole("button", { name: "Analyse my CV" }).click();
   expect((await analyze).postDataJSON().seeds).toEqual(expect.arrayContaining(["Terraform", "Kubernetes"]));
 });
+
+for (const theme of ["dark", "light"] as const) {
+  test(`tailor hub: no WCAG AA violations across facts, guided run and results (${theme})`, async ({ appPage, db, e2eUser }) => {
+    await appPage.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
+    await asPro(appPage, db, e2eUser.id);
+    await stubAgents(appPage);
+    await openCoach(appPage);
+    const scan = async (label: string) => {
+      await expect(appPage.locator(".ws-swap")).toHaveCSS("opacity", "1");
+      await appPage.waitForTimeout(500);
+      const audit = await new AxeBuilder({ page: appPage }).include(".ws-swap").withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+      expect(audit.violations, label).toEqual([]);
+    };
+    await appPage.getByLabel("Job description").fill("Senior TypeScript engineer.");
+    await appPage.getByRole("button", { name: "Analyse my CV" }).click();
+    await appPage.getByLabel("By how much did the redesign lift engagement?").fill("34% weekly active use");
+    await appPage.getByRole("button", { name: "Rewrite with 1 answer" }).click();
+    await expect(appPage.getByText("33% → 67%")).toBeVisible();
+    const rail = appPage.getByRole("navigation", { name: "Workspaces" });
+    await rail.getByRole("button", { name: "Edit", exact: true }).click();
+    await appPage.getByLabel("Title", { exact: true }).fill("Staff TypeScript Engineer");
+    await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+    await expect(appPage.getByRole("region", { name: /Your verified facts/ })).toBeVisible();
+    await expect(appPage.getByLabel("Title", { exact: true })).toHaveCount(0);
+    await scan("hub with facts");
+    await appPage.getByRole("button", { name: "Start guided run" }).click();
+    const bar = appPage.getByRole("region", { name: "Guided run" });
+    await expect(bar).toBeVisible();
+    await scan("guided run");
+    await bar.getByRole("button", { name: "Skip this step" }).click();
+    await bar.getByRole("button", { name: "Skip this step" }).click();
+    await bar.getByRole("button", { name: "Done, next step" }).click();
+    await expect(appPage.getByRole("region", { name: "Run complete" })).toBeVisible();
+    await scan("run complete");
+  });
+}
