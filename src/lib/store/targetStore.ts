@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CVData } from "@/lib/cv/schema";
+import { appendHistory, type ScorePoint } from "@/lib/ai/simulateImpact";
 
 /**
  * Persisted "target" benchmark (req 20, reframed).
@@ -32,7 +33,10 @@ interface TargetState {
   /** True after a refine was applied while a target is locked: Simulate should
    *  offer to re-run against the new CV and (confirmed) JD. */
   resimPrompt: boolean;
+  /** Match score over time (deduped, capped) for the verdict sparkline. */
+  history: ScorePoint[];
 
+  recordScore: (score: number) => void;
   setJd: (jd: string) => void;
   setTarget: (ideal: CVData, jd: string, baseScore: number, label?: string) => void;
   clearTarget: () => void;
@@ -62,7 +66,14 @@ export const useTargetStore = create<TargetState>()(
       createdAt: null,
       baseScore: 0,
       resimPrompt: false,
+      history: [],
 
+      recordScore: (score) =>
+        set((s) => {
+          if (!s.ideal) return {};
+          const next = appendHistory(s.history ?? [], score, Date.now());
+          return next === s.history ? {} : { history: next };
+        }),
       setJd: (jd) => set({ jd }),
 
       setTarget: (ideal, jd, baseScore, label) =>
@@ -74,17 +85,18 @@ export const useTargetStore = create<TargetState>()(
           label: label?.trim() || deriveLabel(ideal, jd),
           createdAt: Date.now(),
           resimPrompt: false,
+          history: [{ t: Date.now(), score: baseScore }],
         }),
 
-      discardTarget: () => set({ ideal: null, idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false }),
-      clearTarget: () => set({ ideal: null, jd: "", idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false }),
+      discardTarget: () => set({ ideal: null, idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false, history: [] }),
+      clearTarget: () => set({ ideal: null, jd: "", idealJd: "", label: "", createdAt: null, baseScore: 0, resimPrompt: false, history: [] }),
       requestResim: () => set((s) => (s.ideal ? { resimPrompt: true } : {})),
       dismissResim: () => set({ resimPrompt: false }),
     }),
     {
       // Anonymous default; StorageScope rebinds per signed-in user id.
       name: "orire-target:anon:v1",
-      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, idealJd: s.idealJd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore, resimPrompt: s.resimPrompt }),
+      partialize: (s) => ({ ideal: s.ideal, jd: s.jd, idealJd: s.idealJd, label: s.label, createdAt: s.createdAt, baseScore: s.baseScore, resimPrompt: s.resimPrompt, history: s.history }),
     },
   ),
 );

@@ -4,12 +4,15 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { SECTION_LABELS, type SectionKey } from "@/lib/cv/schema";
 import type { TargetMatch } from "@/lib/ai/simulate";
+import type { RankedSection, RankedSkill } from "@/lib/ai/simulateImpact";
 import { coverageColor } from "./VerdictStrip";
 
 type Tab = "skills" | "sections" | "signals";
 
 export interface GapPanelProps {
   match: TargetMatch;
+  rankedSkills: RankedSkill[];
+  rankedSections: RankedSection[];
   onAddSkill: (skill: string) => void;
   onAddSection: (key: SectionKey) => void;
 }
@@ -17,12 +20,18 @@ export interface GapPanelProps {
 const SKILL_PREVIEW = 6;
 
 /** Tabbed gap view: only one lens is open at a time, so the screen stays quiet. */
-export function GapPanel({ match, onAddSkill, onAddSection }: GapPanelProps) {
+export function GapPanel({ match, rankedSkills, rankedSections, onAddSkill, onAddSection }: GapPanelProps) {
   const [tab, setTab] = useState<Tab>("skills");
   const [showAll, setShowAll] = useState(false);
   const { gap } = match;
-  const missingSkills = showAll ? gap.missingSkills : gap.missingSkills.slice(0, SKILL_PREVIEW);
-  const hidden = gap.missingSkills.length - missingSkills.length;
+  const missingSkills = showAll ? rankedSkills : rankedSkills.slice(0, SKILL_PREVIEW);
+  const hidden = rankedSkills.length - missingSkills.length;
+  const next = [
+    ...rankedSkills.map((r) => ({ id: `s:${r.skill}`, label: r.skill, impact: r.impact, run: () => onAddSkill(r.skill) })),
+    ...rankedSections.map((r) => ({ id: `c:${r.key}`, label: `${SECTION_LABELS[r.key]} section`, impact: r.impact, run: () => onAddSection(r.key) })),
+  ]
+    .sort((a, b) => b.impact - a.impact)
+    .slice(0, 3);
 
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: "skills", label: "Skills", count: gap.missingSkills.length },
@@ -47,6 +56,19 @@ export function GapPanel({ match, onAddSkill, onAddSection }: GapPanelProps) {
         ))}
       </div>
 
+      {next.length > 0 && next[0].impact > 0 && (
+        <div className="sim-next" aria-label="Next best moves">
+          <div className="sim-next-h">Next best moves</div>
+          {next.map((n) => (
+            <button key={n.id} className="sim-next-row" onClick={n.run} title="Add only if you genuinely have it">
+              <span className="sim-next-box" aria-hidden />
+              <span className="sim-gap-name">{n.label}</span>
+              <span className="sim-impact">+{n.impact}%</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {tab === "skills" && (
         <div role="tabpanel">
           {gap.missingSkills.length === 0 ? (
@@ -55,9 +77,10 @@ export function GapPanel({ match, onAddSkill, onAddSection }: GapPanelProps) {
             <>
               <p className="sim-gap-hint">Add only what you genuinely have.</p>
               <ul className="sim-gap-list">
-                {missingSkills.map((s) => (
+                {missingSkills.map(({ skill: s, impact }) => (
                   <li key={s} className="sim-gap-row">
                     <span className="sim-gap-name">{s}</span>
+                    {impact > 0 && <span className="sim-impact">+{impact}%</span>}
                     <button className="sim-add" onClick={() => onAddSkill(s)} aria-label={`Add ${s} to my skills`}>
                       Add
                     </button>
@@ -67,7 +90,7 @@ export function GapPanel({ match, onAddSkill, onAddSection }: GapPanelProps) {
               {hidden > 0 && (
                 <button className="ai-link" onClick={() => setShowAll(true)}>Show {hidden} more</button>
               )}
-              {showAll && gap.missingSkills.length > SKILL_PREVIEW && (
+              {showAll && rankedSkills.length > SKILL_PREVIEW && (
                 <button className="ai-link" onClick={() => setShowAll(false)}>Show fewer</button>
               )}
             </>
@@ -94,6 +117,9 @@ export function GapPanel({ match, onAddSkill, onAddSection }: GapPanelProps) {
               {gap.missingSections.map((k) => (
                 <li key={k} className="sim-gap-row">
                   <span className="sim-gap-name">{SECTION_LABELS[k as SectionKey]}</span>
+                  {(rankedSections.find((r) => r.key === k)?.impact ?? 0) > 0 && (
+                    <span className="sim-impact">+{rankedSections.find((r) => r.key === k)?.impact}%</span>
+                  )}
                   <button
                     className="sim-add"
                     onClick={() => onAddSection(k as SectionKey)}

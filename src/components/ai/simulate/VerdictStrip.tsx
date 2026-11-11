@@ -18,10 +18,12 @@ export interface VerdictStripProps {
   missing: number;
   /** Primary action(s) on the right of the strip. */
   actions?: ReactNode;
+  /** Score history for the sparkline (needs 2+ points). */
+  history?: { t: number; score: number }[];
 }
 
 /** Sticky one-line summary: score, change since lock, counts, and the primary action. */
-export function VerdictStrip({ score, baseScore, matched, missing, actions }: VerdictStripProps) {
+export function VerdictStrip({ score, baseScore, matched, missing, actions, history }: VerdictStripProps) {
   const delta = score - baseScore;
   return (
     <section className="sim-verdict" aria-label="Simulated match summary">
@@ -64,6 +66,8 @@ export function VerdictStrip({ score, baseScore, matched, missing, actions }: Ve
         )}
       </div>
 
+      {history && history.length > 1 && <Sparkline points={history.map((h) => h.score)} />}
+
       <div className="sim-verdict-counts">
         <span><b>{matched}</b> skills matched</span>
         <span><b>{missing}</b> to add</span>
@@ -71,5 +75,17 @@ export function VerdictStrip({ score, baseScore, matched, missing, actions }: Ve
 
       {actions ? <div className="sim-verdict-actions">{actions}</div> : null}
     </section>
+  );
+}
+
+function Sparkline({ points }: { points: number[] }) {
+  const w = 96;
+  const h = 28;
+  const step = w / (points.length - 1);
+  const d = points.map((v, i) => `${i === 0 ? "M" : "L"}${(i * step).toFixed(1)} ${(h - 2 - (v / 100) * (h - 4)).toFixed(1)}`).join(" ");
+  return (
+    <svg className="sim-spark" viewBox={`0 0 ${w} ${h}`} width={w} height={h} role="img" aria-label={`Score history: ${points.join(", ")}`}>
+      <path d={d} fill="none" stroke={coverageColor(points[points.length - 1])} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

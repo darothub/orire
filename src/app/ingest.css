@@ -2957,3 +2957,14 @@
 .sim-diff-state { font-size: 12px; color: var(--muted); }
 .sim-add.ghost { opacity: 0.8; }
 button.sim-chip { cursor: pointer; font: inherit; font-size: 12px; }
+
+/* Impact ranking, next moves, sparkline */
+.sim-impact { font-size: 12px; font-weight: 600; color: #4ade80; font-variant-numeric: tabular-nums; }
+.sim-spark { flex: none; }
+.sim-next { display: grid; gap: 4px; margin: 10px 0 4px; padding: 10px; border-radius: 12px; background: rgba(139, 108, 255, 0.08); border: 1px solid rgba(139, 108, 255, 0.25); }
+.sim-next-h { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.sim-next-row { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; background: none; border: 0; padding: 6px 4px; border-radius: 8px; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+.sim-next-row:hover { background: rgba(139, 108, 255, 0.14); }
+.sim-next-row:focus-visible { outline: 2px solid var(--accent-2, var(--accent)); outline-offset: 1px; }
+.sim-next-row .sim-gap-name { flex: 1; }
+.sim-next-box { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid var(--muted); flex: none; }

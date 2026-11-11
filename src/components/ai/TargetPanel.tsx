@@ -22,6 +22,7 @@ import { PROVIDERS, type RefineResponse } from "@/lib/ai/types";
 import { type CVData } from "@/lib/cv/schema";
 import { NoticeSlot, type SimNotice } from "@/components/ai/simulate/NoticeSlot";
 import { VerdictStrip } from "@/components/ai/simulate/VerdictStrip";
+import { rankMissingSections, rankMissingSkills } from "@/lib/ai/simulateImpact";
 import { DiffView } from "./simulate/DiffView";
 import { GapPanel } from "@/components/ai/simulate/GapPanel";
 
@@ -51,6 +52,8 @@ export function TargetView() {
   const jdStale = useTargetStore(isIdealStale);
   const resimPrompt = useTargetStore((s) => s.resimPrompt);
   const dismissResim = useTargetStore((s) => s.dismissResim);
+  const history = useTargetStore((s) => s.history);
+  const recordScore = useTargetStore((s) => s.recordScore);
 
   const provider = useSettingsStore((s) => s.provider);
   const models = useSettingsStore((s) => s.models);
@@ -95,6 +98,13 @@ export function TargetView() {
     if (!ideal) return;
     setSkillSuggestions(gapAnalysis(cv, ideal).missingSkills);
   }, [cv, ideal, setSkillSuggestions]);
+
+  // Record the live score (debounced) so the verdict strip can show progress.
+  useEffect(() => {
+    if (!ideal) return;
+    const id = setTimeout(() => recordScore(targetMatch(cv, ideal, jd).score), 800);
+    return () => clearTimeout(id);
+  }, [cv, ideal, jd, recordScore]);
 
   const MineTpl = getTemplate(activeTemplate).Component;
 
@@ -214,6 +224,8 @@ export function TargetView() {
 
   const match = targetMatch(cv, ideal, jd);
   const gap = match.gap;
+  const rankedSkills = rankMissingSkills(cv, ideal, jd);
+  const rankedSections = rankMissingSections(cv, ideal, jd);
   const IdealTpl = getTemplate(activeTemplate).Component;
   const dateLabel = createdAt
     ? new Date(createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
@@ -354,6 +366,7 @@ export function TargetView() {
       <NoticeSlot notices={notices} />
 
       <VerdictStrip
+        history={history}
         score={match.score}
         baseScore={baseScore}
         matched={gap.matchedSkills.length}
@@ -370,6 +383,8 @@ export function TargetView() {
         <div className="sim-rail">
           <GapPanel
             match={match}
+            rankedSkills={rankedSkills}
+            rankedSections={rankedSections}
             onAddSkill={(s) => useCVStore.getState().acceptSkillSuggestion(s)}
             onAddSection={(k) => useCVStore.getState().addSuggestedSection(k)}
           />
