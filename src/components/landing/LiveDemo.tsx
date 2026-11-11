@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from "framer-motion";
 import { getTemplate } from "@/components/templates/registry";
 import { demoTemplates } from "@/components/landing/demo";
-import { sampleCV } from "@/lib/cv/sample";
+import { landingCV as sampleCV } from "@/components/landing/landingCv";
 import { useUIStore } from "@/lib/store/uiStore";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
