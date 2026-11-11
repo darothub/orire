@@ -17,6 +17,7 @@ import { fakeAiFor, fakeRefinePatch } from "@/lib/ai/server/fakeProvider";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { runAnalysis, runCritique, runRewrite, type AgentCaller, type AgentName } from "@/lib/ai/server/agentPipeline";
 import { MAX_CRITIC_ROUNDS, sanitizeAnswers, sanitizeCritique, sanitizeGapReport, sanitizeProfile } from "@/lib/ai/agents";
+import { sanitizeSeeds } from "@/lib/tailor/seeds";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { claimCoachStep, consume, getPlanId, getUsed, refund, releaseCoachStep } from "@/lib/entitlement/entitlement";
 import { gateCoachCall, type CoachStore } from "@/lib/plan/coachGate";
@@ -45,6 +46,8 @@ interface Body {
   draft?: CVData;
   critique?: Record<string, unknown>;
   round?: number;
+  /** Skills a Simulate run flagged as missing; hints for the gap finder only. */
+  seeds?: unknown;
   /** Minted by analyze; required for rewrite and critique. */
   runToken?: string;
 }
@@ -135,7 +138,7 @@ export async function POST(req: Request) {
         feedback,
       );
     } else {
-      result = await runAnalysis(cv, jobDescription, call);
+      result = await runAnalysis(cv, jobDescription, call, sanitizeSeeds(body.seeds));
     }
     if (!result.ok) {
       await undo();

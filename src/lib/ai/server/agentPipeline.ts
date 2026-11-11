@@ -80,12 +80,13 @@ export async function runAnalysis(
   cv: CVData,
   jobDescription: string,
   call: AgentCaller,
+  seeds: string[] = [],
 ): Promise<AnalysisResult | PipelineFailure> {
   const analyst = await step(call, "analyst", ANALYST_SYSTEM, buildAnalystPrompt(jobDescription), parseIdealProfile);
   if (!analyst.ok) return analyst;
   const profile = analyst.value;
 
-  const gap = await step(call, "gap", GAP_SYSTEM, buildGapPrompt(cv, profile), (raw) => parseGapReport(raw, cv));
+  const gap = await step(call, "gap", GAP_SYSTEM, buildGapPrompt(cv, profile, seeds), (raw) => parseGapReport(raw, cv));
   if (!gap.ok) return gap;
   const report = gap.value;
 

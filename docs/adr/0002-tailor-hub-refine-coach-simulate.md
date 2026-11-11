@@ -46,8 +46,10 @@ Copy, rail hints and Home cards use these verbs, so users can tell them apart.
   (`cv` span or `answer`), the job they were given for, and a created time.
   Coach writes answered questions here. Refine and the guard read it. A fact
   is reused across tools and across runs for the same CV.
-- **Gap list**: Simulate's gaps are passed to Coach as question seeds so Coach
-  does not re-derive them.
+- **Gap list** (built): the skills Simulate found missing are passed to Coach's
+  gap finder as hints (`simulateSeeds`). They are only sent when the saved
+  target was simulated from the current job description, and the gap finder
+  still buckets each against the CV, so a hint never becomes a claim.
 
 ### 3. No-conflict rule: proposals, not writes
 
@@ -95,13 +97,13 @@ keeps everything already accepted.
    use it. Open proposals show in the Tailor "Review changes" inbox. Each accept
    is one undo step held in memory (`proposalStore`), not a library version, and
    the inbox registers a proposal only once its tool view has loaded it.
-3. **Fact ledger** (built, except seeding): Coach answers are saved as facts
+3. **Fact ledger** (built): Coach answers are saved as facts
    (`factStore`, scoped per account, merged by id with delete tombstones) and
    synced to `User.factLedger` for signed-in users. Coach prefills a matching
    question from an earlier answer; Refine sends up to 12 facts as a CONFIRMED
    FACTS block, and figures the candidate typed are accepted by the guard.
-   Facts show on Tailor with delete. Seeding Coach from Simulate gaps is
-   deferred.
+   Facts show on Tailor with delete. Coach's gap finder also receives
+   Simulate's missing skills as hints.
 4. **Run all** (built): `src/lib/tailor/runAll.ts` and `runAllStore`. A Pro/Career
    guided pass over Diagnose, Coach and Refine from the Tailor hub, with a bar
    above each tool to continue or skip. It only sequences the tools, which still
