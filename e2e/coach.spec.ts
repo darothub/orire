@@ -227,3 +227,35 @@ test("tailor hub: one job description is shared with the tools, and all three ar
     await expect(appPage.getByRole("button", { name: `Open ${tool}`, exact: true })).toBeVisible();
   }
 });
+
+test("tailor run all: guided steps can be skipped, then the before and after shows", async ({ appPage, db, e2eUser }) => {
+  await asPro(appPage, db, e2eUser.id);
+  await stubAgents(appPage);
+  await openCoach(appPage);
+  const rail = appPage.getByRole("navigation", { name: "Workspaces" });
+  // Touch the CV so it counts as the candidate's own.
+  await rail.getByRole("button", { name: "Edit", exact: true }).click();
+  await appPage.getByLabel("Title", { exact: true }).fill("Staff TypeScript Engineer");
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByLabel("Job description").fill("Senior TypeScript engineer. React, GraphQL, AWS.");
+
+  await appPage.getByRole("button", { name: "Start guided run" }).click();
+  const bar = appPage.getByRole("region", { name: "Guided run" });
+  await expect(bar).toContainText("step 1 of 3: Diagnose");
+  await bar.getByRole("button", { name: "Skip this step" }).click();
+  await expect(bar).toContainText("step 2 of 3: Coach");
+  await bar.getByRole("button", { name: "Skip this step" }).click();
+  await expect(bar).toContainText("step 3 of 3: Refine");
+  await bar.getByRole("button", { name: "Done, next step" }).click();
+
+  const panel = appPage.getByRole("region", { name: "Run complete" });
+  await expect(panel).toContainText("Diagnose: skipped");
+  await expect(panel).toContainText("Refine: done");
+  await expect(panel).toContainText("Match before:");
+});
+
+test("tailor run all: Free users see the plans prompt, not the run", async ({ appPage }) => {
+  await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Tailor", exact: true }).click();
+  await expect(appPage.getByRole("button", { name: /Run all is a Pro feature/ })).toBeVisible();
+  await expect(appPage.getByRole("button", { name: "Start guided run" })).toHaveCount(0);
+});
