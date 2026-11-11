@@ -20,6 +20,7 @@ import {
   emptyCertification,
 } from "@/lib/cv/schema";
 import { sampleCV } from "@/lib/cv/sample";
+import { placeSkill, type SkillSource } from "@/lib/cv/skillCategory";
 import type { ParsedCV } from "@/lib/ingest/parse";
 
 type BasicsPatch = Partial<CVData["basics"]>;
@@ -93,7 +94,9 @@ interface CVState {
   skillSuggestions: string[];
   /** Skills the user dismissed — persisted so they don't reappear next simulate. */
   ignoredSkills: string[];
-  setSkillSuggestions: (list: string[]) => void;
+  /** Ideal-match skill groups the suggestions came from; decides each skill's category. Not persisted. */
+  skillSource: SkillSource[];
+  setSkillSuggestions: (list: string[], source?: SkillSource[]) => void;
   acceptSkillSuggestion: (skill: string) => void;
   dismissSkillSuggestion: (skill: string) => void;
   clearSkillSuggestions: () => void;
@@ -131,6 +134,7 @@ export const useCVStore = create<CVState>()(
       baseline: null,
       started: false,
       skillSuggestions: [],
+      skillSource: [],
       ignoredSkills: [],
 
       setBasics: (patch) =>
@@ -274,7 +278,7 @@ export const useCVStore = create<CVState>()(
       setExperience: (next) => set((s) => ({ cv: { ...s.cv, experience: next } })),
       setEducation: (next) => set((s) => ({ cv: { ...s.cv, education: next } })),
       setSkills: (next) => set((s) => ({ cv: { ...s.cv, skills: next } })),
-      setSkillSuggestions: (list) =>
+      setSkillSuggestions: (list, source) =>
         set((s) => {
           const have = new Set(s.cv.skills.flatMap((g) => g.items.map((i) => i.toLowerCase())));
           const ignored = new Set(s.ignoredSkills.map((i) => i.toLowerCase()));
@@ -288,18 +292,24 @@ export const useCVStore = create<CVState>()(
               seen.add(k);
               return true;
             });
-          return { skillSuggestions: cleaned };
+          return { skillSuggestions: cleaned, skillSource: source ?? s.skillSource };
         }),
       acceptSkillSuggestion: (skill) =>
         set((s) => {
           const value = skill.trim();
           if (!value) return {};
           const exists = s.cv.skills.some((g) => g.items.some((i) => i.toLowerCase() === value.toLowerCase()));
-          const groups = s.cv.skills.length ? s.cv.skills : [{ ...emptySkillGroup(), category: "Skills" }];
-          const targetIdx = pickSkillGroupIndex(groups);
-          const nextSkills = exists
-            ? groups
-            : groups.map((g, idx) => (idx === targetIdx ? { ...g, items: [...g.items, value] } : g));
+          const placement = exists ? null : placeSkill(s.cv.skills, s.skillSource, value);
+          let nextSkills = s.cv.skills;
+          if (!exists && placement) {
+            nextSkills = placement.groupId
+              ? s.cv.skills.map((g) => (g.id === placement.groupId ? { ...g, items: [...g.items, value] } : g))
+              : [...s.cv.skills, { ...emptySkillGroup(), category: placement.category, items: [value] }];
+          } else if (!exists) {
+            const groups = s.cv.skills.length ? s.cv.skills : [{ ...emptySkillGroup(), category: "Skills" }];
+            const targetIdx = pickSkillGroupIndex(groups);
+            nextSkills = groups.map((g, idx) => (idx === targetIdx ? { ...g, items: [...g.items, value] } : g));
+          }
           const order = s.cv.order.includes("skills") ? s.cv.order : [...s.cv.order, "skills" as SectionKey];
           return {
             cv: { ...s.cv, skills: nextSkills, order },
@@ -430,8 +440,8 @@ export const useCVStore = create<CVState>()(
       setBaseline: (cv) => set({ baseline: cv, started: true }),
       clearBaseline: () => set({ baseline: null }),
 
-      startBlank: () => set({ cv: blankCV(), activeTemplate: "aurora", baseline: null, started: true, skillSuggestions: [], ignoredSkills: [] }),
-      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, started: false, skillSuggestions: [], ignoredSkills: [] }),
+      startBlank: () => set({ cv: blankCV(), activeTemplate: "aurora", baseline: null, started: true, skillSuggestions: [], skillSource: [], ignoredSkills: [] }),
+      reset: () => set({ cv: sampleCV, activeTemplate: "aurora", baseline: null, started: false, skillSuggestions: [], skillSource: [], ignoredSkills: [] }),
     }),
     {
       // Anonymous default; StorageScope rebinds to `orire-cv:u:<id>:v1` on sign-in.

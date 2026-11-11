@@ -1,5 +1,6 @@
 "use client";
 
+import { groupSuggestions } from "@/lib/cv/skillCategory";
 import { funnel } from "@/lib/analytics/funnel";
 
 import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
@@ -559,24 +560,32 @@ export function EditorPanel() {
               </div>
             </div>
             <p className="ed-suggest-note">Add only skills you genuinely have — these come from the target role, not your CV.</p>
-            <div className="ed-suggest-chips">
-              <AnimatePresence initial={false}>
-                {s.skillSuggestions.map((sk) => (
-                  <motion.span
-                    key={sk}
-                    layout
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.85 }}
-                    transition={{ duration: 0.18 }}
-                    className="ed-suggest-chip"
-                  >
-                    <button className="ed-suggest-add" onClick={() => s.acceptSkillSuggestion(sk)} title="Add to your skills">＋ {sk}</button>
-                    <button className="ed-suggest-x" onClick={() => s.dismissSkillSuggestion(sk)} aria-label={`Dismiss ${sk}`}>×</button>
-                  </motion.span>
-                ))}
-              </AnimatePresence>
-            </div>
+            {groupSuggestions(cv.skills, s.skillSource, s.skillSuggestions).map((sec) => (
+              <div key={sec.key} className="ed-suggest-group" role="group" aria-label={`Suggested for ${sec.category}`}>
+                <span className="ed-suggest-cat">
+                  {sec.category}
+                  {sec.isNew && <span className="ed-suggest-new"> · new category</span>}
+                </span>
+                <div className="ed-suggest-chips">
+                  <AnimatePresence initial={false}>
+                    {sec.skills.map((sk) => (
+                      <motion.span
+                        key={sk}
+                        layout
+                        initial={{ opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.85 }}
+                        transition={{ duration: 0.18 }}
+                        className="ed-suggest-chip"
+                      >
+                        <button className="ed-suggest-add" onClick={() => s.acceptSkillSuggestion(sk)} title={`Add to ${sec.category}`}>＋ {sk}</button>
+                        <button className="ed-suggest-x" onClick={() => s.dismissSkillSuggestion(sk)} aria-label={`Dismiss ${sk}`}>×</button>
+                      </motion.span>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            ))}
           </div>
         )}
         <Reorder.Group axis="y" values={cv.skills} onReorder={s.setSkills} className="ed-list" role="list">

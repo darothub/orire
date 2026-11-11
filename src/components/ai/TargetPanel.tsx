@@ -100,7 +100,7 @@ export function TargetView() {
   // Keep editor skill chips aligned with the live gap vs the locked ideal.
   useEffect(() => {
     if (!ideal) return;
-    setSkillSuggestions(gapAnalysis(cv, ideal).missingSkills);
+    setSkillSuggestions(gapAnalysis(cv, ideal).missingSkills, ideal.skills);
   }, [cv, ideal, setSkillSuggestions]);
 
   // Record the live score (debounced) so the verdict strip can show progress.
@@ -135,7 +135,7 @@ export function TargetView() {
       const working = liveWorkingCV();
       const locked = targetMatch(working, built, jd);
       setTarget(built, jd, locked.score);
-      useCVStore.getState().setSkillSuggestions(locked.gap.missingSkills);
+      useCVStore.getState().setSkillSuggestions(locked.gap.missingSkills, built.skills);
       previewBaseSig.current = null;
       setPreview(null);
       setPhase("idle");
