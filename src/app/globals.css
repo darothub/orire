@@ -5299,7 +5299,7 @@ html[data-theme="light"] .landing-scrim {
 }
 @media (prefers-reduced-motion: reduce) {
   .spotlight-view { opacity: 1 !important; transform: none !important; filter: none !important; }
-  .spotlight-view .spot-card { transition: none; }
+  .spotlight-view .spot-card, .spotlight-view .spot-card-toggle { transition: none; }
   .spotlight-view .spot-card:hover { transform: none; }
 }
 

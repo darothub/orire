@@ -256,7 +256,7 @@ export function CoachView() {
         <div className="cl-gate">
           <strong>The CV coach is a {nextPlan("free")?.label ?? "Pro"} feature.</strong>
           <p>Upgrade to get tailored questions, a fact-grounded rewrite and a recruiter/ATS review.</p>
-          <button className="flow-btn primary" onClick={() => setView("connect")}>See plans</button>
+          <button className="flow-btn primary" onClick={() => setView("plans")}>See plans</button>
         </div>
       )}
 
