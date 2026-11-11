@@ -14,6 +14,7 @@ import { allowCoach, type Metric } from "@/lib/plan/plan";
 import { jdMatch } from "@/lib/ai/jdmatch";
 import { suggestTailorStep, type TailorStep } from "@/lib/tailor/suggestStep";
 import { ViewIcon } from "@/components/ViewIcon";
+import { RunAllPanel } from "@/components/ai/RunAll";
 import { TailorFacts } from "@/components/ai/TailorFacts";
 import { TailorInbox } from "@/components/ai/TailorInbox";
 
@@ -155,6 +156,8 @@ export function TailorView() {
         )}
 
         <p className="tailor-suggest" role="status">{suggestion.reason}</p>
+
+        <RunAllPanel ready={started && hasJd} />
 
         <TailorInbox />
         <TailorFacts />
