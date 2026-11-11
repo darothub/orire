@@ -100,6 +100,18 @@ model EmailVerificationToken {
   @@index([userId])
 }
 
+// Single-use, hashed tokens for passwordless sign-in links. Keyed by email so
+// the first link can also create the account; only the SHA-256 hash is stored.
+model MagicLinkToken {
+  id        String   @id @default(cuid())
+  email     String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 // ---------- Product domain ----------
 
 /// A saved CV document. A user may keep several; the client tracks the active one.

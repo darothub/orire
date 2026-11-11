@@ -96,6 +96,7 @@ export function AuthOverlay() {
   const [authErr, setAuthErr] = useState<string | null>(null);
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [magicSentTo, setMagicSentTo] = useState<string | null>(null);
   const [lastMethod, setLastMethod] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
@@ -192,6 +193,7 @@ export function AuthOverlay() {
       setAuthErr(null);
       setEmailTouched(false);
       setEmailOpen(false);
+      setMagicSentTo(null);
     }
   }
 
@@ -324,6 +326,31 @@ export function AuthOverlay() {
       }
     } catch {
       setAuthErr("Could not start Google sign-in. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const sendMagicLink = async () => {
+    const target = email.trim();
+    if (!EMAIL_RE.test(target) || busy) return;
+    setBusy("magic");
+    setAuthErr(null);
+    try {
+      if (!(await passCaptcha())) return;
+      const res = await fetch("/api/auth/magic", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: target }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAuthErr(data?.error ? String(data.error) : "Could not send the link. Please try again.");
+        return;
+      }
+      setMagicSentTo(target);
+    } catch (err) {
+      setAuthErr((err as Error)?.message ?? "Something went wrong. Please try again.");
     } finally {
       setBusy(null);
     }
@@ -659,6 +686,19 @@ export function AuthOverlay() {
                     ? "Create account"
                     : "Sign in"}
               </button>
+              <button
+                type="button"
+                className="auth-magic"
+                onClick={sendMagicLink}
+                disabled={!!busy || !EMAIL_RE.test(email.trim())}
+              >
+                {busy === "magic" ? "Sending…" : magicSentTo ? "Resend sign-in link" : "Email me a sign-in link instead"}
+              </button>
+              {magicSentTo && (
+                <p className="auth-hint ok" role="status">
+                  Link sent to {magicSentTo} — check your inbox. It expires in 15 minutes.
+                </p>
+              )}
               {!signup && (
                 <a className="auth-forgot" href="/forgot">
                   Forgot password?

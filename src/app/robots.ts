@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
       // Keep API, auth and checkout flows out of the index.
-      disallow: ["/api/", "/checkout/", "/forgot", "/reset"],
+      disallow: ["/api/", "/checkout/", "/forgot", "/reset", "/magic"],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,

@@ -85,6 +85,23 @@ test.describe("guest signup entry", () => {
     await expect(dialog.getByRole("button", { name: "Create account", exact: true })).toBeEnabled();
   });
 
+  test("email me a sign-in link shows confirmation (mocked API)", async ({ page }) => {
+    await page.route("**/api/auth/magic", (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) }),
+    );
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await dismissCookies(page);
+    await guestCta(page).click();
+    const dialog = page.getByRole("dialog", { name: "Create your account" });
+    await expect(dialog).toBeVisible({ timeout: SHELL_READY_TIMEOUT });
+    await dialog.getByRole("button", { name: "Continue with email" }).click();
+    const magic = dialog.getByRole("button", { name: "Email me a sign-in link instead" });
+    await expect(magic).toBeDisabled();
+    await dialog.locator('input[type="email"]').fill("magic@orire.test");
+    await magic.click();
+    await expect(dialog.getByText(/Link sent to magic@orire.test/)).toBeVisible();
+  });
+
   test("mocked signup API then failed auto sign-in still confirms account create path", async ({
     page,
   }) => {
