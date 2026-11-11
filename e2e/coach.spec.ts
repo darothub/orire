@@ -261,6 +261,41 @@ test("tailor run all: Free users see the plans prompt, not the run", async ({ ap
   await expect(appPage.getByRole("button", { name: "Start guided run" })).toHaveCount(0);
 });
 
+test("tailor seeds: Simulate's missing skills reach Coach as hints", async ({ appPage, db, e2eUser }) => {
+  await asPro(appPage, db, e2eUser.id);
+  await stubAgents(appPage);
+  const ideal = {
+    basics: { name: "Ideal", title: "Senior TypeScript Engineer", email: "", phone: "", location: "", summary: "", links: [] },
+    experience: [],
+    education: [],
+    skills: [{ category: "Platform", items: ["Terraform", "Kubernetes"] }],
+    projects: [],
+  };
+  await appPage.route("**/api/ai/simulate", (route) =>
+    route.fulfill({ json: { ok: true, provider: "stub", model: "stub", raw: JSON.stringify(ideal) } }),
+  );
+  await openCoach(appPage);
+  await appPage.getByLabel("Job description").fill("Senior TypeScript engineer. Terraform, Kubernetes.");
+  const rail = appPage.getByRole("navigation", { name: "Workspaces" });
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByRole("button", { name: "Open Simulate", exact: true }).click();
+  await appPage.getByRole("button", { name: "Generate role-target example" }).click();
+  await expect(appPage.getByRole("button", { name: "Generate role-target example" })).toHaveCount(0);
+
+  await rail.getByRole("button", { name: "Tailor", exact: true }).click();
+  await appPage.getByRole("button", { name: "Open Coach", exact: true }).click();
+  await expect(appPage.getByTestId("coach-seeds")).toContainText("Terraform");
+  // A different job means the target is for another role, so its hints are dropped.
+  await appPage.getByLabel("Job description").fill("Staff designer.");
+  await expect(appPage.getByTestId("coach-seeds")).toHaveCount(0);
+  await appPage.getByLabel("Job description").fill("Senior TypeScript engineer. Terraform, Kubernetes.");
+  await expect(appPage.getByTestId("coach-seeds")).toContainText("Terraform");
+
+  const analyze = appPage.waitForRequest((r) => r.url().includes("/api/ai/agents") && r.postDataJSON()?.action === "analyze");
+  await appPage.getByRole("button", { name: "Analyse my CV" }).click();
+  expect((await analyze).postDataJSON().seeds).toEqual(expect.arrayContaining(["Terraform", "Kubernetes"]));
+});
+
 for (const theme of ["dark", "light"] as const) {
   test(`tailor hub: no WCAG AA violations across facts, guided run and results (${theme})`, async ({ appPage, db, e2eUser }) => {
     await appPage.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });

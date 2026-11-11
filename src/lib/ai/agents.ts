@@ -153,7 +153,7 @@ RULES:
 - Flag weak bullets (vague, duty-only, no outcome) by their [#index].
 - Be specific and brief. Output valid JSON only, no prose.`;
 
-export function buildGapPrompt(cv: CVData, profile: IdealProfile): string {
+export function buildGapPrompt(cv: CVData, profile: IdealProfile, seeds: string[] = []): string {
   return [
     "IDEAL CANDIDATE PROFILE:",
     "```json",
@@ -163,6 +163,13 @@ export function buildGapPrompt(cv: CVData, profile: IdealProfile): string {
     "CV:",
     indexedSource(cv),
     "",
+    ...(seeds.length
+      ? [
+          `A SIMULATION flagged these skills as possibly missing: ${seeds.join(", ")}.`,
+          "They are hints, not facts. Bucket each one honestly against the CV: understated or plausible only when related work is on the CV, otherwise genuineGap.",
+          "",
+        ]
+      : []),
     `Return ONLY this JSON shape:
 {
   "matched": [string],

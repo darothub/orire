@@ -4,6 +4,7 @@ import { useFactStore } from "@/lib/store/factStore";
 import { factForArea } from "@/lib/tailor/facts";
 import { useMemo, useRef, useEffect, useState } from "react";
 import { useCVStore } from "@/lib/store/cvStore";
+import { simulateSeeds } from "@/lib/tailor/seeds";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { usePlanStore } from "@/lib/store/planStore";
 import { allowCoach, nextPlan } from "@/lib/plan/plan";
@@ -95,6 +96,9 @@ export function CoachView() {
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const jd = useTargetStore((s) => s.jd);
   const setJd = useTargetStore((s) => s.setJd);
+  const ideal = useTargetStore((s) => s.ideal);
+  const idealJd = useTargetStore((s) => s.idealJd);
+  const seeds = useMemo(() => simulateSeeds(liveCV, { ideal, idealJd }, jd), [liveCV, ideal, idealJd, jd]);
   const setView = useViewStore((s) => s.setView);
   const plan = usePlanStore((s) => s.plan);
   const allowed = allowCoach(plan);
@@ -151,7 +155,7 @@ export function CoachView() {
     setBaseCV(snapshot);
     setPhase("analyzing");
     try {
-      const r = await post<Analysis>({ action: "analyze", cv: snapshot, jobDescription: jd });
+      const r = await post<Analysis>({ action: "analyze", cv: snapshot, jobDescription: jd, seeds: simulateSeeds(snapshot, { ideal, idealJd }, jd) });
       if (id !== runId.current) return;
       setAnalysis({ runToken: r.runToken, startedAt: nowMs(), profile: r.profile, report: r.report, questions: r.questions });
       const known = useFactStore.getState().facts;
@@ -275,6 +279,11 @@ export function CoachView() {
               rows={12}
             />
           </div>
+          {seeds.length > 0 && (
+            <p className="tailor-sub" data-testid="coach-seeds">
+              Using {seeds.length} gap{seeds.length === 1 ? "" : "s"} from your Simulate run: {seeds.join(", ")}. Coach only asks about the ones your CV hints at.
+            </p>
+          )}
           <div className="step-nav">
             <button className="flow-btn primary" onClick={analyze} disabled={!jd.trim()}>Analyse my CV</button>
           </div>
