@@ -6033,3 +6033,17 @@ body,
   .auth-form > .auth-brand, .auth-form > .auth-back { display: none; }
   .auth-usps { display: none; }
 }
+
+/* Guest mode: marks rail items that need a free account */
+.rail-acct {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: #ede9ff;
+  color: #4a3fb5;
+}

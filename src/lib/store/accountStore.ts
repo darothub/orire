@@ -83,7 +83,7 @@ export function useWriteGate(action = "download"): WriteGate {
 
   const guard = (): boolean => {
     if (allowed) return true;
-    if (!signedIn) openAuth("signup");
+    if (!signedIn) openAuth("signup", null, `Sign up to ${action}`);
     return false;
   };
 

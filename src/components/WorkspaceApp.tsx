@@ -28,7 +28,8 @@ import { useOnboardingStore, hasSeenOnboarding } from "@/lib/store/onboardingSto
 import { getTemplate } from "@/components/templates/registry";
 import { useUIStore, readPendingPlanIntent } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
-import { VIEW_META } from "@/lib/store/viewMeta";
+import { VIEW_META, ACCOUNT_VIEWS } from "@/lib/store/viewMeta";
+import { useSession } from "next-auth/react";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { targetMatch } from "@/lib/ai/simulate";
@@ -191,6 +192,9 @@ export default function WorkspaceApp() {
   const cv = useCVStore((s) => s.cv);
   const active = useCVStore((s) => s.activeTemplate);
   const reset = useCVStore((s) => s.reset);
+  const { status: sessionStatus } = useSession();
+  const guest = sessionStatus === "unauthenticated";
+  const openAuth = useUIStore((s) => s.openAuth);
   const previewEdit = useUIStore((s) => s.previewEdit);
   const togglePreviewEdit = useUIStore((s) => s.togglePreviewEdit);
   const mobilePane = useUIStore((s) => s.mobilePane);
@@ -213,6 +217,14 @@ export default function WorkspaceApp() {
     setView("plans");
     clearIntendedPlan();
   }, [intendedPlan, setView, clearIntendedPlan]);
+  // Guests reaching an account-only view by any path (palette, restored state)
+  // are sent back to the editor with the sign-up prompt.
+  useEffect(() => {
+    const reason = guest ? ACCOUNT_VIEWS[view] : undefined;
+    if (!reason) return;
+    setView("edit");
+    openAuth("signup", null, reason);
+  }, [guest, view, setView, openAuth]);
   const refStarted = useRefineStore((s) => s.started);
   const refCompare = useRefineStore((s) => s.runProviders.length === 2);
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
@@ -310,7 +322,15 @@ export default function WorkspaceApp() {
             {mounted && previewEdit ? "Editing preview" : "Edit on preview"}
           </button>
           <button className="btn-ghost" onClick={reset}>Reset</button>
-          <button className="btn-primary" onClick={() => setView("export")}>Export PDF</button>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              if (guest) openAuth("signup", null, ACCOUNT_VIEWS.export);
+              else setView("export");
+            }}
+          >
+            Export PDF
+          </button>
           <SyncStatus />
           <AccountButton />
         </div>

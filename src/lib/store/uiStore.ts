@@ -18,12 +18,13 @@ interface UIState {
   /** Plan the visitor chose on the pricing cards, carried through sign-up so the
    *  app can land them on checkout for that plan. null = no specific intent. */
   intendedPlan: PlanId | null;
-  openAuth: (mode?: "signin" | "signup", plan?: PlanId | null) => void;
+  /** Why the overlay was opened (e.g. "Sign up to export your CV"); null = generic. */
+  authReason: string | null;
+  openAuth: (mode?: "signin" | "signup", plan?: PlanId | null, reason?: string | null) => void;
   closeAuth: () => void;
   clearIntendedPlan: () => void;
-  /** User chose "Explore without an account" (mirrors the persisted localStorage
-   *  flag). While false and not signed in, the main workspace stays gated behind
-   *  the login page so the landing never flashes first. */
+  /** User chose "Continue as guest" (mirrors the persisted localStorage flag).
+   *  Guests get the workspace with local-only storage; AI and export need an account. */
   explored: boolean;
   setExplored: (v: boolean) => void;
 }
@@ -54,6 +55,26 @@ function writePendingPlanIntent(plan: PlanId | null) {
   }
 }
 
+/** Persisted "continue as guest" flag (kept under the legacy key name). */
+const GUEST_KEY = "orire.auth.explored";
+export function readGuestFlag(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(GUEST_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+function writeGuestFlag(on: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    if (on) window.localStorage.setItem(GUEST_KEY, "1");
+    else window.localStorage.removeItem(GUEST_KEY);
+  } catch {
+    // Storage can be unavailable in privacy-restricted browsers.
+  }
+}
+
 /** Ephemeral UI flags — intentionally NOT persisted. */
 export const useUIStore = create<UIState>((set) => ({
   previewEdit: false,
@@ -64,15 +85,19 @@ export const useUIStore = create<UIState>((set) => ({
   authOpen: false,
   authMode: "signin",
   intendedPlan: null,
-  openAuth: (mode = "signin", plan = null) => {
+  authReason: null,
+  openAuth: (mode = "signin", plan = null, reason = null) => {
     writePendingPlanIntent(plan);
-    set({ authOpen: true, authMode: mode, intendedPlan: plan });
+    set({ authOpen: true, authMode: mode, intendedPlan: plan, authReason: reason });
   },
-  closeAuth: () => set({ authOpen: false }),
+  closeAuth: () => set({ authOpen: false, authReason: null }),
   clearIntendedPlan: () => {
     writePendingPlanIntent(null);
     set({ intendedPlan: null });
   },
   explored: false,
-  setExplored: (v) => set({ explored: v }),
+  setExplored: (v) => {
+    writeGuestFlag(v);
+    set({ explored: v });
+  },
 }));

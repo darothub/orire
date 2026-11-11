@@ -18,18 +18,12 @@ import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
- * Legacy "explore without an account" flag. Anonymous exploration has been
- * removed (the free quota must be tied to an account so it can't be reset by
- * switching browsers), but sign-out still clears this key to tidy up any value
- * left in storage from older builds.
+ * Guests may explore and edit locally, but AI runs and downloads need an
+ * account so the free quota can't be reset by switching browsers. Sign-out
+ * clears the guest flag so the next visit starts from the landing page.
  */
-const EXPLORED_KEY = "orire.auth.explored";
 export function clearExplored() {
-  try {
-    window.localStorage.removeItem(EXPLORED_KEY);
-  } catch {
-    /* ignore */
-  }
+  useUIStore.getState().setExplored(false);
 }
 
 /** OAuth providers we surface as one-tap buttons, in display order. */
@@ -101,6 +95,7 @@ export function AuthOverlay() {
   const cardRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
+  const authReason = useUIStore((s) => s.authReason);
   const emailId = useId();
   const passwordId = useId();
   const errorId = useId();
@@ -535,7 +530,9 @@ export function AuthOverlay() {
               >
                 <h1 id={titleId}>{signup ? "Create your account" : "Welcome back"}</h1>
                 <p>
-                  {signup
+                  {authReason
+                    ? `${authReason} — it’s free, and your work so far comes with you.`
+                    : signup
                     ? "Save your CVs to the cloud, compare assistants and unlock plan features."
                     : "Sign in to sync your CVs and pick up right where you left off."}
                 </p>

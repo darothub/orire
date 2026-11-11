@@ -99,6 +99,7 @@ function FeatureViz({ kind }: { kind: Feature["viz"] }) {
  */
 export function Landing() {
   const openAuth = useUIStore((s) => s.openAuth);
+  const setExplored = useUIStore((s) => s.setExplored);
   const { consent, ready } = useConsent();
   const reducedMotion = useReducedMotion();
   const reveal = (distance = 16, delay = 0, amount = 0.4) => ({
@@ -134,6 +135,9 @@ export function Landing() {
           </nav>
           <button className="landing-ghost" disabled={!ready} onClick={() => openAuth("signin")}>
             Sign in
+          </button>
+          <button className="landing-ghost landing-guest" disabled={!ready} onClick={() => setExplored(true)}>
+            Try as guest
           </button>
           <button className="landing-cta landing-header-cta" disabled={!ready} aria-label="Get started" onClick={() => startSignup("header")}>
             <span className="landing-header-cta-long">Get started</span>

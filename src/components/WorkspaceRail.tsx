@@ -4,7 +4,9 @@ import { workspaceBusy } from "@/lib/store/busy";
 import { useEffect, useState } from "react";
 import { motion, Reorder, useReducedMotion } from "framer-motion";
 import { useViewStore, type WorkspaceView } from "@/lib/store/viewStore";
-import { VIEW_META } from "@/lib/store/viewMeta";
+import { useSession } from "next-auth/react";
+import { useUIStore } from "@/lib/store/uiStore";
+import { VIEW_META, ACCOUNT_VIEWS } from "@/lib/store/viewMeta";
 import { useRefineStore } from "@/lib/store/refineStore";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useFlowStore, PINNED_VIEWS } from "@/lib/store/flowStore";
@@ -39,7 +41,10 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
   const meta = VIEW_META[item];
   const active = view === item;
   const reducedMotion = useReducedMotion();
-  const hint = locked ? "Free limit reached — upgrade to Pro to keep using this." : meta.hint;
+  const { status } = useSession();
+  const openAuth = useUIStore((s) => s.openAuth);
+  const guestReason = status === "unauthenticated" ? ACCOUNT_VIEWS[item] : undefined;
+  const hint = guestReason ? `${guestReason} (free).` : locked ? "Free limit reached — upgrade to Pro to keep using this." : meta.hint;
   return (
     <Tooltip title={meta.label} hint={hint} placement="right">
       <button
@@ -47,8 +52,11 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
         data-tour={`rail-${item}`}
         // When locked, the click routes to Plans (the upgrade path) rather than
         // the spent feature.
-        onClick={() => setView(locked ? "plans" : item)}
-        aria-label={locked ? `${meta.label} — free limit reached, upgrade to continue` : meta.label}
+        onClick={() => {
+          if (guestReason) openAuth("signup", null, guestReason);
+          else setView(locked ? "plans" : item);
+        }}
+        aria-label={locked ? `${meta.label} — free limit reached, upgrade to continue` : guestReason ? `${meta.label} — needs a free account` : meta.label}
         aria-current={active ? "page" : undefined}
       >
         {active && (
@@ -61,6 +69,7 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
         <span className="rail-icon" aria-hidden>{meta.icon}</span>
         <span className="rail-label">{meta.label}</span>
         {locked && <span className="rail-lock" aria-hidden>🔒</span>}
+        {guestReason && <span className="rail-acct" aria-hidden>{item === "export" ? "Free" : "AI"}</span>}
         {badge && !locked && <span className={`rail-badge ${badge}`} aria-hidden />}
       </button>
     </Tooltip>
