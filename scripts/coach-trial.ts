@@ -10,10 +10,10 @@ import fs from "node:fs";
 import path from "node:path";
 import type { CVData } from "@/lib/cv/schema";
 import { parseCVText } from "@/lib/ingest/parse";
-import { runAnalysis, runCritique, runRewrite, type AgentCaller, type AgentName } from "@/lib/ai/server/agentPipeline";
+import { runAnalysis, type AnalysisResult, runCritique, runRewrite, type AgentCaller, type AgentName } from "@/lib/ai/server/agentPipeline";
 import { DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { runRoutedWithFailover } from "@/lib/ai/server/failover";
-import { MAX_CRITIC_ROUNDS, shouldContinue } from "@/lib/ai/agents";
+import { MAX_CRITIC_ROUNDS, sanitizeAnswers, shouldContinue } from "@/lib/ai/agents";
 import { isBetterDraft } from "@/lib/ai/coachLoop";
 import { diffCv } from "@/lib/ai/cvDiff";
 
@@ -60,18 +60,40 @@ function toCV(text: string): CVData {
 
 const q = (s: unknown) => "```json\n" + JSON.stringify(s, null, 2) + "\n```";
 
-async function trial(name: string): Promise<string> {
+/** .trial/answers.txt: "## NN-name" sections of "qN: answer" lines. */
+function loadAnswers(name: string): Record<string, string> | null {
+  const p = path.join(DIR, "answers.txt");
+  if (!fs.existsSync(p)) return null;
+  const sec = fs.readFileSync(p, "utf8").split(/^## /m).find((s) => s.startsWith(name));
+  if (!sec) return null;
+  return Object.fromEntries([...sec.matchAll(/^(q\d+):\s*(.+)$/gm)].map((m) => [m[1], m[2].trim()]));
+}
+
+/** Reuse the first pass's analysis so the answers line up with the questions that were asked. */
+function savedAnalysis(name: string): AnalysisResult {
+  const t = fs.readFileSync(path.join(DIR, `${name}.report.md`), "utf8");
+  const block = (head: string) => JSON.parse(t.split(head)[1].match(/```json\n([\s\S]*?)```/)![1]);
+  return { ok: true, profile: block("## Ideal profile"), report: block("## Gap report"), questions: block("## Questions asked") };
+}
+
+async function trial(name: string, useAnswers: boolean): Promise<string> {
   const cvText = fs.readFileSync(path.join(DIR, `${name}.cv.txt`), "utf8");
   const jd = fs.readFileSync(path.join(DIR, `${name}.jd.txt`), "utf8");
   const cv = toCV(cvText);
   const out: string[] = [`# ${name}`, ``, `Parsed: ${cv.experience.length} roles, ${cv.experience.reduce((n, e) => n + e.highlights.length, 0)} bullets, ${cv.skills.length} skill groups, ${cv.education.length} education`, ``];
   const before = calls;
 
-  const a = await runAnalysis(cv, jd, call);
+  const a = useAnswers ? savedAnalysis(name) : await runAnalysis(cv, jd, call);
   if (!a.ok) return out.concat(`**Analysis failed** (${a.agent}): ${a.message}`).join("\n");
   out.push(`## Ideal profile`, q(a.profile), `## Gap report`, q(a.report), `## Questions asked (${a.questions.length})`, q(a.questions));
 
-  const base = await runRewrite(cv, jd, a.profile, a.report, [], call);
+  const raw = useAnswers ? loadAnswers(name) : null;
+  if (useAnswers && !raw) return out.concat("No answers for this pair.").join("\n");
+  const answers = sanitizeAnswers(
+    a.questions.filter((x) => raw?.[x.id]).map((x) => ({ questionId: x.id, question: x.prompt, answer: raw![x.id] })),
+  );
+  if (useAnswers) out.push(`## Answers used (${answers.length})`, q(answers));
+  const base = await runRewrite(cv, jd, a.profile, a.report, answers, call);
   if (!base.ok) return out.concat(`**Rewrite failed** (${base.agent}): ${base.message}`).join("\n");
   let best = base;
   const rounds: string[] = [];
@@ -80,7 +102,7 @@ async function trial(name: string): Promise<string> {
     if (!rev.ok) { rounds.push(`critic failed: ${rev.message}`); break; }
     rounds.push(`round ${round} critique: ${JSON.stringify(rev.critique)}`);
     if (!shouldContinue(rev.critique, round - 1)) break;
-    const next = await runRewrite(cv, jd, a.profile, a.report, [], call, { critique: rev.critique, previousDraft: best.cv });
+    const next = await runRewrite(cv, jd, a.profile, a.report, answers, call, { critique: rev.critique, previousDraft: best.cv });
     if (!next.ok) { rounds.push(`rewrite failed: ${next.message}`); break; }
     const qual = (r: typeof best) => ({ warnings: r.warnings.length, atsScore: r.ats.after.score });
     const better = isBetterDraft(qual(best), qual(next));
@@ -89,7 +111,7 @@ async function trial(name: string): Promise<string> {
     best = next;
   }
   out.push(
-    `## Result (no answers supplied)`,
+    `## Result (${useAnswers ? "with answers" : "no answers supplied"})`,
     `ATS before ${base.ats.before.score}% → after ${best.ats.after.score}% · grounding ${JSON.stringify(best.grounding)}`,
     ``, `### Guard warnings (${best.warnings.length})`, ...best.warnings.map((w) => `- ${w}`),
     ``, `### Changes the user would review (${diffCv(cv, best.cv).length})`,
@@ -106,14 +128,15 @@ async function main() {
     console.error("Set OPENAI_API_KEY (or ANTHROPIC_API_KEY) in the environment or .env.local.");
     process.exit(1);
   }
-  const want = process.argv.slice(2);
+  const useAnswers = process.argv.includes("--answers");
+  const want = process.argv.slice(2).filter((a) => !a.startsWith("--"));
   const names = fs.readdirSync(DIR).filter((f) => f.endsWith(".cv.txt")).map((f) => f.replace(".cv.txt", "")).filter((n) => want.length === 0 || want.some((w) => n.startsWith(w))).sort();
   for (const n of names) {
     if (!fs.existsSync(path.join(DIR, `${n}.jd.txt`))) { console.log(`skip ${n}: no jd`); continue; }
     process.stdout.write(`${n} … `);
     const t = Date.now();
     try {
-      fs.writeFileSync(path.join(DIR, `${n}.report.md`), await trial(n));
+      fs.writeFileSync(path.join(DIR, useAnswers ? `${n}.answers.report.md` : `${n}.report.md`), await trial(n, useAnswers));
       console.log(`done ${((Date.now() - t) / 1000).toFixed(0)}s`);
     } catch (e) {
       console.log(`error: ${(e as Error).message}`);

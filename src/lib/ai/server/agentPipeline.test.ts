@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { runAnalysis, runCritique, runRewrite, type AgentCaller } from "@/lib/ai/server/agentPipeline";
+import { disclaimerWarnings, runAnalysis, runCritique, runRewrite, type AgentCaller } from "@/lib/ai/server/agentPipeline";
+import type { CVData } from "@/lib/cv/schema";
 import { MAX_CRITIC_ROUNDS, parseCritique, parseGapReport, parseQuestions, sanitizeAnswers, shouldContinue, buildRewriterPrompt } from "@/lib/ai/agents";
 import { isBetterDraft } from "@/lib/ai/coachLoop";
 import { sampleCV } from "@/lib/cv/sample";
@@ -150,5 +151,19 @@ describe("critic loop", () => {
     expect(isBetterDraft({ warnings: 1, atsScore: 50 }, { warnings: 1, atsScore: 60 })).toBe(true);
     expect(isBetterDraft({ warnings: 1, atsScore: 50 }, { warnings: 1, atsScore: 50 })).toBe(false);
     expect(isBetterDraft({ warnings: 0, atsScore: 50 }, { warnings: 1, atsScore: 90 })).toBe(false);
+  });
+});
+
+describe("disclaimerWarnings", () => {
+  const cv = (summary: string, highlights: string[] = []) =>
+    ({ basics: { summary }, experience: [{ highlights }], projects: [] }) as unknown as CVData;
+
+  it("flags caveats copied from answers", () => {
+    expect(disclaimerWarnings(cv("Coach engineers (no formal mentoring programme metrics recorded)."))).toHaveLength(1);
+    expect(disclaimerWarnings(cv("Fine.", ["Exact test counts are not verified."]))).toHaveLength(1);
+  });
+
+  it("leaves honest achievements alone", () => {
+    expect(disclaimerWarnings(cv("Led a team of 4 engineers.", ["Cut CI time by 30%."]))).toEqual([]);
   });
 });

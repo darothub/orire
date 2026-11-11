@@ -270,6 +270,7 @@ ABSOLUTE RULES (fact-grounding):
 - The only allowed facts are the source CV and the candidate's answers. NEVER invent or alter employers, titles, dates, locations, degrees, institutions, certifications, project names, metrics or numbers, and NEVER add skills the person did not list or confirm.
 - Use a number only if it appears verbatim in the source CV or the answers. Never estimate, round or combine figures.
 - Fold an answer into the highlight of the entry it clearly concerns; if you cannot tell which entry, leave it out.
+- Answers often include caveats such as "not verified", "no metrics", "not confirmed" or "not claimed". Never copy a caveat, disclaimer or statement of what is missing into the CV. Use only the positive facts and leave the rest out.
 - Fix flagged weak bullets: lead with a strong verb and make the outcome clear.
 - When a REVIEWER FEEDBACK section is present, address each issue it raises, but a fix that would need a fact or number not in the source or answers must be ignored. Never add a missing keyword the CV and answers do not support.
 - Where the source and the profile name the SAME existing skill differently, use the profile's wording. Do NOT add a requirement the CV and answers do not demonstrate — leave real gaps as gaps.

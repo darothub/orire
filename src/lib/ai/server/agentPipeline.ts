@@ -114,6 +114,18 @@ function acceptAnswerFigures(warnings: string[], answers: ElicitedAnswer[]): str
   });
 }
 
+const DISCLAIMER_RE =
+  /\b(?:not|never|un)[ -]?(?:verified|confirmed|documented|claimed|recorded)\b|\bno (?:formal|exact|specific)\b[^.;)]*\b(?:metrics?|figures?|numbers?|data|programme|program)\b|\bunavailable\b/i;
+
+/** Caveats copied from the candidate's answers describe what's missing, not what they did. */
+export function disclaimerWarnings(cv: CVData): string[] {
+  const texts = [cv.basics.summary, ...cv.experience.flatMap((e) => e.highlights), ...cv.projects.flatMap((p) => p.highlights)];
+  return texts
+    .map((t) => (t ?? "").match(DISCLAIMER_RE) && (t ?? "").trim())
+    .filter((t): t is string => !!t)
+    .map((t) => `A caveat leaked into your CV: “…${t.slice(-90)}”. Remove it; say only what you did.`);
+}
+
 export async function runRewrite(
   cv: CVData,
   jobDescription: string,
@@ -133,7 +145,7 @@ export async function runRewrite(
   if (!rewriter.ok) return rewriter;
 
   const grounded = factGround(cv, applyRefinePatch(cv, rewriter.value));
-  const warnings = acceptAnswerFigures(grounded.warnings, answers);
+  const warnings = [...acceptAnswerFigures(grounded.warnings, answers), ...disclaimerWarnings(grounded.cv)];
   return {
     ok: true,
     cv: grounded.cv,
