@@ -85,6 +85,9 @@ export function AuthOverlay() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  // True once the server has asked for the security check (repeated failed
+  // sign-ins). Sign-up and magic-link sends always show it.
+  const [challenged, setChallenged] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaReset, setCaptchaReset] = useState(0);
   const [authErr, setAuthErr] = useState<string | null>(null);
@@ -281,8 +284,28 @@ export function AuthOverlay() {
 
   // Verify the solved Turnstile token server-side (sets the short-lived cookie
   // the auth backend checks). Shared by Google OAuth and email sign-in.
-  const passCaptcha = async (): Promise<boolean> => {
+  const checkChallenged = async (): Promise<boolean> => {
+    try {
+      const r = await fetch("/api/auth/captcha-required", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const j = await r.json().catch(() => ({}));
+      return j?.required === true;
+    } catch {
+      return false;
+    }
+  };
+
+  const passCaptcha = async (kind: "signin" | "signup" | "magic"): Promise<boolean> => {
     if (!captchaOn) return true;
+    const always = kind === "signup" || kind === "magic";
+    if (!always && !challenged) {
+      if (!(await checkChallenged())) return true;
+      setChallenged(true);
+    }
+    if (always && !challenged) setChallenged(true);
     if (!captchaToken) {
       setAuthErr("Please complete the verification challenge.");
       return false;
@@ -307,7 +330,7 @@ export function AuthOverlay() {
     setBusy(id);
     setAuthErr(null);
     try {
-      if (!(await passCaptcha())) return;
+      if (!(await passCaptcha("signin"))) return;
       writeLastMethod(id);
       // OAuth normally navigates away. If initiation fails, tell the user
       // what happened and re-enable the button instead of leaving a spinner.
@@ -332,7 +355,7 @@ export function AuthOverlay() {
     setBusy("magic");
     setAuthErr(null);
     try {
-      if (!(await passCaptcha())) return;
+      if (!(await passCaptcha("magic"))) return;
       const res = await fetch("/api/auth/magic", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -357,7 +380,7 @@ export function AuthOverlay() {
     setBusy("email");
     setAuthErr(null);
     try {
-      if (!(await passCaptcha())) return;
+      if (!(await passCaptcha(signup ? "signup" : "signin"))) return;
 
       // Sign-up first creates the account, then we sign in with the same creds.
       if (signup) {
@@ -387,6 +410,7 @@ export function AuthOverlay() {
         if (captchaOn) {
           setCaptchaToken(null);
           setCaptchaReset((n) => n + 1);
+          if (!signup && (await checkChallenged())) setChallenged(true);
         }
         return;
       }
@@ -662,7 +686,7 @@ export function AuthOverlay() {
                   </div>
                 )}
               </div>
-              {captchaOn && (
+              {captchaOn && (signup || challenged) && (
                 <div className="auth-captcha-frame">
                   <span className="auth-captcha-label" id={`${panelId}-captcha`}>
                     <span aria-hidden>🛡</span> Quick security check
@@ -704,7 +728,7 @@ export function AuthOverlay() {
             </form>
             )}
 
-            {captchaOn && !PASSWORD_AUTH_ENABLED && (
+            {captchaOn && !PASSWORD_AUTH_ENABLED && challenged && (
               <div className="auth-captcha-frame">
                 <span className="auth-captcha-label">
                   <span aria-hidden>🛡</span> Quick security check
