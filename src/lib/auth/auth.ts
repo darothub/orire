@@ -1,7 +1,8 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { recordSignInFailure, signInCaptchaRequired } from "@/lib/auth/captchaGate";
 import { CAPTCHA_COOKIE, captchaEnabled, verifyCaptchaProof } from "@/lib/auth/turnstile";
 import { verifyPassword } from "@/lib/auth/password";
 import { consumeMagicLinkToken } from "@/lib/auth/magic";
@@ -42,7 +43,9 @@ function buildProviders(): Provider[] {
         // Captcha gate: when Turnstile is enabled, the client must have passed
         // /api/auth/turnstile first (which sets an HttpOnly cookie). No cookie,
         // no sign-in — this blocks headless credential-stuffing.
-        if (captchaEnabled()) {
+        // On-demand: only after repeated failed attempts (see captchaGate).
+        const reqHeaders = await headers();
+        if (captchaEnabled() && (await signInCaptchaRequired(reqHeaders, email))) {
           const jar = await cookies();
           if (!verifyCaptchaProof(jar.get(CAPTCHA_COOKIE)?.value)) {
             throw new Error("Captcha verification required before signing in.");
@@ -50,9 +53,11 @@ function buildProviders(): Provider[] {
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user?.passwordHash) return null;
-        const ok = await verifyPassword(password, user.passwordHash);
-        if (!ok) return null;
+        const ok = !!user?.passwordHash && (await verifyPassword(password, user.passwordHash));
+        if (!user || !ok) {
+          await recordSignInFailure(reqHeaders, email);
+          return null;
+        }
         return { id: user.id, email: user.email, name: user.name, image: user.image };
       },
     }),
@@ -93,13 +98,15 @@ export const authConfig: NextAuthConfig = {
   session: { strategy: "jwt" },
   providers: buildProviders(),
   callbacks: {
-    // Captcha gate for OAuth (e.g. Google): when Turnstile is enabled, the
-    // client must have passed /api/auth/turnstile first (which sets an HttpOnly
-    // cookie). Credentials sign-in is already gated inside authorize().
+    // Captcha gate for OAuth (e.g. Google): required only once this client has
+    // been challenged (repeated failed sign-ins). Credentials sign-in is gated
+    // the same way inside authorize().
     async signIn({ account }) {
       if (account && account.provider !== "credentials" && captchaEnabled()) {
-        const jar = await cookies();
-        if (!verifyCaptchaProof(jar.get(CAPTCHA_COOKIE)?.value)) return false;
+        if (await signInCaptchaRequired(await headers())) {
+          const jar = await cookies();
+          if (!verifyCaptchaProof(jar.get(CAPTCHA_COOKIE)?.value)) return false;
+        }
       }
       return true;
     },

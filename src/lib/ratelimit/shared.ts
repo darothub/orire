@@ -14,7 +14,7 @@
  * connection (correct for serverless).
  */
 
-import { checkLimit, type RateLimitResult } from "./rateLimit";
+import { checkLimit, peekCount, type RateLimitResult } from "./rateLimit";
 import { logger } from "@/lib/obs/logger";
 
 export function upstashConfigured(): boolean {
@@ -66,5 +66,32 @@ export async function checkLimitShared(key: string, limit: number, windowMs: num
   } catch (e) {
     logger.warn("ratelimit.shared_fallback", { error: e instanceof Error ? e.message : String(e) });
     return checkLimit(key, limit, windowMs);
+  }
+}
+
+/**
+ * Read a counter without recording a hit. Falls back to the in-memory value
+ * when Upstash is unset or errors (same fail-safe as `checkLimitShared`).
+ */
+export async function peekCountShared(key: string): Promise<number> {
+  if (!upstashConfigured()) return peekCount(key);
+  try {
+    const url = process.env.UPSTASH_REDIS_REST_URL!.replace(/\/+$/, "");
+    const res = await fetch(`${url}/pipeline`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN!}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify([["GET", `rl:${key}`]]),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`Upstash HTTP ${res.status}`);
+    const data = (await res.json()) as PipelineItem[];
+    const n = Number(data?.[0]?.result ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  } catch (e) {
+    logger.warn("ratelimit.shared_fallback", { error: e instanceof Error ? e.message : String(e) });
+    return peekCount(key);
   }
 }

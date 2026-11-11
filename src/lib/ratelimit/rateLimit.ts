@@ -68,6 +68,12 @@ export function checkLimit(
   };
 }
 
+/** Read a bucket's current count without recording a hit (0 when absent/expired). */
+export function peekCount(key: string, now: number = Date.now()): number {
+  const b = buckets.get(key);
+  return b && b.resetAt > now ? b.count : 0;
+}
+
 /** Test-only: clear all buckets. */
 export function __resetRateLimits(): void {
   buckets.clear();
