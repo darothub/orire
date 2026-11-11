@@ -81,7 +81,7 @@ type CvBucket = {
   ignoredSkills: string[];
 };
 
-const { cvStore, libraryStore, targetStore, planStore, flowStore } = vi.hoisted(() => {
+const { cvStore, libraryStore, targetStore, planStore, flowStore, factStore } = vi.hoisted(() => {
   const sample: LooseCv = {
     basics: {
       fullName: "Sample",
@@ -289,7 +289,18 @@ const { cvStore, libraryStore, targetStore, planStore, flowStore } = vi.hoisted(
     persist: flowInner.persist,
   };
 
-  return { cvStore, libraryStore, targetStore, planStore, flowStore };
+  const factInner = makePersistStoreHoisted({ facts: [] as unknown[] }, "orire-facts:anon:v1");
+  const factStore = {
+    ...factInner,
+    getState: () => ({
+      ...factInner.getState(),
+      reset: () => factInner._replace({ facts: [] }),
+    }),
+    setState: factInner.setState,
+    persist: factInner.persist,
+  };
+
+  return { cvStore, libraryStore, targetStore, planStore, flowStore, factStore };
 });
 
 vi.mock("@/lib/cv/sample", () => ({
@@ -302,6 +313,7 @@ vi.mock("./libraryStore", () => ({ useLibraryStore: libraryStore }));
 vi.mock("./targetStore", () => ({ useTargetStore: targetStore }));
 vi.mock("./planStore", () => ({ usePlanStore: planStore }));
 vi.mock("./flowStore", () => ({ useFlowStore: flowStore }));
+vi.mock("./factStore", () => ({ useFactStore: factStore }));
 
 import {
   __resetStorageScopeForTests,

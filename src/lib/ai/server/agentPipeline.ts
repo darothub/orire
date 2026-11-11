@@ -27,6 +27,7 @@ import {
   type GapReport,
   type IdealProfile,
 } from "@/lib/ai/agents";
+import { acceptTypedFigures } from "@/lib/tailor/facts";
 import { factGround, parseModelJSON, scoreGrounding, type GroundingScore } from "@/lib/ai/guardrails";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { jdMatch, type JDMatch } from "@/lib/ai/jdmatch";
@@ -97,23 +98,6 @@ export async function runAnalysis(
   return { ok: true, profile, report, questions: elicitor.value };
 }
 
-const numKey = (tok: string) => tok.replace(/[$,%\s]/g, "").replace(/\.$/, "");
-const numbersIn = (s: string) => (s.match(/\$?\d[\d.,]*%?[kKmMbB]?/g) ?? []).map(numKey);
-
-/**
- * factGround warns about figures absent from the source CV. A figure the
- * candidate typed themselves is grounded, so drop those warnings — everything
- * else (invented numbers, entities, skills) still counts against the draft.
- */
-function acceptAnswerFigures(warnings: string[], answers: ElicitedAnswer[]): string[] {
-  const allowed = new Set(answers.flatMap((a) => numbersIn(a.answer)));
-  if (allowed.size === 0) return warnings;
-  return warnings.filter((w) => {
-    const m = w.match(/^Unverified figure “([^”]+)”/);
-    return !(m && allowed.has(numKey(m[1])));
-  });
-}
-
 const DISCLAIMER_RE =
   /\b(?:not|never|un)[ -]?(?:verified|confirmed|documented|claimed|recorded)\b|\bno (?:formal|exact|specific)\b[^.;)]*\b(?:metrics?|figures?|numbers?|data|programme|program)\b|\bunavailable\b/i;
 
@@ -145,7 +129,7 @@ export async function runRewrite(
   if (!rewriter.ok) return rewriter;
 
   const grounded = factGround(cv, applyRefinePatch(cv, rewriter.value));
-  const warnings = [...acceptAnswerFigures(grounded.warnings, answers), ...disclaimerWarnings(grounded.cv)];
+  const warnings = [...acceptTypedFigures(grounded.warnings, answers), ...disclaimerWarnings(grounded.cv)];
   return {
     ok: true,
     cv: grounded.cv,
