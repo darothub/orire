@@ -34,7 +34,7 @@ const EMAIL_RE = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
 const PHONE_RE = /(\+?\d[\d\s().-]{7,}\d)/;
 const URL_RE = /((https?:\/\/)?(www\.)?[a-z0-9-]+\.[a-z]{2,}(\/[^\s,;]*)?)/gi;
 const DATE_RANGE_RE =
-  /((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)?\.?\s*\d{4}|present|current)\s*[–—\-to]+\s*((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)?\.?\s*\d{4}|present|current)/i;
+  /((?:jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)?\.?,?\s*\d{4}|present|current)\s*[–—\-to]+\s*((?:jan|feb|mar|apr|may|jun|jul|aug|sept?|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)?\.?,?\s*\d{4}|present|current)/i;
 
 type SectionKind =
   | "summary"
@@ -108,12 +108,17 @@ function collectLinks(text: string): Link[] {
   return links;
 }
 
-const EXP_SEP_RE = /\s+(?:at|@|—|–|\||,)\s+/i;
+const EXP_SEP_RE = /\s+(?:at|@|—|–|·|\||,)\s+/i;
 
 /** True when a line looks like the start of a new experience entry. */
 function isExperienceHeader(line: string): boolean {
   if (isBullet(line)) return false;
   return DATE_RANGE_RE.test(line) || EXP_SEP_RE.test(line);
+}
+
+/** A line that is just a date range, e.g. "September 2022 – Jan 2025". */
+function isDateOnly(line: string): boolean {
+  return DATE_RANGE_RE.test(line) && !/[a-z]{3,}/i.test(line.replace(DATE_RANGE_RE, ""));
 }
 
 function finishExperience(header: string[], bullets: string[]): ExperienceItem | null {
@@ -169,7 +174,15 @@ function parseExperience(lines: string[]): ExperienceItem[] {
   for (const raw of lines) {
     const line = raw.trim();
     if (!line) continue;
-    if (isExperienceHeader(line) || (!open && !isBullet(line))) {
+    // Title and dates on separate lines belong to one entry, in either order.
+    const splitHeader =
+      open &&
+      bullets.length === 0 &&
+      ((isDateOnly(line) && !DATE_RANGE_RE.test(header.join(" "))) ||
+        (header.length === 1 && isDateOnly(header[0]) && !isBullet(line) && !DATE_RANGE_RE.test(line)));
+    if (splitHeader) {
+      header.push(line);
+    } else if (isExperienceHeader(line) || (!open && !isBullet(line))) {
       flush();
       header = [line];
       open = true;

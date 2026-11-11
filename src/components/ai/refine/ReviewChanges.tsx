@@ -8,6 +8,7 @@ import { useViewStore } from "@/lib/store/viewStore";
 import { PROVIDERS, type ProviderId } from "@/lib/ai/types";
 import { scoreGrounding } from "@/lib/ai/guardrails";
 import { diffCv, applyReviewed, type CvChange } from "@/lib/ai/cvDiff";
+import { ChangeList } from "@/components/ai/refine/ChangeList";
 
 /**
  * Story 2 — AI-edit transparency. Before a refined CV touches the editor, show
@@ -41,14 +42,6 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
   // The comparison is against the CV captured when the run began. If the
   // editor has changed since, refusing to apply prevents overwriting new work.
   const sourceChanged = JSON.stringify(before) !== JSON.stringify(liveCV);
-
-  const toggle = (id: string) =>
-    setRejected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   const accepted = changes.length - rejected.size;
   const grounding = result ? scoreGrounding(result) : null;
@@ -121,53 +114,7 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
           <p>This version is identical to your current CV — there’s nothing to apply.</p>
         </div>
       ) : (
-        <>
-          <div className="rev-bulk">
-            <span>{accepted} of {changes.length} suggestion{changes.length > 1 ? "s" : ""} explicitly accepted</span>
-            <div className="rev-bulk-btns">
-              <button onClick={() => setRejected(new Set())} disabled={rejected.size === 0}>Accept all</button>
-              <button onClick={() => setRejected(new Set(changes.map((c) => c.id)))} disabled={rejected.size === changes.length}>Reject all</button>
-            </div>
-          </div>
-
-          <div className="rev-list">
-            {changes.map((c) => {
-              const isRejected = rejected.has(c.id);
-              return (
-                <div key={c.id} className={`rev-change${isRejected ? " rejected" : ""}`}>
-                  <div className="rev-change-head">
-                    <span className="rev-change-label">{c.label}</span>
-                    <button
-                      className={`rev-toggle${isRejected ? "" : " on"}`}
-                      onClick={() => toggle(c.id)}
-                      aria-pressed={!isRejected}
-                    >
-                      {isRejected ? "Keep original" : "✓ Accepted"}
-                    </button>
-                  </div>
-                  <div className="rev-diff">
-                    <div className="rev-side before">
-                      <span className="rev-side-tag">Your original</span>
-                      {c.before.filter((l) => l.trim()).length ? (
-                        <ul>{c.before.filter((l) => l.trim()).map((l, i) => <li key={i}>{l}</li>)}</ul>
-                      ) : (
-                        <p className="rev-side-empty">— empty —</p>
-                      )}
-                    </div>
-                    <div className="rev-side after">
-                      <span className="rev-side-tag">{isRejected ? "Suggested (not applied)" : "Will apply"}</span>
-                      {c.after.filter((l) => l.trim()).length ? (
-                        <ul>{c.after.filter((l) => l.trim()).map((l, i) => <li key={i}>{l}</li>)}</ul>
-                      ) : (
-                        <p className="rev-side-empty">— empty —</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
+        <ChangeList changes={changes} rejected={rejected} setRejected={setRejected} />
       )}
 
       <div className="rev-foot">
