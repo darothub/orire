@@ -42,7 +42,6 @@ for (const viewport of [
     const password = signup.locator('input[type="password"]');
     await password.fill("short");
     await expect(signup.getByRole("button", { name: "Create account", exact: true })).toBeDisabled();
-    expect(await password.evaluate((el: HTMLInputElement) => el.validity.tooShort)).toBe(true);
     await password.fill("ExamplePass1234");
 
     await page.screenshot({

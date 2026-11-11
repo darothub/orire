@@ -5993,7 +5993,7 @@ body,
 }
 .auth-preview-tag {
   position: absolute; left: 12px; bottom: 8px; font-size: 10px; letter-spacing: 0.08em;
-  text-transform: uppercase; color: #8a86a8;
+  text-transform: uppercase; color: #5a5678;
 }
 .auth-preview-badge {
   position: absolute; right: 8%; bottom: 0; padding: 7px 12px; border-radius: 12px;
