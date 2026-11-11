@@ -37,11 +37,11 @@ for (const viewport of [
     await expect(signup).toBeVisible();
 
     // A safe validation failure must be understandable without API calls.
+    await signup.getByRole("button", { name: "Continue with email" }).click();
     await signup.locator('input[type="email"]').fill("first-journey@orire.test");
     const password = signup.locator('input[type="password"]');
     await password.fill("short");
-    await signup.getByRole("button", { name: "Create account", exact: true }).click();
-    expect(await password.evaluate((el: HTMLInputElement) => el.validity.tooShort)).toBe(true);
+    await expect(signup.getByRole("button", { name: "Create account", exact: true })).toBeDisabled();
     await password.fill("ExamplePass1234");
 
     await page.screenshot({

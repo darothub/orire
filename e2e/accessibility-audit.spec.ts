@@ -51,6 +51,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
         const dialog = page.getByRole("dialog", { name: "Create your account" });
         await expect(dialog).toBeVisible();
         await expect(page.locator(".auth-showcase")).toHaveAttribute("inert", "");
+        await dialog.getByRole("button", { name: "Continue with email" }).click();
         await expect(dialog.locator('input[type="email"]')).toBeFocused();
         const password = dialog.locator(".pw-input");
         await password.fill("FictionalAuditPass123");

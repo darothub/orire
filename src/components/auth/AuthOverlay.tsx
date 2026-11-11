@@ -8,6 +8,8 @@ import { useUIStore } from "@/lib/store/uiStore";
 import { CvShowcase } from "@/components/landing/CvShowcase";
 import { TurnstileWidget, TURNSTILE_SITE_KEY } from "@/components/auth/TurnstileWidget";
 import { PasswordInput } from "@/components/auth/PasswordInput";
+import { AuthPreview } from "@/components/auth/AuthPreview";
+import { passwordStrength } from "@/lib/auth/passwordStrength";
 import { listFocusable, pickInitialFocus } from "@/components/auth/authFocus";
 import { funnel } from "@/lib/analytics/funnel";
 import { useConsent } from "@/lib/consent/consent";
@@ -43,6 +45,23 @@ const OAUTH = [
  * so we can't offer password reset yet. Re-enable by setting
  * NEXT_PUBLIC_PASSWORD_AUTH=true (no code change) once reset email works.
  */
+const LAST_METHOD_KEY = "orire.auth.last";
+function readLastMethod(): string | null {
+  try {
+    return window.localStorage.getItem(LAST_METHOD_KEY);
+  } catch {
+    return null;
+  }
+}
+function writeLastMethod(id: string) {
+  try {
+    window.localStorage.setItem(LAST_METHOD_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const PASSWORD_AUTH_ENABLED = process.env.NEXT_PUBLIC_PASSWORD_AUTH === "true";
 
 /**
@@ -75,12 +94,18 @@ export function AuthOverlay() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaReset, setCaptchaReset] = useState(0);
   const [authErr, setAuthErr] = useState<string | null>(null);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [lastMethod, setLastMethod] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const titleId = useId();
   const emailId = useId();
   const passwordId = useId();
   const errorId = useId();
+  const emailMsgId = useId();
+  const emailFormId = useId();
+  const strengthId = useId();
   const panelId = useId();
 
   // Which OAuth providers are actually enabled on the server (env-driven).
@@ -126,6 +151,11 @@ export function AuthOverlay() {
     };
   }, [open, configured]);
 
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads client-only localStorage on open
+    if (open) setLastMethod(readLastMethod());
+  }, [open]);
+
   // Close automatically once the user is signed in.
   useEffect(() => {
     if (status === "authenticated" && open) close();
@@ -160,6 +190,8 @@ export function AuthOverlay() {
       setBusy(null);
       setCaptchaToken(null);
       setAuthErr(null);
+      setEmailTouched(false);
+      setEmailOpen(false);
     }
   }
 
@@ -244,6 +276,10 @@ export function AuthOverlay() {
   }, [open]);
 
   const signup = mode === "signup";
+  const emailInvalid = emailTouched && email.trim() !== "" && !EMAIL_RE.test(email.trim());
+  const strength = passwordStrength(password);
+  const canSubmit =
+    EMAIL_RE.test(email.trim()) && password.length >= (signup ? 8 : 1);
   const captchaOn = !!TURNSTILE_SITE_KEY;
 
   // Verify the solved Turnstile token server-side (sets the short-lived cookie
@@ -275,6 +311,7 @@ export function AuthOverlay() {
     setAuthErr(null);
     try {
       if (!(await passCaptcha())) return;
+      writeLastMethod(id);
       // OAuth normally navigates away. If initiation fails, tell the user
       // what happened and re-enable the button instead of leaving a spinner.
       const result = await signIn(id, { callbackUrl: "/", redirect: false });
@@ -331,6 +368,7 @@ export function AuthOverlay() {
         }
         return;
       }
+      writeLastMethod("email");
       // Success — the authenticated effect closes the overlay.
     } catch (err) {
       setAuthErr((err as Error)?.message ?? "Something went wrong. Please try again.");
@@ -367,6 +405,23 @@ export function AuthOverlay() {
             exit={{ opacity: 0, y: 16, scale: 0.97, filter: "blur(8px)" }}
             transition={{ duration: 0.5, ease: EASE }}
           >
+            <aside className="auth-side">
+              <div className="auth-side-brand">
+                <span className="auth-brand-mark"><BrandMark size={30} /></span>
+                <span className="auth-brand-name">Orire</span>
+              </div>
+              <h2 className="auth-side-title">
+                Your CV, <em>tailored in minutes</em> for every role.
+              </h2>
+              <AuthPreview />
+              <ul className="auth-side-usps">
+                <li><span aria-hidden>✎</span> Rebrand any CV into a clean, ATS-ready layout</li>
+                <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
+                <li><span aria-hidden>❖</span> {TEMPLATE_COUNT} standout templates, live preview as you edit</li>
+              </ul>
+              <p className="auth-side-trust">Trusted by job seekers worldwide</p>
+            </aside>
+            <div className="auth-form">
             <button
               type="button"
               className="auth-back"
@@ -460,8 +515,67 @@ export function AuthOverlay() {
               </motion.div>
             </AnimatePresence>
 
-            {PASSWORD_AUTH_ENABLED && (
-            <form className="auth-email" onSubmit={submitEmail}>
+            <div className="auth-oauth">
+              {OAUTH.map((p) => {
+                const ready = configured?.includes(p.id) ?? false;
+                const loading = busy === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    className={`auth-oauth-btn ${p.id}`}
+                    onClick={() => ready && oauth(p.id)}
+                    disabled={!!busy || !ready}
+                    data-auth-initial-focus={
+                      (!PASSWORD_AUTH_ENABLED || !emailOpen) && ready ? true : undefined
+                    }
+                    title={ready ? `Continue with ${p.label}` : `${p.label} sign-in isn't configured on this server`}
+                    aria-label={
+                      loading
+                        ? `Redirecting to ${p.label}`
+                        : `${signup ? "Sign up" : "Continue"} with ${p.label}${ready ? "" : " (not configured)"}`
+                    }
+                  >
+                    <span className="auth-oauth-mark" aria-hidden>
+                      {p.mark}
+                    </span>
+                    <span aria-hidden>
+                      {loading ? "Redirecting…" : `${signup ? "Sign up" : "Continue"} with ${p.label}`}
+                    </span>
+                    {ready && lastMethod === p.id && !busy && (
+                      <span className="auth-oauth-last">Last used</span>
+                    )}
+                    {!ready && configured !== null && (
+                      <span className="auth-oauth-soon" aria-hidden>
+                        soon
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="auth-divider" hidden={!PASSWORD_AUTH_ENABLED}>
+              <span>or use email</span>
+            </div>
+
+            {PASSWORD_AUTH_ENABLED && !emailOpen && (
+              <button
+                type="button"
+                className="auth-email-toggle"
+                aria-expanded={false}
+                aria-controls={emailFormId}
+                onClick={() => {
+                  setEmailOpen(true);
+                  requestAnimationFrame(() => document.getElementById(emailId)?.focus());
+                }}
+              >
+                Continue with email
+              </button>
+            )}
+
+            {PASSWORD_AUTH_ENABLED && emailOpen && (
+            <form id={emailFormId} className="auth-email" onSubmit={submitEmail}>
               <div className="auth-field">
                 <label className="auth-label" htmlFor={emailId}>
                   Email
@@ -475,13 +589,19 @@ export function AuthOverlay() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => setEmailTouched(true)}
                   autoComplete="email"
                   autoCapitalize="none"
                   spellCheck={false}
                   required
-                  aria-invalid={authErr ? true : undefined}
-                  aria-describedby={authErr ? errorId : undefined}
+                  aria-invalid={authErr || emailInvalid ? true : undefined}
+                  aria-describedby={emailInvalid ? emailMsgId : authErr ? errorId : undefined}
                 />
+                {emailInvalid && (
+                  <p id={emailMsgId} className="auth-hint bad">
+                    That email looks incomplete — try name@domain.com
+                  </p>
+                )}
               </div>
               <div className="auth-field">
                 <label className="auth-label" htmlFor={passwordId}>
@@ -498,8 +618,25 @@ export function AuthOverlay() {
                   minLength={signup ? 8 : undefined}
                   required
                   aria-invalid={authErr ? true : undefined}
-                  aria-describedby={authErr ? errorId : undefined}
+                  aria-describedby={signup && password ? strengthId : authErr ? errorId : undefined}
                 />
+                {signup && password && (
+                  <div id={strengthId} className="auth-strength" data-score={strength.score}>
+                    <div className="auth-strength-bars" aria-hidden>
+                      {[1, 2, 3, 4].map((n) => (
+                        <i key={n} className={n <= strength.score ? "on" : ""} />
+                      ))}
+                    </div>
+                    <span className="auth-strength-label" aria-live="polite">{strength.label}</span>
+                    <ul className="auth-rules">
+                      {strength.rules.map((r) => (
+                        <li key={r.key} className={r.met ? "ok" : ""}>
+                          <span aria-hidden>{r.met ? "✓" : "○"}</span> {r.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
               {captchaOn && (
                 <div className="auth-captcha-frame">
@@ -513,7 +650,7 @@ export function AuthOverlay() {
                   />
                 </div>
               )}
-              <button className="auth-submit" type="submit" disabled={busy === "email"}>
+              <button className="auth-submit" type="submit" disabled={busy === "email" || !canSubmit}>
                 {busy === "email"
                   ? signup
                     ? "Creating account…"
@@ -543,47 +680,6 @@ export function AuthOverlay() {
               </div>
             )}
 
-            <div className="auth-divider" hidden={!PASSWORD_AUTH_ENABLED}>
-              <span>or {signup ? "sign up" : "continue"} with Google</span>
-            </div>
-
-            <div className="auth-oauth">
-              {OAUTH.map((p) => {
-                const ready = configured?.includes(p.id) ?? false;
-                const loading = busy === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    className={`auth-oauth-btn ${p.id}`}
-                    onClick={() => ready && oauth(p.id)}
-                    disabled={!!busy || !ready}
-                    data-auth-initial-focus={
-                      !PASSWORD_AUTH_ENABLED && ready ? true : undefined
-                    }
-                    title={ready ? `Continue with ${p.label}` : `${p.label} sign-in isn't configured on this server`}
-                    aria-label={
-                      loading
-                        ? `Redirecting to ${p.label}`
-                        : `${signup ? "Sign up" : "Continue"} with ${p.label}${ready ? "" : " (not configured)"}`
-                    }
-                  >
-                    <span className="auth-oauth-mark" aria-hidden>
-                      {p.mark}
-                    </span>
-                    <span aria-hidden>
-                      {loading ? "Redirecting…" : `${signup ? "Sign up" : "Continue"} with ${p.label}`}
-                    </span>
-                    {!ready && configured !== null && (
-                      <span className="auth-oauth-soon" aria-hidden>
-                        soon
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
             {authErr && (
               <p id={errorId} className="auth-error" role="alert">
                 {authErr}
@@ -593,6 +689,7 @@ export function AuthOverlay() {
             <p className="auth-fine">
               By continuing you agree to use Orire responsibly.
             </p>
+            </div>
             </div>
           </motion.div>
 

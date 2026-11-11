@@ -19,16 +19,17 @@ import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { factGround, parseModelJSON, scoreGrounding, RefineParseError } from "@/lib/ai/guardrails";
 import { cvContentSig } from "@/lib/ai/judge";
 import { PROVIDERS, type RefineResponse } from "@/lib/ai/types";
-import { SECTION_LABELS, type CVData, type SectionKey } from "@/lib/cv/schema";
+import { type CVData } from "@/lib/cv/schema";
+import { NoticeSlot, type SimNotice } from "@/components/ai/simulate/NoticeSlot";
+import { VerdictStrip } from "@/components/ai/simulate/VerdictStrip";
+import { rankMissingSections, rankMissingSkills } from "@/lib/ai/simulateImpact";
+import { buildGapReportHtml } from "@/lib/ai/simulateReport";
+import { DiffView } from "./simulate/DiffView";
+import { GapPanel } from "@/components/ai/simulate/GapPanel";
 
 /** Always read the working CV from the store at call time (edits + applied refine). */
 function liveWorkingCV(): CVData {
   return useCVStore.getState().cv;
-}
-
-function coverageColor(v: number): string {
-  const hue = Math.round((v / 100) * 130);
-  return `hsl(${hue} 70% 45%)`;
 }
 
 const TONE_OPTIONS: ToneLabel[] = ["Executive", "Technical", "Balanced"];
@@ -52,6 +53,11 @@ export function TargetView() {
   const jdStale = useTargetStore(isIdealStale);
   const resimPrompt = useTargetStore((s) => s.resimPrompt);
   const dismissResim = useTargetStore((s) => s.dismissResim);
+  const history = useTargetStore((s) => s.history);
+  const saved = useTargetStore((s) => s.saved);
+  const switchTarget = useTargetStore((s) => s.switchTarget);
+  const removeSaved = useTargetStore((s) => s.removeSaved);
+  const recordScore = useTargetStore((s) => s.recordScore);
 
   const provider = useSettingsStore((s) => s.provider);
   const models = useSettingsStore((s) => s.models);
@@ -64,6 +70,7 @@ export function TargetView() {
   const [err, setErr] = useState<{ title: string; body: string; status?: number } | null>(null);
   const [preview, setPreview] = useState<{ cv: CVData; warnings: string[] } | null>(null);
   const [showBefore, setShowBefore] = useState(false);
+  const [compare, setCompare] = useState<"yours" | "ideal" | "both" | "diff">("both");
   /** Working-CV fingerprint the open retone preview was built from. */
   const previewBaseSig = useRef<string | null>(null);
 
@@ -95,6 +102,13 @@ export function TargetView() {
     if (!ideal) return;
     setSkillSuggestions(gapAnalysis(cv, ideal).missingSkills);
   }, [cv, ideal, setSkillSuggestions]);
+
+  // Record the live score (debounced) so the verdict strip can show progress.
+  useEffect(() => {
+    if (!ideal) return;
+    const id = setTimeout(() => recordScore(targetMatch(cv, ideal, jd).score), 800);
+    return () => clearTimeout(id);
+  }, [cv, ideal, jd, recordScore]);
 
   const MineTpl = getTemplate(activeTemplate).Component;
 
@@ -214,13 +228,46 @@ export function TargetView() {
 
   const match = targetMatch(cv, ideal, jd);
   const gap = match.gap;
-  const delta = match.score - baseScore;
+  const rankedSkills = rankMissingSkills(cv, ideal, jd);
+  const rankedSections = rankMissingSections(cv, ideal, jd);
   const IdealTpl = getTemplate(activeTemplate).Component;
   const dateLabel = createdAt
     ? new Date(createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
     : "";
 
   const activeTone: ToneLabel = toneLabel ?? detected?.label ?? "Balanced";
+
+  function exportReport() {
+    const html = buildGapReportHtml({ label: label || "Target role", match, baseScore, rankedSkills, rankedSections });
+    const w = window.open("", "_blank");
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    w.print();
+  }
+
+  const openResim = () => { setRecompose(true); setGenPhase("input"); setGenErr(null); };
+  const notices: SimNotice[] = [];
+  if (usageNote) notices.push({ id: "usage", body: usageNote });
+  if (resimPrompt) {
+    notices.push({
+      id: "resim",
+      body: <><strong>Your CV changed after a refinement.</strong> Re-simulate to benchmark the new version against the latest job description?</>,
+      actions: (
+        <>
+          <button className="imp-btn" onClick={dismissResim}>Not now</button>
+          <button className="imp-btn primary" onClick={() => { dismissResim(); openResim(); }}>Re-simulate with my new CV</button>
+        </>
+      ),
+    });
+  } else if (jdStale) {
+    notices.push({
+      id: "stale",
+      body: <><strong>The job description changed</strong> since this target was simulated (it is shared with Refine). Re-simulate to benchmark against the current JD.</>,
+      actions: <button className="imp-btn primary" onClick={openResim}>Re-simulate with current JD</button>,
+    });
+  }
 
   // What the left column shows: the retoned preview when one exists (and the
   // user isn't peeking at the original), otherwise the live CV.
@@ -317,138 +364,65 @@ export function TargetView() {
         <div>
           <h2>{VIEW_META.target.label}</h2>
           <p>
-            Your latest working CV (edits and applied refine) beside the ideal for{" "}
-            <strong>{label || "this role"}</strong>
-            {dateLabel ? ` · locked ${dateLabel}` : ""}. Match and gaps recompute on every change.
+            Your latest CV against the ideal for <strong>{label || "this role"}</strong>
+            {dateLabel ? ` · locked ${dateLabel}` : ""}.
           </p>
         </div>
-      </div>
-
-      {usageNote && (
-        <div className="usage-note" role="status">{usageNote}</div>
-      )}
-
-      {jdStale && !resimPrompt && (
-        <div className="usage-note" role="status">
-          <strong>The job description changed</strong> since this target was simulated (it is shared with Refine). Re-simulate to benchmark against the current JD.
-          <div className="imp-actions">
-            <button
-              className="imp-btn primary"
-              onClick={() => { setRecompose(true); setGenPhase("input"); setGenErr(null); }}
-            >
-              Re-simulate with current JD
-            </button>
-          </div>
-        </div>
-      )}
-
-      {resimPrompt && (
-        <div className="usage-note" role="status">
-          <strong>Your CV changed after a refinement.</strong> Re-simulate to benchmark the new version against the latest job description?
-          <div className="imp-actions">
-            <button className="imp-btn" onClick={dismissResim}>Not now</button>
-            <button
-              className="imp-btn primary"
-              onClick={() => { dismissResim(); setRecompose(true); setGenPhase("input"); setGenErr(null); }}
-            >
-              Re-simulate with my new CV
-            </button>
-          </div>
-        </div>
-      )}
-
-      <p className="score-disclosure" id="target-score-explainer">\n        <strong>About this score:</strong> Orire compares your CV with an AI-generated example and signals from the pasted job description. It is an illustrative benchmark, not an employer decision, ATS pass rate, or prediction of interviews. Only include skills and achievements you actually have.\n      </p>\n\n      <div className="tgt-meter" aria-describedby="target-score-explainer">
-        <div className="sim-cov">
-          <svg viewBox="0 0 84 84" width="84" height="84" className="sim-cov-svg">
-            <circle cx="42" cy="42" r="34" className="rate-ring-track" />
-            <motion.circle
-              cx="42"
-              cy="42"
-              r="34"
-              className="rate-ring-fill"
-              stroke={coverageColor(match.score)}
-              strokeDasharray={2 * Math.PI * 34}
-              initial={{ strokeDashoffset: 2 * Math.PI * 34 }}
-              animate={{ strokeDashoffset: 2 * Math.PI * 34 * (1 - match.score / 100) }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-            />
-          </svg>
-          <div className="sim-cov-center">
-            <strong style={{ color: coverageColor(match.score) }}>{match.score}%</strong>
-          </div>
-          <span className="rate-ring-label">Simulated match</span>
-        </div>
-
-        <div className="tgt-meter-body">
-          <div className="tgt-stat-row">
-            {delta !== 0 ? (
-              <span className={`tgt-stat ${delta > 0 ? "match" : "miss"}`}>
-                {delta > 0 ? "▲" : "▼"} {Math.abs(delta)}% since locked
-              </span>
-            ) : (
-              <span className="tgt-stat">Baseline {baseScore}% when locked</span>
-            )}
-            <span className="tgt-stat match">{gap.matchedSkills.length} skills matched</span>
-            <span className="tgt-stat miss">{gap.missingSkills.length} to add</span>
-          </div>
-
-          <div className="tgt-signals">
-            {match.metrics.map((m) => (
-              <div key={m.key} className="tgt-signal" title={m.hint}>
-                <span className="tgt-signal-label">{m.label}</span>
-                <span className="tgt-signal-bar">
-                  <motion.span
-                    className="tgt-signal-fill"
-                    style={{ background: coverageColor(m.score) }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${m.score}%` }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                  />
-                </span>
-                <span className="tgt-signal-val">{m.score}%</span>
-              </div>
-            ))}
-          </div>
-
-          {gap.missingSkills.length > 0 ? (
-            <div className="tgt-chips">
-              {gap.missingSkills.slice(0, 18).map((s) => (
-                <span key={s} className="sim-chip miss">{s}</span>
-              ))}
-              {gap.missingSkills.length > 18 && (
-                <span className="sim-chip miss">+{gap.missingSkills.length - 18} more</span>
-              )}
-            </div>
-          ) : (
-            <p className="sim-perfect">You cover every skill in the target. 🎯</p>
-          )}
-          {gap.missingSections.length > 0 && (
-            <div className="tgt-chips">
-              {gap.missingSections.map((k) => (
-                <span key={k} className="sim-chip miss">{SECTION_LABELS[k as SectionKey]}</span>
-              ))}
-            </div>
-          )}
-          <div className="tgt-actions">
-            <button className="imp-btn primary" onClick={() => setView("edit")}>Edit my CV</button>
-            <button
-              className="imp-btn accent"
-              onClick={runRetone}
-              disabled={phase === "running"}
-              title={`Rewrite your CV in the target's ${activeTone.toLowerCase()} voice — facts stay yours`}
-            >
-              {phase === "running" ? (
-                <><span className="cmp-spinner" /> Rewriting…</>
-              ) : (
-                <>✍️ Rewrite in target&apos;s tone</>
-              )}
-            </button>
-            <button className="imp-btn" onClick={() => setView("refine")}>Refine to JD</button>
-            <button className="imp-btn" onClick={() => { setRecompose(true); setGenPhase("input"); setGenErr(null); }}>New simulation</button>
+        <details className="sim-more">
+          <summary className="imp-btn" aria-label="More actions">⋯</summary>
+          <div className="sim-more-menu">
+            <button className="imp-btn" onClick={openResim}>New simulation</button>
+            <button className="imp-btn" onClick={exportReport}>Gap report (PDF)</button>
             <button className="imp-btn danger" onClick={clearTarget}>Clear target</button>
           </div>
+        </details>
+      </div>
 
+      {saved.length > 0 && (
+        <div className="sim-targets" role="tablist" aria-label="Targets">
+          {saved.map((t) => (
+            <span key={t.id} className="sim-target">
+              <button role="tab" aria-selected={false} onClick={() => { discardRetone(); switchTarget(t.id); }}>{t.label}</button>
+              <button className="sim-target-x" aria-label={`Remove ${t.label}`} onClick={() => removeSaved(t.id)}>×</button>
+            </span>
+          ))}
+          <span className="sim-target on"><button role="tab" aria-selected>{label || "This role"}</button></span>
+          <button className="sim-target new" onClick={openResim}>+ New</button>
+        </div>
+      )}
+
+      <NoticeSlot notices={notices} />
+
+      <VerdictStrip
+        history={history}
+        score={match.score}
+        baseScore={baseScore}
+        matched={gap.matchedSkills.length}
+        missing={gap.missingSkills.length}
+        actions={
+          <>
+            <button className="imp-btn" onClick={() => setView("refine")}>Refine to JD</button>
+            <button className="imp-btn primary" onClick={() => setView("edit")}>Edit my CV</button>
+          </>
+        }
+      />
+
+      <div className="sim-layout">
+        <div className="sim-rail">
+          <GapPanel
+            match={match}
+            cv={cv}
+            rankedSkills={rankedSkills}
+            rankedSections={rankedSections}
+            onAddSkill={(s) => useCVStore.getState().acceptSkillSuggestion(s)}
+            onAddSection={(k) => useCVStore.getState().addSuggestedSection(k)}
+          />
           {detected && (
+            <details className="sim-voice">
+              <summary>
+                <span>Rewrite in target&apos;s tone</span>
+                <span className="tone-badge" data-tone={activeTone}>{activeTone}</span>
+              </summary>
             <div className="tone-studio">
               <div className="tone-studio-head">
                 <span className="tone-badge" data-tone={activeTone}>Target voice · {detected.label}</span>
@@ -470,7 +444,20 @@ export function TargetView() {
                 Voice only — your employers, dates, numbers, and skills stay exactly as they are. The
                 target&apos;s metrics are never borrowed.
               </p>
+              <button
+                className="imp-btn accent sim-voice-run"
+                onClick={runRetone}
+                disabled={phase === "running"}
+                title={`Rewrite your CV in the target's ${activeTone.toLowerCase()} voice; facts stay yours`}
+              >
+                {phase === "running" ? (
+                  <><span className="cmp-spinner" /> Rewriting…</>
+                ) : (
+                  <>Rewrite in {activeTone.toLowerCase()} voice</>
+                )}
+              </button>
             </div>
+            </details>
           )}
 
           <AnimatePresence>
@@ -488,15 +475,69 @@ export function TargetView() {
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+
+        <div className="sim-main">
+          <div className="sim-seg sim-view-seg" role="tablist" aria-label="Compare view">
+            {(["yours", "ideal", "both", "diff"] as const).map((m) => (
+              <button
+                key={m}
+                role="tab"
+                aria-selected={compare === m}
+                className={compare === m ? "on" : ""}
+                onClick={() => setCompare(m)}
+              >
+                {m === "yours" ? "Yours" : m === "ideal" ? "Ideal" : m === "both" ? "Side by side" : "Diff"}
+              </button>
+            ))}
+          </div>
+
+          {compare === "diff" && (
+            <DiffView
+              ideal={ideal}
+              gap={gap}
+              onAddSkill={(s) => useCVStore.getState().acceptSkillSuggestion(s)}
+              onAddSection={(k) => useCVStore.getState().addSuggestedSection(k)}
+              onEdit={() => setView("edit")}
+            />
+          )}
+
+          <div className={`tgt-split sim-split ${compare}`} hidden={compare === "diff"}>
+            {compare !== "ideal" && (
+              <div className="tgt-col">
+                <div className="tgt-col-head mine">
+                  <span className="tgt-col-tag">{preview && !showBefore ? `Rewritten · ${activeTone}` : "Yours"}</span>
+                  <span className="tgt-col-sub">{getTemplate(activeTemplate).name}</span>
+                </div>
+                <div className="tgt-paper-wrap">
+                  {preview && !showBefore && <span className="sim-ribbon after">AFTER</span>}
+                  <div className="tgt-paper"><MineTpl cv={leftCV} /></div>
+                </div>
+              </div>
+            )}
+
+            {compare !== "yours" && (
+              <div className="tgt-col">
+                <div className="tgt-col-head ideal">
+                  <span className="tgt-col-tag">Simulated reference</span>
+                  <span className="tgt-col-sub">Simulated · not your facts</span>
+                </div>
+                <div className="tgt-paper-wrap">
+                  <span className="sim-ribbon">TARGET</span>
+                  <div className="tgt-paper"><IdealTpl cv={ideal} /></div>
+                </div>
+              </div>
+            )}
+          </div>
 
           <AnimatePresence>
             {phase === "preview" && preview && previewMatch && fidelity && (
               <motion.div
                 key="tone-apply"
-                className="tone-applybar"
-                initial={{ opacity: 0, y: -6 }}
+                className="tone-applybar sim-applybar"
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
+                exit={{ opacity: 0, y: 8 }}
               >
                 <div className="tone-applybar-stats">
                   <span className="tone-badge" data-tone={activeTone}>Rewritten · {activeTone}</span>
@@ -527,30 +568,6 @@ export function TargetView() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </div>
-
-      <div className="tgt-split">
-        <div className="tgt-col">
-          <div className="tgt-col-head mine">
-            <span className="tgt-col-tag">{preview && !showBefore ? `Rewritten · ${activeTone}` : "Yours"}</span>
-            <span className="tgt-col-sub">{getTemplate(activeTemplate).name}</span>
-          </div>
-          <div className="tgt-paper-wrap">
-            {preview && !showBefore && <span className="sim-ribbon after">AFTER</span>}
-            <div className="tgt-paper"><MineTpl cv={leftCV} /></div>
-          </div>
-        </div>
-
-        <div className="tgt-col">
-          <div className="tgt-col-head ideal">
-            <span className="tgt-col-tag">Simulated reference</span>
-            <span className="tgt-col-sub">Simulated · not your facts</span>
-          </div>
-          <div className="tgt-paper-wrap">
-            <span className="sim-ribbon">TARGET</span>
-            <div className="tgt-paper"><IdealTpl cv={ideal} /></div>
-          </div>
         </div>
       </div>
     </motion.div>

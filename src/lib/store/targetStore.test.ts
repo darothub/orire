@@ -46,3 +46,26 @@ describe("shared JD sync", () => {
     expect(useTargetStore.getState().jd).toBe("");
   });
 });
+
+describe("multiple targets", () => {
+  beforeEach(() => useTargetStore.getState().clearTarget());
+
+  it("stashes the previous target when a different role is locked, and switches back", () => {
+    const st = useTargetStore.getState();
+    st.setTarget(sampleCV, "Go role", 40, "Go Dev");
+    useTargetStore.getState().setTarget(sampleCV, "Rust role", 50, "Rust Dev");
+    let s = useTargetStore.getState();
+    expect(s.label).toBe("Rust Dev");
+    expect(s.saved.map((t) => t.label)).toEqual(["Go Dev"]);
+    s.switchTarget(s.saved[0].id);
+    s = useTargetStore.getState();
+    expect(s.label).toBe("Go Dev");
+    expect(s.saved.map((t) => t.label)).toEqual(["Rust Dev"]);
+  });
+
+  it("re-simulating the same role does not duplicate it", () => {
+    useTargetStore.getState().setTarget(sampleCV, "Go role", 40, "Go Dev");
+    useTargetStore.getState().setTarget(sampleCV, "Go role v2", 45, "Go Dev");
+    expect(useTargetStore.getState().saved).toHaveLength(0);
+  });
+});
