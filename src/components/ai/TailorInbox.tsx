@@ -5,7 +5,7 @@ import { useViewStore } from "@/lib/store/viewStore";
 import { useProposalStore } from "@/lib/store/proposalStore";
 import { cvHash, rebaseProposal, type ProposalTool } from "@/lib/tailor/proposal";
 
-const TOOL_LABEL: Record<ProposalTool, string> = { refine: "Refine", coach: "Coach" };
+const TOOL_LABEL: Record<ProposalTool, string> = { refine: "Rewrite", coach: "Coach" };
 
 /**
  * One inbox for pending changes from any tool, plus a one-step undo of the last

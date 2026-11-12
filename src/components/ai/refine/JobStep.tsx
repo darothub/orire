@@ -8,7 +8,7 @@ export function JobStep({ onBack, onNext }: { onBack: () => void; onNext: () => 
   const stale = useTargetStore(isIdealStale);
   return (
     <div className="step-body">
-      <p className="step-hint">Paste the full job description — shared across Refine and Simulate. The assistant tailors your existing facts to match it — no invention.</p>
+      <p className="step-hint">Paste the full job description — shared across Rewrite and Simulate. The assistant tailors your existing facts to match it — no invention.</p>
       <div className="ai-field">
         <span className="ed-label">Job description</span>
         <textarea

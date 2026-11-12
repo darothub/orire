@@ -5,7 +5,7 @@ import { useReducedMotion } from "framer-motion";
 import { howItWorksSteps } from "@/components/landing/howItWorks";
 
 const STEPS = howItWorksSteps();
-const TITLES = ["Add your details", "Refine with AI", "Download your CV"];
+const TITLES = ["Add your details", "Rewrite with AI", "Download your CV"];
 const ADVANCE_MS = 5000;
 
 const BEFORE = "Helped the team with the app redesign";

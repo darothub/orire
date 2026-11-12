@@ -26,12 +26,7 @@ for (const viewport of [
     await next.getByRole("button", { name: /Create your CV|Continue editing/ }).click();
     await expect(page.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
     const rail = page.getByRole("navigation", { name: "Workspaces" });
-    // The Home brand button is intentionally hidden at <=820px; mobile users
-    // return to Studio through the visible Add blocks entry in the rail.
-    await rail.getByRole("button", {
-      name: viewport.name === "mobile" ? "Add blocks" : "Home",
-      exact: true,
-    }).click();
+    await rail.getByRole("button", { name: "Home", exact: true }).click();
     await expect(next).toBeVisible();
     await next.getByRole("button", { name: "Your library" }).click();
     await expect(page.getByRole("heading", { name: /Library|History|Your CVs/ })).toBeVisible();

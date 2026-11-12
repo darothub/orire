@@ -1429,11 +1429,12 @@
   max-height: 560px;
   overflow-y: auto;
 }
+.tgt-paper-box { overflow: hidden; }
 .tgt-paper {
   transform: scale(0.74);
   transform-origin: top center;
   width: 135%;
-  margin: 0 -17.5% -26% -17.5%;
+  margin: 0 -17.5%;
   pointer-events: none;
 }
 @media (max-width: 900px) {
@@ -2900,7 +2901,7 @@
   background: var(--bg, #07060f); border: 1px solid var(--line-2); border-radius: 10px;
 }
 .sim-seg button {
-  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  flex: 1; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   padding: 6px 8px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; font: inherit; font-size: 13px;
 }
 .sim-seg button.on { background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--accent); }
@@ -2909,7 +2910,7 @@
   font-size: 11px; min-width: 18px; padding: 0 5px; border-radius: 99px;
   background: rgba(139, 108, 255, 0.2); color: var(--text);
 }
-.sim-view-seg { max-width: 360px; }
+.sim-view-seg { max-width: 420px; }
 
 .sim-gap-hint { margin: 0 0 8px; font-size: 12px; color: var(--muted); }
 .sim-gap-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }

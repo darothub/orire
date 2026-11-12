@@ -152,7 +152,7 @@ test("tailor facts: an answer is kept, reused on the next run, synced to the acc
 
   // The next Coach run starts with the earlier answer filled in.
   await appPage.getByRole("button", { name: "Open Coach", exact: true }).click();
-  await appPage.getByRole("button", { name: "Start over" }).click();
+  await appPage.getByRole("button", { name: "New coaching session" }).click();
   await appPage.getByLabel("Job description").fill("Another TypeScript role.");
   await appPage.getByRole("button", { name: "Analyse my CV" }).click();
   await expect(appPage.getByLabel("By how much did the redesign lift engagement?")).toHaveValue("34% weekly active use");
@@ -177,7 +177,7 @@ test("coach: a refresh mid-run restores the questions and answers", async ({ app
   await appPage.getByRole("button", { name: "Open Coach", exact: true }).click();
   await expect(appPage.getByLabel("By how much did the redesign lift engagement?")).toHaveValue("34%");
 
-  await appPage.getByRole("button", { name: "Start over" }).click();
+  await appPage.getByRole("button", { name: "New coaching session" }).click();
   await expect(appPage.getByLabel("Job description")).toBeVisible();
   expect(await appPage.evaluate(() => sessionStorage.getItem("orire-coach-run"))).toBeNull();
 });
@@ -224,7 +224,7 @@ test("tailor hub: one job description is shared with the tools, and all three ar
   await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: "Tailor", exact: true }).click();
   await expect(appPage.getByRole("heading", { name: "Tailor to a job" })).toBeVisible();
   await expect(appPage.getByLabel("Job description")).toHaveValue("Senior TypeScript engineer.");
-  for (const tool of ["Simulate", "Coach", "Refine"]) {
+  for (const tool of ["Simulate", "Coach", "Rewrite"]) {
     await expect(appPage.getByRole("button", { name: `Open ${tool}`, exact: true })).toBeVisible();
   }
 });
@@ -246,12 +246,12 @@ test("tailor run all: guided steps can be skipped, then the before and after sho
   await bar.getByRole("button", { name: "Skip this step" }).click();
   await expect(bar).toContainText("step 2 of 3: Coach");
   await bar.getByRole("button", { name: "Skip this step" }).click();
-  await expect(bar).toContainText("step 3 of 3: Refine");
+  await expect(bar).toContainText("step 3 of 3: Rewrite");
   await bar.getByRole("button", { name: "Done, next step" }).click();
 
   const panel = appPage.getByRole("region", { name: "Run complete" });
   await expect(panel).toContainText("Diagnose: skipped");
-  await expect(panel).toContainText("Refine: done");
+  await expect(panel).toContainText("Rewrite: done");
   await expect(panel).toContainText("Match before:");
 });
 

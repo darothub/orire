@@ -14,7 +14,7 @@ export type StepStatus = "pending" | "done" | "skipped" | "capped";
 export const RUN_STEPS: { step: RunStep; label: string; metric: Metric; view: "target" | "coach" | "refine" }[] = [
   { step: "simulate", label: "Diagnose", metric: "simulate", view: "target" },
   { step: "coach", label: "Coach", metric: "coach", view: "coach" },
-  { step: "refine", label: "Refine", metric: "refine", view: "refine" },
+  { step: "refine", label: "Rewrite", metric: "refine", view: "refine" },
 ];
 
 export interface RunAllState {
