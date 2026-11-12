@@ -24,6 +24,7 @@ import { NoticeSlot, type SimNotice } from "@/components/ai/simulate/NoticeSlot"
 import { VerdictStrip } from "@/components/ai/simulate/VerdictStrip";
 import { rankMissingSections, rankMissingSkills } from "@/lib/ai/simulateImpact";
 import { buildGapReportHtml } from "@/lib/ai/simulateReport";
+import { advanceGuidedRun } from "@/components/ai/RunAll";
 import { useRunAllStore } from "@/lib/store/runAllStore";
 import { isFinished } from "@/lib/tailor/runAll";
 import { DiffView } from "./simulate/DiffView";
@@ -408,7 +409,9 @@ export function TargetView() {
         actions={
           <>
             {!guidedRun && <button className="imp-btn" onClick={() => setView("refine")}>Rewrite to JD</button>}
-            <button className="imp-btn primary" onClick={() => setView("edit")}>Edit my CV</button>
+            {guidedRun
+              ? <button className="imp-btn primary" onClick={() => { if (!advanceGuidedRun()) setView("edit"); }}>Next step</button>
+              : <button className="imp-btn primary" onClick={() => setView("edit")}>Edit my CV</button>}
           </>
         }
       />

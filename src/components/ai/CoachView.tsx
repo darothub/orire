@@ -1,5 +1,6 @@
 "use client";
 
+import { advanceGuidedRun } from "@/components/ai/RunAll";
 import { useFactStore } from "@/lib/store/factStore";
 import { factForArea } from "@/lib/tailor/facts";
 import { useMemo, useRef, useEffect, useState } from "react";
@@ -243,7 +244,7 @@ export function CoachView() {
     const next = applyOffered(live, draft.cv, fresh.changes, rejected);
     applyRefinedCV(next);
     recordApplied("coach", live, next);
-    setView("edit");
+    if (!advanceGuidedRun()) setView("edit");
   };
 
   const answeredCount = Object.values(answers).filter((v) => v.trim()).length;
