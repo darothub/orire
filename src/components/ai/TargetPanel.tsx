@@ -24,6 +24,8 @@ import { NoticeSlot, type SimNotice } from "@/components/ai/simulate/NoticeSlot"
 import { VerdictStrip } from "@/components/ai/simulate/VerdictStrip";
 import { rankMissingSections, rankMissingSkills } from "@/lib/ai/simulateImpact";
 import { buildGapReportHtml } from "@/lib/ai/simulateReport";
+import { useRunAllStore } from "@/lib/store/runAllStore";
+import { isFinished } from "@/lib/tailor/runAll";
 import { DiffView } from "./simulate/DiffView";
 import { ScaledPaper } from "./simulate/ScaledPaper";
 import { GapPanel } from "@/components/ai/simulate/GapPanel";
@@ -43,6 +45,7 @@ export function TargetView() {
   const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const setSkillSuggestions = useCVStore((s) => s.setSkillSuggestions);
   const setView = useViewStore((s) => s.setView);
+  const guidedRun = useRunAllStore((s) => s.run !== null && !isFinished(s.run));
   const ideal = useTargetStore((s) => s.ideal);
   const jd = useTargetStore((s) => s.jd);
   const setJd = useTargetStore((s) => s.setJd);
@@ -371,10 +374,10 @@ export function TargetView() {
             {dateLabel ? ` · locked ${dateLabel}` : ""}.
           </p>
         </div>
-        <button className="ws-reset" onClick={openResim} title="Build a new ideal CV from a job description">New simulation</button>
         <details className="sim-more">
           <summary className="imp-btn" aria-label="More actions">⋯</summary>
           <div className="sim-more-menu">
+            <button className="imp-btn" onClick={openResim}>New simulation</button>
             <button className="imp-btn" onClick={exportReport}>Gap report (PDF)</button>
             <button className="imp-btn danger" onClick={clearTarget}>Clear target</button>
           </div>
@@ -404,7 +407,7 @@ export function TargetView() {
         missing={gap.missingSkills.length}
         actions={
           <>
-            <button className="imp-btn" onClick={() => setView("refine")}>Rewrite to JD</button>
+            {!guidedRun && <button className="imp-btn" onClick={() => setView("refine")}>Rewrite to JD</button>}
             <button className="imp-btn primary" onClick={() => setView("edit")}>Edit my CV</button>
           </>
         }
