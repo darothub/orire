@@ -37,6 +37,16 @@ function finishStep(step: RunStep, status: "done" | "skipped") {
   goNext();
 }
 
+/** If a guided run is on the current tool's step, mark it done and open the next tool. */
+export function advanceGuidedRun(): boolean {
+  const { run } = useRunAllStore.getState();
+  const step = run && currentStep(run);
+  const meta = RUN_STEPS.find((s) => s.step === step);
+  if (!step || !meta || meta.view !== useViewStore.getState().view) return false;
+  finishStep(step, "done");
+  return true;
+}
+
 /** Hub card: start a guided run, follow it, and see the before and after. */
 export function RunAllPanel({ ready }: { ready: boolean }) {
   const plan = usePlanStore((s) => s.plan);
