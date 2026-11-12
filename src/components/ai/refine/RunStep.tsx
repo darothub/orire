@@ -52,7 +52,7 @@ export function RunStep({ onBack }: { onBack: () => void }) {
           <div className="run-ready-icon">✦</div>
           <strong>{single ? "Ready to tailor with " : "Ready to compare "}{runProviders.map((p) => PROVIDERS[p].label).join(" vs ")}</strong>
           <p>{single ? "One assistant will rewrite your CV for the role." : "Both assistants run in parallel on the same job — then Orire can pick the best version for you."}</p>
-          <button className="flow-btn primary lg" onClick={() => void runAll()}>{single ? "Refine my CV" : "Run comparison"}</button>
+          <button className="flow-btn primary lg" onClick={() => void runAll()}>{single ? "Rewrite my CV" : "Run comparison"}</button>
           {planBlock && (
             <div className="plan-block" role="alert">
               <strong>{planBlock.title}</strong>
@@ -92,7 +92,7 @@ export function RunStep({ onBack }: { onBack: () => void }) {
             <span>You edited the assistants, job description, or CV after this comparison. Re-run so the results match, or keep the comparison you already have.</span>
           </div>
           <div className="run-stale-actions">
-            <button className="flow-btn primary sm" onClick={() => void runAll()} disabled={anyRunning}>{single ? "Re-refine" : "Re-run comparison"}</button>
+            <button className="flow-btn primary sm" onClick={() => void runAll()} disabled={anyRunning}>{single ? "Re-rewrite" : "Re-run comparison"}</button>
             <button className="flow-btn ghost sm" onClick={keepResults} disabled={anyRunning}>Keep these results</button>
           </div>
         </div>

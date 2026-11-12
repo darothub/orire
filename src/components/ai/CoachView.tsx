@@ -250,10 +250,11 @@ export function CoachView() {
     <div className="ws-view coach-flow">
       <div className="ws-head">
         <div>
+          <button type="button" className="ws-back" onClick={() => setView("tailor")}>← Back to Tailor</button>
           <h2>Coach me to the role</h2>
           <p>We find what this job wants, ask about work your CV under-reports, then rewrite using only your CV and your answers.</p>
         </div>
-        {phase !== "input" && <button className="ws-reset" onClick={reset}>Start over</button>}
+        {phase !== "input" && <button className="ws-reset" onClick={reset} title="Discard this session and start a fresh one">New coaching session</button>}
       </div>
 
       {!allowed && (

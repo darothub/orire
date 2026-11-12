@@ -189,7 +189,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
               </strong>
               <span>
                 {facts.experience} roles · {facts.education} education · {facts.skills} skills
-                {facts.projects ? ` · ${facts.projects} projects` : ""}. Refine it as-is, or upload a new
+                {facts.projects ? ` · ${facts.projects} projects` : ""}. Rewrite it as-is, or upload a new
                 file below to start fresh.
               </span>
             </div>

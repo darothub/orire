@@ -175,16 +175,6 @@ export function WorkspaceRail() {
           </Reorder.Item>
         ))}
       </Reorder.Group>
-      <div className="rail-group">
-        <Tooltip title="Add blocks" hint="Open your studio to add or remove blocks" placement="right">
-          <button className="rail-item rail-add" onClick={() => setView("spotlight")} aria-label="Add blocks">
-            <span className="rail-icon" aria-hidden>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-            </span>
-            <span className="rail-label">Add</span>
-          </button>
-        </Tooltip>
-      </div>
       <div className="rail-group rail-foot">
         {PINNED_VIEWS.map((v) => (
           <RailButton key={v} item={v} badge={badgeFor(v)} />

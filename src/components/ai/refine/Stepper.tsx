@@ -8,7 +8,7 @@ export const STEP_INDEX: Record<RefineStep, number> = { connect: 0, sources: 1, 
 export function Stepper({ step, onJump }: { step: RefineStep; onJump: (s: RefineStep) => void }) {
   const active = STEP_INDEX[step];
   return (
-    <nav className="stepper" aria-label="Refine steps">
+    <nav className="stepper" aria-label="Rewrite steps">
       <div className="stepper-line">
         <motion.div
           className="stepper-line-fill"

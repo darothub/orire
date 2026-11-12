@@ -1030,9 +1030,6 @@ body {
   border-color: var(--line-2);
   background: var(--surface-soft);
 }
-/* The "+" add-blocks entry uses the rail-item shell but reads as secondary. */
-.rail-add { color: var(--muted); }
-.rail-add:hover { color: var(--text); }
 /* Each flow block is drag-reorderable (A2), with move-earlier/move-later
    buttons as the keyboard/AT fallback (P1-8). */
 .rail-ritem {
@@ -2666,7 +2663,7 @@ body {
     scrollbar-width: none;
   }
   .rail::-webkit-scrollbar { display: none; }
-  .rail-brand { display: none; }
+  .rail-brand { display: grid; margin-bottom: 0; flex: 0 0 auto; }
   .rail-group { flex-direction: row; width: auto; gap: 4px; }
   .rail-foot {
     margin-top: 0;
@@ -6373,3 +6370,8 @@ body,
 .ed-suggest-group { margin-top: 10px; }
 .ed-suggest-cat { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
 .ed-suggest-new { font-weight: 500; color: var(--muted); }
+
+/* Back to the Tailor hub from its tools */
+.ws-back { display: inline-flex; align-items: center; gap: 4px; margin: 0 0 6px; padding: 2px 0; background: none; border: 0; cursor: pointer; font: inherit; font-size: 13px; color: var(--muted); }
+.ws-back:hover { color: var(--text); }
+.ws-back:focus-visible { outline: 2px solid var(--accent-2, var(--accent)); outline-offset: 2px; border-radius: 4px; }

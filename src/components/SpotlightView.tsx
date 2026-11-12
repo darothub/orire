@@ -84,7 +84,7 @@ function TailorHero({ recommended }: { recommended: boolean }) {
           <ViewIcon view="tailor" /> Tailor your CV to a job
         </strong>
         <span className="spot-hero-sub">
-          Simulate the ideal match, answer a few coaching questions, and refine the wording. One job, three tools,
+          Simulate the ideal match, answer a few coaching questions, and rewrite the wording. One job, three tools,
           and nothing changes without your approval.
         </span>
       </div>

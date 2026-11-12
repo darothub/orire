@@ -43,8 +43,8 @@ for (const viewport of [
 
     const rail = appPage.getByRole("navigation", { name: "Workspaces" });
     await rail.getByRole("button", { name: "Tailor", exact: true }).click();
-    await appPage.getByRole("button", { name: "Open Refine", exact: true }).click();
-    await expect(appPage.getByRole("heading", { name: "Refine to a job" })).toBeVisible();
+    await appPage.getByRole("button", { name: "Open Rewrite", exact: true }).click();
+    await expect(appPage.getByRole("heading", { name: "Rewrite for a job" })).toBeVisible();
 
     await appPage.locator(".conn-card").first().getByRole("button", { name: "Select", exact: true }).click();
     await appPage.getByRole("button", { name: "Continue", exact: true }).click();
@@ -57,7 +57,7 @@ for (const viewport of [
     await appPage.locator(".refine-step").filter({
       has: appPage.locator("textarea.ai-jd"),
     }).getByRole("button", { name: "Continue", exact: true }).click();
-    await appPage.getByRole("button", { name: "Refine my CV" }).click();
+    await appPage.getByRole("button", { name: "Rewrite my CV" }).click();
 
     await expect(appPage.getByRole("button", { name: /Review & apply/ })).toBeVisible({ timeout: 15_000 });
     await expect(appPage.locator(".cmp-flags")).toContainText("999%");

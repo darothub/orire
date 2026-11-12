@@ -25,6 +25,7 @@ import { VerdictStrip } from "@/components/ai/simulate/VerdictStrip";
 import { rankMissingSections, rankMissingSkills } from "@/lib/ai/simulateImpact";
 import { buildGapReportHtml } from "@/lib/ai/simulateReport";
 import { DiffView } from "./simulate/DiffView";
+import { ScaledPaper } from "./simulate/ScaledPaper";
 import { GapPanel } from "@/components/ai/simulate/GapPanel";
 
 /** Always read the working CV from the store at call time (edits + applied refine). */
@@ -167,6 +168,7 @@ export function TargetView() {
       >
         <div className="ws-head">
           <div>
+            <button type="button" className="ws-back" onClick={() => setView("tailor")}>← Back to Tailor</button>
             <h2>{VIEW_META.target.label}</h2>
             <p>
               {recompose
@@ -264,7 +266,7 @@ export function TargetView() {
   } else if (jdStale) {
     notices.push({
       id: "stale",
-      body: <><strong>The job description changed</strong> since this target was simulated (it is shared with Refine). Re-simulate to benchmark against the current JD.</>,
+      body: <><strong>The job description changed</strong> since this target was simulated (it is shared with Rewrite). Re-simulate to benchmark against the current JD.</>,
       actions: <button className="imp-btn primary" onClick={openResim}>Re-simulate with current JD</button>,
     });
   }
@@ -362,16 +364,17 @@ export function TargetView() {
     >
       <div className="ws-head">
         <div>
+          <button type="button" className="ws-back" onClick={() => setView("tailor")}>← Back to Tailor</button>
           <h2>{VIEW_META.target.label}</h2>
           <p>
             Your latest CV against the ideal for <strong>{label || "this role"}</strong>
             {dateLabel ? ` · locked ${dateLabel}` : ""}.
           </p>
         </div>
+        <button className="ws-reset" onClick={openResim} title="Build a new ideal CV from a job description">New simulation</button>
         <details className="sim-more">
           <summary className="imp-btn" aria-label="More actions">⋯</summary>
           <div className="sim-more-menu">
-            <button className="imp-btn" onClick={openResim}>New simulation</button>
             <button className="imp-btn" onClick={exportReport}>Gap report (PDF)</button>
             <button className="imp-btn danger" onClick={clearTarget}>Clear target</button>
           </div>
@@ -401,7 +404,7 @@ export function TargetView() {
         missing={gap.missingSkills.length}
         actions={
           <>
-            <button className="imp-btn" onClick={() => setView("refine")}>Refine to JD</button>
+            <button className="imp-btn" onClick={() => setView("refine")}>Rewrite to JD</button>
             <button className="imp-btn primary" onClick={() => setView("edit")}>Edit my CV</button>
           </>
         }
@@ -487,7 +490,7 @@ export function TargetView() {
                 className={compare === m ? "on" : ""}
                 onClick={() => setCompare(m)}
               >
-                {m === "yours" ? "Yours" : m === "ideal" ? "Ideal" : m === "both" ? "Side by side" : "Diff"}
+                {m === "yours" ? "Yours" : m === "ideal" ? "Ideal" : m === "both" ? "Side by Side" : "Diff"}
               </button>
             ))}
           </div>
@@ -511,7 +514,7 @@ export function TargetView() {
                 </div>
                 <div className="tgt-paper-wrap">
                   {preview && !showBefore && <span className="sim-ribbon after">AFTER</span>}
-                  <div className="tgt-paper"><MineTpl cv={leftCV} /></div>
+                  <ScaledPaper><MineTpl cv={leftCV} /></ScaledPaper>
                 </div>
               </div>
             )}
@@ -524,7 +527,7 @@ export function TargetView() {
                 </div>
                 <div className="tgt-paper-wrap">
                   <span className="sim-ribbon">TARGET</span>
-                  <div className="tgt-paper"><IdealTpl cv={ideal} /></div>
+                  <ScaledPaper><IdealTpl cv={ideal} /></ScaledPaper>
                 </div>
               </div>
             )}

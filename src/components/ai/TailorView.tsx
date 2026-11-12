@@ -23,7 +23,7 @@ type Tool = "target" | "coach" | "refine";
 const TOOLS: { view: Tool; verb: string; text: string; metric?: Metric }[] = [
   { view: "target", verb: "Diagnose", text: "See how close you are to an ideal candidate for this job and where the gaps are.", metric: "simulate" },
   { view: "coach", verb: "Coach", text: "Answer a few targeted questions so real achievements and numbers fill the gaps." },
-  { view: "refine", verb: "Refine", text: "Tailor the wording to the job, using only facts already on your CV.", metric: "refine" },
+  { view: "refine", verb: "Rewrite", text: "Tailor the wording to the job, using only facts already on your CV.", metric: "refine" },
 ];
 
 const STEP_VIEW: Record<Exclude<TailorStep, "job">, WorkspaceView> = {

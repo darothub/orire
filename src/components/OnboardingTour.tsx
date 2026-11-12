@@ -41,7 +41,7 @@ const STEPS: Step[] = [
   {
     sel: '[data-tour="rail-tailor"]',
     title: "Tailor to a job",
-    body: "Enter a job once, see where your CV stands, then simulate the ideal match, answer coaching questions, or refine the wording. You approve every change.",
+    body: "Enter a job once, see where your CV stands, then simulate the ideal match, answer coaching questions, or rewrite the wording. You approve every change.",
     place: "right",
   },
   {
