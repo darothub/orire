@@ -20,6 +20,7 @@ export function RefineFlow() {
   const step = useRefineStore((s) => s.step);
   const setStep = useRefineStore((s) => s.setStep);
   const reset = useRefineStore((s) => s.reset);
+  const started = useRefineStore((s) => s.started);
   const setView = useViewStore((s) => s.setView);
   const [dir, setDir] = useState(1);
 
@@ -37,7 +38,7 @@ export function RefineFlow() {
           <p>Connect an assistant, bring your CVs, add the role — then compare tailored results. Only your own facts are used.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="ws-reset" onClick={reset} title="Clear the current results and start a fresh refinement">New refinement</button>
+          {(started || step !== "connect") && <button className="ws-reset" onClick={reset} title="Clear the current results and start a fresh refinement">New refinement</button>}
         </div>
       </div>
 
