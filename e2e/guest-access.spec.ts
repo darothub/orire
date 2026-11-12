@@ -12,7 +12,7 @@ test.describe("guest access", () => {
     await page.getByRole("button", { name: "Open Rewrite" }).click();
     const dialog = page.getByRole("dialog", { name: "Create your account" });
     await expect(dialog).toBeVisible();
-    await expect(dialog).toContainText("Sign up to refine your CV with AI");
+    await expect(dialog).toContainText("Sign up to rewrite your CV with AI");
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
 
