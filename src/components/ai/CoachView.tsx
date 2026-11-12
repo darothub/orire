@@ -73,7 +73,9 @@ function loadSavedRun(): SavedRun | null {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw) as SavedRun;
-    if (!saved.baseCV || !saved.analysis || nowMs() - saved.analysis.startedAt > SAVED_RUN_TTL_MS) {
+    // A finished review needs no run token, so only the question phase expires.
+    const expired = saved.phase !== "review" && nowMs() - saved.analysis?.startedAt > SAVED_RUN_TTL_MS;
+    if (!saved.baseCV || !saved.analysis || expired) {
       window.sessionStorage.removeItem(STORAGE_KEY);
       return null;
     }
