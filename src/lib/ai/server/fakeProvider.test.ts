@@ -1,4 +1,5 @@
-import { describe, it, expect, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, beforeAll, vi } from "vitest";
+import { installTestDictionary } from "@/lib/cv/spellTestSetup";
 import {
   fakeAiEnabled,
   fakeAiFor,
@@ -11,6 +12,7 @@ import {
   fakeStructuredCV,
   fakeBulletReview,
 } from "./fakeProvider";
+beforeAll(installTestDictionary);
 import { parseBulletReview } from "@/lib/ai/bulletReview";
 import { parseModelJSON } from "@/lib/ai/guardrails";
 import { applyRefinePatch } from "@/lib/ai/refinePatch";
@@ -144,10 +146,6 @@ describe("fakeBulletReview", () => {
     expect(r.suggestion.startsWith("Contributed")).toBe(true);
   });
 
-  it("flags a real-but-unusual opener", () => {
-    const r = parseBulletReview(fakeBulletReview("Colonised everything"));
-    expect(r.issues.some((i) => i.type === "odd-verb")).toBe(true);
-  });
 });
 
 describe("fakeStructuredCV", () => {

@@ -53,6 +53,8 @@ const DUTY_PHRASES = [
   "accountable for",
 ];
 
+import { isEnglishWord } from "@/lib/cv/spell";
+
 /**
  * Curated CV action-verb lexicon (correctly spelled, British + American where
  * they differ). Used two ways: an opener in here is accepted; an opener NOT in
@@ -184,10 +186,11 @@ export function analyzeBullet(text: string): CoachFlag[] {
   // The first token, letters only — but skip compounds/hyphenated/non-alpha.
   const firstTokenRaw = h.split(/\s+/)[0] ?? "";
   const opener = /^[a-z]+$/.test(firstTokenRaw) ? firstTokenRaw : "";
-  if (!openerFlagged && opener.length >= 4 && !VERB_VOCAB.has(opener)) {
+  // Typo only when the dictionary confirms the word isn't English at all;
+  // the verb list merely supplies the suggested correction.
+  if (!openerFlagged && opener.length >= 4 && !VERB_VOCAB.has(opener) && isEnglishWord(opener) === false) {
     const near = nearestActionVerb(opener);
-    // One edit only: two-edit matches flag real words ("Extended" ≠ "Exceeded").
-    const threshold = 1;
+    const threshold = opener.length >= 7 ? 2 : 1;
     if (near && near.dist > 0 && near.dist <= threshold) {
       flags.push({
         id: "typo",
@@ -196,16 +199,8 @@ export function analyzeBullet(text: string): CoachFlag[] {
         severity: "warn",
         suggest: near.word,
       });
-    } else {
-      flags.push({
-        id: "odd-verb",
-        label: "Unusual opener",
-        hint: "This isn’t a standard CV action verb — try Led, Built, Drove, Delivered…",
-        severity: "info",
-      });
     }
   }
-
 
   if (substantive && !METRIC_RE.test(trimmed)) {
     flags.push({

@@ -12,6 +12,7 @@ import { AutoTextarea } from "./AutoTextarea";
 import { EvidenceHelper } from "./EvidenceHelper";
 import { hasMeasurable } from "@/lib/ai/evidence";
 import { analyzeBullet } from "@/lib/cv/coach";
+import { useSpellReady } from "@/lib/cv/useSpellReady";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useViewStore } from "@/lib/store/viewStore";
 import { allowContextualBulletReview } from "@/lib/plan/plan";
@@ -173,6 +174,7 @@ function HighlightItem({
   onMove: (dir: -1 | 1) => void;
 }) {
   const controls = useDragControls();
+  useSpellReady();
   const flags = analyzeBullet(value);
   const plan = usePlanStore((s) => s.plan);
   const setView = useViewStore((s) => s.setView);

@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
+import { beforeAll, describe, it, expect } from "vitest";
+import { setSpellChecker } from "./spell";
+import { installTestDictionary } from "./spellTestSetup";
 import { analyzeBullet, coachWarningCount, editDistance } from "./coach";
+
+beforeAll(installTestDictionary);
 
 const ids = (text: string) => analyzeBullet(text).map((f) => f.id).sort();
 const flag = (text: string, id: string) => analyzeBullet(text).find((f) => f.id === id);
@@ -61,10 +65,21 @@ describe("opener verb strength + spelling", () => {
     expect(f!.hint).toContain("Contributed");
   });
 
-  it("flags a real word that isn't a CV action verb as an unusual opener", () => {
+  it("leaves real words that aren't on any verb list to the AI review", () => {
     const got = ids("Colonised everything");
-    expect(got).toContain("odd-verb");
+    expect(got).not.toContain("odd-verb");
     expect(got).not.toContain("typo");
+  });
+
+  it("never calls a dictionary word a typo, whatever its neighbours", () => {
+    expect(ids("Extended the platform to support more regions")).not.toContain("typo");
+    expect(ids("Tabulated the quarterly figures for every region")).not.toContain("typo");
+  });
+
+  it("stays silent until the dictionary has loaded", () => {
+    setSpellChecker(null);
+    expect(ids("Comtributed to the platform redesign across teams")).not.toContain("typo");
+    installTestDictionary();
   });
 
   it("accepts a recognized strong action verb", () => {
