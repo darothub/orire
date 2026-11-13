@@ -201,7 +201,7 @@ function HighlightItem({
       const res = await fetch("/api/ai/bullet-check", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: value }),
+        body: JSON.stringify({ text: value, advice: flags.map((f) => ({ label: f.label, hint: f.hint })) }),
       });
       const data = (await res.json()) as { ok: boolean; review?: BulletReview; error?: string };
       if (data.ok && data.review) setReview(data.review);

@@ -175,6 +175,10 @@ export function fakeBulletReview(text: string): string {
   } else if (flags.some((f) => f.id === "weak-verb" || f.id === "duty" || f.id === "odd-verb")) {
     suggestion = body ? `Led ${body.charAt(0).toLowerCase()}${body.slice(1)}` : "Led the work";
   }
+  if (flags.some((f) => f.id === "no-metric")) {
+    const base = suggestion || text.trim();
+    suggestion = `${base.replace(/[.\s]+$/, "")}, improving results by [X%]`;
+  }
   const verdict = flags.some((f) => f.severity === "warn") ? "weak" : flags.length ? "ok" : "strong";
   return JSON.stringify({ verdict, issues, suggestion });
 }
