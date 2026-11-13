@@ -34,7 +34,7 @@ import { useUIStore, readPendingPlanIntent } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { VIEW_META, ACCOUNT_VIEWS } from "@/lib/store/viewMeta";
 import { useSession } from "next-auth/react";
-import { useViewStore } from "@/lib/store/viewStore";
+import { persistView, restoreView, useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { targetMatch } from "@/lib/ai/simulate";
 import { useRebrandStore } from "@/lib/store/rebrandStore";
@@ -284,6 +284,18 @@ export default function WorkspaceApp() {
   const view = useViewStore((s) => s.view);
   const setView = useViewStore((s) => s.setView);
   const refStep = useRefineStore((s) => s.step);
+
+  // A refresh keeps the current workspace instead of resetting to Home.
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    const saved = restoreView();
+    if (saved) setView(saved);
+  }, [setView]);
+  useEffect(() => {
+    if (restored.current) persistView(view);
+  }, [view]);
 
   // Preserve pricing intent: a visitor who clicked "Choose Pro/Career" on the
   // landing lands on the Plans view after signing up, so they can complete the
