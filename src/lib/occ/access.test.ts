@@ -3,7 +3,7 @@ import { canAccessOcc, occFeatureEnabled } from "./access";
 
 describe("OCC feature access", () => {
   it("is off by default and only recognizes explicit true", () => {
-    expect(occFeatureEnabled(undefined)).toBe(false);
+    expect(occFeatureEnabled("")).toBe(false);
     expect(occFeatureEnabled("false")).toBe(false);
     expect(occFeatureEnabled("1")).toBe(false);
     expect(occFeatureEnabled("TRUE")).toBe(false);
