@@ -48,7 +48,7 @@ for (const viewport of viewports) {
       const mobileNav = page.getByRole("navigation", { name: "Mobile page sections" });
       await expect(mobileNav).toBeVisible();
       await expect(page.getByRole("button", { name: "Close section menu" })).toHaveAttribute("aria-expanded", "true");
-      await expect(mobileNav.getByRole("link")).toHaveCount(2);
+      await expect(mobileNav.getByRole("link")).toHaveCount(4);
       await page.screenshot({
         path: `${dir}/AFTER-menu-open-${viewport.name}.png`,
         animations: "disabled",

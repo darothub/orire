@@ -68,6 +68,8 @@ for (const width of [1440, 390, 320]) {
       await page.keyboard.press("Tab");
       await expect(studio.getByRole("button", { name: /^Open Tailor/ })).toBeFocused();
       await page.keyboard.press("Tab");
+      await expect(tools.getByRole("button", { name: "Reset to recommended flow" })).toBeFocused();
+      await page.keyboard.press("Tab");
       await expect(tools.getByRole("button", { name: /^Open Re-brand/ })).toBeFocused();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       const audit = await new AxeBuilder({ page }).include(".spotlight-view").withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
