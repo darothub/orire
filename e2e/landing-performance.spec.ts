@@ -86,13 +86,14 @@ test("anonymous landing defers workspace JavaScript and still resumes paid plan 
   // landing is ~757 KB; allow growth while catching the eager workspace bundle.
   expect(scriptBytes).toBeGreaterThan(0);
   expect(scriptBytes).toBeLessThan(1_200_000);
+  await page.goto("/pricing", { waitUntil: "domcontentloaded" });
   const pro = page.locator(".landing-price-card").filter({
     has: page.getByRole("heading", { name: "Pro", exact: true }),
   });
   await pro.getByRole("button").click();
   await expect(page.getByRole("dialog", { name: "Create your account" })).toBeVisible();
   await signIn(page);
-  await page.reload({ waitUntil: "domcontentloaded" });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
   await waitForShell(page);
   await expect(page.getByRole("heading", { name: "Plans", exact: true })).toBeVisible();
 });

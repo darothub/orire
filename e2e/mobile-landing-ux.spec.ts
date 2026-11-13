@@ -19,7 +19,7 @@ for (const viewport of viewports) {
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Let AI turn your experience into a CV that stands out." }),
+      page.getByRole("heading", { name: "Measure the gap to the job. Then close it, honestly." }),
     ).toBeVisible({ timeout: 20_000 });
 
     const consent = page.getByRole("dialog", { name: "Cookie consent" });
@@ -48,7 +48,7 @@ for (const viewport of viewports) {
       const mobileNav = page.getByRole("navigation", { name: "Mobile page sections" });
       await expect(mobileNav).toBeVisible();
       await expect(page.getByRole("button", { name: "Close section menu" })).toHaveAttribute("aria-expanded", "true");
-      await expect(mobileNav.getByRole("link")).toHaveCount(4);
+      await expect(mobileNav.getByRole("link")).toHaveCount(2);
       await page.screenshot({
         path: `${dir}/AFTER-menu-open-${viewport.name}.png`,
         animations: "disabled",
