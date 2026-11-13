@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
 import { useUIStore } from "@/lib/store/uiStore";
 
 const SECTIONS = [
   { href: "#how", label: "How it works" },
   { href: "#templates", label: "Templates" },
   { href: "#demo", label: "Live demo" },
-  { href: "#pricing", label: "Pricing" },
 ] as const;
 
 /**
@@ -83,6 +83,9 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
                 {label}
               </a>
             ))}
+            <Link href="/pricing" onClick={() => setOpen(false)}>
+              Pricing
+            </Link>
             <button
               type="button"
               className="landing-mobile-menu-signin"

@@ -9,7 +9,6 @@ import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesL
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { GapGauge } from "@/components/landing/GapGauge";
-import { landingPlans } from "@/components/landing/pricing";
 import { TailorTrio } from "@/components/landing/TailorTrio";
 import dynamic from "next/dynamic";
 
@@ -65,7 +64,7 @@ export function Landing() {
             <a href="#how">How it works</a>
             <a href="#templates">Templates</a>
             <a href="#demo">Live demo</a>
-            <a href="#pricing">Pricing</a>
+            <Link href="/pricing">Pricing</Link>
           </nav>
           <button className="landing-ghost" disabled={!ready} onClick={() => openAuth("signin")}>
             Sign in
@@ -159,54 +158,6 @@ export function Landing() {
 
         <LiveDemo />
 
-        <section id="pricing" className="landing-section landing-pricing" aria-label="Pricing">
-          <motion.div
-            className="landing-motion-reveal landing-about-head"
-            {...reveal()}
-          >
-            <span className="landing-eyebrow">Simple, honest pricing</span>
-            <h2 className="landing-h2">Start free. Choose a plan when you need more.</h2>
-            <p className="landing-about-lead">
-              Prices are in US dollars (USD). Paid plans renew monthly.
-              Orire includes managed AI usage—no separate AI API key required.
-            </p>
-          </motion.div>
-          <div className="landing-price-grid">
-            {landingPlans().map((p, i) => (
-              <motion.div
-                key={p.id}
-                className={`landing-motion-reveal landing-price-card${p.highlighted ? " is-featured" : ""}`}
-                {...reveal(18, i * 0.08, 0.3)}
-              >
-                {p.highlighted && <span className="landing-price-badge">Recommended</span>}
-                <h3 className="landing-price-name">{p.label}</h3>
-                <div className="landing-price-amt">
-                  <span className="landing-price-num">{p.priceLabel}</span>
-                  <span className="landing-price-cad">{p.cadence}</span>
-                </div>
-                <p className="landing-price-blurb">{p.blurb}</p>
-                <p className="landing-price-usage-title">Usage limits</p>
-                <ul className="landing-price-usage" aria-label={`${p.label} usage limits`}>
-                  {p.usageDetails.map((detail) => <li key={detail}>{detail}</li>)}
-                </ul>
-                <ul className="landing-price-perks">
-                  {p.perks.map((perk) => (
-                    <li key={perk}><span aria-hidden>✓</span> {perk}</li>
-                  ))}
-                </ul>
-                <button
-                  className={p.highlighted ? "landing-cta" : "landing-ghost"}
-                  disabled={!ready}
-                  onClick={() => startSignup("pricing", p.id)}
-                >
-                  {p.cta}
-                </button>
-              </motion.div>
-            ))}
-          </div>
-          <p className="landing-pricing-disclosure">Paid subscriptions renew monthly in USD until cancelled. Cancel through billing settings; access generally continues until the current paid period ends. Applicable taxes, if any, are shown during checkout before payment. Free quotas are lifetime totals, not monthly allowances.</p>
-        </section>
-
         <section className="landing-section landing-final">
           <motion.div
             className="landing-motion-reveal landing-final-card"
@@ -231,6 +182,7 @@ export function Landing() {
         </span>
         <span className="landing-foot-links">
           <Link href="/templates">Templates</Link>
+          <Link href="/pricing">Pricing</Link>
           <Link href="/guides">Guides</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>

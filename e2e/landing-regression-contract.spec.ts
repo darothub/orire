@@ -4,7 +4,6 @@ const sections = [
   { name: "How it works", id: "how" },
   { name: "Templates", id: "templates" },
   { name: "Live demo", id: "demo" },
-  { name: "Pricing", id: "pricing" },
 ] as const;
 
 for (const viewport of [
