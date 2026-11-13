@@ -101,3 +101,14 @@ describe("coachWarningCount", () => {
     expect(coachWarningCount(bullets)).toBe(2);
   });
 });
+
+describe("typo false positives", () => {
+  it("does not flag valid verbs that sit near another verb", () => {
+    for (const v of ["Extended", "Expanded", "Enhanced", "Enabled"]) {
+      expect(analyzeBullet(`${v} the platform to support more regions and teams`).some((f) => f.id === "typo")).toBe(false);
+    }
+  });
+  it("still catches a one-letter slip", () => {
+    expect(analyzeBullet("Comtributed to the platform redesign across teams").some((f) => f.id === "typo")).toBe(true);
+  });
+});
