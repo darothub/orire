@@ -53,6 +53,8 @@ const DUTY_PHRASES = [
   "accountable for",
 ];
 
+import { isEnglishWord } from "@/lib/cv/spell";
+
 /**
  * Curated CV action-verb lexicon (correctly spelled, British + American where
  * they differ). Used two ways: an opener in here is accepted; an opener NOT in
@@ -73,6 +75,30 @@ const ACTION_VERBS = new Set([
   "generated","produced","wrote","authored","published","edited","translated","taught","advised","consulted",
   "supervised","hired","recruited","onboarded","promoted","transformed","overhauled","revamped","championed",
   "drove","handled","administered","operated","executed","achieved","exceeded","surpassed","earned","awarded",
+  "extended","expanded","enhanced","enabled","enforced","enriched","ensured","elevated","eliminated","empowered",
+  "expedited","explored","exported","fostered","fixed","formulated","gathered","guided","identified","influenced",
+  "inspected","installed","instituted","instructed","invented","investigated","joined","judged","kickstarted",
+  "leveraged","liaised","localized","localised","mapped","mastered","mediated","merged","mobilized","mobilised",
+  "monitored","motivated","navigated","orchestrated","outperformed","partnered","performed","prepared","processed",
+  "programmed","prototyped","provided","reconciled","reengineered","refined","rehabilitated","remodeled","renewed",
+  "reorganized","reorganised","replaced","reported","represented","restored","restructured","retained","reviewed",
+  "revised","rewrote","scripted","selected","served","settled","shaped","sourced","staffed","stabilized","stabilised",
+  "strengthened","structured","succeeded","summarized","summarised","supplied","surveyed","sustained","synthesized",
+  "systematized","targeted","tracked","traded","unified","upgraded","utilized","utilised","verified","visualized",
+  "widened","wired","expanded","adapted","adopted","aligned","allocated","amplified","applied","appointed","approved",
+  "assembled","assessed","assigned","attained","balanced","benchmarked","booked","bridged","calculated","captured",
+  "catalogued","chaired","clarified","cleared","combined","compiled","completed","composed","conceived","conducted",
+  "controlled","converted","corrected","counseled","counselled","crafted","cultivated","customized","customised",
+  "decreased","defined","demonstrated","derived","detected","determined","devised","distributed","diversified",
+  "drafted","drove","educated","enacted","encouraged","enlarged","entered","equipped","expanded","finalized","finalised",
+  "forged","formalized","formalised","generated","halved","harnessed","highlighted","honed","illustrated","inspired",
+  "instrumented","interpreted","interviewed","juggled","labeled","labelled","lifted","linked","logged","managed",
+  "marketed","matched","merged","minimised","negotiated","nurtured","observed","obtained","orchestrated","outlined",
+  "packaged","paired","piloted","pitched","populated","positioned","predicted","preserved","prevented","profiled",
+  "projected","proposed","proved","proven","qualified","ranked","rated","reached","realigned","rebranded","recovered",
+  "redefined","reduced","reinforced","relaunched","remediated","rescued","reshaped","resolved","revitalized","revitalised",
+  "scaled","screened","sharpened","simulated","sold","solved","sparked","specified","sponsored","steered","stored",
+  "stretched","tailored","tripled","doubled","tuned","uncovered","unlocked","updated","upskilled","validated","won",
 ]);
 
 /**
@@ -160,7 +186,9 @@ export function analyzeBullet(text: string): CoachFlag[] {
   // The first token, letters only — but skip compounds/hyphenated/non-alpha.
   const firstTokenRaw = h.split(/\s+/)[0] ?? "";
   const opener = /^[a-z]+$/.test(firstTokenRaw) ? firstTokenRaw : "";
-  if (!openerFlagged && opener.length >= 4 && !VERB_VOCAB.has(opener)) {
+  // Typo only when the dictionary confirms the word isn't English at all;
+  // the verb list merely supplies the suggested correction.
+  if (!openerFlagged && opener.length >= 4 && !VERB_VOCAB.has(opener) && isEnglishWord(opener) === false) {
     const near = nearestActionVerb(opener);
     const threshold = opener.length >= 7 ? 2 : 1;
     if (near && near.dist > 0 && near.dist <= threshold) {
@@ -171,16 +199,8 @@ export function analyzeBullet(text: string): CoachFlag[] {
         severity: "warn",
         suggest: near.word,
       });
-    } else {
-      flags.push({
-        id: "odd-verb",
-        label: "Unusual opener",
-        hint: "This isn’t a standard CV action verb — try Led, Built, Drove, Delivered…",
-        severity: "info",
-      });
     }
   }
-
 
   if (substantive && !METRIC_RE.test(trimmed)) {
     flags.push({
