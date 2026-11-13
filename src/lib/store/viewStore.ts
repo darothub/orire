@@ -37,3 +37,21 @@ export const useViewStore = create<ViewState>((set, get) => ({
   },
   clearFocus: () => set({ focus: null }),
 }));
+
+const KEY = "orire:view";
+
+/** Remember the open workspace so a browser refresh lands back on it. */
+export function persistView(v: WorkspaceView): void {
+  try {
+    sessionStorage.setItem(KEY, v);
+  } catch {}
+}
+
+export function restoreView(): WorkspaceView | null {
+  try {
+    const v = sessionStorage.getItem(KEY) as WorkspaceView | null;
+    return v && ORDER.includes(v) && v !== "create" ? v : null;
+  } catch {
+    return null;
+  }
+}
