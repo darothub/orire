@@ -23,7 +23,7 @@ export function PricingView() {
           <Link className="landing-ghost" href="/">← Back to Orire</Link>
         </div>
       </header>
-      <main id="main-content">
+      <main id="main-content" className="landing-main">
         <section id="pricing" className="landing-section landing-pricing" aria-label="Pricing">
           <div className="landing-about-head">
             <span className="landing-eyebrow">Simple, honest pricing</span>
