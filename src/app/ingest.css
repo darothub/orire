@@ -2995,3 +2995,21 @@ button.sim-chip { cursor: pointer; font: inherit; font-size: 12px; }
 
 .ed-suggest-rm { border-color: rgba(240,138,138,0.35); background: linear-gradient(120deg, rgba(240,138,138,0.08), rgba(240,138,138,0.03)); }
 .ed-suggest-del:hover { background: rgba(240,138,138,0.16); color: #f08a8a; }
+
+.resume-overlay {
+  display: none; position: fixed; inset: 0; z-index: 9999;
+  align-items: center; justify-content: center; gap: 12px;
+  background: var(--bg, #0b0d14); color: var(--text, #e7ebf3); font-size: 14px;
+}
+html[data-resume="1"] .resume-overlay { display: flex; }
+.resume-spin {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--line-2, #2a3142); border-top-color: var(--accent, #17b892);
+  animation: resume-spin 0.8s linear infinite;
+}
+@keyframes resume-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .resume-spin { animation: none; } }
+.ed-suggest-all { font-weight: 600; color: var(--text, #e7ebf3); }
+.ed-suggest-clear.ed-suggest-del:hover { color: #f08a8a; }
+.ed-suggest-struck { opacity: 0.7; }
+.ed-suggest-struck s { text-decoration-thickness: 1.5px; }
