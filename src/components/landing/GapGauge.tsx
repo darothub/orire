@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function useCountUp(target: number, run: boolean) {
   const [v, setV] = useState(0);
   useEffect(() => {
-    if (!run) return;
+    if (!run) {
+      const id = requestAnimationFrame(() => setV(0));
+      return () => cancelAnimationFrame(id);
+    }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       const id = requestAnimationFrame(() => setV(target));
       return () => cancelAnimationFrame(id);
@@ -30,14 +33,19 @@ const AFTER = { score: 91 };
 /** Illustrative before/after match score — the promise of Simulate → Coach → Rewrite in one glance. */
 export function GapGauge() {
   const [on, setOn] = useState(false);
+  const ref = useRef<HTMLElement>(null);
+  // Replay every time the gauge scrolls into view; reset when it leaves.
   useEffect(() => {
-    const id = requestAnimationFrame(() => setOn(true));
-    return () => cancelAnimationFrame(id);
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => setOn(entry.isIntersecting), { threshold: 0.4 });
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
   const before = useCountUp(BEFORE.score, on);
   const after = useCountUp(AFTER.score, on);
   return (
-    <figure className="gx-gauge" aria-label="Illustrative match score before and after">
+    <figure ref={ref} className="gx-gauge" aria-label="Illustrative match score before and after">
       <div className="gx-gauge-col is-before">
         <span className="gx-gauge-k">Your CV · today</span>
         <p className="gx-gauge-n">{before}<small>% match</small></p>
