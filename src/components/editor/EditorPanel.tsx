@@ -269,6 +269,7 @@ function HighlightItem({
         <div className="ed-bullet-btns">
           <button
             className="ed-improve"
+            aria-busy={busy}
             onClick={() => void improve()}
             disabled={busy || !canReview}
             title={
@@ -277,7 +278,9 @@ function HighlightItem({
                 : "AI contextual review is a Pro/Career feature — opens plans"
             }
           >
-            {busy ? "…" : canAiReview ? "✨ Improve" : "✨ Improve · Pro"}
+            {busy ? (
+              <><span className="ed-spark" aria-hidden>✨</span> Improving…</>
+            ) : canAiReview ? "✨ Improve" : "✨ Improve · Pro"}
           </button>
           <button className="ed-mini" onClick={onRemove} aria-label="Remove highlight">
             ✕
