@@ -34,6 +34,7 @@ import { useUIStore, readPendingPlanIntent } from "@/lib/store/uiStore";
 import { useCVStore } from "@/lib/store/cvStore";
 import { VIEW_META, ACCOUNT_VIEWS } from "@/lib/store/viewMeta";
 import { useSession } from "next-auth/react";
+import { clearResumeOverlay } from "@/lib/resume";
 import { persistView, restoreView, useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { targetMatch } from "@/lib/ai/simulate";
@@ -292,6 +293,7 @@ export default function WorkspaceApp() {
     restored.current = true;
     const saved = restoreView();
     if (saved) setView(saved);
+    requestAnimationFrame(() => requestAnimationFrame(clearResumeOverlay));
   }, [setView]);
   useEffect(() => {
     if (restored.current) persistView(view);

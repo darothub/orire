@@ -102,6 +102,8 @@ interface CVState {
   clearSkillSuggestions: () => void;
   /** Remove a skill from every group (accepting a "suggested for removal"). */
   removeSkill: (skill: string) => void;
+  /** Put a removed skill back into its category, recreating the group if it was dropped. */
+  restoreSkill: (skill: string, category: string) => void;
   clearIgnoredSkills: () => void;
   /** Reveal/seed a section the ideal has (one empty item so it shows in the editor). */
   addSuggestedSection: (key: SectionKey) => void;
@@ -333,9 +335,22 @@ export const useCVStore = create<CVState>()(
           return {
             cv: {
               ...s.cv,
-              skills: s.cv.skills.map((g) => ({ ...g, items: g.items.filter((i) => i.trim().toLowerCase() !== k) })),
+              skills: s.cv.skills
+                .map((g) => ({ ...g, items: g.items.filter((i) => i.trim().toLowerCase() !== k) }))
+                .filter((g, i) => g.items.length > 0 || s.cv.skills[i].items.length === 0),
             },
           };
+        }),
+      restoreSkill: (skill, category) =>
+        set((s) => {
+          const value = skill.trim();
+          if (!value || s.cv.skills.some((g) => g.items.some((i) => i.trim().toLowerCase() === value.toLowerCase()))) return {};
+          const cat = category.trim().toLowerCase();
+          const home = s.cv.skills.find((g) => g.category.trim().toLowerCase() === cat);
+          const skills = home
+            ? s.cv.skills.map((g) => (g === home ? { ...g, items: [...g.items, value] } : g))
+            : [...s.cv.skills, { ...emptySkillGroup(), category, items: [value] }];
+          return { cv: { ...s.cv, skills } };
         }),
       clearSkillSuggestions: () =>
         set((s) => {

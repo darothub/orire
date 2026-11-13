@@ -5,7 +5,8 @@ import { funnel } from "@/lib/analytics/funnel";
 
 import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { gapAnalysis } from "@/lib/ai/simulate";
 import { useSession } from "next-auth/react";
 import { useUIStore } from "@/lib/store/uiStore";
 import { AutoTextarea } from "./AutoTextarea";
@@ -433,9 +434,26 @@ export function EditorPanel() {
   const ideal = useTargetStore((t) => t.ideal);
   const jd = useTargetStore((t) => t.jd);
   const [keptSkills, setKeptSkills] = useState<string[]>([]);
+  const [removedSkills, setRemovedSkills] = useState<{ skill: string; category: string }[]>([]);
   const removals = ideal
     ? removableSkills(cv.skills, ideal.skills, jd).filter((x) => !keptSkills.some((k) => k.toLowerCase() === x.toLowerCase()))
     : [];
+  const categoryOf = (sk: string) =>
+    cv.skills.find((g) => g.items.some((i) => i.trim().toLowerCase() === sk.toLowerCase()))?.category ?? "Skills";
+  const removeSkills = (list: string[]) => {
+    const recs = list.map((skill) => ({ skill, category: categoryOf(skill) }));
+    list.forEach((sk) => s.removeSkill(sk));
+    setRemovedSkills((r) => [...r.filter((x) => !list.includes(x.skill)), ...recs]);
+  };
+  const restoreSkill = (rec: { skill: string; category: string }) => {
+    s.restoreSkill(rec.skill, rec.category);
+    setRemovedSkills((r) => r.filter((x) => x.skill !== rec.skill));
+  };
+  // Keep the "suggested from the ideal match" chips live wherever the editor opens.
+  const setSkillSuggestions = s.setSkillSuggestions;
+  useEffect(() => {
+    if (ideal) setSkillSuggestions(gapAnalysis(cv, ideal).missingSkills, ideal.skills);
+  }, [cv, ideal, setSkillSuggestions]);
   const announce = setAnnouncement;
 
   return (
@@ -568,6 +586,7 @@ export function EditorPanel() {
                     Reset ignored ({s.ignoredSkills.length})
                   </button>
                 )}
+                <button className="ed-suggest-clear ed-suggest-all" onClick={() => [...s.skillSuggestions].forEach((sk) => s.acceptSkillSuggestion(sk))}>Add all</button>
                 <button className="ed-suggest-clear" onClick={s.clearSkillSuggestions}>Dismiss all</button>
               </div>
             </div>
@@ -600,11 +619,18 @@ export function EditorPanel() {
             ))}
           </div>
         )}
-        {removals.length > 0 && (
+        {(removals.length > 0 || removedSkills.length > 0) && (
           <div className="ed-suggest ed-suggest-rm">
             <div className="ed-suggest-head">
               <span className="ed-suggest-title">Suggested for removal</span>
-              <button className="ed-suggest-clear" onClick={() => setKeptSkills((k) => [...k, ...removals])}>Keep all</button>
+              <div className="ed-suggest-actions">
+                {removals.length > 0 && (
+                  <button className="ed-suggest-clear ed-suggest-all ed-suggest-del" onClick={() => removeSkills(removals)}>Remove all</button>
+                )}
+                {removals.length > 0 && (
+                  <button className="ed-suggest-clear" onClick={() => setKeptSkills((k) => [...k, ...removals])}>Keep all</button>
+                )}
+              </div>
             </div>
             <p className="ed-suggest-note">Not in the ideal match or the job description — removing them sharpens focus on the role.</p>
             <div className="ed-suggest-chips">
@@ -619,9 +645,16 @@ export function EditorPanel() {
                     transition={{ duration: 0.18 }}
                     className="ed-suggest-chip"
                   >
-                    <button className="ed-suggest-add ed-suggest-del" onClick={() => s.removeSkill(sk)} title="Remove from your CV">− {sk}</button>
+                    <button className="ed-suggest-add ed-suggest-del" onClick={() => removeSkills([sk])} title="Remove from your CV">− {sk}</button>
                     <button className="ed-suggest-x" onClick={() => setKeptSkills((k) => [...k, sk])} aria-label={`Keep ${sk}`} title="Keep this skill">×</button>
                   </motion.span>
+                ))}
+                {removedSkills.map((rec) => (
+                  <span key={`rm-${rec.skill}`} className="ed-suggest-chip ed-suggest-struck">
+                    <button className="ed-suggest-add" onClick={() => restoreSkill(rec)} title={`Add back to ${rec.category}`}>
+                      <s>{rec.skill}</s>
+                    </button>
+                  </span>
                 ))}
               </AnimatePresence>
             </div>
