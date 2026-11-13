@@ -8,10 +8,9 @@ import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
-import { AiStudioHero } from "@/components/landing/AiStudioHero";
+import { GapGauge } from "@/components/landing/GapGauge";
 import { landingPlans } from "@/components/landing/pricing";
-import { HowStudio } from "@/components/landing/HowStudio";
-import { beforeAfterLines } from "@/components/landing/beforeAfter";
+import { TailorTrio } from "@/components/landing/TailorTrio";
 import dynamic from "next/dynamic";
 
 // Keep the fictional demo in a separate client chunk instead of bundling its
@@ -89,11 +88,12 @@ export function Landing() {
             <div className="lx-hero-copy">
               <span className="lx-pill"><i aria-hidden="true" />AI-powered CV studio</span>
               <h1 className="lx-title">
-                Let AI turn your experience into a CV that <em>stands out.</em>
+                Measure the gap to the job. <em>Then close it</em> — honestly.
               </h1>
               <p className="lx-sub">
-                Orire reads the job, rewrites your wording to fit it, and lays it out in a
-                designer template. Your facts stay yours. You approve every word.
+                Paste a job description. Orire benchmarks your CV against a perfect-match candidate,
+                interviews you for what&apos;s missing, and rewrites in the role&apos;s voice — without
+                inventing a single fact.
               </p>
               <div className="lx-cta-row">
                 <button className="lx-cta" disabled={!ready} onClick={() => startSignup("hero")}>
@@ -103,35 +103,23 @@ export function Landing() {
                   Try it as a guest
                 </button>
               </div>
-              <p className="lx-note">Free to start · No card required · Try it before you sign up</p>
+              <p className="lx-note">Free to start · No card required · Your first simulation is free</p>
               <p className="lx-trust">
                 <span className="lx-faces" aria-hidden="true"><i /><i /><i /><i /></span>
                 Trusted by job seekers worldwide
               </p>
             </div>
-            <AiStudioHero />
-          </div>
-          <div className="lx-marquee" aria-hidden="true">
-            <div className="lx-marquee-track">
-              {[0, 1].map((k) => (
-                <span key={k}>
-                  <b>Tailor to any job</b><b>Role-match guidance</b><b>Rewrite weak bullets</b>
-                  <b>{TEMPLATE_COUNT} templates</b><b>PDF &amp; DOCX in</b><b>Side-by-side assistants</b>
-                </span>
-              ))}
-            </div>
+            <GapGauge />
           </div>
         </section>
 
         <section id="how" className="landing-section landing-how landing-how-compact" aria-label="How it works">
-          <motion.div
-            className="landing-motion-reveal landing-about-head"
-            {...reveal()}
-          >
-            <span className="landing-eyebrow">How it works</span>
-            <h2 className="landing-h2">From rough notes to a CV that lands interviews</h2>
+          <motion.div className="landing-motion-reveal landing-about-head" {...reveal()}>
+            <span className="landing-eyebrow">Three instruments, one loop</span>
+            <h2 className="landing-h2">Diagnose. Interview. Polish.</h2>
+            <p className="landing-about-lead">Each stands alone. Run them in order for a guided path, or jump to the one you need.</p>
           </motion.div>
-          <HowStudio />
+          <TailorTrio />
         </section>
 
         <section id="templates" className="landing-section landing-gallery" aria-labelledby="landing-gallery-heading">
@@ -167,40 +155,6 @@ export function Landing() {
             ))}
           </div>
           <p className="landing-gallery-more"><Link href="/templates">View all {TEMPLATE_COUNT} templates →</Link></p>
-        </section>
-
-        <section className="landing-section landing-ba" aria-label="Before and after writing examples">
-          <motion.div
-            className="landing-motion-reveal landing-about-head"
-            {...reveal()}
-          >
-            <span className="landing-eyebrow">Same facts, sharper story</span>
-            <h2 className="landing-h2">See how clearer writing strengthens your experience.</h2>
-            <p className="landing-about-lead">
-              Orire never invents experience — it re-frames what you already did
-              into outcome-led lines a recruiter can&apos;t skim past. The
-              before/after examples are illustrative; you provide the real figures.
-            </p>
-          </motion.div>
-          <ul className="landing-ba-list">
-            {beforeAfterLines().map((line, i) => (
-              <motion.li
-                key={line.after}
-                className="landing-motion-reveal landing-ba-row" tabIndex={0}
-                {...reveal(16, i * 0.08, 0.3)}
-              >
-                <span className="landing-ba-before">
-                  <span className="landing-ba-tag" aria-hidden>Before</span>
-                  {line.before}
-                </span>
-                <span className="landing-ba-arrow" aria-hidden>→</span>
-                <span className="landing-ba-after">
-                  <span className="landing-ba-tag" aria-hidden>After</span>
-                  {line.after}
-                </span>
-              </motion.li>
-            ))}
-          </ul>
         </section>
 
         <LiveDemo />
