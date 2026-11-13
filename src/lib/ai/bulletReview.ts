@@ -51,9 +51,36 @@ Return ONLY this JSON (no markdown, no prose):
   "suggestion": string
 }`;
 
-export function buildBulletReviewPrompt(text: string, role?: string): string {
+/** Advice the editor already shows under the bullet; Improve must act on it. */
+export interface BulletAdvice {
+  label: string;
+  hint: string;
+}
+
+export function buildBulletReviewPrompt(text: string, role?: string, advice: BulletAdvice[] = []): string {
   const ctx = role?.trim() ? `Role/context: ${role.trim()}\n` : "";
-  return `${ctx}Bullet to review:\n"""${text.trim()}"""\n\nReturn the JSON review.`;
+  const todo = advice.length
+    ? `\nThe candidate was already shown this advice and expects the rewrite to apply ALL of it:\n${advice
+        .map((a) => `- ${a.label}: ${a.hint}`)
+        .join("\n")}\nYour "suggestion" MUST be a non-empty rewrite that resolves each item above while keeping the original facts. ` +
+      `Where the advice asks for a metric the bullet does not contain, do NOT invent one: insert a clear bracketed placeholder such as "[X%]" or "[N users]" for the candidate to fill in. ` +
+      `Where the advice says it is too long, tighten it to one line. Your issues list may add further points, but the rewrite must still address the advice above.\n`
+    : "";
+  return `${ctx}Bullet to review:\n"""${text.trim()}"""\n${todo}\nReturn the JSON review.`;
+}
+
+/** Coerce untrusted client advice into a short, bounded list. */
+export function sanitizeAdvice(raw: unknown): BulletAdvice[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((a) => {
+      const o = a as Record<string, unknown>;
+      const label = typeof o?.label === "string" ? o.label.trim().slice(0, 80) : "";
+      const hint = typeof o?.hint === "string" ? o.hint.trim().slice(0, 240) : "";
+      return label || hint ? { label, hint } : null;
+    })
+    .filter((x): x is BulletAdvice => x !== null)
+    .slice(0, 8);
 }
 
 const VERDICTS: BulletVerdict[] = ["strong", "ok", "weak"];

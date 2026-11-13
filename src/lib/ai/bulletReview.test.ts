@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseBulletReview, groundSuggestion, numbersIn } from "./bulletReview";
+import { parseBulletReview, groundSuggestion, numbersIn, buildBulletReviewPrompt, sanitizeAdvice } from "./bulletReview";
 
 describe("parseBulletReview", () => {
   it("parses a well-formed review", () => {
@@ -36,5 +36,21 @@ describe("groundSuggestion (fact-grounding guard)", () => {
 
   it("numbersIn extracts digit tokens", () => {
     expect(numbersIn("Saved $120k and cut 30% over 2 years")).toEqual(["120", "30", "2"]);
+  });
+});
+
+describe("advice-aware prompt", () => {
+  it("tells the model to apply the shown advice and use placeholders, not invented numbers", () => {
+    const p = buildBulletReviewPrompt("Managed team", undefined, [{ label: "No metric", hint: "Quantify the impact." }]);
+    expect(p).toContain("No metric: Quantify the impact.");
+    expect(p).toContain("MUST be a non-empty rewrite");
+    expect(p).toContain("[X%]");
+  });
+  it("omits the advice block when there is none", () => {
+    expect(buildBulletReviewPrompt("Led team")).not.toContain("advice");
+  });
+  it("sanitizes untrusted advice", () => {
+    expect(sanitizeAdvice("x")).toEqual([]);
+    expect(sanitizeAdvice([{ label: "A", hint: "b" }, 5, {}])).toEqual([{ label: "A", hint: "b" }]);
   });
 });

@@ -19,6 +19,7 @@ import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import {
   BULLET_REVIEW_SYSTEM,
   buildBulletReviewPrompt,
+  sanitizeAdvice,
   parseBulletReview,
   groundSuggestion,
   type BulletReview,
@@ -34,6 +35,7 @@ export const runtime = "nodejs";
 interface Body {
   text?: string;
   role?: string;
+  advice?: unknown;
 }
 
 type Resp = { ok: true; review: BulletReview } | { ok: false; error: string };
@@ -54,6 +56,7 @@ export async function POST(req: Request) {
   }
   const text = (body.text ?? "").trim();
   if (!text) return json("Nothing to review.", 400);
+  const advice = sanitizeAdvice(body.advice);
   const sizeErr = validateInputSize({ text });
   if (sizeErr) return json(sizeErr, 413);
 
@@ -82,7 +85,7 @@ export async function POST(req: Request) {
     } else {
       const served = await runRoutedWithFailover("bullet-review", {
         system: BULLET_REVIEW_SYSTEM,
-        user: buildBulletReviewPrompt(text, body.role),
+        user: buildBulletReviewPrompt(text, body.role, advice),
         opts: { ...DETERMINISTIC, maxTokens: 700 },
       });
       if (!served.call.ok) return json(served.call.body);
