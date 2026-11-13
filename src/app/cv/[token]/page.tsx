@@ -13,7 +13,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { token } = await params;
   const shared = await getSharedCV(token);
-  const title = shared ? `${shared.name} — CV` : "Shared CV";
+  const title = shared ? `${shared.name} · CV` : "Shared CV";
   return privateMetadata(title);
 }
 

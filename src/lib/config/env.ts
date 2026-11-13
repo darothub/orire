@@ -93,7 +93,7 @@ export function checkEnv(env: EnvRecord = process.env): EnvCheckResult {
   // it just silently never sends. That's safe, but easy to miss, so warn.
   if (env.NODE_ENV === "production" && !has(env, "CRON_SECRET")) {
     warnings.push(
-      "CRON_SECRET is not set; the activation-nudge cron (/api/cron/activation-nudge) will reject every request and never send its emails. Set CRON_SECRET to a random secret — Vercel's own Cron Jobs send it automatically as a Bearer token when it's configured.",
+      "CRON_SECRET is not set; the activation-nudge cron (/api/cron/activation-nudge) will reject every request and never send its emails. Set CRON_SECRET to a random secret, Vercel's own Cron Jobs send it automatically as a Bearer token when it's configured.",
     );
   }
 

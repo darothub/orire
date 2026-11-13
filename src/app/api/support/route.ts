@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
   const inbox = process.env.SUPPORT_INBOX || COMPANY.supportEmail;
   const who = name ? `${name} <${email}>` : email;
-  const subject = `Orire support — ${name || email}`;
+  const subject = `Orire support, ${name || email}`;
   const text = `From: ${who}\n\n${message}`;
   const html = `<p><strong>From:</strong> ${escapeHtml(who)}</p><p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>`;
 

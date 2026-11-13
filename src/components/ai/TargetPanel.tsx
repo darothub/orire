@@ -450,7 +450,7 @@ export function TargetView() {
                 ))}
               </div>
               <p className="tone-hint">
-                Voice only — your employers, dates, numbers, and skills stay exactly as they are. The
+                Voice only, your employers, dates, numbers, and skills stay exactly as they are. The
                 target&apos;s metrics are never borrowed.
               </p>
               <button

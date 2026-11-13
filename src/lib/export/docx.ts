@@ -55,7 +55,7 @@ function experienceBlock(items: ExperienceItem[]): Paragraph[] {
   const out: Paragraph[] = [];
   for (const it of items) {
     const when = dateRange(it.startDate, it.endDate, it.current);
-    const head = [it.role, it.company].filter(Boolean).join(" — ");
+    const head = [it.role, it.company].filter(Boolean).join(", ");
     out.push(
       new Paragraph({
         spacing: { before: 120, after: 0 },
@@ -111,7 +111,7 @@ function projectsBlock(items: ProjectItem[]): Paragraph[] {
   const out: Paragraph[] = [];
   for (const it of items) {
     const when = dateRange(it.startDate, it.endDate);
-    const head = [it.name, it.role].filter(Boolean).join(" — ");
+    const head = [it.name, it.role].filter(Boolean).join(", ");
     out.push(
       new Paragraph({
         spacing: { before: 120, after: 0 },
@@ -206,7 +206,7 @@ export function buildCvDocx(cv: CVData, opts: { watermark?: boolean } = {}): Doc
 
   return new Document({
     creator: "Orire",
-    title: `${b.fullName.trim() || "CV"} — CV`,
+    title: `${b.fullName.trim() || "CV"} · CV`,
     styles: {
       default: {
         document: { run: { font: "Calibri", size: 21 } }, // ~10.5pt

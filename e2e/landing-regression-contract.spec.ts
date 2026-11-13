@@ -2,7 +2,6 @@ import { test, expect } from "./fixtures";
 
 const sections = [
   { name: "How it works", id: "how" },
-  { name: "Templates", id: "templates" },
   { name: "Live demo", id: "demo" },
 ] as const;
 

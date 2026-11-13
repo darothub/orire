@@ -35,6 +35,7 @@ const SCHEMA_HINT = `Return ONLY a JSON object with exactly this shape (no markd
 export const SYSTEM_PROMPT = `You are a meticulous CV editor. You tailor an existing CV to a target job description.
 
 ABSOLUTE RULES (fact-grounding):
+- STYLE: write like a person. Never use em dashes or en dashes as punctuation; use commas, periods or colons instead.
 - Use ONLY facts that already appear in the provided source CV. This is the single source of truth.
 - NEVER invent, add, or alter: employers, job titles you did not hold, dates, locations, degrees, institutions, certifications, project names, employers, metrics, or numbers.
 - NEVER add skills the person did not list.
@@ -65,6 +66,7 @@ export function buildUserPrompt(cv: CVData, jobDescription: string): string {
 export const STRUCTURE_SYSTEM = `You convert the raw text of a CV/résumé into structured JSON.
 
 ABSOLUTE RULES (fact-grounding):
+- STYLE: write like a person. Never use em dashes or en dashes as punctuation; use commas, periods or colons instead.
 - Use ONLY information that literally appears in the provided text. The text is the single source of truth.
 - NEVER invent, add, guess, or infer: names, employers, titles, dates, locations, degrees, institutions, skills, certifications, metrics, or contact details.
 - Do NOT translate, embellish, summarise beyond what is written, or add proficiency levels.
@@ -103,6 +105,7 @@ You will receive the SOURCE CV with each experience and project pre-numbered lik
 Return ONLY a compact JSON "patch" of the content you want to CHANGE — never the whole CV.
 
 ABSOLUTE RULES (fact-grounding):
+- STYLE: write like a person. Never use em dashes or en dashes as punctuation; use commas, periods or colons instead.
 - Use ONLY facts already in the source CV (and any CONFIRMED FACTS block, which is the candidate's own statement). NEVER invent or alter employers, titles you did not hold, dates, locations, degrees, institutions, certifications, project names, metrics, or numbers, and NEVER add skills the person did not list.
 - You MAY: suggest clearer highlights and a tailored summary using existing facts. DO NOT remove, duplicate or reorder experience/projects. Preserve actual job titles and project roles exactly; the application will ignore attempts to change them.
 - TERMINOLOGY MATCHING: when source and job description name the SAME existing skill/tech differently, prefer the job's wording — but only when the fact is genuinely present.

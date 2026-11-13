@@ -43,8 +43,8 @@ function BlockCard({ view, recommended }: { view: WorkspaceView; recommended: bo
         className="spot-card-open"
         onClick={() => setView(locked ? "plans" : view)}
         aria-label={
-          (locked ? `${meta.label} — free limit reached, upgrade to continue` : `Open ${meta.label}`) +
-          (recommended ? " — recommended next" : "")
+          (locked ? `${meta.label}, free limit reached, upgrade to continue` : `Open ${meta.label}`) +
+          (recommended ? ", recommended next" : "")
         }
       >
         <span className="spot-card-icon" aria-hidden><ViewIcon view={view} /></span>
@@ -55,7 +55,7 @@ function BlockCard({ view, recommended }: { view: WorkspaceView; recommended: bo
           </span>
           <span className="spot-card-hint">
             {recommended && <span className="spot-card-next">Recommended next · </span>}
-            {locked ? "Free limit reached — upgrade to Pro." : meta.hint}
+            {locked ? "Free limit reached, upgrade to Pro." : meta.hint}
           </span>
         </span>
       </button>
@@ -114,7 +114,7 @@ export function SpotlightView() {
     status === "authenticated"
       ? firstName ? `Good to see you, ${firstName}.` : "Welcome back."
       : started
-        ? "Welcome back — your draft is saved on this device."
+        ? "Welcome back, your draft is saved on this device."
         : "Welcome to Orire. Build your CV free; sign up only for AI or to export.";
 
   return (
@@ -137,7 +137,7 @@ export function SpotlightView() {
       <section className="spot-studio-next" aria-label="Continue your CV">
         <div>
           <h3>{started ? "Continue your CV" : "Start your first CV"}</h3>
-          <p>{started ? `Pick up where you left off${currentName ? ` — ${currentName}` : ""}. Your existing edits remain in your workspace.` : "Add your experience, choose a template and see the live preview as you work."}</p>
+          <p>{started ? `Pick up where you left off${currentName ? `, ${currentName}` : ""}. Your existing edits remain in your workspace.` : "Add your experience, choose a template and see the live preview as you work."}</p>
         </div>
         <div className="spot-studio-actions">
           <button type="button" className="flow-btn primary" onClick={() => setView("edit")}>{started ? "Continue editing →" : "Create your CV →"}</button>

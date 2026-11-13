@@ -96,8 +96,8 @@ export function PlanPanel() {
         const params = new URLSearchParams(window.location.search);
         const flag = params.get("billing");
         if (flag) {
-          if (flag === "success") setNotice("Subscription active — welcome aboard.");
-          else if (flag === "cancelled") setNotice("Checkout cancelled — no changes made.");
+          if (flag === "success") setNotice("Subscription active, welcome aboard.");
+          else if (flag === "cancelled") setNotice("Checkout cancelled, no changes made.");
           else if (flag === "processing") setNotice("Finishing up your subscription…");
           else if (flag === "card") setNotice("Card updated.");
           params.delete("billing");
@@ -122,7 +122,7 @@ export function PlanPanel() {
     if (r.ok) {
       await refresh();
       const end = formatBillingDate(billing?.renewsAt ?? null);
-      setNotice(end ? `Cancellation scheduled — access continues until ${end}.` : "Cancellation scheduled.");
+      setNotice(end ? `Cancellation scheduled, access continues until ${end}.` : "Cancellation scheduled.");
     } else {
       setNotice(r.error ?? "Could not cancel.");
     }
@@ -135,7 +135,7 @@ export function PlanPanel() {
     const r = await resumeSubscription();
     if (r.ok) {
       await refresh();
-      setNotice("Subscription resumed — your plan will keep renewing.");
+      setNotice("Subscription resumed, your plan will keep renewing.");
     } else {
       setNotice(r.error ?? "Could not resume.");
     }
@@ -221,11 +221,11 @@ export function PlanPanel() {
         <span className="conn-hint">
           {signedIn
             ? useStripe
-              ? "Subscribe, switch, cancel or update your card right here — no redirects."
-              : "Switch instantly to try each tier’s limits — enforced server-side against your account."
+              ? "Subscribe, switch, cancel or update your card right here, no redirects."
+              : "Switch instantly to try each tier’s limits, enforced server-side against your account."
             : "Sign in to save your plan. Switching here is a local trial until you do."}
           {" "}Premium models are included on Career; Free and Pro run on budget and mid-tier
-          models — that’s what keeps the flat price sustainable.
+          models, that’s what keeps the flat price sustainable.
         </span>
       </div>
 
@@ -271,7 +271,7 @@ export function PlanPanel() {
               <div className="plan-subline is-warn">
                 {(() => {
                   const end = formatBillingDate(billing.renewsAt);
-                  return end ? `Cancels on ${end} — you keep access until then.` : "Cancellation scheduled.";
+                  return end ? `Cancels on ${end}, you keep access until then.` : "Cancellation scheduled.";
                 })()}
               </div>
             ) : (

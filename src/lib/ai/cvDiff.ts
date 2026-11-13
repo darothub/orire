@@ -58,7 +58,7 @@ export function diffCv(before: CVData, after: CVData): CvChange[] {
     const b = before.experience[i];
     const a = after.experience[i];
     if (!sameLines(b.highlights, a.highlights)) {
-      const label = `Experience — ${[a.role || b.role, a.company || b.company].filter(Boolean).join(", ")}`;
+      const label = `Experience, ${[a.role || b.role, a.company || b.company].filter(Boolean).join(", ")}`;
       changes.push({ id: `exp:${i}`, kind: "experience", label, before: b.highlights, after: a.highlights });
     }
   }
@@ -68,7 +68,7 @@ export function diffCv(before: CVData, after: CVData): CvChange[] {
     const b = before.projects[i];
     const a = after.projects[i];
     if (!sameLines(b.highlights, a.highlights)) {
-      const label = `Project — ${a.name || b.name}`;
+      const label = `Project, ${a.name || b.name}`;
       changes.push({ id: `prj:${i}`, kind: "project", label, before: b.highlights, after: a.highlights });
     }
   }

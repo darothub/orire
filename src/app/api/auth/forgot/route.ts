@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
   if (!user.passwordHash) {
     return NextResponse.json(
-      { error: "This account signs in with Google — use “Continue with Google” instead." },
+      { error: "This account signs in with Google, use “Continue with Google” instead." },
       { status: 409 },
     );
   }

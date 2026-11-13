@@ -45,7 +45,7 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
   const { status } = useSession();
   const openAuth = useUIStore((s) => s.openAuth);
   const guestReason = status === "unauthenticated" ? ACCOUNT_VIEWS[item] : undefined;
-  const hint = guestReason ? `${guestReason} (free).` : locked ? "Free limit reached — upgrade to Pro to keep using this." : meta.hint;
+  const hint = guestReason ? `${guestReason} (free).` : locked ? "Free limit reached, upgrade to Pro to keep using this." : meta.hint;
   return (
     <Tooltip title={meta.label} hint={hint} placement="right">
       <button
@@ -57,7 +57,7 @@ function RailButton({ item, badge }: { item: WorkspaceView; badge?: Badge }) {
           if (guestReason) openAuth("signup", null, guestReason);
           else setView(locked ? "plans" : item);
         }}
-        aria-label={locked ? `${meta.label} — free limit reached, upgrade to continue` : guestReason ? `${meta.label} — needs a free account` : meta.label}
+        aria-label={locked ? `${meta.label}, free limit reached, upgrade to continue` : guestReason ? `${meta.label}, needs a free account` : meta.label}
         aria-current={active ? "page" : undefined}
       >
         {active && (
@@ -136,7 +136,7 @@ export function WorkspaceRail() {
         className={`rail-brand rail-home${view === "spotlight" ? " is-active" : ""}`}
         data-tour="rail-home"
         onClick={() => setView("spotlight")}
-        title="Home — your building blocks"
+        title="Home, your building blocks"
         aria-label="Home"
         aria-current={view === "spotlight" ? "page" : undefined}
       >

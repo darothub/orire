@@ -23,7 +23,7 @@ export async function generateMetadata({
   if (!info) return {};
   const copy = getTemplateCopy(id);
   return publicMetadata(
-    `${info.name} — CV template | Orire`,
+    `${info.name}: CV template | Orire`,
     copy?.summary ?? info.blurb,
     `/templates/${id}`,
   );

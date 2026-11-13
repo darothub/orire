@@ -123,7 +123,7 @@ test("Studio still routes exhausted Simulate access to Plans", async ({ page, db
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForShell(page);
     await page.getByRole("button", { name: "Open Tailor →", exact: true }).click();
-    await page.getByRole("button", { name: "Simulate — free limit reached, upgrade to continue", exact: true }).click();
+    await page.getByRole("button", { name: "Simulate, free limit reached, upgrade to continue", exact: true }).click();
     await expect(page.locator(".plan-panel")).toBeVisible();
   } finally {
     await page.context().close();

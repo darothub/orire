@@ -24,8 +24,8 @@ export const EVIDENCE_QUESTIONS: {
   placeholder: string;
 }[] = [
   { key: "action", label: "What did you do?", placeholder: "e.g. Reworked how new customers get onboarded" },
-  { key: "scale", label: "How big was it?", placeholder: "People, clients, projects, budget, volume — e.g. 200 clients, team of 6" },
-  { key: "result", label: "What changed, and by roughly how much?", placeholder: "Time saved, cost cut, revenue, quality, speed — e.g. onboarding went from 10 days to 6" },
+  { key: "scale", label: "How big was it?", placeholder: "People, clients, projects, budget, volume, e.g. 200 clients, team of 6" },
+  { key: "result", label: "What changed, and by roughly how much?", placeholder: "Time saved, cost cut, revenue, quality, speed, e.g. onboarding went from 10 days to 6" },
   { key: "timeframe", label: "Over what period?", placeholder: "e.g. 6 months, Q3 2024 (optional)" },
 ];
 

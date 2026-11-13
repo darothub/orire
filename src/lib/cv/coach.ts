@@ -177,7 +177,7 @@ export function analyzeBullet(text: string): CoachFlag[] {
     flags.push({
       id: "weak-verb",
       label: "Weak opener",
-      hint: "Open with a strong action verb — Led, Built, Shipped, Drove, Cut.",
+      hint: "Open with a strong action verb, Led, Built, Shipped, Drove, Cut.",
       severity: "warn",
     });
     openerFlagged = true;
@@ -195,7 +195,7 @@ export function analyzeBullet(text: string): CoachFlag[] {
       flags.push({
         id: "typo",
         label: "Possible typo",
-        hint: `“${cap(opener)}” looks misspelled — did you mean “${cap(near.word)}”?`,
+        hint: `“${cap(opener)}” looks misspelled, did you mean “${cap(near.word)}”?`,
         severity: "warn",
         suggest: near.word,
       });
@@ -206,7 +206,7 @@ export function analyzeBullet(text: string): CoachFlag[] {
     flags.push({
       id: "no-metric",
       label: "No metric",
-      hint: "Quantify the impact — a number, %, amount or time saved.",
+      hint: "Quantify the impact, a number, %, amount or time saved.",
       severity: "info",
     });
   }
@@ -215,7 +215,7 @@ export function analyzeBullet(text: string): CoachFlag[] {
     flags.push({
       id: "first-person",
       label: "First person",
-      hint: "CV bullets drop “I/my” — start straight with the action verb.",
+      hint: "CV bullets drop “I/my”, start straight with the action verb.",
       severity: "warn",
     });
   }
@@ -224,7 +224,7 @@ export function analyzeBullet(text: string): CoachFlag[] {
     flags.push({
       id: "too-long",
       label: "Too long",
-      hint: "Tighten to one idea — aim for a single readable line.",
+      hint: "Tighten to one idea, aim for a single readable line.",
       severity: "info",
     });
   }

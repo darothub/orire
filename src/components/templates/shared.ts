@@ -20,7 +20,7 @@ export const item: Variants = {
 
 export function dateRange(start?: string, end?: string, current?: boolean) {
   const e = current ? "Present" : end || "";
-  if (start && e) return `${start} — ${e}`;
+  if (start && e) return `${start} to ${e}`;
   return start || e || "";
 }
 

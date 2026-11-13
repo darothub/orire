@@ -30,7 +30,7 @@ export function PricingView() {
             <h1 className="landing-h2">Start free. Choose a plan when you need more.</h1>
             <p className="landing-about-lead">
               Prices are in US dollars (USD). Paid plans renew monthly.
-              Orire includes managed AI usage—no separate AI API key required.
+              Orire includes managed AI usage, no separate AI API key required.
             </p>
           </div>
           <div className="landing-price-grid">

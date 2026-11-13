@@ -32,7 +32,7 @@ export function SimulateProgress({ startedAt, label: fixedLabel, ariaLabel = "Si
         <span className="sim-progress-fill" style={{ width: `${percent}%` }} />
       </div>
       <p className="sim-progress-note">
-        {slow ? "Still working — longer job descriptions take more time." : "Estimated progress. This usually takes under a minute."}
+        {slow ? "Still working, longer job descriptions take more time." : "Estimated progress. This usually takes under a minute."}
       </p>
     </div>
   );

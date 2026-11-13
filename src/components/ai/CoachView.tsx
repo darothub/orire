@@ -305,7 +305,7 @@ export function CoachView() {
         <div className="step-body">
           <GapSummary report={analysis.report} />
           <p className="step-hint">
-            Answer what you can — real numbers and outcomes help most. Only what you type here is added. We can’t verify your answers, so include only what’s true; skip anything you don’t remember.
+            Answer what you can, real numbers and outcomes help most. Only what you type here is added. We can’t verify your answers, so include only what’s true; skip anything you don’t remember.
           </p>
           <div className="coach-questions">
             {analysis.questions.map((q) => (
@@ -323,7 +323,7 @@ export function CoachView() {
                   onChange={(e) => setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))}
                 />
                 {prefilled[q.id] && answers[q.id] === prefilled[q.id] && (
-                  <span className="coach-prefill">From your earlier answer — edit if it has changed.</span>
+                  <span className="coach-prefill">From your earlier answer, edit if it has changed.</span>
                 )}
                 <span className="coach-count" id={`coach-${q.id}-n`}>{(answers[q.id] ?? "").length}/600</span>
               </div>
@@ -371,7 +371,7 @@ export function CoachView() {
             <div className="coach-remaining">
               <strong>Still worth a look</strong>
               <ul>
-                {critique.recruiter.issues.map((i, n) => <li key={n}>{i.problem} — {i.fix}</li>)}
+                {critique.recruiter.issues.map((i, n) => <li key={n}>{i.problem}, {i.fix}</li>)}
                 {critique.ats.parseRisks.map((r, n) => <li key={`p${n}`}>{r}</li>)}
               </ul>
             </div>

@@ -14,7 +14,7 @@ export function PublicWordSample({ compact = false }: { compact?: boolean }) {
     setError(false);
     try {
       const { exportCVtoDocx } = await import("@/lib/export/docx");
-      const ok = await exportCVtoDocx("Orire — fictional CV sample", publicSampleCV);
+      const ok = await exportCVtoDocx("Orire: fictional CV sample", publicSampleCV);
       if (!ok) setError(true);
     } catch {
       setError(true);
@@ -25,7 +25,7 @@ export function PublicWordSample({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="public-word-sample">
-      <button className="public-export-button" type="button" onClick={download} disabled={busy} aria-busy={busy} aria-label={busy ? "Preparing Word…" : compact ? "Sample Word — download fictional CV (.docx)" : "Download fictional Word (.docx) sample"}>
+      <button className="public-export-button" type="button" onClick={download} disabled={busy} aria-busy={busy} aria-label={busy ? "Preparing Word…" : compact ? "Sample Word, download fictional CV (.docx)" : "Download fictional Word (.docx) sample"}>
         {busy ? "Preparing Word…" : compact ? "Sample Word" : "Download fictional Word (.docx) sample"}
       </button>
       {error && <p role="alert">Could not generate the sample. Please try again.</p>}

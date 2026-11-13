@@ -5,8 +5,8 @@ import { TEMPLATE_CATALOG, TEMPLATE_COUNT } from "@/lib/templates/catalog";
 import { PublicExportPanel } from "@/components/templates/PublicExportPanel";
 
 export const metadata = publicMetadata(
-  `CV templates — ${TEMPLATE_COUNT} ATS-ready designs | Orire`,
-  `Browse Orire's ${TEMPLATE_COUNT} CV templates — from minimal and corporate to bold and executive. Pick one, upload your CV, and export an ATS-ready PDF.`,
+  `CV templates: ${TEMPLATE_COUNT} ATS-ready designs | Orire`,
+  `Browse Orire's ${TEMPLATE_COUNT} CV templates, from minimal and corporate to bold and executive. Pick one, upload your CV, and export an ATS-ready PDF.`,
   "/templates",
 );
 
@@ -16,7 +16,7 @@ export default function TemplatesIndex() {
       <Link href="/" className="content-back">← Back to Orire</Link>
       <h1>CV templates</h1>
       <p className="content-lede">
-        {TEMPLATE_CATALOG.length} professionally designed, ATS-ready templates —
+        {TEMPLATE_CATALOG.length} professionally designed, ATS-ready templates,
         from calm and minimal to bold and executive. Pick one, upload the CV you
         already have, and Orire re-lays it into the design, then exports a clean
         PDF. Your facts stay yours; only the presentation changes.

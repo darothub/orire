@@ -17,10 +17,6 @@ import dynamic from "next/dynamic";
 // SSR remains enabled: HTML and page geometry are unchanged.
 const LiveDemo = dynamic(() => import("@/components/landing/LiveDemo").then((m) => m.LiveDemo));
 import { LandingMobileNav } from "@/components/landing/LandingMobileNav";
-import { demoTemplates } from "@/components/landing/demo";
-import { getTemplate } from "@/components/templates/registry";
-import { landingCV } from "@/components/landing/landingCv";
-import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -62,7 +58,7 @@ export function Landing() {
         <div className="landing-nav-actions">
           <nav className="landing-nav-links" aria-label="Sections">
             <a href="#how">How it works</a>
-            <a href="#templates">Templates</a>
+            <Link href="/templates">Templates</Link>
             <a href="#demo">Live demo</a>
             <Link href="/pricing">Pricing</Link>
           </nav>
@@ -87,11 +83,11 @@ export function Landing() {
             <div className="lx-hero-copy">
               <span className="lx-pill"><i aria-hidden="true" />AI-powered CV studio</span>
               <h1 className="lx-title">
-                Measure the gap to the job. <em>Then close it</em> — honestly.
+                Measure the gap to the job. <em>Then close it</em>, honestly.
               </h1>
               <p className="lx-sub">
                 Paste a job description. Orire benchmarks your CV against a perfect-match candidate,
-                interviews you for what&apos;s missing, and rewrites in the role&apos;s voice — without
+                interviews you for what&apos;s missing, and rewrites in the role&apos;s voice, without
                 inventing a single fact.
               </p>
               <div className="lx-cta-row">
@@ -119,41 +115,6 @@ export function Landing() {
             <p className="landing-about-lead">Each stands alone. Run them in order for a guided path, or jump to the one you need.</p>
           </motion.div>
           <TailorTrio />
-        </section>
-
-        <section id="templates" className="landing-section landing-gallery" aria-labelledby="landing-gallery-heading">
-          <div className="landing-about-head">
-            <span className="landing-eyebrow">Designed for your next step</span>
-            <h2 id="landing-gallery-heading" className="landing-h2">Explore real CV templates before signing up.</h2>
-            <p className="landing-about-lead">
-              See how three available Orire templates present the same fictional example CV.
-              Choose a design that fits your experience, then make it your own.
-            </p>
-          </div>
-          <div className="landing-gallery-grid">
-            {demoTemplates().slice(0, 3).map((template) => (
-              <article key={template.id} className="landing-gallery-card">
-                {/* Full templates can contain anchors. Keep the decorative
-                    snapshot inert and outside the card's navigation link. */}
-                <div className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true" inert>
-                  <div className="landing-gallery-real-paper">
-                    <div className="paper landing-gallery-template">
-                      {(() => {
-                        const Preview = getTemplate(template.id).Component;
-                        return <Preview cv={landingCV} />;
-                      })()}
-                    </div>
-                  </div>
-                </div>
-                <h3 className="landing-gallery-name">{template.name}</h3>
-                <p className="landing-gallery-description">{template.blurb}</p>
-                <Link className="landing-gallery-action" href={`/templates/${template.id}`}>
-                  Preview {template.name} template →
-                </Link>
-              </article>
-            ))}
-          </div>
-          <p className="landing-gallery-more"><Link href="/templates">View all {TEMPLATE_COUNT} templates →</Link></p>
         </section>
 
         <LiveDemo />

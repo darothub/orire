@@ -143,6 +143,7 @@ export function analyzeTone(cv: CVData): ToneProfile {
 export const RETONE_SYSTEM = `You are a meticulous CV editor performing a TONE TRANSFER. You rewrite a SOURCE CV so its VOICE matches a target register, WITHOUT importing any facts from the target.
 
 ABSOLUTE RULES (fact-grounding — never broken for style):
+- STYLE: write like a person. Never use em dashes or en dashes as punctuation; use commas, periods or colons instead.
 - Use ONLY facts already in the SOURCE CV. NEVER invent or alter employers, titles the person did not hold, dates, locations, degrees, certifications, project names, metrics, numbers, technologies, or skills.
 - The target tone is given as STYLE EXEMPLARS. They are samples of VOICE ONLY. NEVER copy their numbers, metrics, company names, tools, technologies, or achievements into the source — doing so is a hard failure.
 - Preserve every source bullet's underlying fact and any real figures it already contains. If a source bullet has NO number, do NOT add one.

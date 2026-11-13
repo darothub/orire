@@ -163,7 +163,7 @@ export function CreatorFlow({ mounted }: { mounted: boolean }) {
   };
 
   const person = cv.basics.fullName.trim();
-  const defaultName = useMemo(() => (person ? `${person} — CV` : "My CV"), [person]);
+  const defaultName = useMemo(() => (person ? `${person} · CV` : "My CV"), [person]);
   const [fileName, setFileName] = useState("");
   const saveAs = fileName.trim() || defaultName;
 
@@ -414,7 +414,7 @@ export function CreatorFlow({ mounted }: { mounted: boolean }) {
             <button type="button" className="cr-link" onClick={() => openAuth("signup", null, "Sign up to write your summary with AI")}>
               Write it with AI
             </button>{" "}
-            — free account needed. Totally optional.
+            (free account needed). Totally optional.
           </p>
         </section>
       )}
@@ -444,7 +444,7 @@ export function CreatorFlow({ mounted }: { mounted: boolean }) {
         <section className="cr-card cr-done" aria-label="Download">
           <div className="cr-eyebrow">DONE</div>
           <h2 className="cr-title">Your CV is ready{person ? `, ${person.split(/\s+/)[0]}` : ""}</h2>
-          <p className="cr-sub">Free to download — no account needed, and it doesn’t use any of your plan’s downloads.</p>
+          <p className="cr-sub">Free to download, no account needed, and it doesn’t use any of your plan’s downloads.</p>
           <label className="cr-f">
             <span>File name</span>
             <input value={fileName} placeholder={defaultName} onChange={(e) => setFileName(e.target.value)} />

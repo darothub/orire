@@ -9,7 +9,7 @@ const TABS = [
     kicker: "01 · Simulate · Diagnose",
     title: "See the gap",
     blurb: "Your CV against a synthetic 100% match. Scored, side by side.",
-    caption: "Yours · Ideal · Side by side · Diff — every difference, one click away. The ideal is synthetic: a yardstick, never your CV.",
+    caption: "Yours · Ideal · Side by side · Diff, every difference, one click away. The ideal is synthetic: a yardstick, never your CV.",
   },
   {
     id: "coach",
@@ -55,14 +55,14 @@ function Pane({ i }: { i: number }) {
         <div className="gx-card">
           <h4>Question 2 of 5</h4>
           <p className="gx-q">The role needs automated testing. Have you written tests at your last job?</p>
-          <p className="gx-ans">“Yes — JUnit suites for the payments service, around 400 cases.”</p>
-          <p className="gx-verdict">✓ Grounded in your answer — added as a bullet.</p>
+          <p className="gx-ans">“Yes, JUnit suites for the payments service, around 400 cases.”</p>
+          <p className="gx-verdict">✓ Grounded in your answer, added as a bullet.</p>
         </div>
         <div className="gx-card">
           <h4>Already strong / not shown</h4>
           <p className="gx-row">Java, Spring Boot<span className="gx-pill is-hi">strong</span></p>
           <p className="gx-row">PostgreSQL<span className="gx-pill is-hi">strong</span></p>
-          <p className="gx-row">OpenShift<span className="gx-pill is-lo">not shown — we won’t fake it</span></p>
+          <p className="gx-row">OpenShift<span className="gx-pill is-lo">not shown, we won’t fake it</span></p>
         </div>
       </div>
     );

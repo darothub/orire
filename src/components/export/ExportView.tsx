@@ -59,7 +59,7 @@ export function ExportView() {
   const resetStyle = useStyleStore((s) => s.resetStyle);
 
   const person = cv.basics.fullName.trim();
-  const defaultName = useMemo(() => (person ? `${person} — CV` : "Orire — CV"), [person]);
+  const defaultName = useMemo(() => (person ? `${person} · CV` : "Orire: CV"), [person]);
 
   const [fileName, setFileName] = useState(defaultName);
   const [company, setCompany] = useState(lastCompany);
@@ -79,7 +79,7 @@ export function ExportView() {
   const copyPlainText = async () => {
     try {
       await navigator.clipboard.writeText(cvToPlainText(cv));
-      setMsg({ kind: "ok", text: "Plain text copied — paste it into any application form." });
+      setMsg({ kind: "ok", text: "Plain text copied, paste it into any application form." });
     } catch {
       setMsg({ kind: "err", text: "Couldn’t copy. Your browser may be blocking clipboard access." });
     }
@@ -106,7 +106,7 @@ export function ExportView() {
       if (!authz.ok) {
         setMsg({
           kind: "err",
-          text: authz.block ? `${authz.block.title} — ${authz.block.body}` : "Downloads aren’t available right now.",
+          text: authz.block ? `${authz.block.title}, ${authz.block.body}` : "Downloads aren’t available right now.",
         });
         return;
       }
@@ -165,7 +165,7 @@ export function ExportView() {
           <p>
             Style the CV and download as <strong>PDF</strong> or <strong>Word (.docx)</strong>.
             Page layout options apply to the <strong>PDF</strong> (pixel-true template snapshot).
-            Word is a clean, single-column, ATS-friendly file built from your content — not a visual clone of the template.
+            Word is a clean, single-column, ATS-friendly file built from your content, not a visual clone of the template.
             Plain-text copy for application forms is free and does not use a download.
           </p>
         </div>
@@ -261,7 +261,7 @@ export function ExportView() {
             Include re-import data
             <em>
               {embedData
-                ? "This exact PDF can be re-imported later with no loss. The full CV data travels invisibly inside the file — turn off before sending it somewhere that shouldn't receive that."
+                ? "This exact PDF can be re-imported later with no loss. The full CV data travels invisibly inside the file, turn off before sending it somewhere that shouldn't receive that."
                 : "This PDF won’t carry your full CV data in its metadata. Re-importing it later will go through the normal parser instead of a lossless round-trip."}
             </em>
           </span>
@@ -302,7 +302,7 @@ export function ExportView() {
         <button className="exp-copy-btn" onClick={() => void copyPlainText()} disabled={busy}>
           ⧉ Copy as plain text
         </button>
-        <span className="exp-plaintext-note">For pasting into an application form (Workday, Greenhouse…). Free — doesn’t use a download.</span>
+        <span className="exp-plaintext-note">For pasting into an application form (Workday, Greenhouse…). Free, doesn’t use a download.</span>
       </div>
     </motion.div>
   );

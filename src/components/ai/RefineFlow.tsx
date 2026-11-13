@@ -35,7 +35,7 @@ export function RefineFlow() {
         <div>
           <button type="button" className="ws-back" onClick={() => setView("tailor")}>← Back to Tailor</button>
           <h2>Rewrite for a job</h2>
-          <p>Connect an assistant, bring your CVs, add the role — then compare tailored results. Only your own facts are used.</p>
+          <p>Connect an assistant, bring your CVs, add the role, then compare tailored results. Only your own facts are used.</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           {(started || step !== "connect") && <button className="ws-reset" onClick={reset} title="Clear the current results and start a fresh refinement">New refinement</button>}

@@ -50,7 +50,7 @@ export default function SupportPage() {
 
       {status === "sent" ? (
         <p className="content-lede">
-          Thanks — your message is on its way. We’ll reply to{" "}
+          Thanks, your message is on its way. We’ll reply to{" "}
           <strong>{email}</strong> as soon as we can.
         </p>
       ) : (

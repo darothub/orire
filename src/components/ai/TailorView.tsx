@@ -68,7 +68,7 @@ function ToolCard({ tool, suggested }: { tool: (typeof TOOLS)[number]; suggested
       <button
         type="button"
         className={`flow-btn${suggested ? " primary" : ""}`}
-        aria-label={spent ? `${label} — free limit reached, upgrade to continue` : `Open ${label}`}
+        aria-label={spent ? `${label}, free limit reached, upgrade to continue` : `Open ${label}`}
         onClick={() => (spent ? setView("plans") : open(tool.view))}
       >
         {spent ? "Upgrade" : `Open ${label}`}

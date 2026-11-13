@@ -4,7 +4,7 @@ import "../content.css";
 import { GUIDES } from "@/lib/content/guides";
 
 export const metadata = publicMetadata(
-  "CV guides — practical advice for a stronger CV | Orire",
+  "CV guides: practical advice for a stronger CV | Orire",
   "Practical, honest guides on tailoring your CV, quantifying achievements, getting past ATS, and choosing a template.",
   "/guides",
 );
@@ -15,7 +15,7 @@ export default function GuidesIndex() {
       <Link href="/" className="content-back">← Back to Orire</Link>
       <h1>CV guides</h1>
       <p className="content-lede">
-        Short, practical guides on building a stronger CV — tailoring to a role,
+        Short, practical guides on building a stronger CV, tailoring to a role,
         quantifying impact, getting read correctly by applicant tracking systems,
         and choosing a template. Honest advice: re-frame what you have, never
         invent it.

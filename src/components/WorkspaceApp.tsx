@@ -107,7 +107,7 @@ function PlansView() {
           <h2>{VIEW_META.plans.label}</h2>
           <p>
             Pick the plan that fits how you job-hunt. Upgrade, downgrade or cancel
-            anytime — your monthly usage and entitlement are tracked server-side.
+            anytime, your monthly usage and entitlement are tracked server-side.
           </p>
         </div>
       </div>
@@ -164,7 +164,7 @@ function TargetChip({ mounted }: { mounted: boolean }) {
     <button
       className="tgt-chip"
       onClick={() => setView("target")}
-      title="Open simulated match guidance — not an ATS score or hiring prediction"
+      title="Open simulated match guidance, not an ATS score or hiring prediction"
       style={{ ["--tgt-hue" as string]: String(hue) }}
     >
       <span className="tgt-chip-ic" aria-hidden>🎯</span>
@@ -237,7 +237,7 @@ function HeaderMenu({
             <strong>{mounted ? templateName : "—"}</strong>
           </div>
           <button type="button" role="menuitemcheckbox" aria-checked={mounted && previewEdit} className="hm-item" onClick={run(onTogglePreviewEdit)}>
-            {mounted && previewEdit ? "Editing preview — turn off" : "Edit on preview"}
+            {mounted && previewEdit ? "Editing preview, turn off" : "Edit on preview"}
           </button>
           <button type="button" role="menuitem" className="hm-item" onClick={run(onTour)}>Take the tour</button>
           <button type="button" role="menuitem" className="hm-item hm-danger" onClick={run(onReset)}>Reset CV</button>

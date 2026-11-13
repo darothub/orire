@@ -7,7 +7,6 @@ import { useUIStore } from "@/lib/store/uiStore";
 
 const SECTIONS = [
   { href: "#how", label: "How it works" },
-  { href: "#templates", label: "Templates" },
   { href: "#demo", label: "Live demo" },
 ] as const;
 
@@ -83,6 +82,9 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
                 {label}
               </a>
             ))}
+            <Link href="/templates" onClick={() => setOpen(false)}>
+              Templates
+            </Link>
             <Link href="/pricing" onClick={() => setOpen(false)}>
               Pricing
             </Link>

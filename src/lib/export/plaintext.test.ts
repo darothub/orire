@@ -22,7 +22,7 @@ describe("cvToPlainText", () => {
     expect(txt.startsWith("Ada Okonkwo\nBackend Engineer\n")).toBe(true);
     expect(txt).toContain("ada@x.com  |  +351 900  |  Porto  |  github.com/ada");
     expect(txt).toContain("EXPERIENCE");
-    expect(txt).toContain("Engineer — Acme");
+    expect(txt).toContain("Engineer, Acme");
     expect(txt).toContain("2021 – Present");
     expect(txt).toContain("  - Led the billing rebuild.");
     expect(txt).toContain("Languages: TypeScript, Go");

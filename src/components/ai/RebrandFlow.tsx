@@ -138,7 +138,7 @@ function UploadStep() {
           <h2>Re-brand a CV</h2>
           <p>
             Drop in an existing CV (or use the one you&apos;re working on) and we&apos;ll restructure it into a clean,
-            fact-grounded document — then audition any template with a live output preview before you commit. No job
+            fact-grounded document, then audition any template with a live output preview before you commit. No job
             description, no invented content.
           </p>
         </div>
@@ -150,7 +150,7 @@ function UploadStep() {
             <div className="rb-existing-main">
               <span className="rb-existing-ico" aria-hidden>✨</span>
               <div className="rb-existing-text">
-                <strong>This is orire’s sample CV — not yours yet</strong>
+                <strong>This is orire’s sample CV, not yours yet</strong>
                 <span>
                   Upload your own CV (PDF or DOCX) below to re-brand it. Or explore the flow with our
                   sample.
@@ -166,7 +166,7 @@ function UploadStep() {
               <span className="rb-existing-ico" aria-hidden>📄</span>
               <div className="rb-existing-text">
                 <strong>
-                  You already have a CV in the editor{cv.basics.fullName ? ` — ${cv.basics.fullName}` : ""}
+                  You already have a CV in the editor{cv.basics.fullName ? `, ${cv.basics.fullName}` : ""}
                 </strong>
                 <span>
                   {facts.experience} roles · {facts.education} education · {facts.skills} skills
@@ -293,7 +293,7 @@ function BrandStep() {
         <div>
           <h2>Choose a look</h2>
           <p>
-            Your re-branded CV is ready. Pick a template from the gallery on the right — each card previews
+            Your re-branded CV is ready. Pick a template from the gallery on the right, each card previews
             <em> your content</em>, and the page below shows the full output. Apply when it feels right.
           </p>
         </div>
@@ -343,7 +343,7 @@ function BrandStep() {
         <AnimatePresence>
           {applied && (
             <motion.div className="imp-applied" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-              Re-brand applied — opening the editor…
+              Re-brand applied, opening the editor…
             </motion.div>
           )}
         </AnimatePresence>

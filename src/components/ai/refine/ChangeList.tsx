@@ -52,7 +52,7 @@ export function ChangeList({
                   {c.before.filter((l) => l.trim()).length ? (
                     <ul>{c.before.filter((l) => l.trim()).map((l, i) => <li key={i}>{l}</li>)}</ul>
                   ) : (
-                    <p className="rev-side-empty">— empty —</p>
+                    <p className="rev-side-empty">(empty)</p>
                   )}
                 </div>
                 <div className="rev-side after">
@@ -60,7 +60,7 @@ export function ChangeList({
                   {c.after.filter((l) => l.trim()).length ? (
                     <ul>{c.after.filter((l) => l.trim()).map((l, i) => <li key={i}>{l}</li>)}</ul>
                   ) : (
-                    <p className="rev-side-empty">— empty —</p>
+                    <p className="rev-side-empty">(empty)</p>
                   )}
                 </div>
               </div>

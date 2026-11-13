@@ -47,7 +47,7 @@ export function ChooseTemplateGuide() {
         <p>
           The right layout helps someone find your strongest work quickly.
           Start with readability, the experience you need to fit, and the expectations
-          of the role—then choose a style that feels like you.
+          of the role, then choose a style that feels like you.
         </p>
         <div className="ux107-actions">
           <Link href="/templates" className="ux107-primary">
@@ -91,7 +91,7 @@ export function ChooseTemplateGuide() {
             <strong>What must stand out?</strong>
             <p>
               Prioritize the roles, outcomes and projects most relevant to this
-              application. Keep the substance honest—layout cannot replace evidence.
+              application. Keep the substance honest, layout cannot replace evidence.
             </p>
           </li>
           <li>
@@ -118,7 +118,7 @@ export function ChooseTemplateGuide() {
         <h2 id="compare-heading">One CV. Three different first impressions.</h2>
         <p className="ux107-lede">
           These are live renders of real Orire templates, each using the same
-          fictional Ada Okonkwo CV. Compare their hierarchy, structure and tone—not
+          fictional Ada Okonkwo CV. Compare their hierarchy, structure and tone, not
           unsupported promises about ATS scores or interview outcomes.
         </p>
         <div className="ux107-grid">
