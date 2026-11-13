@@ -5,7 +5,7 @@ import { simulateProgressAt } from "@/lib/ai/simulateProgress";
 
 /** Estimated staged progress for an in-flight Simulate request. Mount it while
  *  the request runs; `startedAt` lets a second view join an existing run. */
-export function SimulateProgress({ startedAt }: { startedAt?: number }) {
+export function SimulateProgress({ startedAt, label: fixedLabel, ariaLabel = "Simulation progress" }: { startedAt?: number; label?: string; ariaLabel?: string }) {
   const [t0] = useState(() => startedAt ?? Date.now());
   const [now, setNow] = useState(() => Date.now());
 
@@ -18,7 +18,7 @@ export function SimulateProgress({ startedAt }: { startedAt?: number }) {
   return (
     <div className="sim-progress" role="status" aria-live="polite">
       <div className="sim-progress-head">
-        <span className="sim-progress-label">{label}</span>
+        <span className="sim-progress-label">{fixedLabel ?? label}</span>
         <span className="sim-progress-pct">{percent}%</span>
       </div>
       <div
@@ -27,7 +27,7 @@ export function SimulateProgress({ startedAt }: { startedAt?: number }) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
-        aria-label="Simulation progress"
+        aria-label={ariaLabel}
       >
         <span className="sim-progress-fill" style={{ width: `${percent}%` }} />
       </div>
