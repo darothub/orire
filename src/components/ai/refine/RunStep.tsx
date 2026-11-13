@@ -119,30 +119,9 @@ export function RunStep({ onBack }: { onBack: () => void }) {
 
       <JudgeBlock />
 
-      <PostCompare />
-
       <div className="step-nav">
         <button className="flow-btn ghost" onClick={onBack} disabled={anyRunning}>Back</button>
         <button className="flow-btn" onClick={resetRun} disabled={anyRunning}>{anyRunning ? "Running…" : "New run"}</button>
-      </div>
-    </div>
-  );
-}
-
-function PostCompare() {
-  const cols = useRefineStore((s) => s.cols);
-  const runProviders = useRefineStore((s) => s.runProviders);
-
-  // Only meaningful once at least one refined result exists to build on.
-  const anyDone = runProviders.some((p) => cols[p].phase === "done" && cols[p].result);
-  if (!anyDone) return null;
-
-  return (
-    <div className="post-compare">
-      <div className="post-compare-head">
-        <span className="post-compare-step">Next</span>
-        <h3>Go further in Simulate</h3>
-        <p>You&apos;ve compared and picked a version. To push it further, head to Simulate — it benchmarks your CV against a synthetic 100%-match candidate, shows exactly what&apos;s missing, and can rewrite your CV in the target&apos;s voice, all without touching your facts.</p>
       </div>
     </div>
   );
