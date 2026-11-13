@@ -321,7 +321,7 @@ export default function WorkspaceApp() {
   const compareWide = view === "refine" && refStep === "run" && refStarted && refCompare;
   // The Target page renders its own side-by-side split, so it also takes the
   // full workspace width and hides the single live-preview pane.
-  const wide = compareWide || view === "target" || view === "cover" || view === "spotlight";
+  const wide = compareWide || view === "target" || view === "rate" || view === "cover" || view === "spotlight";
 
   // Re-brand (req 3): while in the re-brand workspace with a draft, the right
   // pane previews the restructured draft in the auditioned template so the user
