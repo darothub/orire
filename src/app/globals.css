@@ -6450,3 +6450,21 @@ body,
   .gx-stage { height: auto; min-height: 520px; }
 }
 @media (prefers-reduced-motion: reduce) { .gx-prog { animation: none; } .gx-bar i { transition: none; } }
+
+/* Workspace home: primary band (start + Tailor) and a 3-column tool grid */
+.spot-band { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; margin: 0 0 24px; align-items: stretch; }
+.spot-band .spot-studio-next { margin: 0; flex-direction: column; align-items: flex-start; justify-content: space-between; }
+.spot-band .spot-hero { margin: 0; flex-direction: column; align-items: flex-start; justify-content: space-between; border-style: dashed; }
+.spot-studio-tools .spot-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; }
+.spot-studio-tools .spot-card { min-height: 92px; height: 100%; flex-direction: row; align-items: center; gap: 10px; padding: 12px 14px; }
+.spot-studio-tools .spot-card-open { flex: 1; min-width: 0; align-items: center; }
+.spot-studio-tools .spot-card-toggle { margin-top: 0; align-self: center; flex: 0 0 auto; white-space: nowrap; }
+.spot-studio-tools .spot-card-icon { display: grid; place-items: center; }
+.spot-reset { background: none; border: 0; padding: 0; margin-left: 6px; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
+@media (max-width: 960px) {
+  .spot-band { grid-template-columns: 1fr; }
+  .spot-studio-tools .spot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+  .spot-studio-tools .spot-grid { grid-template-columns: 1fr; }
+}

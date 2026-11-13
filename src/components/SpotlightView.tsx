@@ -134,6 +134,7 @@ export function SpotlightView() {
         <span>{started ? `Current CV: ${currentName || "Untitled CV"}` : "New CV"}</span>
         <span>Template: <strong>{templateName}</strong></span>
       </div>
+      <div className="spot-band">
       <section className="spot-studio-next" aria-label="Continue your CV">
         <div>
           <h3>{started ? "Continue your CV" : "Start your first CV"}</h3>
@@ -145,11 +146,16 @@ export function SpotlightView() {
           <button type="button" className="flow-btn" onClick={() => setView("history")}>Your library</button>
         </div>
       </section>
+      <TailorHero recommended={recommendedNext === "tailor"} />
+      </div>
 
       <section className="spot-studio-tools" aria-labelledby="spot-studio-tools-title">
         <div className="spot-studio-tools-head">
           <h3 id="spot-studio-tools-title">Your CV tools</h3>
-          <p>Open a tool or add it to your flow.</p>
+          <p>
+            Open a tool or add it to your flow.{" "}
+            <button type="button" className="spot-reset" onClick={resetFlow}>Reset to recommended flow</button>
+          </p>
         </div>
         <div className="spot-grid">
           {gridBlocks.map((v) => (
@@ -158,13 +164,6 @@ export function SpotlightView() {
         </div>
       </section>
 
-      <TailorHero recommended={recommendedNext === "tailor"} />
-
-      <div className="spot-foot">
-        <button type="button" className="flow-btn ghost sm" onClick={resetFlow}>
-          Reset to recommended flow
-        </button>
-      </div>
     </motion.div>
   );
 }
