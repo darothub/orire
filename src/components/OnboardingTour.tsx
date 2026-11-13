@@ -35,7 +35,7 @@ const STEPS: Step[] = [
   {
     sel: '[data-tour="rail-rebrand"]',
     title: "Re-brand an old CV",
-    body: "Drop in an existing CV (PDF or DOCX) and restructure it into any template — preview the result before you apply it.",
+    body: "Drop in an existing CV (PDF or DOCX) and restructure it into any template, preview the result before you apply it.",
     place: "right",
   },
   {
@@ -47,7 +47,7 @@ const STEPS: Step[] = [
   {
     sel: '[data-tour="rail-home"]',
     title: "Arrange your flow",
-    body: "This left panel is yours. Drag blocks to reorder them, and tap Home (or ＋) to add or remove blocks from your flow. Open any block to see your live CV beside it. That’s the tour — enjoy orire!",
+    body: "This left panel is yours. Drag blocks to reorder them, and tap Home (or ＋) to add or remove blocks from your flow. Open any block to see your live CV beside it. That’s the tour, enjoy orire!",
     place: "right",
   },
 ];

@@ -9,7 +9,7 @@ export const sampleCV: CVData = {
     phone: "+44 20 7946 0958",
     location: "London, UK",
     summary:
-      "Product designer with 8+ years shaping data-dense fintech and healthcare products. I turn ambiguous problems into calm, usable systems — pairing rigorous research with a strong craft bar. Comfortable leading end-to-end from discovery to shipped, measured outcomes.",
+      "Product designer with 8+ years shaping data-dense fintech and healthcare products. I turn ambiguous problems into calm, usable systems, pairing rigorous research with a strong craft bar. Comfortable leading end-to-end from discovery to shipped, measured outcomes.",
     links: [
       { id: "lnk_site", label: "Portfolio", url: "adaok.design" },
       { id: "lnk_li", label: "LinkedIn", url: "linkedin.com/in/adaok" },
@@ -87,7 +87,7 @@ export const sampleCV: CVData = {
     },
     {
       id: "prj_2",
-      name: "Calm Money — concept app",
+      name: "Calm Money, concept app",
       role: "Design & research",
       url: "adaok.design/calm-money",
       startDate: "2021",

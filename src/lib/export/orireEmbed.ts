@@ -163,6 +163,6 @@ export function parsedFromCVData(cv: CVData): ParsedCV {
     skills: cv.skills,
     projects: cv.projects,
     certifications: cv.certifications,
-    notes: ["Restored from orire-embedded data — exact round-trip."],
+    notes: ["Restored from orire-embedded data: exact round-trip."],
   };
 }

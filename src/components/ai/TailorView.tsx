@@ -22,8 +22,8 @@ type Tool = "target" | "coach" | "refine";
 
 const TOOLS: { view: Tool; verb: string; text: string; metric?: Metric }[] = [
   { view: "target", verb: "Diagnose", text: "See how close you are to an ideal candidate for this job and where the gaps are.", metric: "simulate" },
-  { view: "coach", verb: "Coach", text: "Answer a few targeted questions so real achievements and numbers fill the gaps." },
-  { view: "refine", verb: "Rewrite", text: "Tailor the wording to the job, using only facts already on your CV.", metric: "refine" },
+  { view: "coach", verb: "Interview", text: "Answer a few targeted questions so real achievements and numbers fill the gaps." },
+  { view: "refine", verb: "Polish", text: "Tailor the wording to the job, using only facts already on your CV.", metric: "refine" },
 ];
 
 const STEP_VIEW: Record<Exclude<TailorStep, "job">, WorkspaceView> = {
@@ -59,7 +59,7 @@ function ToolCard({ tool, suggested }: { tool: (typeof TOOLS)[number]; suggested
       <span className="tailor-tool-icon" aria-hidden><ViewIcon view={tool.view} /></span>
       <div className="tailor-tool-main">
         <strong>
-          {tool.verb} <span className="tailor-tool-name">· {label}</span>
+          {label} <span className="tailor-tool-name">· {tool.verb}</span>
           {suggested && <span className="tailor-tool-next"> Suggested next</span>}
           {proOnly && <span className="tailor-tool-plan"> Pro</span>}
         </strong>
@@ -68,7 +68,7 @@ function ToolCard({ tool, suggested }: { tool: (typeof TOOLS)[number]; suggested
       <button
         type="button"
         className={`flow-btn${suggested ? " primary" : ""}`}
-        aria-label={spent ? `${label} — free limit reached, upgrade to continue` : `Open ${label}`}
+        aria-label={spent ? `${label}, free limit reached, upgrade to continue` : `Open ${label}`}
         onClick={() => (spent ? setView("plans") : open(tool.view))}
       >
         {spent ? "Upgrade" : `Open ${label}`}

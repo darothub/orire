@@ -4,7 +4,7 @@ import "../legal.css";
 import { COMPANY } from "@/lib/legal/company";
 
 export const metadata = publicMetadata(
-  "Terms of Service — Orire",
+  "Terms of Service | Orire",
   "The terms that govern your use of Orire.",
   "/terms",
 );
@@ -72,7 +72,7 @@ export default function TermsPage() {
         You keep all ownership of the CVs, text and job descriptions you upload or
         create (&ldquo;Your Content&rdquo;). You grant us a limited, non-exclusive
         licence to host, process and transmit Your Content solely to operate and
-        provide the Service to you — including sending it to our AI processors to
+        provide the Service to you, including sending it to our AI processors to
         re-brand, tailor and score it. We do not claim ownership of your CV, and
         we do not use Your Content to train AI models. You are responsible for the
         accuracy of Your Content and for reviewing every output before you use it.

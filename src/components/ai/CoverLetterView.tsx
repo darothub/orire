@@ -77,7 +77,7 @@ export function CoverLetterView() {
         <div>
           <h2>Cover letter</h2>
           <p>
-            Edit on the left, preview on the right — matched to your{" "}
+            Edit on the left, preview on the right, matched to your{" "}
             <strong>{getTemplate(activeTemplate).name}</strong> template. Grounded in your CV facts.
             {provider && phase === "done" ? ` Drafted by ${PROVIDERS[provider].label}.` : ""}
           </p>
@@ -164,7 +164,7 @@ function CoverLetterEditor() {
     <div className="cl-col cl-editor">
       <div className="cl-col-head">
         <span className="cl-col-tag">Edit</span>
-        <span className="cl-col-sub">Boxes grow to fit — no scrolling</span>
+        <span className="cl-col-sub">Boxes grow to fit, no scrolling</span>
       </div>
 
       <div className="cl-fields">

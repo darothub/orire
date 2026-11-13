@@ -8,7 +8,7 @@ export function JobStep({ onBack, onNext }: { onBack: () => void; onNext: () => 
   const stale = useTargetStore(isIdealStale);
   return (
     <div className="step-body">
-      <p className="step-hint">Paste the full job description — shared across Rewrite and Simulate. The assistant tailors your existing facts to match it — no invention.</p>
+      <p className="step-hint">Paste the full job description, shared across Rewrite and Simulate. The assistant tailors your existing facts to match it, no invention.</p>
       <div className="ai-field">
         <span className="ed-label">Job description</span>
         <textarea
@@ -21,7 +21,7 @@ export function JobStep({ onBack, onNext }: { onBack: () => void; onNext: () => 
       </div>
       {stale && (
         <p className="step-hint" role="status">
-          This JD differs from the one your Simulate target was built from — re-simulate there to keep them aligned.
+          This JD differs from the one your Simulate target was built from, re-simulate there to keep them aligned.
         </p>
       )}
       <div className="step-nav">

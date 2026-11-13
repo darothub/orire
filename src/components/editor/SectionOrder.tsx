@@ -34,7 +34,7 @@ export function SectionOrder() {
 
   return (
     <div className="order-bar">
-      <span className="ed-label">Sections — drag to rearrange, or use ◀▶, ✕ to hide</span>
+      <span className="ed-label">Sections, drag to rearrange, or use ◀▶, ✕ to hide</span>
       <div className="sr-only" aria-live="polite">{announcement}</div>
       <Reorder.Group
         axis="x"

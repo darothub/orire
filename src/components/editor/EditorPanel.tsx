@@ -279,7 +279,7 @@ function HighlightItem({
             title={
               canAiReview
                 ? "AI review: spelling, grammar, and impact in full-sentence context (Pro/Career)"
-                : "AI contextual review is a Pro/Career feature — opens plans"
+                : "AI contextual review is a Pro/Career feature, opens plans"
             }
           >
             {busy ? (
@@ -331,7 +331,7 @@ function HighlightItem({
             </div>
           )}
           {review.issues.length === 0 && !review.suggestion && (
-            <p className="ed-review-clean">Nothing to change — this reads well.</p>
+            <p className="ed-review-clean">Nothing to change, this reads well.</p>
           )}
         </div>
       )}
@@ -360,7 +360,7 @@ function Highlights({
   const indices = items.map((_, i) => i);
   return (
     <div className="ed-bullets">
-      <span className="ed-label">Highlights — drag ⋮⋮ to reorder, or use ▲▼</span>
+      <span className="ed-label">Highlights, drag ⋮⋮ to reorder, or use ▲▼</span>
       <Reorder.Group
         axis="y"
         values={indices}
@@ -416,7 +416,7 @@ function EvidenceSection({
       ) : (
         <button className="ed-evidence-btn" onClick={() => setOpen(true)}>
           📈 Add numbers &amp; evidence
-          {missing && <span className="ed-evidence-nudge"> — none of your bullets show a measurable result yet</span>}
+          {missing && <span className="ed-evidence-nudge">, none of your bullets show a measurable result yet</span>}
         </button>
       )}
     </div>
@@ -590,7 +590,7 @@ export function EditorPanel() {
                 <button className="ed-suggest-clear" onClick={s.clearSkillSuggestions}>Dismiss all</button>
               </div>
             </div>
-            <p className="ed-suggest-note">Add only skills you genuinely have — these come from the target role, not your CV.</p>
+            <p className="ed-suggest-note">Add only skills you genuinely have, these come from the target role, not your CV.</p>
             {groupSuggestions(cv.skills, s.skillSource, s.skillSuggestions).map((sec) => (
               <div key={sec.key} className="ed-suggest-group" role="group" aria-label={`Suggested for ${sec.category}`}>
                 <span className="ed-suggest-cat">
@@ -632,7 +632,7 @@ export function EditorPanel() {
                 )}
               </div>
             </div>
-            <p className="ed-suggest-note">Not in the ideal match or the job description — removing them sharpens focus on the role.</p>
+            <p className="ed-suggest-note">Not in the ideal match or the job description, removing them sharpens focus on the role.</p>
             <div className="ed-suggest-chips">
               <AnimatePresence initial={false}>
                 {removals.map((sk) => (

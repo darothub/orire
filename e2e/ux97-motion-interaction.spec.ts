@@ -111,7 +111,7 @@ for (const viewport of [
           const templatesLink = page.getByRole("navigation", { name: "Sections" })
             .getByRole("link", { name: "Templates" });
           await templatesLink.click();
-          await expect(page).toHaveURL(/#templates$/);
+          await expect(page).toHaveURL(/\/templates$/);
         }
       } finally {
         releaseScripts();

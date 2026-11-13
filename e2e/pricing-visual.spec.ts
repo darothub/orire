@@ -7,7 +7,7 @@ import { test, expect } from "./fixtures";
  */
 test("desktop pricing cards are consistently aligned", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.goto("/pricing", { waitUntil: "domcontentloaded" });
   const pricing = page.locator("#pricing");
   const cards = pricing.locator(".landing-price-card");
 

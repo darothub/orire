@@ -4,7 +4,7 @@ import "../legal.css";
 import { COMPANY } from "@/lib/legal/company";
 
 export const metadata = publicMetadata(
-  "Privacy Policy — Orire",
+  "Privacy Policy | Orire",
   "How Orire collects, uses and protects your personal data.",
   "/privacy",
 );
@@ -40,23 +40,23 @@ export default function PrivacyPage() {
 
       <h2>3. The personal data we collect</h2>
       <ul>
-        <li><strong>Account data</strong> — your name, email address, a hashed password, and your plan / subscription status.</li>
-        <li><strong>CV content you upload or create</strong> — the full contents of any CV you upload (PDF or DOCX) or edit: name, contact details, employment history, education, skills and anything else you choose to include.</li>
-        <li><strong>Special-category and third-party data</strong> — a CV can contain special categories of data (e.g. references to health, religion or trade-union membership) and personal data about other people (e.g. referees). You decide what to include; we process it solely on your instruction to provide the Service to you.</li>
+        <li><strong>Account data</strong>: your name, email address, a hashed password, and your plan / subscription status.</li>
+        <li><strong>CV content you upload or create</strong>: the full contents of any CV you upload (PDF or DOCX) or edit: name, contact details, employment history, education, skills and anything else you choose to include.</li>
+        <li><strong>Special-category and third-party data</strong>: a CV can contain special categories of data (e.g. references to health, religion or trade-union membership) and personal data about other people (e.g. referees). You decide what to include; we process it solely on your instruction to provide the Service to you.</li>
         <li><strong>Job descriptions</strong> you paste in to tailor or score a CV.</li>
-        <li><strong>Payment data</strong> — processed by {COMPANY.paymentProvider}. We receive confirmation of payment and limited billing details; we do not store full card numbers.</li>
-        <li><strong>Usage and device data</strong> — log data, IP address, browser and device type, pages viewed and actions taken, used for security and to improve the Service.</li>
-        <li><strong>Cookies and similar technologies</strong> — see section 10.</li>
+        <li><strong>Payment data</strong>: processed by {COMPANY.paymentProvider}. We receive confirmation of payment and limited billing details; we do not store full card numbers.</li>
+        <li><strong>Usage and device data</strong>: log data, IP address, browser and device type, pages viewed and actions taken, used for security and to improve the Service.</li>
+        <li><strong>Cookies and similar technologies</strong>: see section 10.</li>
       </ul>
 
       <h2>4. Why we process your data, and our legal bases</h2>
       <ul>
-        <li><strong>To provide the Service</strong> — manage your account, read your CV into structured sections, re-brand, tailor, score and export it. <em>Legal basis: performance of a contract (Art. 6(1)(b)).</em></li>
+        <li><strong>To provide the Service</strong>: manage your account, read your CV into structured sections, re-brand, tailor, score and export it. <em>Legal basis: performance of a contract (Art. 6(1)(b)).</em></li>
         <li><strong>To process CV content through AI.</strong> <em>Legal basis: performance of a contract. Where your CV contains special-category data, we rely on your explicit consent and the fact that you have manifestly chosen to include that information yourself (Art. 9(2)(a)/(e)).</em></li>
         <li><strong>Billing, accounting and fraud prevention.</strong> <em>Legal basis: contract and compliance with a legal obligation.</em></li>
         <li><strong>Security, debugging and abuse prevention.</strong> <em>Legal basis: legitimate interests.</em></li>
         <li><strong>Product analytics and improvement.</strong> <em>Legal basis: consent, where required.</em></li>
-        <li><strong>Marketing emails</strong>, if any. <em>Legal basis: consent — withdrawable at any time.</em></li>
+        <li><strong>Marketing emails</strong>, if any. <em>Legal basis: consent, withdrawable at any time.</em></li>
       </ul>
 
       <h2>5. How your CV is processed by AI</h2>
@@ -130,7 +130,7 @@ export default function PrivacyPage() {
         enquiry, contact <a href={COMPANY.contactUrl}>{COMPANY.contactLabel}</a>
         {" "}on Instagram without sending sensitive documents. You may also lodge a
         complaint with the Portuguese supervisory authority, the Comissão
-        Nacional de Proteção de Dados (CNPD) —{" "}
+        Nacional de Proteção de Dados (CNPD),{" "}
         <a href="https://www.cnpd.pt" target="_blank" rel="noopener noreferrer">www.cnpd.pt</a>.
       </p>
 
@@ -167,8 +167,8 @@ export default function PrivacyPage() {
 
       <h2>12. Security</h2>
       <p>
-        We use industry-standard measures — encryption in transit, hashed
-        passwords, and access controls — to protect your data. No method of
+        We use industry-standard measures, encryption in transit, hashed
+        passwords, and access controls, to protect your data. No method of
         transmission or storage is completely secure.
       </p>
 

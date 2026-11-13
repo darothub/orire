@@ -41,7 +41,7 @@ export function passwordResetEmail(token: string): {
             </a>
           </td></tr>
           <tr><td style="font-size:12px;line-height:1.6;color:#6b7280;">
-            If you didn't request this, you can safely ignore this email — your
+            If you didn't request this, you can safely ignore this email, your
             password won't change. Or paste this link into your browser:<br/>
             <a href="${link}" style="color:${ACCENT};word-break:break-all;">${link}</a>
           </td></tr>
@@ -90,7 +90,7 @@ export function magicLinkEmail(token: string): {
             Sign in to Orire
           </td></tr>
           <tr><td style="font-size:14px;line-height:1.6;color:#a6adbb;padding-bottom:22px;">
-            Click the button below to sign in — no password needed. This link
+            Click the button below to sign in, no password needed. This link
             expires in 15 minutes and can be used once.
           </td></tr>
           <tr><td style="padding-bottom:22px;">
@@ -113,7 +113,7 @@ export function magicLinkEmail(token: string): {
   const text = [
     "Sign in to Orire",
     "",
-    "Open this link to sign in — no password needed (expires in 15 minutes, single use):",
+    "Open this link to sign in, no password needed (expires in 15 minutes, single use):",
     link,
     "",
     "If you didn't request this, you can safely ignore this email.",
@@ -199,13 +199,13 @@ export function activationNudgeEmail(gap: "export" | "simulate" | "both"): {
     export: {
       subject: "Your CV is ready to download",
       heading: "Don't forget to download your CV",
-      body: "You started a CV on Orire but haven't downloaded it yet. Export it as a PDF or Word file whenever you're ready — it only takes a second.",
+      body: "You started a CV on Orire but haven't downloaded it yet. Export it as a PDF or Word file whenever you're ready, it only takes a second.",
       cta: "Open your CV",
     },
     simulate: {
       subject: "See the 100%-match CV for your target job",
-      heading: "Try Simulate — see exactly where your CV falls short",
-      body: "Orire can show you what a 100%-match CV would look like for any job, then help you close the gap in your own words — nothing invented. Most people find this the most useful thing here.",
+      heading: "Try Simulate, see exactly where your CV falls short",
+      body: "Orire can show you what a 100%-match CV would look like for any job, then help you close the gap in your own words, nothing invented. Most people find this the most useful thing here.",
       cta: "Try Simulate",
     },
     both: {

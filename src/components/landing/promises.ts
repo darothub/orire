@@ -22,7 +22,7 @@ const ITEMS: Promise[] = [
   {
     title: "Your facts, elevated",
     body:
-      "Upload the CV you already have and Orire re-lays it into a clean, modern template. It re-frames what you did — it never invents experience you don't have.",
+      "Upload the CV you already have and Orire re-lays it into a clean, modern template. It re-frames what you did, it never invents experience you don't have.",
   },
   {
     title: "Tailored to the role",
@@ -32,7 +32,7 @@ const ITEMS: Promise[] = [
   {
     title: "See which draft is stronger",
     body:
-      "Run two assistants side by side and let Orire pick the strongest result, with its reasoning shown — so you are never guessing.",
+      "Run two assistants side by side and let Orire pick the strongest result, with its reasoning shown, so you are never guessing.",
   },
   {
     title: "A score you can trust",

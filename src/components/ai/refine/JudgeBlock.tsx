@@ -65,7 +65,7 @@ export function JudgeBlock() {
           {verdict.reasoning && <p className="cmp-reasoning">{verdict.reasoning}</p>}
           {judgeFromCache && (
             <p className="cmp-cache-note" title="Identical inputs always give the same pick. Use “Run fresh” to re-evaluate.">
-              ⦿ Consistent result — the same inputs always pick the same winner.
+              ⦿ Consistent result, the same inputs always pick the same winner.
             </p>
           )}
           {(() => {

@@ -555,7 +555,7 @@ export function AuthOverlay() {
                 <h1 id={titleId}>{signup ? "Create your account" : "Welcome back"}</h1>
                 <p>
                   {authReason
-                    ? `${authReason} — it’s free, and your work so far comes with you.`
+                    ? `${authReason}, it’s free, and your work so far comes with you.`
                     : signup
                     ? "Save your CVs to the cloud, compare assistants and unlock plan features."
                     : "Sign in to sync your CVs and pick up right where you left off."}
@@ -647,7 +647,7 @@ export function AuthOverlay() {
                 />
                 {emailInvalid && (
                   <p id={emailMsgId} className="auth-hint bad">
-                    That email looks incomplete — try name@domain.com
+                    That email looks incomplete, try name@domain.com
                   </p>
                 )}
               </div>
@@ -717,7 +717,7 @@ export function AuthOverlay() {
               </button>
               {magicSentTo && (
                 <p className="auth-hint ok" role="status">
-                  Link sent to {magicSentTo} — check your inbox. It expires in 15 minutes.
+                  Link sent to {magicSentTo}, check your inbox. It expires in 15 minutes.
                 </p>
               )}
               {!signup && (

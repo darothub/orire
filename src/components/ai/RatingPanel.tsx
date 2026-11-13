@@ -73,7 +73,7 @@ export function RateView() {
           <div className="rate-hero solo">
             <Ring value={0} label="Rating" sub="—" />
             <p className="rate-note">
-              No rating yet. Upload your first CV in <strong>Re-brand</strong> — your score is
+              No rating yet. Upload your first CV in <strong>Re-brand</strong>: your score is
               measured against the CV you bring in, so it starts at zero until then.
             </p>
           </div>
@@ -93,7 +93,7 @@ export function RateView() {
             <Ring value={current.overall} label="Current" sub={grade(current.overall)} />
             <p className="rate-note">
               No initial baseline saved yet. Refining or comparing with AI captures one
-              automatically — or snapshot the current CV now to measure future edits against it.
+              automatically, or snapshot the current CV now to measure future edits against it.
             </p>
           </div>
         )}
@@ -103,7 +103,7 @@ export function RateView() {
             <strong>See the full six-metric breakdown</strong>
             <span>
               You&apos;re seeing your overall score. Pro and Career unlock the per-dimension
-              breakdown — relevance, impact, coverage, conciseness and more — so you can see
+              breakdown, relevance, impact, coverage, conciseness and more, so you can see
               exactly where to improve.
             </span>
             <button className="flow-btn primary" onClick={() => setView("plans")}>Upgrade to Pro</button>

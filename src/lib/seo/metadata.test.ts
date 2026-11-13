@@ -36,7 +36,7 @@ describe("route-specific social previews", () => {
   });
 
   it("keeps the support page social URL distinct from the homepage", () => {
-    expect(supportMetadata.openGraph).toMatchObject({ url: "/support", title: "Support — Orire" });
+    expect(supportMetadata.openGraph).toMatchObject({ url: "/support", title: "Support | Orire" });
   });
 });
 

@@ -31,14 +31,14 @@ export function Column({ provider, state, before, applied, onReview }: { provide
       </div>
 {state.phase === "done" && state.servedBy && state.servedBy !== provider && (
         <div className="cmp-fellback" title="Your chosen assistant was temporarily unavailable, so Orire served this from its managed backup. It still counts as one refine.">
-          ⤷ {meta.label} was unavailable — served by {PROVIDERS[state.servedBy].label}
+          ⤷ {meta.label} was unavailable, served by {PROVIDERS[state.servedBy].label}
         </div>
       )}
       {state.phase === "running" && (
         state.retrying ? (
           <div className="cmp-loading">
             <span className="cmp-spinner" />
-            {meta.label} is busy — retrying{state.retryAttempt ? ` (${state.retryAttempt})` : ""}…
+            {meta.label} is busy, retrying{state.retryAttempt ? ` (${state.retryAttempt})` : ""}…
             {state.retryAfterMs ? <span className="cmp-retry-delay"> {Math.ceil(state.retryAfterMs / 1000)}s</span> : null}
           </div>
         ) : (

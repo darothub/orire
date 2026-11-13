@@ -20,7 +20,7 @@ const COPY: Record<string, TemplateCopy> = {
   slate: { summary: "A corporate single-column layout with a calm blue accent rail. Familiar and easy for recruiters to scan.", bestFor: "Business, finance and operations roles." },
   ivory: { summary: "A warm cream palette with a centered serif header. Classic and understated.", bestFor: "Traditional industries and academic applications." },
   carbon: { summary: "A dark, technical two-column layout with cyan accents and monospaced detail. Reads like a well-kept terminal.", bestFor: "Software, data and infrastructure engineers." },
-  coral: { summary: "A soft peach two-column layout with a friendly, approachable feel.", bestFor: "People-facing roles — support, community, early-career." },
+  coral: { summary: "A soft peach two-column layout with a friendly, approachable feel.", bestFor: "People-facing roles, support, community, early-career." },
   onyx: { summary: "A near-black, uppercase-led single column with heavy structure and strong headings.", bestFor: "Bold applicants who want maximum contrast." },
   verde: { summary: "A deep-green two-column layout with gold serif accents for a grounded, premium tone.", bestFor: "Established professionals in traditional fields." },
   sapphire: { summary: "A royal-blue banner header over a clean single column. Confident and corporate.", bestFor: "Management and client-facing roles." },
@@ -36,7 +36,7 @@ const COPY: Record<string, TemplateCopy> = {
   oxford: { summary: "A navy-and-bronze executive layout with a double-rule crest header.", bestFor: "Senior leadership and executive applications." },
   bordeaux: { summary: "An oxblood-wine two-column layout with a classic serif for a refined, traditional tone.", bestFor: "Law, finance and established professions." },
   sterling: { summary: "A charcoal-and-steel single column with tracked uppercase headings.", bestFor: "Executives who want sober, high-end structure." },
-  imperial: { summary: "A black layout with a champagne-gold banner — formal and commanding.", bestFor: "C-suite and board-level applications." },
+  imperial: { summary: "A black layout with a champagne-gold banner, formal and commanding.", bestFor: "C-suite and board-level applications." },
   consul: { summary: "A graphite layout with deep-teal serif accents, balancing authority and warmth.", bestFor: "Directors and senior specialists." },
 };
 

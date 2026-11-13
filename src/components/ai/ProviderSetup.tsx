@@ -34,7 +34,7 @@ export function ProviderSetup({ selectable = false }: { selectable?: boolean }) 
         <div className="conn-planhint">
           <span className="conn-dot openai" aria-hidden />
           <span>
-            <strong>{planMeta.label}</strong> —{" "}
+            <strong>{planMeta.label}</strong>:{" "}
             {planMeta.allowCompare
               ? `compare up to ${planMeta.maxProviders} assistants in parallel.`
               : "ChatGPT only on Free. Upgrade to Pro to add Claude and compare two side by side."}

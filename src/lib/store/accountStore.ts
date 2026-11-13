@@ -78,7 +78,7 @@ export function useWriteGate(action = "download"): WriteGate {
   const reason = !signedIn
     ? `Create an account and verify your email to ${action}.`
     : !verified
-      ? `Verify your email to ${action} — check your inbox for the link, or resend it from the banner.`
+      ? `Verify your email to ${action}, check your inbox for the link, or resend it from the banner.`
       : null;
 
   const guard = (): boolean => {

@@ -124,7 +124,7 @@ export function ReviewChanges({ provider }: { provider: ProviderId }) {
 
       {changes.length === 0 ? (
         <div className="rev-none">
-          <p>This version is identical to your current CV — there’s nothing to apply.</p>
+          <p>This version is identical to your current CV, there’s nothing to apply.</p>
         </div>
       ) : (
         <ChangeList changes={changes} rejected={rejected} setRejected={setRejected} />

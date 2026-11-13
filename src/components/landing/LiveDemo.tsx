@@ -34,7 +34,7 @@ export function LiveDemo() {
         transition={reducedMotion ? { duration: 0 } : { duration: 0.5, ease: EASE }}
       >
         <span className="landing-eyebrow">See it live</span>
-        <h2 className="landing-h2">Preview a fictional example CV — choose a template and watch its layout change.</h2>
+        <h2 className="landing-h2">Preview a fictional example CV, choose a template and watch its layout change.</h2>
       </motion.div>
 
       <div className="landing-demo-stage">
@@ -127,7 +127,7 @@ export function LiveDemo() {
           >
             <div className="landing-demo-dialog-header">
               <div>
-                <h3 id="landing-demo-dialog-heading">{active.name} — full-size CV preview</h3>
+                <h3 id="landing-demo-dialog-heading">{active.name}, full-size CV preview</h3>
                 <p id="landing-demo-dialog-description">
                   Fictional details. Scroll vertically and sideways to inspect the full-size document.
                 </p>
@@ -145,7 +145,7 @@ export function LiveDemo() {
                 links cannot steal focus. Expose the actual fictional data as
                 semantic text for screen-reader visitors instead. */}
             <section className="sr-only" aria-label="Fictional CV text alternative">
-              <h4>{sampleCV.basics.fullName} — {sampleCV.basics.title}</h4>
+              <h4>{sampleCV.basics.fullName}, {sampleCV.basics.title}</h4>
               <p>{sampleCV.basics.location}. {sampleCV.basics.summary}</p>
               <h5>Experience</h5>
               <ul>

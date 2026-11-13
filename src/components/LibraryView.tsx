@@ -48,7 +48,7 @@ export function LibraryView() {
   const groups = groupByCompany(versions);
 
   const openSave = () => {
-    setDraftName(person ? `${person} — CV` : "Untitled version");
+    setDraftName(person ? `${person} · CV` : "Untitled version");
     setDraftCompany(lastCompany);
     setSaving(true);
   };
@@ -103,7 +103,7 @@ export function LibraryView() {
             <div className="lib-save-row">
               <label className="exp-field">
                 <span className="exp-label">Version name</span>
-                <input className="ed-input" value={draftName} autoFocus spellCheck={false} onChange={(e) => setDraftName(e.target.value)} placeholder="e.g. Backend — Stripe" />
+                <input className="ed-input" value={draftName} autoFocus spellCheck={false} onChange={(e) => setDraftName(e.target.value)} placeholder="e.g. Backend, Stripe" />
               </label>
               <label className="exp-field">
                 <span className="exp-label">Company <span className="exp-opt">· for filing</span></span>
@@ -121,7 +121,7 @@ export function LibraryView() {
       {versions.length === 0 ? (
         <div className="hist-empty">
           <span className="hist-empty-ic" aria-hidden>🗂️</span>
-          <p>{loading ? "Loading your versions…" : "No saved versions yet. Save the CV you’re working on, or export one — both land here, grouped by company."}</p>
+          <p>{loading ? "Loading your versions…" : "No saved versions yet. Save the CV you’re working on, or export one, both land here, grouped by company."}</p>
         </div>
       ) : (
         <div className="hist-groups">
@@ -265,7 +265,7 @@ function VersionCard({ version: v }: { version: CvVersion }) {
           <span className="lib-share-badge" title="Anyone with this link can view this CV">🔗 Public link</span>
           <input className="lib-share-url" value={shareLink} readOnly onFocus={(e) => e.currentTarget.select()} />
           <button className="hist-btn" onClick={() => void copyShare(shareLink)}>{copied ? "Copied!" : "Copy"}</button>
-          <button className="hist-btn danger" onClick={() => void unshare(v.id)} title="Stop sharing — the link stops working">Unshare</button>
+          <button className="hist-btn danger" onClick={() => void unshare(v.id)} title="Stop sharing, the link stops working">Unshare</button>
         </div>
       )}
     </motion.div>

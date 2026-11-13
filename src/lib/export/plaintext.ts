@@ -32,7 +32,7 @@ function sectionLines(cv: CVData, key: SectionKey): string[] {
       if (!cv.experience.length) return [];
       const out = heading(SECTION_LABELS.experience);
       for (const it of cv.experience) {
-        out.push(join([[it.role, it.company].filter(Boolean).join(" — "), dateRange(it.startDate, it.endDate, it.current), it.location]));
+        out.push(join([[it.role, it.company].filter(Boolean).join(", "), dateRange(it.startDate, it.endDate, it.current), it.location]));
         for (const h of it.highlights.filter((x) => x.trim())) out.push(`  - ${h.trim()}`);
       }
       return out;
@@ -57,7 +57,7 @@ function sectionLines(cv: CVData, key: SectionKey): string[] {
       if (!cv.projects.length) return [];
       const out = heading(SECTION_LABELS.projects);
       for (const it of cv.projects) {
-        out.push(join([[it.name, it.role].filter(Boolean).join(" — "), dateRange(it.startDate, it.endDate), it.url]));
+        out.push(join([[it.name, it.role].filter(Boolean).join(", "), dateRange(it.startDate, it.endDate), it.url]));
         for (const h of it.highlights.filter((x) => x.trim())) out.push(`  - ${h.trim()}`);
       }
       return out;

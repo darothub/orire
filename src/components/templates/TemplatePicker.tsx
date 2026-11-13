@@ -152,7 +152,7 @@ function PickCard({
             className={`pick-ats ${t.ats ? "safe" : "design"}`}
             title={
               t.ats
-                ? "Single-column layout — the safest bet for ATS parsers that read by visible column."
+                ? "Single-column layout, the safest bet for ATS parsers that read by visible column."
                 : "Multi-column layout. Still machine-readable (every export carries a hidden, linearly-ordered text layer), but pick a single-column template if an ATS is a known risk."
             }
           >

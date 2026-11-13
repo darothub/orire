@@ -69,7 +69,7 @@ export function validatePassword(password: string, email?: string): string | nul
     return "Password can’t be a simple sequence like “123456” or “abcdef”.";
   }
   if (/^\d+$/.test(pw)) {
-    return "Password can’t be all numbers — add letters or symbols.";
+    return "Password can’t be all numbers, add letters or symbols.";
   }
   if (email) {
     const local = email.split("@")[0]?.toLowerCase();

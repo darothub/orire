@@ -23,7 +23,7 @@ export async function register(): Promise<void> {
     const message = formatEnvError(result);
     if (process.env.NODE_ENV === "production") {
       logger.error("config.env.invalid", { missing: result.missing });
-      throw new Error(`orire boot aborted — ${message}`);
+      throw new Error(`orire boot aborted, ${message}`);
     }
     logger.warn("config.env.invalid", { missing: result.missing });
   }

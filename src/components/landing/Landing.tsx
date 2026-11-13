@@ -8,10 +8,8 @@ import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
-import { AiStudioHero } from "@/components/landing/AiStudioHero";
-import { landingPlans } from "@/components/landing/pricing";
-import { HowStudio } from "@/components/landing/HowStudio";
-import { beforeAfterLines } from "@/components/landing/beforeAfter";
+import { GapGauge } from "@/components/landing/GapGauge";
+import { TailorTrio } from "@/components/landing/TailorTrio";
 import dynamic from "next/dynamic";
 
 // Keep the fictional demo in a separate client chunk instead of bundling its
@@ -19,10 +17,6 @@ import dynamic from "next/dynamic";
 // SSR remains enabled: HTML and page geometry are unchanged.
 const LiveDemo = dynamic(() => import("@/components/landing/LiveDemo").then((m) => m.LiveDemo));
 import { LandingMobileNav } from "@/components/landing/LandingMobileNav";
-import { demoTemplates } from "@/components/landing/demo";
-import { getTemplate } from "@/components/templates/registry";
-import { landingCV } from "@/components/landing/landingCv";
-import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -64,9 +58,9 @@ export function Landing() {
         <div className="landing-nav-actions">
           <nav className="landing-nav-links" aria-label="Sections">
             <a href="#how">How it works</a>
-            <a href="#templates">Templates</a>
+            <Link href="/templates">Templates</Link>
             <a href="#demo">Live demo</a>
-            <a href="#pricing">Pricing</a>
+            <Link href="/pricing">Pricing</Link>
           </nav>
           <button className="landing-ghost" disabled={!ready} onClick={() => openAuth("signin")}>
             Sign in
@@ -89,11 +83,12 @@ export function Landing() {
             <div className="lx-hero-copy">
               <span className="lx-pill"><i aria-hidden="true" />AI-powered CV studio</span>
               <h1 className="lx-title">
-                Let AI turn your experience into a CV that <em>stands out.</em>
+                Measure the gap to the job. <em>Then close it</em>, honestly.
               </h1>
               <p className="lx-sub">
-                Orire reads the job, rewrites your wording to fit it, and lays it out in a
-                designer template. Your facts stay yours. You approve every word.
+                Paste a job description. Orire benchmarks your CV against a perfect-match candidate,
+                interviews you for what&apos;s missing, and rewrites in the role&apos;s voice, without
+                inventing a single fact.
               </p>
               <div className="lx-cta-row">
                 <button className="lx-cta" disabled={!ready} onClick={() => startSignup("hero")}>
@@ -103,155 +98,26 @@ export function Landing() {
                   Try it as a guest
                 </button>
               </div>
-              <p className="lx-note">Free to start · No card required · Try it before you sign up</p>
+              <p className="lx-note">Free to start · No card required · Your first simulation is free</p>
               <p className="lx-trust">
                 <span className="lx-faces" aria-hidden="true"><i /><i /><i /><i /></span>
                 Trusted by job seekers worldwide
               </p>
             </div>
-            <AiStudioHero />
-          </div>
-          <div className="lx-marquee" aria-hidden="true">
-            <div className="lx-marquee-track">
-              {[0, 1].map((k) => (
-                <span key={k}>
-                  <b>Tailor to any job</b><b>Role-match guidance</b><b>Rewrite weak bullets</b>
-                  <b>{TEMPLATE_COUNT} templates</b><b>PDF &amp; DOCX in</b><b>Side-by-side assistants</b>
-                </span>
-              ))}
-            </div>
+            <GapGauge />
           </div>
         </section>
 
         <section id="how" className="landing-section landing-how landing-how-compact" aria-label="How it works">
-          <motion.div
-            className="landing-motion-reveal landing-about-head"
-            {...reveal()}
-          >
-            <span className="landing-eyebrow">How it works</span>
-            <h2 className="landing-h2">From rough notes to a CV that lands interviews</h2>
+          <motion.div className="landing-motion-reveal landing-about-head" {...reveal()}>
+            <span className="landing-eyebrow">Three instruments, one loop</span>
+            <h2 className="landing-h2">Diagnose. Interview. Polish.</h2>
+            <p className="landing-about-lead">Each stands alone. Run them in order for a guided path, or jump to the one you need.</p>
           </motion.div>
-          <HowStudio />
-        </section>
-
-        <section id="templates" className="landing-section landing-gallery" aria-labelledby="landing-gallery-heading">
-          <div className="landing-about-head">
-            <span className="landing-eyebrow">Designed for your next step</span>
-            <h2 id="landing-gallery-heading" className="landing-h2">Explore real CV templates before signing up.</h2>
-            <p className="landing-about-lead">
-              See how three available Orire templates present the same fictional example CV.
-              Choose a design that fits your experience, then make it your own.
-            </p>
-          </div>
-          <div className="landing-gallery-grid">
-            {demoTemplates().slice(0, 3).map((template) => (
-              <article key={template.id} className="landing-gallery-card">
-                {/* Full templates can contain anchors. Keep the decorative
-                    snapshot inert and outside the card's navigation link. */}
-                <div className="landing-gallery-art" style={{ background: template.swatch }} aria-hidden="true" inert>
-                  <div className="landing-gallery-real-paper">
-                    <div className="paper landing-gallery-template">
-                      {(() => {
-                        const Preview = getTemplate(template.id).Component;
-                        return <Preview cv={landingCV} />;
-                      })()}
-                    </div>
-                  </div>
-                </div>
-                <h3 className="landing-gallery-name">{template.name}</h3>
-                <p className="landing-gallery-description">{template.blurb}</p>
-                <Link className="landing-gallery-action" href={`/templates/${template.id}`}>
-                  Preview {template.name} template →
-                </Link>
-              </article>
-            ))}
-          </div>
-          <p className="landing-gallery-more"><Link href="/templates">View all {TEMPLATE_COUNT} templates →</Link></p>
-        </section>
-
-        <section className="landing-section landing-ba" aria-label="Before and after writing examples">
-          <motion.div
-            className="landing-motion-reveal landing-about-head"
-            {...reveal()}
-          >
-            <span className="landing-eyebrow">Same facts, sharper story</span>
-            <h2 className="landing-h2">See how clearer writing strengthens your experience.</h2>
-            <p className="landing-about-lead">
-              Orire never invents experience — it re-frames what you already did
-              into outcome-led lines a recruiter can&apos;t skim past. The
-              before/after examples are illustrative; you provide the real figures.
-            </p>
-          </motion.div>
-          <ul className="landing-ba-list">
-            {beforeAfterLines().map((line, i) => (
-              <motion.li
-                key={line.after}
-                className="landing-motion-reveal landing-ba-row" tabIndex={0}
-                {...reveal(16, i * 0.08, 0.3)}
-              >
-                <span className="landing-ba-before">
-                  <span className="landing-ba-tag" aria-hidden>Before</span>
-                  {line.before}
-                </span>
-                <span className="landing-ba-arrow" aria-hidden>→</span>
-                <span className="landing-ba-after">
-                  <span className="landing-ba-tag" aria-hidden>After</span>
-                  {line.after}
-                </span>
-              </motion.li>
-            ))}
-          </ul>
+          <TailorTrio />
         </section>
 
         <LiveDemo />
-
-        <section id="pricing" className="landing-section landing-pricing" aria-label="Pricing">
-          <motion.div
-            className="landing-motion-reveal landing-about-head"
-            {...reveal()}
-          >
-            <span className="landing-eyebrow">Simple, honest pricing</span>
-            <h2 className="landing-h2">Start free. Choose a plan when you need more.</h2>
-            <p className="landing-about-lead">
-              Prices are in US dollars (USD). Paid plans renew monthly.
-              Orire includes managed AI usage—no separate AI API key required.
-            </p>
-          </motion.div>
-          <div className="landing-price-grid">
-            {landingPlans().map((p, i) => (
-              <motion.div
-                key={p.id}
-                className={`landing-motion-reveal landing-price-card${p.highlighted ? " is-featured" : ""}`}
-                {...reveal(18, i * 0.08, 0.3)}
-              >
-                {p.highlighted && <span className="landing-price-badge">Recommended</span>}
-                <h3 className="landing-price-name">{p.label}</h3>
-                <div className="landing-price-amt">
-                  <span className="landing-price-num">{p.priceLabel}</span>
-                  <span className="landing-price-cad">{p.cadence}</span>
-                </div>
-                <p className="landing-price-blurb">{p.blurb}</p>
-                <p className="landing-price-usage-title">Usage limits</p>
-                <ul className="landing-price-usage" aria-label={`${p.label} usage limits`}>
-                  {p.usageDetails.map((detail) => <li key={detail}>{detail}</li>)}
-                </ul>
-                <ul className="landing-price-perks">
-                  {p.perks.map((perk) => (
-                    <li key={perk}><span aria-hidden>✓</span> {perk}</li>
-                  ))}
-                </ul>
-                <button
-                  className={p.highlighted ? "landing-cta" : "landing-ghost"}
-                  disabled={!ready}
-                  onClick={() => startSignup("pricing", p.id)}
-                >
-                  {p.cta}
-                </button>
-              </motion.div>
-            ))}
-          </div>
-          <p className="landing-pricing-disclosure">Paid subscriptions renew monthly in USD until cancelled. Cancel through billing settings; access generally continues until the current paid period ends. Applicable taxes, if any, are shown during checkout before payment. Free quotas are lifetime totals, not monthly allowances.</p>
-        </section>
 
         <section className="landing-section landing-final">
           <motion.div
@@ -277,6 +143,7 @@ export function Landing() {
         </span>
         <span className="landing-foot-links">
           <Link href="/templates">Templates</Link>
+          <Link href="/pricing">Pricing</Link>
           <Link href="/guides">Guides</Link>
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>

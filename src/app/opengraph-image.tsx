@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Orire — turn the CV you have into the one the role wants";
+export const alt = "Orire: turn the CV you have into the one the role wants";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

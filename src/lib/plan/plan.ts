@@ -256,7 +256,7 @@ export function remainingNote(metric: Metric, cap: number | null, used: number):
   if (cap === null) return "";
   const remaining = Math.max(0, cap - used);
   const n = METRIC_NOUNS[metric];
-  if (remaining === 0) return `That was your last free ${n.one} — upgrade to Pro for more.`;
+  if (remaining === 0) return `That was your last free ${n.one}, upgrade to Pro for more.`;
   if (remaining === 1) return `1 free ${n.one} left.`;
   return `${remaining} free ${n.many} left.`;
 }

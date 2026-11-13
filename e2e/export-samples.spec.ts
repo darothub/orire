@@ -25,7 +25,7 @@ for (const theme of ["dark", "light"] as const) {
       await page.keyboard.press("Tab");
       await expect(panel.getByRole("link", { name: "Sample PDF" })).toBeFocused();
       await page.keyboard.press("Tab");
-      await expect(panel.getByRole("button", { name: "Sample Word — download fictional CV (.docx)" })).toBeFocused();
+      await expect(panel.getByRole("button", { name: "Sample Word, download fictional CV (.docx)" })).toBeFocused();
       const audit = await new AxeBuilder({ page }).include(".public-export-panel").withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
       expect(audit.violations).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -69,7 +69,7 @@ test("anonymous PDF sample is a readable genuine export without embedded structu
 test("anonymous panel Word sample contains the same fictional facts and reserved links", async ({ page, db, e2eUser }) => {
   await page.goto("/templates", { waitUntil: "domcontentloaded" });
   const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: "Sample Word — download fictional CV (.docx)" }).click();
+  await page.getByRole("button", { name: "Sample Word, download fictional CV (.docx)" }).click();
   const file = await download;
   expect(file.suggestedFilename()).toMatch(/fictional CV sample\.docx$/);
   const path = await file.path();

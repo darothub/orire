@@ -15,7 +15,7 @@ import { buildStructuredData } from "@/lib/seo/structuredData";
 import { publicMetadata, SITE_URL } from "@/lib/seo/metadata";
 import { TEMPLATE_COUNT } from "@/lib/templates/catalog";
 
-const TITLE = "Orire — AI CV Studio & Professional Resume Templates";
+const TITLE = "Orire: AI CV Studio & Professional Resume Templates";
 const DESCRIPTION = `Upload your CV, re-brand it into a clean template, tailor it to any job, and export an ATS-ready PDF. ${TEMPLATE_COUNT} templates; AI that never invents experience.`;
 
 export const metadata: Metadata = {

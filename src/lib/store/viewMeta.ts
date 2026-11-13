@@ -20,13 +20,13 @@ export interface ViewMeta {
  * analytics events, store names) live elsewhere and must stay stable.
  */
 export const VIEW_META: Record<WorkspaceView, ViewMeta> = {
-  spotlight: { label: "Home", hint: "Your building blocks — arrange your CV course", icon: "⌂" },
-  create: { label: "Create", hint: "Build a CV from scratch, step by step — free", icon: "✚" },
+  spotlight: { label: "Home", hint: "Your building blocks, arrange your CV course", icon: "⌂" },
+  create: { label: "Create", hint: "Build a CV from scratch, step by step, free", icon: "✚" },
   edit: { label: "Edit", hint: "Two-pane live editor", icon: "✎" },
   rebrand: { label: "Re-brand", hint: "Restructure a CV into a new template", icon: "⟳" },
   tailor: { label: "Tailor", hint: "Simulate, coach and refine your CV for one job", icon: "◎" },
   refine: { label: "Rewrite", hint: "Connect an assistant · import · tailor to a job", icon: "✦" },
-  coach: { label: "Coach", hint: "Close the gap to the ideal candidate — with your real answers", icon: "✧" },
+  coach: { label: "Coach", hint: "Close the gap to the ideal candidate, with your real answers", icon: "✧" },
   target: { label: "Simulate", hint: "Simulate the ideal match & edit toward it", icon: "🎯" },
   cover: { label: "Cover", hint: "Write, edit & export a cover letter", icon: "✉" },
   export: { label: "Export", hint: "Style, page layout & PDF download", icon: "⭳" },

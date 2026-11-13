@@ -127,7 +127,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
     if (!pendingApply) return;
     const { r, mode, parsed, via } = pendingApply;
     applyImport(parsed, mode);
-    setApplied(`${r.name} — ${mode === "replace" ? "replaced" : "appended"}${via ? ` · ${via}` : ""}`);
+    setApplied(`${r.name}, ${mode === "replace" ? "replaced" : "appended"}${via ? ` · ${via}` : ""}`);
     setPendingApply(null);
   };
   const cancelApply = () => setPendingApply(null);
@@ -151,7 +151,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
       basics[c.field] = c.values[choices[c.field] ?? 0];
     }
     applyImport({ ...mergePreview.merged, basics }, "replace");
-    setApplied(`merged ${mergePreview.stats.files} CVs into one — replaced editor`);
+    setApplied(`merged ${mergePreview.stats.files} CVs into one, replaced editor`);
     setMergePreview(null);
     setChoices({});
   };
@@ -159,7 +159,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
   return (
     <div className="step-body">
       <p className="step-hint">
-        Upload one or more existing CVs (PDF or DOCX). We extract the text and map it into your working CV — the
+        Upload one or more existing CVs (PDF or DOCX). We extract the text and map it into your working CV, the
         source of facts for refining. With {providerLabel}, “Replace editor (AI)” structures the CV
         accurately; the built-in parser is used as a fallback.
       </p>
@@ -169,7 +169,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
           <div className="rb-existing-main">
             <span className="rb-existing-ico" aria-hidden>✨</span>
             <div className="rb-existing-text">
-              <strong>This is orire’s sample CV — not yours yet</strong>
+              <strong>This is orire’s sample CV, not yours yet</strong>
               <span>
                 Upload your own CV (PDF or DOCX) below to refine it. Or explore the flow with our
                 sample using “Try with sample CV”.
@@ -185,7 +185,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
             <span className="rb-existing-ico" aria-hidden>📄</span>
             <div className="rb-existing-text">
               <strong>
-                You already have a CV in the editor{cv.basics.fullName ? ` — ${cv.basics.fullName}` : ""}
+                You already have a CV in the editor{cv.basics.fullName ? `, ${cv.basics.fullName}` : ""}
               </strong>
               <span>
                 {facts.experience} roles · {facts.education} education · {facts.skills} skills
@@ -238,7 +238,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
           <motion.div className="imp-merge-bar" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="imp-merge-text">
               <strong>{parseable.length} CVs parsed.</strong>
-              <span>Combine them into one de-duplicated CV — union skills, concatenate roles, keep one copy of repeats.</span>
+              <span>Combine them into one de-duplicated CV, union skills, concatenate roles, keep one copy of repeats.</span>
             </div>
             <button className="imp-btn primary" onClick={buildMerge}>Merge all into one →</button>
           </motion.div>
@@ -265,7 +265,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
             <ImportNotes notes={mergePreview.merged.notes.filter((n) => !n.startsWith("Merged "))} />
             {mergePreview.conflicts.length > 0 && (
               <div className="imp-conflicts">
-                <span className="ed-label">Sources disagree — pick which to keep</span>
+                <span className="ed-label">Sources disagree, pick which to keep</span>
                 {mergePreview.conflicts.map((c) => (
                   <div key={c.field} className="imp-conflict">
                     <span className="imp-conflict-field">{c.label}</span>
@@ -303,7 +303,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
             </div>
             <p className="step-hint">
               Nothing has changed yet. Check the extracted fields below, then{" "}
-              {pendingApply.mode === "replace" ? "replace the working CV" : "append this to the working CV"} —
+              {pendingApply.mode === "replace" ? "replace the working CV" : "append this to the working CV"},
               or cancel and try the other assistant/mode.
             </p>
             <div className="imp-summary">
@@ -317,7 +317,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
             <ImportNotes notes={pendingApply.parsed.notes} />
             <div className="imp-actions">
               <button className="imp-btn primary" onClick={confirmApply}>
-                {pendingApply.mode === "replace" ? "Looks good — replace editor" : "Looks good — append"}
+                {pendingApply.mode === "replace" ? "Looks good, replace editor" : "Looks good, append"}
               </button>
               <button className="imp-btn" onClick={cancelApply}>Cancel</button>
             </div>
@@ -375,7 +375,7 @@ export function SourcesStep({ onBack, onNext }: { onBack: () => void; onNext: ()
       <div className="step-nav">
         <button className="flow-btn ghost" onClick={onBack}>Back</button>
         <button className="flow-btn primary" onClick={onNext}>
-          {isSeed ? "Try with sample CV" : hasContent ? "Continue" : "Skip — use current CV"}
+          {isSeed ? "Try with sample CV" : hasContent ? "Continue" : "Skip, use current CV"}
         </button>
       </div>
     </div>

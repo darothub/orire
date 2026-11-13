@@ -31,7 +31,7 @@ export function VerifyBanner() {
     const verified = url.searchParams.get("verified");
     const err = url.searchParams.get("verify_error");
     const initialNotice: Notice = verified
-      ? { kind: "ok", text: "Email verified — upload, download, and AI features are unlocked." }
+      ? { kind: "ok", text: "Email verified, upload, download, and AI features are unlocked." }
       : err
         ? { kind: "err", text: err }
         : null;
@@ -113,7 +113,7 @@ export function VerifyBanner() {
     >
       <span>
         {notice?.text ??
-          "Verify your email to upload, download, save, and use AI — check your inbox for the link we sent."}
+          "Verify your email to upload, download, save, and use AI, check your inbox for the link we sent."}
       </span>
       {showBar && !isOk && (
         <button

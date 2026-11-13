@@ -114,7 +114,7 @@ export function ProfileView() {
       <div className="ws-head">
         <div>
           <h2>Your profile</h2>
-          <p>Your activity, best CV rating and current plan — synced to your account.</p>
+          <p>Your activity, best CV rating and current plan, synced to your account.</p>
         </div>
         <button className="exp-reset" onClick={refresh} disabled={loading} type="button">
           {loading ? "Refreshing…" : "Refresh"}
@@ -235,7 +235,7 @@ function PlanLine({ data }: { data: ProfileData }) {
     hasSubscription: data.plan.id !== "free",
   });
   if (!line) {
-    return <span className="prof-plan-sub">{data.plan.id === "free" ? "Free forever — upgrade anytime." : "Active"}</span>;
+    return <span className="prof-plan-sub">{data.plan.id === "free" ? "Free forever, upgrade anytime." : "Active"}</span>;
   }
   return <span className={`prof-plan-sub ${line.tone}`}>{line.text}</span>;
 }

@@ -45,10 +45,10 @@ export function subscriptionLine(b: BillingLike): SubscriptionLine | null {
       return { text: date ? `Trial ends ${date}` : "On trial", tone: "ok" };
     case "past_due":
     case "unpaid":
-      return { text: "Payment past due — update your card in the billing portal.", tone: "warn" };
+      return { text: "Payment past due, update your card in the billing portal.", tone: "warn" };
     case "incomplete":
     case "incomplete_expired":
-      return { text: "Payment didn’t complete — try subscribing again.", tone: "warn" };
+      return { text: "Payment didn’t complete, try subscribing again.", tone: "warn" };
     case "canceled":
       return { text: date ? `Access ends ${date}` : "Subscription canceled.", tone: "warn" };
     default:

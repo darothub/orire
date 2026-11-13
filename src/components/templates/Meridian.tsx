@@ -25,7 +25,7 @@ export function Meridian({ cv }: { cv: CVData }) {
       case "summary":
         return basics.summary || previewEdit ? (
           <motion.section key="summary" variants={item} layout className="md-row">
-            <div className="md-label">{num("summary")} — Profile</div>
+            <div className="md-label">{num("summary")} · Profile</div>
             <EditableText
               as="p"
               className="md-summary"
@@ -39,7 +39,7 @@ export function Meridian({ cv }: { cv: CVData }) {
       case "experience":
         return cv.experience.length ? (
           <motion.section key="experience" variants={item} layout className="md-row">
-            <div className="md-label">{num("experience")} — Experience</div>
+            <div className="md-label">{num("experience")} · Experience</div>
             <div className="md-list">
               {cv.experience.map((exp) => (
                 <motion.div key={exp.id} variants={item} layout className="md-entry">
@@ -86,7 +86,7 @@ export function Meridian({ cv }: { cv: CVData }) {
       case "education":
         return cv.education.length ? (
           <motion.section key="education" variants={item} layout className="md-row">
-            <div className="md-label">{num("education")} — Education</div>
+            <div className="md-label">{num("education")} · Education</div>
             <div className="md-list">
               {cv.education.map((ed) => (
                 <motion.div key={ed.id} variants={item} layout className="md-entry">
@@ -118,7 +118,7 @@ export function Meridian({ cv }: { cv: CVData }) {
       case "projects":
         return cv.projects.length ? (
           <motion.section key="projects" variants={item} layout className="md-row">
-            <div className="md-label">{num("projects")} — Projects</div>
+            <div className="md-label">{num("projects")} · Projects</div>
             <div className="md-list">
               {cv.projects.map((prj) => (
                 <motion.div key={prj.id} variants={item} layout className="md-entry">
@@ -165,7 +165,7 @@ export function Meridian({ cv }: { cv: CVData }) {
       case "certifications":
         return cv.certifications.length ? (
           <motion.section key="certifications" variants={item} layout className="md-row">
-            <div className="md-label">{num("certifications")} — Certifications</div>
+            <div className="md-label">{num("certifications")} · Certifications</div>
             <div className="md-list">
               {cv.certifications.map((crt) => (
                 <div key={crt.id} className="md-entry">
@@ -201,7 +201,7 @@ export function Meridian({ cv }: { cv: CVData }) {
       case "skills":
         return cv.skills.length ? (
           <motion.section key="skills" variants={item} layout className="md-row">
-            <div className="md-label">{num("skills")} — Skills</div>
+            <div className="md-label">{num("skills")} · Skills</div>
             <div className="md-list">
               {cv.skills.map((g) => (
                 <div key={g.id} className="md-entry">

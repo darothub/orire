@@ -311,8 +311,8 @@ export const useLibraryStore = create<LibraryState>()(
           migrated === total
             ? `Moved ${migrated} saved version${migrated === 1 ? "" : "s"} from this browser to your account.`
             : migrated > 0
-              ? `Moved ${migrated} of ${total} saved versions from this browser to your account — the rest stayed put, try saving them again.`
-              : `Couldn't move your ${total} saved version${total === 1 ? "" : "s"} from this browser to your account — try saving ${total === 1 ? "it" : "them"} again.`;
+              ? `Moved ${migrated} of ${total} saved versions from this browser to your account, the rest stayed put, try saving them again.`
+              : `Couldn't move your ${total} saved version${total === 1 ? "" : "s"} from this browser to your account, try saving ${total === 1 ? "it" : "them"} again.`;
         set({ migrationNote: note });
       },
 

@@ -338,7 +338,7 @@ export function findInventedNumbers(source: CVData, cv: CVData): string[] {
       const dedupe = `${where}|${key}`;
       if (seen.has(dedupe)) continue;
       seen.add(dedupe);
-      warnings.push(`${FIGURE_PREFIX} “${tok}” in ${where} does not appear in your source CV — verify before sending.`);
+      warnings.push(`${FIGURE_PREFIX} “${tok}” in ${where} does not appear in your source CV, verify before sending.`);
     }
   };
   if (cv.basics.summary) check(cv.basics.summary, "your summary");
