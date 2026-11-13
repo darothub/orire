@@ -1,5 +1,6 @@
 "use client";
 
+import { SimulateProgress } from "@/components/ai/SimulateProgress";
 import { motion } from "framer-motion";
 import { useRefineStore, type ColState } from "@/lib/store/refineStore";
 import { useCVStore } from "@/lib/store/cvStore";
@@ -34,17 +35,15 @@ export function Column({ provider, state, before, applied, onReview }: { provide
         </div>
       )}
       {state.phase === "running" && (
-        <div className="cmp-loading">
-          <span className="cmp-spinner" />
-          {state.retrying ? (
-            <>
-              {meta.label} is busy — retrying{state.retryAttempt ? ` (${state.retryAttempt})` : ""}…
-              {state.retryAfterMs ? <span className="cmp-retry-delay"> {Math.ceil(state.retryAfterMs / 1000)}s</span> : null}
-            </>
-          ) : (
-            <>Contacting {meta.label}…</>
-          )}
-        </div>
+        state.retrying ? (
+          <div className="cmp-loading">
+            <span className="cmp-spinner" />
+            {meta.label} is busy — retrying{state.retryAttempt ? ` (${state.retryAttempt})` : ""}…
+            {state.retryAfterMs ? <span className="cmp-retry-delay"> {Math.ceil(state.retryAfterMs / 1000)}s</span> : null}
+          </div>
+        ) : (
+          <SimulateProgress ariaLabel="Rewrite progress" label={`Rewriting with ${meta.label}…`} />
+        )
       )}
       {state.phase === "error" && state.error && (
         <div className="imp-error"><strong>{state.error.title}{state.error.status ? ` (HTTP ${state.error.status})` : ""}</strong><pre>{state.error.body}</pre></div>

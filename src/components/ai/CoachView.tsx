@@ -1,5 +1,6 @@
 "use client";
 
+import { SimulateProgress } from "@/components/ai/SimulateProgress";
 import { advanceGuidedRun } from "@/components/ai/RunAll";
 import { useFactStore } from "@/lib/store/factStore";
 import { factForArea } from "@/lib/tailor/facts";
@@ -296,7 +297,7 @@ export function CoachView() {
 
       {(phase === "analyzing" || phase === "rewriting") && (
         <div className="coach-busy" role="status" aria-live="polite" aria-busy="true">
-          <p>{phase === "analyzing" ? "Modelling the ideal candidate and comparing your CV…" : status}</p>
+          <SimulateProgress key={phase} ariaLabel="Coach progress" label={phase === "analyzing" ? "Modelling the ideal candidate and comparing your CV…" : status} />
         </div>
       )}
 
