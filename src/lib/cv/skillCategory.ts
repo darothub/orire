@@ -72,3 +72,37 @@ export function groupSuggestions(groups: SkillGroup[], source: SkillSource[], su
   }
   return [...sections.values()];
 }
+
+const KEEP_CATEGORY = /language|interest|hobb/i;
+
+const mentions = (haystack: string, skill: string) => {
+  const k = norm(skill);
+  return k.length > 0 && haystack.includes(k);
+};
+
+/**
+ * Skills on the CV the target role doesn't ask for: absent from the ideal match
+ * and never named in the job description. Spoken languages and interests are
+ * never flagged. Deterministic, and only a suggestion — nothing is removed for
+ * the user.
+ */
+export function removableSkills(groups: SkillGroup[], ideal: SkillSource[], jd: string): string[] {
+  if (!ideal.length && !jd.trim()) return [];
+  const wanted = ideal.flatMap((g) => g.items).map(norm).filter(Boolean);
+  const text = norm(jd);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const g of groups) {
+    if (KEEP_CATEGORY.test(g.category)) continue;
+    for (const raw of g.items) {
+      const skill = raw.trim();
+      const k = norm(skill);
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      const inIdeal = wanted.some((w) => w === k || (Math.min(w.length, k.length) >= 4 && (w.includes(k) || k.includes(w))));
+      if (inIdeal || mentions(text, skill)) continue;
+      out.push(skill);
+    }
+  }
+  return out;
+}

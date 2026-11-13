@@ -1,6 +1,6 @@
 "use client";
 
-import { groupSuggestions } from "@/lib/cv/skillCategory";
+import { groupSuggestions, removableSkills } from "@/lib/cv/skillCategory";
 import { funnel } from "@/lib/analytics/funnel";
 
 import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion";
@@ -15,6 +15,7 @@ import { analyzeBullet } from "@/lib/cv/coach";
 import { useSpellReady } from "@/lib/cv/useSpellReady";
 import { usePlanStore } from "@/lib/store/planStore";
 import { useViewStore } from "@/lib/store/viewStore";
+import { useTargetStore } from "@/lib/store/targetStore";
 import { allowContextualBulletReview } from "@/lib/plan/plan";
 import type { BulletReview } from "@/lib/ai/bulletReview";
 import { moveById, moveAt } from "@/lib/cv/reorder";
@@ -429,6 +430,12 @@ export function EditorPanel() {
   // panel (cards and highlights alike) — one live region is enough since
   // only one move can happen at a time.
   const [announcement, setAnnouncement] = useState("");
+  const ideal = useTargetStore((t) => t.ideal);
+  const jd = useTargetStore((t) => t.jd);
+  const [keptSkills, setKeptSkills] = useState<string[]>([]);
+  const removals = ideal
+    ? removableSkills(cv.skills, ideal.skills, jd).filter((x) => !keptSkills.some((k) => k.toLowerCase() === x.toLowerCase()))
+    : [];
   const announce = setAnnouncement;
 
   return (
@@ -591,6 +598,33 @@ export function EditorPanel() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+        {removals.length > 0 && (
+          <div className="ed-suggest ed-suggest-rm">
+            <div className="ed-suggest-head">
+              <span className="ed-suggest-title">Suggested for removal</span>
+              <button className="ed-suggest-clear" onClick={() => setKeptSkills((k) => [...k, ...removals])}>Keep all</button>
+            </div>
+            <p className="ed-suggest-note">Not in the ideal match or the job description — removing them sharpens focus on the role.</p>
+            <div className="ed-suggest-chips">
+              <AnimatePresence initial={false}>
+                {removals.map((sk) => (
+                  <motion.span
+                    key={sk}
+                    layout
+                    initial={{ opacity: 0, scale: 0.85 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.85 }}
+                    transition={{ duration: 0.18 }}
+                    className="ed-suggest-chip"
+                  >
+                    <button className="ed-suggest-add ed-suggest-del" onClick={() => s.removeSkill(sk)} title="Remove from your CV">− {sk}</button>
+                    <button className="ed-suggest-x" onClick={() => setKeptSkills((k) => [...k, sk])} aria-label={`Keep ${sk}`} title="Keep this skill">×</button>
+                  </motion.span>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         )}
         <Reorder.Group axis="y" values={cv.skills} onReorder={s.setSkills} className="ed-list" role="list">
