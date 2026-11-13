@@ -52,7 +52,8 @@ for (const width of [1440, 390, 320]) {
       await expect(tools).toBeVisible();
       expect(await studio.evaluate((root) => {
         const order = [...root.children];
-        return order.findIndex((el) => el.classList.contains("spot-studio-tools")) < order.findIndex((el) => el.classList.contains("spot-hero"));
+        const band = order.findIndex((el) => el.classList.contains("spot-band"));
+        return band >= 0 && band < order.findIndex((el) => el.classList.contains("spot-studio-tools"));
       })).toBe(true);
       const create = studio.getByRole("button", { name: "Create your CV →", exact: true });
       await create.focus();
@@ -64,6 +65,10 @@ for (const width of [1440, 390, 320]) {
       await expect(studio.getByRole("button", { name: /^Build step by step/ })).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(studio.getByRole("button", { name: "Your library", exact: true })).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(studio.getByRole("button", { name: /^Open Tailor/ })).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(tools.getByRole("button", { name: "Reset to recommended flow" })).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(tools.getByRole("button", { name: /^Open Re-brand/ })).toBeFocused();
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

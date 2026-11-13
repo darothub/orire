@@ -116,6 +116,7 @@ for (const viewport of [
       } finally {
         releaseScripts();
       }
+      if (viewport.name === "desktop") await page.goto("/", { waitUntil: "domcontentloaded" });
       const cta = page.getByRole("button", { name: /Create your CV/ }).first();
       await expect(cta).toBeEnabled();
       const guestCta = page.getByRole("button", { name: "Try it as a guest" });

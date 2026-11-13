@@ -19,7 +19,7 @@ for (const viewport of viewports) {
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Let AI turn your experience into a CV that stands out." }),
+      page.getByRole("heading", { name: "Measure the gap to the job. Then close it, honestly." }),
     ).toBeVisible({ timeout: 20_000 });
 
     const consent = page.getByRole("dialog", { name: "Cookie consent" });

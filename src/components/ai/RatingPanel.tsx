@@ -7,6 +7,8 @@ import { usePlanStore } from "@/lib/store/planStore";
 import { VIEW_META } from "@/lib/store/viewMeta";
 import { allowGradeBreakdown } from "@/lib/plan/plan";
 import { scoreCV, diffScores, grade } from "@/lib/cv/rating";
+import { getTemplate } from "@/components/templates/registry";
+import { FitPaper } from "@/components/ai/simulate/ScaledPaper";
 
 /** Colour a 0–100 value from red → amber → green. */
 function scoreColor(v: number): string {
@@ -14,30 +16,32 @@ function scoreColor(v: number): string {
   return `hsl(${hue} 70% 45%)`;
 }
 
-function Ring({ value, label, sub }: { value: number; label: string; sub?: string }) {
+function Ring({ value, label, sub, big }: { value: number; label: string; sub?: string; big?: boolean }) {
   const r = 34;
   const c = 2 * Math.PI * r;
   return (
-    <div className="rate-ring">
-      <svg viewBox="0 0 84 84" width="84" height="84">
-        <circle cx="42" cy="42" r={r} className="rate-ring-track" />
-        <motion.circle
-          cx="42"
-          cy="42"
-          r={r}
-          className="rate-ring-fill"
-          stroke={scoreColor(value)}
-          strokeDasharray={c}
-          initial={{ strokeDashoffset: c }}
-          animate={{ strokeDashoffset: c - (value / 100) * c }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        />
-      </svg>
-      <div className="rate-ring-center">
+    <div className={`rate-ring${big ? " big" : ""}`}>
+      <div className="rate-ring-dial">
+        <svg viewBox="0 0 84 84">
+          <circle cx="42" cy="42" r={r} className="rate-ring-track" />
+          <motion.circle
+            cx="42"
+            cy="42"
+            r={r}
+            className="rate-ring-fill"
+            stroke={scoreColor(value)}
+            strokeDasharray={c}
+            initial={{ strokeDashoffset: c }}
+            animate={{ strokeDashoffset: c - (value / 100) * c }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
+        </svg>
         <strong style={{ color: scoreColor(value) }}>{value}</strong>
       </div>
-      <span className="rate-ring-label">{label}</span>
-      {sub && <span className="rate-ring-sub">{sub}</span>}
+      <div className="rate-ring-text">
+        <span className="rate-ring-label">{label}</span>
+        {sub && <span className="rate-ring-sub">{sub}</span>}
+      </div>
     </div>
   );
 }
@@ -52,6 +56,9 @@ export function RateView() {
   const plan = usePlanStore((s) => s.plan);
   const showBreakdown = allowGradeBreakdown(plan);
 
+  const activeTemplate = useCVStore((s) => s.activeTemplate);
+  const Tpl = getTemplate(activeTemplate).Component;
+
   const current = scoreCV(cv);
   const diff = started && baseline ? diffScores(baseline, cv) : null;
 
@@ -65,11 +72,18 @@ export function RateView() {
       <div className="ws-head">
         <div>
           <h2>{VIEW_META.rate.label}</h2>
-          <p>An internal writing-quality rubric comparing your current and initial CV. Not an ATS score or hiring prediction.</p>
+          <p>Your initial CV against where it stands now.</p>
         </div>
       </div>
 
-        <p className="score-disclosure"><strong>How grading works:</strong> This score reflects Orire’s fixed CV-writing rubric. It helps track edits; employers and applicant-tracking systems may evaluate your CV differently.</p>\n\n        {!started ? (
+        <aside className="score-disclosure" aria-label="How grading works">
+          <span className="score-disclosure-icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>How grading works.</strong> This score reflects Orire’s fixed CV-writing rubric. It helps track edits; employers and applicant-tracking systems may evaluate your CV differently.</p>
+          </div>
+        </aside>
+
+        {!started ? (
           <div className="rate-hero solo">
             <Ring value={0} label="Rating" sub="—" />
             <p className="rate-note">
@@ -77,18 +91,7 @@ export function RateView() {
               measured against the CV you bring in, so it starts at zero until then.
             </p>
           </div>
-        ) : diff ? (
-          <div className="rate-hero">
-            <Ring value={diff.before} label="Initial" />
-            <div className="rate-arrow">
-              <span className={`rate-delta ${diff.diff > 0 ? "up" : diff.diff < 0 ? "down" : ""}`}>
-                {diff.diff > 0 ? `+${diff.diff}` : diff.diff}
-              </span>
-              <span className="rate-arrow-glyph" aria-hidden>→</span>
-            </div>
-            <Ring value={diff.after} label="Final" sub={grade(diff.after)} />
-          </div>
-        ) : (
+        ) : diff ? null : (
           <div className="rate-hero solo">
             <Ring value={current.overall} label="Current" sub={grade(current.overall)} />
             <p className="rate-note">
@@ -96,6 +99,54 @@ export function RateView() {
               automatically, or snapshot the current CV now to measure future edits against it.
             </p>
           </div>
+        )}
+
+        {!diff && (
+          <section className="rate-compare" aria-label="Current CV">
+            <div className="rate-compare-head">
+              <h3>Your CV, then and now</h3>
+              <button className="flow-btn primary" onClick={captureBaseline}>Set this CV as my starting point</button>
+            </div>
+            <p className="rate-note">
+              Save the CV as it is today. As you edit, Grade shows it side by side with this starting point.
+            </p>
+            <div className="tgt-split rate-split single">
+              <div className="tgt-col">
+                <div className="tgt-col-head ideal">
+                  <span className="tgt-col-tag">Current</span>
+                  <span className="tgt-col-sub">Score {current.overall} · {grade(current.overall)}</span>
+                </div>
+                <div className="tgt-paper-wrap">
+                  <FitPaper><Tpl cv={cv} /></FitPaper>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {started && baseline && diff && (
+          <section className="rate-compare" aria-label="Initial and current CV">
+            <div className="rate-versus" data-dir={diff.after > diff.before ? "up" : diff.after < diff.before ? "down" : "same"}>
+              <div className="rate-side">
+                <Ring value={diff.before} label="Initial" sub={grade(diff.before)} />
+                <div className="tgt-paper-wrap">
+                  <FitPaper><Tpl cv={baseline} /></FitPaper>
+                </div>
+              </div>
+              <div className="rate-arrow rate-arrow-mid">
+                <span className={`rate-delta ${diff.diff > 0 ? "up" : diff.diff < 0 ? "down" : ""}`}>
+                  {diff.diff > 0 ? `+${diff.diff}` : diff.diff}
+                </span>
+                <span className="rate-arrow-glyph" aria-hidden>→</span>
+              </div>
+              <div className="rate-side">
+                <Ring value={diff.after} label="Current" sub={grade(diff.after)} />
+                <div className="tgt-paper-wrap">
+                  <FitPaper><Tpl cv={cv} /></FitPaper>
+                </div>
+              </div>
+            </div>
+          </section>
         )}
 
         {!showBreakdown ? (
