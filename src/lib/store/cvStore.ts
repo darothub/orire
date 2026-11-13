@@ -100,6 +100,8 @@ interface CVState {
   acceptSkillSuggestion: (skill: string) => void;
   dismissSkillSuggestion: (skill: string) => void;
   clearSkillSuggestions: () => void;
+  /** Remove a skill from every group (accepting a "suggested for removal"). */
+  removeSkill: (skill: string) => void;
   clearIgnoredSkills: () => void;
   /** Reveal/seed a section the ideal has (one empty item so it shows in the editor). */
   addSuggestedSection: (key: SectionKey) => void;
@@ -323,6 +325,16 @@ export const useCVStore = create<CVState>()(
           return {
             skillSuggestions: s.skillSuggestions.filter((x) => x.toLowerCase() !== k),
             ignoredSkills: already ? s.ignoredSkills : [...s.ignoredSkills, skill.trim()],
+          };
+        }),
+      removeSkill: (skill) =>
+        set((s) => {
+          const k = skill.trim().toLowerCase();
+          return {
+            cv: {
+              ...s.cv,
+              skills: s.cv.skills.map((g) => ({ ...g, items: g.items.filter((i) => i.trim().toLowerCase() !== k) })),
+            },
           };
         }),
       clearSkillSuggestions: () =>
