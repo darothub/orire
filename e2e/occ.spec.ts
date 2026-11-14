@@ -122,7 +122,7 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     await page.goto("/occ");
     await page.getByRole("button", { name: "Review my CV for a role" }).click();
-    await page.getByLabel("Select an existing Orire CV instead of pasting").selectOption(original.id);
+    await page.getByLabel("Select your CV").selectOption(original.id);
     await expect(page.getByText("Using your selected Orire CV.", { exact: false })).toBeVisible();
     await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
     const stored = await db.document.findUniqueOrThrow({ where: { id: original.id } });
@@ -162,7 +162,7 @@ test.describe("Career-only OCC feature", () => {
     await page.goto("/occ");
     await page.getByRole("button", { name: "Review my CV for a role" }).click();
     await expect(page.getByText("First select a CV from your Orire library", { exact: false })).toBeVisible();
-    await page.getByLabel("Select an existing Orire CV instead of pasting").selectOption({ label: "My Career CV" });
+    await page.getByLabel("Select your CV").selectOption({ label: "My Career CV" });
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
