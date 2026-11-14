@@ -8,7 +8,7 @@ export function looksLikeCV(text: string): boolean {
   const sectionSignals = [
     /\b(?:professional|work|employment)\s+(?:experience|history|summary)\b/i,
     /\b(?:education|qualifications|certifications?|technical skills|core skills|projects)\b/i,
-    /\b(?:skills|experience|expertise|responsibilities|achievements)\b/i,
+    /\b(?:skills|experience|experienced|expertise|responsibilities|achievements)\b/i,
   ].filter(pattern => pattern.test(source)).length;
   const role = /\b(?:engineer|developer|designer|analyst|manager|nurse|doctor|teacher|consultant|accountant|specialist|architect|officer|technician|scientist|administrator|director|coordinator|researcher|intern|student|graduate|executive|recruiter|lawyer|sales|marketing|product|operations)\b/i.test(source);
   const skill = /\b(?:java|kotlin|python|javascript|typescript|react|sql|cloud|api|testing|leadership|communication|patient care|customer service|financial reporting|project management|healthcare|payments|authentication)\b/i.test(source);
