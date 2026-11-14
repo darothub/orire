@@ -1,5 +1,6 @@
 import { test, expect, signIn } from "./fixtures";
 import { sampleCV } from "../src/lib/cv/sample";
+import { Document, Packer, Paragraph } from "docx";
 
 /** Executed twice in CI: baseline E2E with OCC off, and OCC-enabled gate suite. */
 test("OCC is unavailable when the feature switch is off", async ({ page }) => {
@@ -235,6 +236,24 @@ test.describe("Career-only OCC feature", () => {
     await testInfo.attach("occ-m7-uploads-mobile", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
+  });
+
+  test("M7 reads a DOCX through the existing authenticated Orire parser", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await db.user.update({ where: { id: e2eUser.id }, data: { emailVerified: new Date() } });
+    await signIn(page);
+    await page.goto("/occ");
+    const doc = new Document({ sections: [{
+      children: [new Paragraph("Senior engineer creating reliable Java and Kotlin payment services, with authentication and integration testing expertise.")],
+    }] });
+    await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
+      name: "career.docx",
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      buffer: await Packer.toBuffer(doc),
+    });
+    await expect(page.getByText("CV attached: career.docx", { exact: false })).toBeVisible();
+    await expect(page.getByLabel("Your current CV text")).toHaveValue(/Senior engineer creating reliable Java/);
+    expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
   });
 
   test("M7 rejects unsupported and empty uploads without setting analysis context", async ({ page, db, e2eUser }) => {
