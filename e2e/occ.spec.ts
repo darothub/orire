@@ -154,6 +154,27 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("OCC:", { exact: false }).first()).toBeVisible();
   });
 
+  test("M7 orchestrator asks for the missing job description and accepts a follow-up", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await db.document.create({ data: {
+      userId: e2eUser.id, title: "My Career CV", data: JSON.parse(JSON.stringify(sampleCV)),
+    } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Review my CV for a role" }).click();
+    await expect(page.getByText("First select a CV from your Orire library", { exact: false })).toBeVisible();
+    await page.getByLabel("Select an existing Orire CV instead of pasting").selectOption({ label: "My Career CV" });
+    await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
+    const jd = "We are looking for a senior engineer with experience with payment platforms, responsible for API architecture, authentication, quality testing and reliable services.";
+    await page.getByLabel("Message your Career Copilot").fill(jd);
+    await page.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByLabel("Target job description")).toHaveValue(jd);
+    await expect(page.getByRole("button", { name: "Compare CV with role" })).toBeEnabled();
+    await testInfo.attach("occ-m7-orchestrated-context", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+  });
+
   test("anonymous callers cannot access protected OCC endpoints", async ({ page }) => {
     expect((await page.request.get("/occ")).status()).toBe(404);
     expect((await page.request.get("/api/occ/profile")).status()).toBe(403);
