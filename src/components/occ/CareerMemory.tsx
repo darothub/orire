@@ -82,7 +82,7 @@ export function CareerMemory() {
       </div>
     </form>
     <div style={{ display: "grid", gap: 12 }}>
-      <h3 style={{ fontWeight: 700, fontSize: 20 }}>Saved recommendations</h3>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}><h3 style={{ fontWeight: 700, fontSize: 20 }}>Saved recommendations</h3><button type="button" disabled={pending} onClick={() => void refresh().catch(() => setError("Could not refresh OCC memory."))}>Refresh history</button></div>
       <p style={{ opacity: .8, fontSize: 13 }}>Accept or reject suggestions for your OCC review history. Accepting does not edit, export, or submit your CV.</p>
       {runs.length === 0 && <p>No saved recommendation sessions yet. Use the save option when asking OCC for advice.</p>}
       {runs.map(run => <article key={run.id} style={{ border: "1px solid #c8c1d9", padding: 16, borderRadius: 12, display: "grid", gap: 12 }}>
