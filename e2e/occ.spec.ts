@@ -47,6 +47,7 @@ test.describe("Career-only OCC feature", () => {
     expect(newDoc?.template).toBe("aurora");
     const user = await db.user.findUniqueOrThrow({ where: { id: e2eUser.id } });
     expect(user.activeDocumentId).toBe(original.id);
+    page.once("dialog", dialog => void dialog.accept());
     await page.getByRole("button", { name: "Undo saved version" }).click();
 
     await expect.poll(async () => db.document.count({ where: { userId: e2eUser.id } })).toBe(1);
