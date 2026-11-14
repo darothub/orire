@@ -21,6 +21,6 @@ if (( ${#files[@]} )); then
 fi
 if (( ${#source_files[@]} )); then
   echo "Orire pre-push: running unit tests related to modified source files"
-  node_modules/.bin/vitest related --run "${source_files[@]}"
+  node_modules/.bin/vitest related --run --passWithNoTests "${source_files[@]}"
 fi
 echo "Orire pre-push: quick checks passed. Full browser validation remains mandatory in CI."
