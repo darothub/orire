@@ -48,6 +48,16 @@ export function CareerMemory() {
     } catch (e) { setError(e instanceof Error ? e.message : "Delete failed."); }
     finally { setPending(false); }
   }
+  async function deleteRun(id: string) {
+    if (!window.confirm("Permanently delete this saved OCC recommendation session?")) return;
+    setPending(true); setError("");
+    try {
+      const response = await fetch(`/api/occ/runs/${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Could not delete saved session.");
+      setRuns(current => current.filter(run => run.id !== id));
+    } catch (e) { setError(e instanceof Error ? e.message : "Delete failed."); }
+    finally { setPending(false); }
+  }
   async function decide(id: string, index: number, decision: "accepted" | "rejected") {
     setPending(true); setError("");
     try {
@@ -86,7 +96,10 @@ export function CareerMemory() {
       <p style={{ opacity: .8, fontSize: 13 }}>Accept or reject suggestions for your OCC review history. Accepting does not edit, export, or submit your CV.</p>
       {runs.length === 0 && <p>No saved recommendation sessions yet. Use the save option when asking OCC for advice.</p>}
       {runs.map(run => <article key={run.id} style={{ border: "1px solid #c8c1d9", padding: 16, borderRadius: 12, display: "grid", gap: 12 }}>
-        <p><strong>{new Date(run.createdAt).toLocaleDateString()}</strong> — {run.summary}</p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <p><strong>{new Date(run.createdAt).toLocaleDateString()}</strong> — {run.summary}</p>
+          <button type="button" disabled={pending} onClick={() => deleteRun(run.id)} aria-label="Delete this saved recommendation session">Delete session</button>
+        </div>
         {run.recommendations.map((rec, i) => <div key={i} style={{ display: "grid", gap: 5, paddingTop: 8, borderTop: "1px solid #c8c1d9" }}>
           <strong>{rec.requirement}</strong><p>{rec.suggestion}</p>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
