@@ -1,10 +1,11 @@
 import "server-only";
 import { prisma } from "@/lib/db/prisma";
+import { utcDay } from "./budgetPeriod";
 
 // Conservative experimental budget, independent of existing plan quotas.
 export const OCC_DAILY_AI_LIMIT = 20;
 export function occBudgetPeriod(now = new Date()): string {
-  return now.toISOString().slice(0, 10);
+  return utcDay(now);
 }
 
 export async function claimOccAiRequest(userId: string): Promise<boolean> {
