@@ -199,6 +199,9 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     await page.goto("/occ");
     await expect(page.getByLabel("Upload CV", { exact: true })).toHaveCount(1);
+    const composer = page.getByRole("region", { name: "Career Copilot conversation" }).getByRole("textbox", { name: "Message your Career Copilot" }).locator("..");
+    await expect(composer.getByLabel("Upload CV", { exact: true })).toBeVisible();
+    await expect(composer.getByLabel("Upload job description", { exact: true })).toBeVisible();
     await expect(page.getByLabel("Upload job description", { exact: true })).toHaveCount(1);
     await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
       name: "career.txt", mimeType: "text/plain",
@@ -253,6 +256,21 @@ test.describe("Career-only OCC feature", () => {
     });
     await expect(page.getByText("CV attached: career.docx", { exact: false })).toBeVisible();
     await expect(page.getByLabel("Your current CV text")).toHaveValue(/Senior engineer creating reliable Java/);
+    expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
+  });
+
+  test("M7 rejects a non-CV document even when it is a supported TXT upload", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
+      name: "business-report.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("The quarterly business report details revenue and growth patterns. Costs and expenses are expected to decline next year."),
+    });
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByRole("alert")).toContainText("This document does not appear to be a CV");
+    await expect(page.getByText("CV attached: business-report.txt")).toHaveCount(0);
+    await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
     expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
   });
 
