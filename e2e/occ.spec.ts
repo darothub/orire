@@ -208,8 +208,8 @@ test.describe("Career-only OCC feature", () => {
       name: "position.txt", mimeType: "text/plain",
       buffer: Buffer.from("We are looking for an engineer who designs payment systems, Java services and secure authentication APIs for distributed platforms."),
     });
-    await expect(page.getByLabel("Your current CV text")).toContainText("Senior software engineer");
-    await expect(page.getByLabel("Target job description")).toContainText("We are looking for an engineer");
+    await expect(page.getByLabel("Your current CV text")).toHaveValue(/Senior software engineer/);
+    await expect(page.getByLabel("Target job description")).toHaveValue(/We are looking for an engineer/);
     await expect(page.getByRole("button", { name: "Review my fit" })).toBeEnabled();
     expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
     await testInfo.attach("occ-m7-uploads-desktop", {
@@ -230,7 +230,7 @@ test.describe("Career-only OCC feature", () => {
       buffer: Buffer.from("Experienced backend software engineer working on secure Java payment APIs, authentication and automated testing."),
     });
     await expect(page.getByText("CV: updated-cv.txt", { exact: false })).toBeVisible();
-    await expect(page.getByLabel("Your current CV text")).toContainText("Experienced backend software engineer");
+    await expect(page.getByLabel("Your current CV text")).toHaveValue(/Experienced backend software engineer/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await testInfo.attach("occ-m7-uploads-mobile", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
