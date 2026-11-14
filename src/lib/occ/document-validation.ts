@@ -5,6 +5,8 @@
 export function looksLikeCV(text: string): boolean {
   const source = text.slice(0, 30_000);
   if (source.trim().length < 30) return false;
+  // Explicit employer/job-ad phrasing must not pass as a candidate CV.
+  if (/\\b(?:we are (?:looking|hiring|seeking)|apply (?:now|today|for this role)|the ideal candidate|job description|job vacancy)\\b/i.test(source)) return false;
   const sectionSignals = [
     /\b(?:professional|work|employment)\s+(?:experience|history|summary)\b/i,
     /\b(?:education|qualifications|certifications?|technical skills|core skills|projects)\b/i,
