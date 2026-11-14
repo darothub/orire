@@ -25,8 +25,10 @@ export async function DELETE(_request: Request, context: { params: Promise<{ id:
           user?.activeDocumentId === record.documentId) {
         return { status: 409, error: "Version changed or is active. Use the Library to manage it." } as const;
       }
-      await tx.document.delete({ where: { id: doc.id } });
+      // Provenance is also cascaded on deletion; explicitly delete first so
+      // the transaction does not attempt to delete an already-cascaded row.
       await tx.occCvVersion.delete({ where: { id: record.id } });
+      await tx.document.delete({ where: { id: doc.id } });
       return { deleted: true } as const;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     return "error" in result ? send({ error: result.error }, result.status) : send(result);
