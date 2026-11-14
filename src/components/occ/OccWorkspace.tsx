@@ -154,7 +154,7 @@ export function OccWorkspace() {
             style={{ justifySelf: "start", padding: "12px 20px", border: 0, borderRadius: 12, background: "#7251ae", color: "white", fontWeight: 700, cursor: "pointer" }}>
             {running ? "Reviewing your CV…" : "Review my fit"}
           </button>
-          <p style={{ fontSize: 12, opacity: .78 }}>This sends your CV and role description to Orire's AI provider. You review all suggestions before making changes.</p>
+          <p style={{ fontSize: 12, opacity: .78 }}>This sends your CV and role description to the Orire AI provider. You review all suggestions before making changes.</p>
         </div>
         <details open={showPrivacyOptions} onToggle={event => setShowPrivacyOptions(event.currentTarget.open)}>
           <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Privacy and history options</summary>
