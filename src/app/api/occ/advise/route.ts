@@ -9,6 +9,7 @@ import { routeTask } from "@/lib/ai/server/providerRouter";
 import { bodyTooLarge } from "@/lib/ai/server/limits";
 import { prisma } from "@/lib/db/prisma";
 import { buildCareerContext } from "@/lib/occ/context";
+import { claimOccAiRequest, refundOccAiRequest } from "@/lib/occ/budget";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -52,6 +53,12 @@ export async function POST(req: Request) {
     jobDescription: description,
     evidenceTool: comparison,
   });
+  // Atomic daily budget claim happens only after validation and authorization.
+  // Failed or invalid analyses return their allowance.
+  let claimed: boolean;
+  try { claimed = await claimOccAiRequest(access.userId); }
+  catch { return response({ error: "OCC is temporarily unavailable." }, 503); }
+  if (!claimed) return response({ error: "Daily OCC AI allowance reached. Try again tomorrow." }, 429);
   try {
     // Tool step 2: reuse Orire's existing managed provider and failover.
     // Non-deterministic sampling is avoided and provider choice is server-owned.
@@ -60,7 +67,10 @@ export async function POST(req: Request) {
       user,
       opts: { ...DETERMINISTIC, maxTokens: 1800 },
     });
-    if (!served.call.ok) return response({ error: "OCC is temporarily unavailable. Try again later." }, 503);
+    if (!served.call.ok) {
+      await refundOccAiRequest(access.userId);
+      return response({ error: "OCC is temporarily unavailable. Try again later." }, 503);
+    }
     try {
       const advice = parseGroundedAdvice(served.call.content, cv);
       let runId: string | null = null;
@@ -77,9 +87,11 @@ export async function POST(req: Request) {
       }
       return response({ advice, comparison, runId, usedSavedProfile: careerContext.usedSavedProfile }, 200);
     } catch {
-      return response({ error: "OCC could not validate its recommendations. Please retry." }, 502);
+      await refundOccAiRequest(access.userId);
+      return response({ error: "OCC could not validate or save its recommendations. Please retry." }, 502);
     }
   } catch {
+    await refundOccAiRequest(access.userId);
     return response({ error: "OCC is temporarily unavailable. Try again later." }, 503);
   }
 }
