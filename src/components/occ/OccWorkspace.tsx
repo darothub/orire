@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
@@ -45,19 +45,21 @@ export function OccWorkspace() {
     return () => { cancelled = true; };
   }, []);
   const [description, setDescription] = useState("");
-  const [goal, setGoal] = useState("");
+
   const [result, setResult] = useState<Result | null>(null);
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
   const [saveRun, setSaveRun] = useState(false);
+  const [showPrivacyOptions, setShowPrivacyOptions] = useState(false);
+  const [showKeywordCheck, setShowKeywordCheck] = useState(false);
+  const [showCvText, setShowCvText] = useState(false);
   const [useSavedProfile, setUseSavedProfile] = useState(false);
   const [analyzedCv, setAnalyzedCv] = useState("");
   const [analysisVersion, setAnalysisVersion] = useState(0);
   const [profileUsed, setProfileUsed] = useState(false);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
-  async function run(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function run() {
     setError("");
     setResult(null);
     setAdvice(null);
@@ -83,7 +85,7 @@ export function OccWorkspace() {
     try {
       const response = await fetch("/api/occ/advise", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv, description, goal, saveRun, useSavedProfile }), cache: "no-store",
+        body: JSON.stringify({ cv, description, goal: turns.filter(turn => turn.role === "you").at(-1)?.text.slice(0, 300) ?? "", saveRun, useSavedProfile }), cache: "no-store",
       });
       const data = await response.json();
       if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : data.error?.message ?? "OCC could not analyze your CV.");
@@ -109,9 +111,9 @@ export function OccWorkspace() {
         {turns.length === 0 && <>
           <h2 style={{ fontWeight: 750, fontSize: 26 }}>What would you like to achieve today?</h2>
           <p style={{ opacity: .8 }}>Tell OCC your goal. The appropriate tools appear only when needed.</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 12 }}>
+          <div aria-label="Suggested career questions" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {["Review my CV for a role", "Improve my CV", "Prepare for an interview", "Manage my career memory"].map(text =>
-              <button type="button" key={text} onClick={() => ask(text)} style={{ padding: 18, textAlign: "left", background: "transparent", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 12 }}>{text}</button>)}
+              <button type="button" key={text} onClick={() => ask(text)} style={{ padding: "8px 12px", textAlign: "left", background: "transparent", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 13, cursor: "pointer" }}>{text}</button>)}
           </div>
         </>}
         {turns.map((turn, index) => <div key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
@@ -124,42 +126,51 @@ export function OccWorkspace() {
       </section>
       {section !== "overview" && <button type="button" onClick={() => setSection("overview")} style={{ justifySelf: "start" }}>Hide tools</button>}
       {section === "analysis" && <section aria-label="CV analysis workspace" style={{ display: "grid", gap: 20 }}>
-      <form onSubmit={run} style={{ display: "grid", gap: 18 }}>
-        <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Your career goal (optional)
-          <input style={field} value={goal} onChange={e => setGoal(e.target.value)} maxLength={300} placeholder="e.g. Remote backend engineer in Europe" />
-        </label>
-        {savedCvs.length > 0 && <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Select an existing Orire CV instead of pasting
+      <div style={{ display: "grid", gap: 14, padding: "clamp(16px, 3vw, 24px)", border: "1px solid #c8c1d9", borderRadius: 18 }}>
+        <h2 style={{ fontSize: 21, fontWeight: 750 }}>Review your fit for this role</h2>
+        <p style={{ fontSize: 14, opacity: .8 }}>OCC needs your CV and the role requirements. It will explain your strengths, gaps and possible improvements.</p>
+        {savedCvs.length > 0 && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Select your CV
           <select style={field} value={selectedCvId} onChange={event => {
             const id = event.target.value;
             setSelectedCvId(id);
             const document = savedCvs.find(item => item.id === id);
             if (document) setCv(cvToPlainText(document.data));
           }}>
-            <option value="">I will paste my CV text</option>
+            <option value="">Paste CV text manually</option>
             {savedCvs.map(document => <option key={document.id} value={document.id}>{document.title}</option>)}
           </select>
         </label>}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: 18 }}>
-          <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Your current CV text
-            <textarea style={{ ...field, minHeight: 235, resize: "vertical" }} value={cv} onChange={e => { setCv(e.target.value); setSelectedCvId(""); }} maxLength={30000} required minLength={30} placeholder="Paste the CV you want to evaluate…" />
-          </label>
-          <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Target job description
-            <textarea style={{ ...field, minHeight: 235, resize: "vertical" }} value={description} onChange={e => setDescription(e.target.value)} maxLength={15000} required minLength={30} placeholder="Paste the role requirements…" />
-          </label>
+        {selectedCvId && <p style={{ fontSize: 13, opacity: .8 }}>Using your selected Orire CV. The original will not be edited.</p>}
+        {(!selectedCvId && (savedCvs.length === 0 || showCvText || cv.trim().length > 0)) && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Your current CV text
+          <textarea style={{ ...field, minHeight: 135, resize: "vertical" }} value={cv} onChange={e => { setCv(e.target.value); setSelectedCvId(""); }} maxLength={30000} placeholder="Paste your CV if it is not in Orire" />
+        </label>}
+        {!selectedCvId && savedCvs.length > 0 && !showCvText && !cv.trim() && <button type="button" onClick={() => setShowCvText(true)} style={{ justifySelf: "start", textDecoration: "underline" }}>I need to paste a CV</button>}
+        <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Target job description
+          <textarea style={{ ...field, minHeight: description.trim().length >= 30 ? 95 : 130, resize: "vertical" }} value={description} onChange={e => setDescription(e.target.value)} maxLength={15000} placeholder="Paste the requirements or describe the role in the conversation" />
+        </label>
+        <div style={{ display: "grid", gap: 8 }}>
+          <button type="button" disabled={running || cv.trim().length < 30 || description.trim().length < 30}
+            onClick={() => void requestAdvice()}
+            style={{ justifySelf: "start", padding: "12px 20px", border: 0, borderRadius: 12, background: "#7251ae", color: "white", fontWeight: 700, cursor: "pointer" }}>
+            {running ? "Reviewing your CV…" : "Review my fit"}
+          </button>
+          <p style={{ fontSize: 12, opacity: .78 }}>This sends your CV and role description to Orire's AI provider. You review all suggestions before making changes.</p>
         </div>
-        <p style={{ fontSize: 13, opacity: 0.75 }}>The comparison runs without an LLM. Requesting OCC recommendations sends the pasted CV, goal and job description to Orire’s configured AI provider; the saved career profile is only included if you select the opt-in checkbox. Neither action modifies your CV or saves a career profile.</p>
-        <button type="submit" disabled={running || cv.trim().length < 30 || description.trim().length < 30}
-          style={{ justifySelf: "start", padding: "12px 22px", border: 0, borderRadius: 12, background: "#7251ae", color: "white", fontWeight: 700, cursor: "pointer", opacity: running ? 0.6 : 1 }}>
-          {running ? "Comparing…" : "Compare CV with role"}
-        </button>
-        <label style={{ display: "flex", alignItems: "center", gap: 8 }}><input type="checkbox" checked={useSavedProfile} onChange={e => setUseSavedProfile(e.target.checked)} /> Include my saved career profile in this AI analysis (optional, only if previously saved)</label>
-        <label style={{ display: "flex", alignItems: "center", gap: 8 }}><input type="checkbox" checked={saveRun} onChange={e => setSaveRun(e.target.checked)} /> Save this AI recommendation session to private OCC history (optional)</label>
-        <button type="button" disabled={running || cv.trim().length < 30 || description.trim().length < 30}
-          onClick={requestAdvice}
-          style={{ justifySelf: "start", padding: "12px 22px", border: "1px solid #7251ae", borderRadius: 12, background: "transparent", color: "inherit", fontWeight: 700, cursor: "pointer" }}>
-          {running ? "Working…" : "Ask OCC for recommendations"}
-        </button>
-      </form>
+        <details open={showPrivacyOptions} onToggle={event => setShowPrivacyOptions(event.currentTarget.open)}>
+          <summary style={{ cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Privacy and history options</summary>
+          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+            <label><input type="checkbox" checked={useSavedProfile} onChange={e => setUseSavedProfile(e.target.checked)} /> Include my saved career profile in AI analysis</label>
+            <label><input type="checkbox" checked={saveRun} onChange={e => setSaveRun(e.target.checked)} /> Save this recommendation session privately</label>
+          </div>
+        </details>
+        <div style={{ display: "grid", gap: 8 }}>
+          <button type="button" onClick={() => setShowKeywordCheck(value => !value)} aria-expanded={showKeywordCheck} style={{ justifySelf: "start", fontSize: 13, textDecoration: "underline" }}>Other option: keyword-only check (no AI)</button>
+          {showKeywordCheck && <div style={{ display: "grid", gap: 8 }}>
+            <p style={{ fontSize: 13, opacity: .8 }}>Only checks whether phrases from the job description appear in your CV. It does not provide career advice or a match score.</p>
+            <button type="button" disabled={running || cv.trim().length < 30 || description.trim().length < 30} onClick={() => void run()} style={{ justifySelf: "start", padding: "9px 14px", border: "1px solid #c8c1d9", borderRadius: 10, color: "inherit", background: "transparent" }}>Run keyword check</button>
+          </div>}
+        </div>
+      </div>
       {error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
       {result && <section aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>Initial evidence review</h2>
@@ -169,7 +180,7 @@ export function OccWorkspace() {
           <div><h3 style={{ fontWeight: 700 }}>Not found in CV text ({result.unverifiedTerms.length})</h3><p>{result.unverifiedTerms.join(", ") || "No additional keywords identified."}</p></div>
         </div>
         <p style={{ fontSize: 13, opacity: .8 }}>{result.disclaimer}</p>
-        {goal.trim() && <p><strong>Your goal:</strong> {goal.trim()}</p>}
+
       </section>}
       </section>}
       {(section === "recommendations" || (section === "analysis" && advice)) && <section aria-label="OCC recommendations workspace" style={{ display: "grid", gap: 16 }}>
