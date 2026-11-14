@@ -115,3 +115,47 @@ The OCC branches remain stacked and unmerged. Before PR/release:
 Follow-up: persist user-approved edits as a **new** document version with
 optimistic concurrency checks and undo, plus agent spend quotas, consent
 auditing and evaluation fixtures.
+
+## Milestone 6: OCC versioned CV revisions and undo
+
+OCC can now load up to 50 of the authenticated Career user's own structured
+CV documents through `GET /api/occ/versions`. Select a source and one
+existing summary, experience bullet, or project bullet. The user manually edits
+that exact field, reviews before/after, then explicitly chooses
+**Approve & save as new CV version**.
+
+`POST /api/occ/versions` verifies the Career plan plus feature flag,
+document ownership, source `updatedAt`, expected original field text, input
+bounds and supported field path. A serializable transaction creates a *new*
+private `Document` (inheriting the source template and company) and an
+`OccCvVersion` provenance record. The source document is never modified. The
+new version is not shared or exported, and is **not made active**. Legacy users
+without a valid active pointer have their preexisting autosave target pinned
+before creating the new document.
+
+`DELETE /api/occ/versions/:id` supports **Undo saved version**. It only
+removes the OCC-created copy when it still belongs to the requester, has not
+changed since creation and is not the active CV. Original source CVs and
+unrelated documents cannot be deleted using this endpoint. Once activated or
+edited, users should manage the version through the existing Library.
+
+Version content remains normal Orire Document JSON, so existing templates and
+Library can render the saved revision. The additional migration
+`20261114150000_occ_cv_versions` creates the provenance table.
+
+### Validation before PR, merge or production enablement
+
+- Run Prisma migration and generate in an isolated DB.
+- Validate full stacked branch with TypeScript, lint, unit tests, build and
+  authenticated Playwright scenarios.
+- Test flag-off, unauthenticated, Free/Pro denial, Career access, cross-user
+  ownership, missing/stale source, invalid field, duplicate save, new document
+  remaining inactive, original unchanged, legacy autosave pointer, successful
+  undo, undo denied after activation or editing.
+- Capture real Orire desktop/mobile before/after evidence.
+- Wait for green GitHub Actions; keep `ORIRE_OCC_ENABLED` OFF in production.
+
+This is structured, manual one-field editing. Pasted raw CV text from the
+earlier OCC analysis is not automatically mapped onto a saved structured CV.
+Natural-language AI-authored change proposals, multi-field diffing and saved
+approval audit are future improvements.
