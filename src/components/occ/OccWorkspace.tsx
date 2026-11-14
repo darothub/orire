@@ -1,18 +1,21 @@
 "use client";
 import { useState, type CSSProperties, type FormEvent } from "react";
 
+type Advice = { summary: string; recommendations: { requirement: string; cvEvidence: string | null; assessment: "supported" | "needs-clarification" | "not-found"; suggestion: string; question: string | null }[]; nextSteps: string[]; disclaimer: string };
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 export function OccWorkspace() {
   const [cv, setCv] = useState("");
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
   const [result, setResult] = useState<Result | null>(null);
+  const [advice, setAdvice] = useState<Advice | null>(null);
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
   async function run(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setResult(null);
+    setAdvice(null);
     setRunning(true);
     try {
       const response = await fetch("/api/occ/match", {
@@ -25,13 +28,28 @@ export function OccWorkspace() {
     } catch (e) { setError(e instanceof Error ? e.message : "Analysis failed."); }
     finally { setRunning(false); }
   }
+  async function requestAdvice() {
+    setRunning(true);
+    setError("");
+    setAdvice(null);
+    try {
+      const response = await fetch("/api/occ/advise", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cv, description, goal }), cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "OCC could not analyze your CV.");
+      setAdvice(data.advice as Advice);
+    } catch (e) { setError(e instanceof Error ? e.message : "OCC failed."); }
+    finally { setRunning(false); }
+  }
   const field: CSSProperties = { width: "100%", padding: 14, border: "1px solid #c8c1d9", borderRadius: 12, background: "transparent", color: "inherit", font: "inherit" };
   return (
     <div style={{ display: "grid", gap: 24 }}>
       <header>
         <p style={{ color: "#7953b3", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 12 }}>OCC · Career workspace preview</p>
         <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 750 }}>Your career, with a copilot.</h1>
-        <p style={{ maxWidth: 700, opacity: 0.8 }}>Start with your career goal, CV evidence and a target role. This first release offers a transparent evidence comparison; an LLM-powered task agent is a subsequent milestone.</p>
+        <p style={{ maxWidth: 700, opacity: 0.8 }}>Start with your career goal, CV evidence and a target role. Compare evidence directly or ask OCC for AI-powered, evidence-grounded recommendations. No edits are applied automatically.</p>
       </header>
       <form onSubmit={run} style={{ display: "grid", gap: 18 }}>
         <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Your career goal (optional)
@@ -45,13 +63,34 @@ export function OccWorkspace() {
             <textarea style={{ ...field, minHeight: 235, resize: "vertical" }} value={description} onChange={e => setDescription(e.target.value)} maxLength={15000} required minLength={30} placeholder="Paste the role requirements…" />
           </label>
         </div>
-        <p style={{ fontSize: 13, opacity: 0.75 }}>Your pasted content is submitted only to Orire for this comparison; this preview does not save it as a career profile or send it to a model.</p>
+        <p style={{ fontSize: 13, opacity: 0.75 }}>The comparison runs without an LLM. Requesting OCC recommendations sends the pasted CV, goal and job description to Orire’s configured AI provider. Neither action modifies your CV or saves a career profile.</p>
         <button type="submit" disabled={running || cv.trim().length < 30 || description.trim().length < 30}
           style={{ justifySelf: "start", padding: "12px 22px", border: 0, borderRadius: 12, background: "#7251ae", color: "white", fontWeight: 700, cursor: "pointer", opacity: running ? 0.6 : 1 }}>
           {running ? "Comparing…" : "Compare CV with role"}
         </button>
+        <button type="button" disabled={running || cv.trim().length < 30 || description.trim().length < 30}
+          onClick={requestAdvice}
+          style={{ justifySelf: "start", padding: "12px 22px", border: "1px solid #7251ae", borderRadius: 12, background: "transparent", color: "inherit", fontWeight: 700, cursor: "pointer" }}>
+          {running ? "Working…" : "Ask OCC for recommendations"}
+        </button>
       </form>
       {error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
+      {advice && <section aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700 }}>OCC career recommendations</h2>
+        <p>{advice.summary}</p>
+        <div style={{ display: "grid", gap: 12 }}>
+          {advice.recommendations.map((item, i) => <article key={i} style={{ border: "1px solid #c8c1d9", borderRadius: 12, padding: 16 }}>
+            <h3 style={{ fontWeight: 700 }}>{item.requirement}</h3>
+            <p style={{ fontSize: 13, opacity: .8 }}>Evidence status: {item.assessment}</p>
+            {item.cvEvidence && <blockquote style={{ borderLeft: "3px solid #7953b3", paddingLeft: 12, margin: "12px 0" }}>{item.cvEvidence}</blockquote>}
+            <p>{item.suggestion}</p>
+            {item.question && <p><strong>To clarify:</strong> {item.question}</p>}
+          </article>)}
+        </div>
+        {advice.nextSteps.length > 0 && <div><h3 style={{ fontWeight: 700 }}>Suggested next steps</h3><ul style={{ paddingLeft: 20 }}>{advice.nextSteps.map((step, i) => <li key={i}>{step}</li>)}</ul></div>}
+        <p style={{ fontSize: 13, opacity: .8 }}>{advice.disclaimer}</p>
+        <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made.</p>
+      </section>}
       {result && <section aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>Initial evidence review</h2>
         <p>{result.checked} distinct job-description terms reviewed. This is not a ranking or match percentage.</p>
