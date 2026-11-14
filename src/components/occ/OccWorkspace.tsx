@@ -1,5 +1,7 @@
 "use client";
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import type { CVData } from "@/lib/cv/schema";
+import { cvToPlainText } from "@/lib/export/plaintext";
 import { CareerMemory } from "./CareerMemory";
 import { OccDraftReview } from "./OccDraftReview";
 import { OccVersionedCv } from "./OccVersionedCv";
@@ -30,6 +32,17 @@ export function OccWorkspace() {
     setComposer("");
   }
   const [cv, setCv] = useState("");
+  const [savedCvs, setSavedCvs] = useState<{ id: string; title: string; data: CVData }[]>([]);
+  const [selectedCvId, setSelectedCvId] = useState("");
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/occ/versions", { cache: "no-store" }).then(async response => {
+      if (!response.ok) throw new Error("Saved CVs unavailable");
+      const data = await response.json();
+      if (!cancelled) setSavedCvs(data.documents ?? []);
+    }).catch(() => { /* Pasted CV remains available if library request fails. */ });
+    return () => { cancelled = true; };
+  }, []);
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
   const [result, setResult] = useState<Result | null>(null);
@@ -114,9 +127,20 @@ export function OccWorkspace() {
         <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Your career goal (optional)
           <input style={field} value={goal} onChange={e => setGoal(e.target.value)} maxLength={300} placeholder="e.g. Remote backend engineer in Europe" />
         </label>
+        {savedCvs.length > 0 && <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Select an existing Orire CV instead of pasting
+          <select style={field} value={selectedCvId} onChange={event => {
+            const id = event.target.value;
+            setSelectedCvId(id);
+            const document = savedCvs.find(item => item.id === id);
+            if (document) setCv(cvToPlainText(document.data));
+          }}>
+            <option value="">I'll paste my CV text</option>
+            {savedCvs.map(document => <option key={document.id} value={document.id}>{document.title}</option>)}
+          </select>
+        </label>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))", gap: 18 }}>
           <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Your current CV text
-            <textarea style={{ ...field, minHeight: 235, resize: "vertical" }} value={cv} onChange={e => setCv(e.target.value)} maxLength={30000} required minLength={30} placeholder="Paste the CV you want to evaluate…" />
+            <textarea style={{ ...field, minHeight: 235, resize: "vertical" }} value={cv} onChange={e => { setCv(e.target.value); setSelectedCvId(""); }} maxLength={30000} required minLength={30} placeholder="Paste the CV you want to evaluate…" />
           </label>
           <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Target job description
             <textarea style={{ ...field, minHeight: 235, resize: "vertical" }} value={description} onChange={e => setDescription(e.target.value)} maxLength={15000} required minLength={30} placeholder="Paste the role requirements…" />
