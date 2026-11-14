@@ -141,7 +141,6 @@ test.describe("Career-only OCC feature", () => {
     });
     await page.getByRole("button", { name: "Review my CV for a role" }).click();
     await expect(page.getByLabel("Your current CV text")).toBeVisible();
-    await page.getByLabel("Your career goal (optional)").fill("Remote software engineering");
     await page.getByLabel("Your current CV text").fill("Experienced engineer creating secure distributed payment systems.");
     await page.getByLabel("Target job description").fill("Seeking engineer to design secure payment systems and services.");
     await page.getByLabel("Message your Career Copilot").fill("Manage my career memory");
@@ -150,7 +149,6 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByLabel("Your current CV text")).toHaveValue("Experienced engineer creating secure distributed payment systems.");
-    await expect(page.getByLabel("Your career goal (optional)")).toHaveValue("Remote software engineering");
     await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("OCC:", { exact: false }).first()).toBeVisible();
   });
 
@@ -171,8 +169,27 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Message your Career Copilot").fill(jd);
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByLabel("Target job description")).toHaveValue(jd);
-    await expect(page.getByRole("button", { name: "Compare CV with role" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Review my fit" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Run keyword check" })).toHaveCount(0);
     await testInfo.attach("occ-m7-orchestrated-context", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+  });
+
+  test("M7 compact suggestions and one primary AI review action", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    // The compact controls retain their existing accessible names.
+    await expect(page.getByRole("button", { name: "Review my CV for a role" })).toBeVisible();
+    const height = await page.getByRole("button", { name: "Review my CV for a role" }).evaluate(el => el.getBoundingClientRect().height);
+    expect(height).toBeLessThan(55);
+    await page.getByRole("button", { name: "Review my CV for a role" }).click();
+    await expect(page.getByRole("heading", { name: "Review your fit for this role" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Review my fit" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Ask OCC for recommendations" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Compare CV with role" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Other option: keyword-only check (no AI)" }).click();
+    await expect(page.getByRole("button", { name: "Run keyword check" })).toBeVisible();
+    await testInfo.attach("occ-m7-compact-action-desktop", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   });
 
   test("anonymous callers cannot access protected OCC endpoints", async ({ page }) => {
