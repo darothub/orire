@@ -114,6 +114,20 @@ test.describe("Career-only OCC feature", () => {
     });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
+  test("M7 can reuse a saved CV without requiring pasted text", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    const original = await db.document.create({ data: {
+      userId: e2eUser.id, title: "Existing Master CV", data: JSON.parse(JSON.stringify(sampleCV)),
+    } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Review my CV for a role" }).click();
+    await page.getByLabel("Select an existing Orire CV instead of pasting").selectOption(original.id);
+    await expect(page.getByLabel("Your current CV text")).not.toBeEmpty();
+    const stored = await db.document.findUniqueOrThrow({ where: { id: original.id } });
+    expect(stored.data).toEqual(JSON.parse(JSON.stringify(sampleCV)));
+  });
+
   test("M7 conversational entry reveals only relevant tools and keeps the CV draft", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
