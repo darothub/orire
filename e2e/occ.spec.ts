@@ -193,6 +193,65 @@ test.describe("Career-only OCC feature", () => {
     await testInfo.attach("occ-m7-compact-action-desktop", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   });
 
+  test("M7 supports CV and job-description files from the conversation start", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await expect(page.getByLabel("Upload CV", { exact: true })).toHaveCount(1);
+    await expect(page.getByLabel("Upload job description", { exact: true })).toHaveCount(1);
+    await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
+      name: "career.txt", mimeType: "text/plain",
+      buffer: Buffer.from("Senior software engineer building reliable payment and authentication services. Experienced with Java, Kotlin and API integration."),
+    });
+    await expect(page.getByText("CV attached: career.txt", { exact: false })).toBeVisible();
+    await page.getByLabel("Upload job description", { exact: true }).setInputFiles({
+      name: "position.txt", mimeType: "text/plain",
+      buffer: Buffer.from("We are looking for an engineer who designs payment systems, Java services and secure authentication APIs for distributed platforms."),
+    });
+    await expect(page.getByLabel("Your current CV text")).toContainText("Senior software engineer");
+    await expect(page.getByLabel("Target job description")).toContainText("We are looking for an engineer");
+    await expect(page.getByRole("button", { name: "Review my fit" })).toBeEnabled();
+    expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
+    await testInfo.attach("occ-m7-uploads-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+  });
+
+  test("M7 retains document upload after choosing a suggested prompt on mobile", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Review my CV for a role" }).click();
+    await expect(page.getByLabel("Upload another CV")).toBeVisible();
+    await expect(page.getByLabel("Upload role description")).toBeVisible();
+    await page.getByLabel("Upload another CV").setInputFiles({
+      name: "updated-cv.txt", mimeType: "text/plain",
+      buffer: Buffer.from("Experienced backend software engineer working on secure Java payment APIs, authentication and automated testing."),
+    });
+    await expect(page.getByText("CV: updated-cv.txt", { exact: false })).toBeVisible();
+    await expect(page.getByLabel("Your current CV text")).toContainText("Experienced backend software engineer");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await testInfo.attach("occ-m7-uploads-mobile", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+  });
+
+  test("M7 rejects unsupported and empty uploads without setting analysis context", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
+      name: "invalid.exe", mimeType: "application/octet-stream", buffer: Buffer.from("fake"),
+    });
+    await expect(page.getByRole("alert")).toContainText("Upload a PDF, DOCX or TXT document");
+    await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
+      name: "empty.txt", mimeType: "text/plain", buffer: Buffer.from(""),
+    });
+    await expect(page.getByRole("alert")).toContainText("TXT files must be under 1 MB");
+    await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
+  });
+
   test("anonymous callers cannot access protected OCC endpoints", async ({ page }) => {
     expect((await page.request.get("/occ")).status()).toBe(404);
     expect((await page.request.get("/api/occ/profile")).status()).toBe(403);
