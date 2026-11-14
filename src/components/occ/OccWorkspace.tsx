@@ -3,6 +3,7 @@ import { useEffect, useState, type ChangeEvent, type CSSProperties } from "react
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
+import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import { CareerMemory } from "./CareerMemory";
 import { OccDraftReview } from "./OccDraftReview";
 import { OccVersionedCv } from "./OccVersionedCv";
@@ -97,6 +98,8 @@ export function OccWorkspace() {
       const text = extracted.trim();
       if (text.length < 30) throw new Error("Not enough readable text found. Try a text-based PDF, DOCX or TXT file.");
       if (text.length > limit) throw new Error(`Document text exceeds the ${limit.toLocaleString()} character limit. Please shorten it.`);
+      if (kind === "cv" && !looksLikeCV(text)) throw new Error("This document does not appear to be a CV. Upload a resume showing work experience, skills or education.");
+      if (kind === "jobDescription" && !looksLikeJobDescription(text)) throw new Error("This does not appear to be a job description. Upload a role with responsibilities or requirements.");
       if (kind === "cv") {
         setSelectedCvId("");
         setCv(text);
@@ -115,9 +118,12 @@ export function OccWorkspace() {
     }
   }
 
-  const uploadInput = (kind: "cv" | "jobDescription", label: string) => (
-    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: uploading || running ? "not-allowed" : "pointer", padding: "8px 11px", border: "1px solid #c8c1d9", borderRadius: 10, fontSize: 13 }}>
+  const uploadInput = (kind: "cv" | "jobDescription", label: string, compact = false) => (
+    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: uploading || running ? "not-allowed" : "pointer", padding: compact ? "6px 9px" : "8px 11px", border: compact ? "none" : "1px solid #c8c1d9", borderRadius: 10, fontSize: 13, fontWeight: 600 }}>
       <input type="file" accept=".pdf,.docx,.txt" aria-label={label} disabled={Boolean(uploading) || running} onChange={event => { void uploadDocument(kind, event); }} style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+      <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 16V3m0 0L7 8m5-5 5 5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/>
+      </svg>
       {uploading === kind ? "Reading file…" : label}
     </label>
   );
@@ -183,15 +189,17 @@ export function OccWorkspace() {
           <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
         </div>)}
         {section === "overview" && error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          {uploadInput("cv", "Upload CV")}
-          {uploadInput("jobDescription", "Upload job description")}
-          <span style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · Not saved automatically</span>
-        </div>
-        <form onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-          <textarea aria-label="Message your Career Copilot" style={{ ...field, flex: "1 1 250px", minHeight: 76 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Tell OCC what you want to achieve..." />
-          <button type="submit" disabled={!composer.trim()} style={{ padding: "12px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae" }}>Send</button>
+        <form onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 10, border: "1px solid #c8c1d9", borderRadius: 16, background: "rgba(114,81,174,.025)" }}>
+          <textarea aria-label="Message your Career Copilot" style={{ width: "100%", background: "transparent", color: "inherit", font: "inherit", border: 0, resize: "vertical", padding: 8, minHeight: 78, outlineOffset: 2 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Tell OCC what you want to achieve..." />
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              {uploadInput("cv", "Upload CV", true)}
+              {uploadInput("jobDescription", "Upload job description", true)}
+            </div>
+            <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
+          </div>
         </form>
+        <p style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · CVs and job descriptions only · Not saved automatically</p>
       </section>
       {section !== "overview" && <button type="button" onClick={() => setSection("overview")} style={{ justifySelf: "start" }}>Hide tools</button>}
       {section === "analysis" && <section aria-label="CV analysis workspace" style={{ display: "grid", gap: 20 }}>
