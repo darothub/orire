@@ -8,13 +8,6 @@ type Advice = { summary: string; recommendations: { requirement: string; cvEvide
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory";
 type Turn = { role: "you" | "OCC"; text: string };
-const sections: { id: WorkspaceSection; label: string; description: string }[] = [
-  { id: "overview", label: "Overview", description: "Start here" },
-  { id: "analysis", label: "CV analysis", description: "Compare evidence" },
-  { id: "recommendations", label: "Recommendations", description: "Review AI advice" },
-  { id: "versions", label: "CV versions", description: "Approve revisions" },
-  { id: "memory", label: "Career memory", description: "Manage your profile" },
-];
 export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
   const [composer, setComposer] = useState("");
