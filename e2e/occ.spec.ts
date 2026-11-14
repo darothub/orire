@@ -123,7 +123,8 @@ test.describe("Career-only OCC feature", () => {
     await page.goto("/occ");
     await page.getByRole("button", { name: "Review my CV for a role" }).click();
     await page.getByLabel("Select an existing Orire CV instead of pasting").selectOption(original.id);
-    await expect(page.getByLabel("Your current CV text")).not.toBeEmpty();
+    await expect(page.getByText("Using your selected Orire CV.", { exact: false })).toBeVisible();
+    await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
     const stored = await db.document.findUniqueOrThrow({ where: { id: original.id } });
     expect(stored.data).toEqual(JSON.parse(JSON.stringify(sampleCV)));
   });
