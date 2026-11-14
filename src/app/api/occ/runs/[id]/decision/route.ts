@@ -25,7 +25,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     where: { id, userId: access.userId },
     // updateDecision copies a previously stored JSON array and changes only
     // one validated string field. Prisma requires its InputJsonValue type.
-    data: { recommendations: updated as Prisma.InputJsonValue },
+    data: { recommendations: updated as unknown as Prisma.InputJsonValue },
   });
   if (!result.count) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ recommendations: updated }, { headers: { "Cache-Control": "private, no-store" } });
