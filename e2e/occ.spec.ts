@@ -263,11 +263,11 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
       name: "invalid.exe", mimeType: "application/octet-stream", buffer: Buffer.from("fake"),
     });
-    await expect(page.getByRole("alert")).toContainText("Upload a PDF, DOCX or TXT document");
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByRole("alert")).toContainText("Upload a PDF, DOCX or TXT document");
     await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
       name: "empty.txt", mimeType: "text/plain", buffer: Buffer.from(""),
     });
-    await expect(page.getByRole("alert")).toContainText("TXT files must be under 1 MB");
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByRole("alert")).toContainText("TXT files must be under 1 MB");
     await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
   });
 
