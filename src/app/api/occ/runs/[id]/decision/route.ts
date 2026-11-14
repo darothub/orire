@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { requireOccAccess } from "@/lib/occ/requireAccess";
 import { prisma } from "@/lib/db/prisma";
 import { readDecision, updateDecision } from "@/lib/occ/decisions";
@@ -22,7 +23,9 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   if (!updated) return NextResponse.json({ error: "Invalid recommendation" }, { status: 400 });
   const result = await prisma.occAdviceRun.updateMany({
     where: { id, userId: access.userId },
-    data: { recommendations: updated },
+    // updateDecision copies a previously stored JSON array and changes only
+    // one validated string field. Prisma requires its InputJsonValue type.
+    data: { recommendations: updated as Prisma.InputJsonValue },
   });
   if (!result.count) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ recommendations: updated }, { headers: { "Cache-Control": "private, no-store" } });
