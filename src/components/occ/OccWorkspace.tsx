@@ -7,6 +7,7 @@ import { OccVersionedCv } from "./OccVersionedCv";
 type Advice = { summary: string; recommendations: { requirement: string; cvEvidence: string | null; assessment: "supported" | "needs-clarification" | "not-found"; suggestion: string; question: string | null }[]; nextSteps: string[]; disclaimer: string };
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory";
+type Turn = { role: "you" | "OCC"; text: string };
 const sections: { id: WorkspaceSection; label: string; description: string }[] = [
   { id: "overview", label: "Overview", description: "Start here" },
   { id: "analysis", label: "CV analysis", description: "Compare evidence" },
@@ -16,6 +17,25 @@ const sections: { id: WorkspaceSection; label: string; description: string }[] =
 ];
 export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
+  const [composer, setComposer] = useState("");
+  const [turns, setTurns] = useState<Turn[]>([]);
+  function ask(value: string) {
+    const text = value.trim();
+    if (!text) return;
+    const lower = text.toLowerCase();
+    const next: WorkspaceSection = /memory|remember|profile/.test(lower) ? "memory"
+      : /version|revision|edit|rewrite|improve/.test(lower) ? "versions"
+      : /recommendation|suggestion/.test(lower) && advice ? "recommendations" : "analysis";
+    const reply = /interview/.test(lower)
+      ? "Full interview coaching is planned for a later milestone. For now, I can compare your CV with the role requirements to help prepare."
+      : next === "memory" ? "You control what OCC remembers. You can review or delete your saved career profile below."
+      : next === "versions" ? "Let's review a specific passage in your saved CV. Nothing is overwritten, and saving requires approval."
+      : next === "recommendations" ? "Here are your evidence-grounded recommendations and optional wording review."
+      : "Let's look at your next role. You can compare your CV with a job description, then request grounded advice.";
+    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: reply }]);
+    setSection(next);
+    setComposer("");
+  }
   const [cv, setCv] = useState("");
   const [description, setDescription] = useState("");
   const [goal, setGoal] = useState("");
@@ -44,7 +64,7 @@ export function OccWorkspace() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Could not compare the documents.");
       setResult(data as Result);
-      setSection("analysis");
+      setTurns(current => [...current, { role: "OCC", text: "Your evidence comparison is ready below. This is not a hiring score." }]);
     } catch (e) { setError(e instanceof Error ? e.message : "Analysis failed."); }
     finally { setRunning(false); }
   }
@@ -62,6 +82,7 @@ export function OccWorkspace() {
       if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : data.error?.message ?? "OCC could not analyze your CV.");
       setAdvice(data.advice as Advice);
       setSection("recommendations");
+      setTurns(current => [...current, { role: "OCC", text: "Here are grounded recommendations. No CV changes were made automatically." }]);
       setAnalyzedCv(cv);
       setAnalysisVersion(version => version + 1);
       setProfileUsed(data.usedSavedProfile === true);
@@ -77,29 +98,24 @@ export function OccWorkspace() {
         <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 750 }}>Your career, with a copilot.</h1>
         <p style={{ maxWidth: 700, opacity: 0.8 }}>Start with your career goal, CV evidence and a target role. Compare evidence directly or ask OCC for AI-powered, evidence-grounded recommendations. No edits are applied automatically.</p>
       </header>
-      <nav aria-label="Career Copilot sections" style={{ display: "flex", flexWrap: "wrap", gap: 10, borderBottom: "1px solid #c8c1d9", paddingBottom: 14 }}>
-        {sections.map(item => <button key={item.id} type="button" aria-current={section === item.id ? "page" : undefined}
-          onClick={() => setSection(item.id)}
-          style={{ padding: "12px 16px", borderRadius: 12, border: "1px solid #c8c1d9", background: section === item.id ? "#7251ae" : "transparent", color: section === item.id ? "#fff" : "inherit", fontWeight: section === item.id ? 750 : 600, cursor: "pointer" }}>
-          {item.label}
-        </button>)}
-      </nav>
-      {section === "overview" && <section aria-label="Career Copilot overview" style={{ display: "grid", gap: 18 }}>
-        <div style={{ padding: "24px", border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 12 }}>
-          <h2 style={{ fontSize: 26, fontWeight: 750 }}>Your next career move, one step at a time</h2>
-          <p style={{ opacity: .8 }}>Choose a task below. OCC will never apply an AI suggestion to your CV without your review and approval.</p>
-          <button type="button" onClick={() => setSection("analysis")} style={{ justifySelf: "start", border: 0, borderRadius: 10, background: "#7251ae", color: "#fff", padding: "12px 18px", fontWeight: 700 }}>Start CV analysis</button>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: 14 }}>
-          {sections.filter(item => item.id !== "overview").map(item =>
-            <button key={item.id} type="button" onClick={() => setSection(item.id)}
-              style={{ textAlign: "left", display: "grid", gap: 8, padding: 20, border: "1px solid #c8c1d9", borderRadius: 16, background: "transparent", color: "inherit", cursor: "pointer" }}>
-              <strong style={{ fontSize: 18 }}>{item.label}</strong>
-              <span style={{ opacity: .75 }}>{item.description}</span>
-            </button>)}
-        </div>
-        <p style={{ fontSize: 13, opacity: .75 }}>Your profile is only included in an AI request when you opt in. Saved CV revisions remain private and inactive until you choose otherwise.</p>
-      </section>}
+      <section aria-label="Career Copilot conversation" style={{ display: "grid", gap: 16, padding: "clamp(16px, 3vw, 28px)", border: "1px solid #c8c1d9", borderRadius: 18 }}>
+        {turns.length === 0 && <>
+          <h2 style={{ fontWeight: 750, fontSize: 26 }}>What would you like to achieve today?</h2>
+          <p style={{ opacity: .8 }}>Tell OCC your goal. The appropriate tools appear only when needed.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 200px), 1fr))", gap: 12 }}>
+            {["Review my CV for a role", "Improve my CV", "Prepare for an interview", "Manage my career memory"].map(text =>
+              <button type="button" key={text} onClick={() => ask(text)} style={{ padding: 18, textAlign: "left", background: "transparent", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 12 }}>{text}</button>)}
+          </div>
+        </>}
+        {turns.map((turn, index) => <div key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
+          <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
+        </div>)}
+        <form onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          <textarea aria-label="Message your Career Copilot" style={{ ...field, flex: "1 1 250px", minHeight: 76 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Tell OCC what you want to achieve..." />
+          <button type="submit" disabled={!composer.trim()} style={{ padding: "12px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae" }}>Send</button>
+        </form>
+      </section>
+      {section !== "overview" && <button type="button" onClick={() => setSection("overview")} style={{ justifySelf: "start" }}>Hide tools</button>}
       {section === "analysis" && <section aria-label="CV analysis workspace" style={{ display: "grid", gap: 20 }}>
       <form onSubmit={run} style={{ display: "grid", gap: 18 }}>
         <label style={{ display: "grid", gap: 8, fontWeight: 600 }}>Your career goal (optional)
@@ -138,7 +154,7 @@ export function OccWorkspace() {
         {goal.trim() && <p><strong>Your goal:</strong> {goal.trim()}</p>}
       </section>}
       </section>}
-      {section === "recommendations" && <section aria-label="OCC recommendations workspace" style={{ display: "grid", gap: 16 }}>
+      {(section === "recommendations" || (section === "analysis" && advice)) && <section aria-label="OCC recommendations workspace" style={{ display: "grid", gap: 16 }}>
         {!advice && <div style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 12 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700 }}>Recommendations</h2>
           <p>Run an AI analysis to see grounded advice and safely review possible CV wording changes. Your original CV stays unchanged.</p>
