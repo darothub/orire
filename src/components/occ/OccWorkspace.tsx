@@ -1,5 +1,6 @@
 "use client";
 import { useState, type CSSProperties, type FormEvent } from "react";
+import { CareerMemory } from "./CareerMemory";
 
 type Advice = { summary: string; recommendations: { requirement: string; cvEvidence: string | null; assessment: "supported" | "needs-clarification" | "not-found"; suggestion: string; question: string | null }[]; nextSteps: string[]; disclaimer: string };
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
@@ -11,11 +12,14 @@ export function OccWorkspace() {
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
+  const [saveRun, setSaveRun] = useState(false);
+  const [savedRunId, setSavedRunId] = useState<string | null>(null);
   async function run(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setResult(null);
     setAdvice(null);
+    setSavedRunId(null);
     setRunning(true);
     try {
       const response = await fetch("/api/occ/match", {
@@ -32,14 +36,16 @@ export function OccWorkspace() {
     setRunning(true);
     setError("");
     setAdvice(null);
+    setSavedRunId(null);
     try {
       const response = await fetch("/api/occ/advise", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv, description, goal }), cache: "no-store",
+        body: JSON.stringify({ cv, description, goal, saveRun }), cache: "no-store",
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "OCC could not analyze your CV.");
       setAdvice(data.advice as Advice);
+      setSavedRunId(data.runId ?? null);
     } catch (e) { setError(e instanceof Error ? e.message : "OCC failed."); }
     finally { setRunning(false); }
   }
@@ -68,6 +74,7 @@ export function OccWorkspace() {
           style={{ justifySelf: "start", padding: "12px 22px", border: 0, borderRadius: 12, background: "#7251ae", color: "white", fontWeight: 700, cursor: "pointer", opacity: running ? 0.6 : 1 }}>
           {running ? "Comparing…" : "Compare CV with role"}
         </button>
+        <label style={{ display: "flex", alignItems: "center", gap: 8 }}><input type="checkbox" checked={saveRun} onChange={e => setSaveRun(e.target.checked)} /> Save this AI recommendation session to private OCC history (optional)</label>
         <button type="button" disabled={running || cv.trim().length < 30 || description.trim().length < 30}
           onClick={requestAdvice}
           style={{ justifySelf: "start", padding: "12px 22px", border: "1px solid #7251ae", borderRadius: 12, background: "transparent", color: "inherit", fontWeight: 700, cursor: "pointer" }}>
@@ -89,8 +96,9 @@ export function OccWorkspace() {
         </div>
         {advice.nextSteps.length > 0 && <div><h3 style={{ fontWeight: 700 }}>Suggested next steps</h3><ul style={{ paddingLeft: 20 }}>{advice.nextSteps.map((step, i) => <li key={i}>{step}</li>)}</ul></div>}
         <p style={{ fontSize: 13, opacity: .8 }}>{advice.disclaimer}</p>
-        <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made.</p>
+        <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made. {savedRunId ? "Session saved. You can accept or reject suggestions below." : "This session was not saved."}</p>
       </section>}
+      <CareerMemory />
       {result && <section aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>Initial evidence review</h2>
         <p>{result.checked} distinct job-description terms reviewed. This is not a ranking or match percentage.</p>
