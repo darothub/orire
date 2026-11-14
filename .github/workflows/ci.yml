@@ -17,7 +17,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, 'feat/occ-*']
   workflow_dispatch:
 
 # Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
