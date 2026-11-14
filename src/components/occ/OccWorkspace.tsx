@@ -2,6 +2,7 @@
 import { useState, type CSSProperties, type FormEvent } from "react";
 import { CareerMemory } from "./CareerMemory";
 import { OccDraftReview } from "./OccDraftReview";
+import { OccVersionedCv } from "./OccVersionedCv";
 
 type Advice = { summary: string; recommendations: { requirement: string; cvEvidence: string | null; assessment: "supported" | "needs-clarification" | "not-found"; suggestion: string; question: string | null }[]; nextSteps: string[]; disclaimer: string };
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
@@ -109,6 +110,7 @@ export function OccWorkspace() {
         <OccDraftReview key={analysisVersion} original={analyzedCv} recommendations={advice.recommendations} />
         <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made. {savedRunId ? "Session saved. You can accept or reject suggestions below." : "This session was not saved."}</p>
       </section>}
+      <OccVersionedCv />
       <CareerMemory />
       {result && <section aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>Initial evidence review</h2>
