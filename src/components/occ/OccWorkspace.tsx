@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, type ChangeEvent, type CSSProperties } from "react";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
@@ -59,6 +59,69 @@ export function OccWorkspace() {
   const [analysisVersion, setAnalysisVersion] = useState(0);
   const [profileUsed, setProfileUsed] = useState(false);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<"cv" | "jobDescription" | null>(null);
+  const [uploadedCvName, setUploadedCvName] = useState("");
+  const [uploadedJobName, setUploadedJobName] = useState("");
+
+  async function uploadDocument(kind: "cv" | "jobDescription", event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file || uploading || running) return;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!ext || !["pdf", "docx", "txt"].includes(ext)) {
+      setError("Upload a PDF, DOCX or TXT document.");
+      return;
+    }
+    const maxBytes = ext === "txt" ? 1024 * 1024 : 15 * 1024 * 1024;
+    if (file.size === 0 || file.size > maxBytes) {
+      setError(ext === "txt" ? "TXT files must be under 1 MB." : "PDF and DOCX files must be under 15 MB.");
+      return;
+    }
+    setUploading(kind);
+    setError("");
+    try {
+      let extracted: string;
+      if (ext === "txt") {
+        extracted = await file.text();
+      } else {
+        const form = new FormData();
+        form.append("files", file);
+        const response = await fetch("/api/parse", { method: "POST", body: form, cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : "Could not read this document.");
+        const parsed = payload.files?.[0];
+        if (parsed?.error || typeof parsed?.text !== "string") throw new Error(parsed?.error || "Could not extract document text.");
+        extracted = parsed.text;
+      }
+      const limit = kind === "cv" ? 30000 : 15000;
+      const text = extracted.trim();
+      if (text.length < 30) throw new Error("Not enough readable text found. Try a text-based PDF, DOCX or TXT file.");
+      if (text.length > limit) throw new Error(`Document text exceeds the ${limit.toLocaleString()} character limit. Please shorten it.`);
+      if (kind === "cv") {
+        setSelectedCvId("");
+        setCv(text);
+        setUploadedCvName(file.name);
+      } else {
+        setDescription(text);
+        setUploadedJobName(file.name);
+      }
+      setCurrentTask("analysis");
+      setSection("analysis");
+      setTurns(current => [...current, { role: "OCC", text: `${kind === "cv" ? "CV" : "Job description"} attached: ${file.name}. ${kind === "cv" ? "Add a target job description to continue." : "Select or upload your CV to continue."} Files are extracted for this session only; nothing was saved to your CV Library.` }]);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not read that document.");
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  const uploadInput = (kind: "cv" | "jobDescription", label: string) => (
+    <label style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: uploading || running ? "not-allowed" : "pointer", padding: "8px 11px", border: "1px solid #c8c1d9", borderRadius: 10, fontSize: 13 }}>
+      <input type="file" accept=".pdf,.docx,.txt" aria-label={label} disabled={Boolean(uploading) || running} onChange={event => { void uploadDocument(kind, event); }} style={{ position: "absolute", width: 1, height: 1, opacity: 0 }} />
+      {uploading === kind ? "Reading file…" : label}
+    </label>
+  );
+
   async function run() {
     setError("");
     setResult(null);
@@ -119,6 +182,11 @@ export function OccWorkspace() {
         {turns.map((turn, index) => <div key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
           <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
         </div>)}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          {uploadInput("cv", "Upload CV")}
+          {uploadInput("jobDescription", "Upload job description")}
+          <span style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · Not saved automatically</span>
+        </div>
         <form onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           <textarea aria-label="Message your Career Copilot" style={{ ...field, flex: "1 1 250px", minHeight: 76 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Tell OCC what you want to achieve..." />
           <button type="submit" disabled={!composer.trim()} style={{ padding: "12px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae" }}>Send</button>
@@ -129,12 +197,17 @@ export function OccWorkspace() {
       <div style={{ display: "grid", gap: 14, padding: "clamp(16px, 3vw, 24px)", border: "1px solid #c8c1d9", borderRadius: 18 }}>
         <h2 style={{ fontSize: 21, fontWeight: 750 }}>Review your fit for this role</h2>
         <p style={{ fontSize: 14, opacity: .8 }}>OCC needs your CV and the role requirements. It will explain your strengths, gaps and possible improvements.</p>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+          {uploadInput("cv", "Upload another CV")}
+          {uploadInput("jobDescription", "Upload role description")}
+          {(uploadedCvName || uploadedJobName) && <span role="status" style={{ fontSize: 12 }}> {uploadedCvName ? `CV: ${uploadedCvName}` : ""}{uploadedCvName && uploadedJobName ? " · " : ""}{uploadedJobName ? `Role: ${uploadedJobName}` : ""}</span>}
+        </div>
         {savedCvs.length > 0 && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Select your CV
           <select style={field} value={selectedCvId} onChange={event => {
             const id = event.target.value;
             setSelectedCvId(id);
             const document = savedCvs.find(item => item.id === id);
-            if (document) setCv(cvToPlainText(document.data));
+            if (document) { setCv(cvToPlainText(document.data)); setUploadedCvName(""); }
           }}>
             <option value="">Paste CV text manually</option>
             {savedCvs.map(document => <option key={document.id} value={document.id}>{document.title}</option>)}
@@ -142,11 +215,11 @@ export function OccWorkspace() {
         </label>}
         {selectedCvId && <p style={{ fontSize: 13, opacity: .8 }}>Using your selected Orire CV. The original will not be edited.</p>}
         {(!selectedCvId && (savedCvs.length === 0 || showCvText || cv.trim().length > 0)) && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Your current CV text
-          <textarea style={{ ...field, minHeight: 135, resize: "vertical" }} value={cv} onChange={e => { setCv(e.target.value); setSelectedCvId(""); }} maxLength={30000} placeholder="Paste your CV if it is not in Orire" />
+          <textarea style={{ ...field, minHeight: 135, resize: "vertical" }} value={cv} onChange={e => { setCv(e.target.value); setSelectedCvId(""); setUploadedCvName(""); }} maxLength={30000} placeholder="Paste your CV if it is not in Orire" />
         </label>}
         {!selectedCvId && savedCvs.length > 0 && !showCvText && !cv.trim() && <button type="button" onClick={() => setShowCvText(true)} style={{ justifySelf: "start", textDecoration: "underline" }}>I need to paste a CV</button>}
         <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Target job description
-          <textarea style={{ ...field, minHeight: description.trim().length >= 30 ? 95 : 130, resize: "vertical" }} value={description} onChange={e => setDescription(e.target.value)} maxLength={15000} placeholder="Paste the requirements or describe the role in the conversation" />
+          <textarea style={{ ...field, minHeight: description.trim().length >= 30 ? 95 : 130, resize: "vertical" }} value={description} onChange={e => { setDescription(e.target.value); setUploadedJobName(""); }} maxLength={15000} placeholder="Paste the requirements or describe the role in the conversation" />
         </label>
         <div style={{ display: "grid", gap: 8 }}>
           <button type="button" disabled={running || cv.trim().length < 30 || description.trim().length < 30}
