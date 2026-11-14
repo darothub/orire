@@ -2,6 +2,7 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
+import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
 import { CareerMemory } from "./CareerMemory";
 import { OccDraftReview } from "./OccDraftReview";
 import { OccVersionedCv } from "./OccVersionedCv";
@@ -14,22 +15,22 @@ export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
   const [composer, setComposer] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
+  const [currentTask, setCurrentTask] = useState<OccTask>("unknown");
   function ask(value: string) {
     const text = value.trim();
-    if (!text) return;
-    const lower = text.toLowerCase();
-    const next: WorkspaceSection = /memory|remember|profile/.test(lower) ? "memory"
-      : /version|revision|edit|rewrite|improve/.test(lower) ? "versions"
-      : /recommendation|suggestion/.test(lower) && advice ? "recommendations" : "analysis";
-    const reply = /interview/.test(lower)
-      ? "Full interview coaching is planned for a later milestone. For now, I can compare your CV with the role requirements to help prepare."
-      : next === "memory" ? "You control what OCC remembers. You can review or delete your saved career profile below."
-      : next === "versions" ? "Let's review a specific passage in your saved CV. Nothing is overwritten, and saving requires approval."
-      : next === "recommendations" ? "Here are your evidence-grounded recommendations and optional wording review."
-      : "Let's look at your next role. You can compare your CV with a job description, then request grounded advice.";
-    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: reply }]);
-    setSection(next);
+    if (!text || running) return;
+    const plan = planOccTurn(text, {
+      priorTask: currentTask,
+      hasCv: cv.trim().length >= 30,
+      hasJobDescription: description.trim().length >= 30,
+      hasAdvice: advice !== null,
+    });
+    if (plan.captureJobDescription) setDescription(text.slice(0, 15000));
+    setCurrentTask(plan.task);
+    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: plan.reply }]);
+    setSection(plan.panel === "none" ? "overview" : plan.panel);
     setComposer("");
+    setError("");
   }
   const [cv, setCv] = useState("");
   const [savedCvs, setSavedCvs] = useState<{ id: string; title: string; data: CVData }[]>([]);
@@ -102,7 +103,7 @@ export function OccWorkspace() {
       <header>
         <p style={{ color: "#7953b3", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 12 }}>OCC · Career workspace preview</p>
         <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 750 }}>Your career, with a copilot.</h1>
-        <p style={{ maxWidth: 700, opacity: 0.8 }}>Start with your career goal, CV evidence and a target role. Compare evidence directly or ask OCC for AI-powered, evidence-grounded recommendations. No edits are applied automatically.</p>
+        <p style={{ maxWidth: 700, opacity: 0.8 }}>Describe your goal, and OCC will guide you through the next step. You control when AI is used and when changes are saved.</p>
       </header>
       <section aria-label="Career Copilot conversation" style={{ display: "grid", gap: 16, padding: "clamp(16px, 3vw, 28px)", border: "1px solid #c8c1d9", borderRadius: 18 }}>
         {turns.length === 0 && <>
