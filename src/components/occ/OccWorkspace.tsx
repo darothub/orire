@@ -182,6 +182,7 @@ export function OccWorkspace() {
         {turns.map((turn, index) => <div key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
           <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
         </div>)}
+        {section === "overview" && error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
           {uploadInput("cv", "Upload CV")}
           {uploadInput("jobDescription", "Upload job description")}
