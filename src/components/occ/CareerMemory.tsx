@@ -27,7 +27,27 @@ export function CareerMemory() {
     setSaved(Boolean(profileData.profile));
     setRuns(runsData.runs);
   }
-  useEffect(() => { void refresh().catch(() => setError("Could not load your OCC memory.")); }, []);
+  useEffect(() => {
+    // Initial load updates React state only after asynchronous I/O completes.
+    // Keep this separate from the event-driven refresh() that sets loading state.
+    let cancelled = false;
+    void Promise.all([
+      fetch("/api/occ/profile", { cache: "no-store" }),
+      fetch("/api/occ/runs", { cache: "no-store" }),
+    ]).then(async ([p, r]) => {
+      if (!p.ok || !r.ok) throw new Error("Could not load OCC memory.");
+      const [profileData, runsData] = await Promise.all([p.json(), r.json()]);
+      if (cancelled) return;
+      setProfile(profileData.profile
+        ? Object.fromEntries(Object.keys(EMPTY).map(k => [k, profileData.profile[k] ?? ""])) as Profile
+        : EMPTY);
+      setSaved(Boolean(profileData.profile));
+      setRuns(runsData.runs);
+    }).catch(() => {
+      if (!cancelled) setError("Could not load your OCC memory.");
+    });
+    return () => { cancelled = true; };
+  }, []);
   async function save(event: FormEvent) {
     event.preventDefault();
     setPending(true); setError("");
