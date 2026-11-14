@@ -25,6 +25,7 @@ import { SpotlightView } from "@/components/SpotlightView";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PreviewToolbar } from "@/components/PreviewToolbar";
 import { AccountButton } from "@/components/auth/AccountButton";
+import { OccEntry } from "@/components/occ/OccEntry";
 import { SyncStatus } from "@/components/auth/SyncStatus";
 import { CloudSync } from "@/components/auth/CloudSync";
 import { OnboardingTour } from "@/components/OnboardingTour";
@@ -420,6 +421,7 @@ export default function WorkspaceApp() {
             Export PDF
           </button>
           <SyncStatus />
+          <OccEntry />
           <AccountButton />
         </div>
       </header>

@@ -1,0 +1,32 @@
+import "server-only";
+import { prisma } from "@/lib/db/prisma";
+import { utcDay } from "./budgetPeriod";
+
+// Conservative experimental budget, independent of existing plan quotas.
+export const OCC_DAILY_AI_LIMIT = 20;
+export function occBudgetPeriod(now = new Date()): string {
+  return utcDay(now);
+}
+
+export async function claimOccAiRequest(userId: string): Promise<string | null> {
+  const period = occBudgetPeriod();
+  const where = { userId_metric_period: { userId, metric: "occ-ai", period } };
+  const counter = await prisma.usageCounter.upsert({
+    where,
+    create: { userId, metric: "occ-ai", period, count: 1 },
+    update: { count: { increment: 1 } },
+  });
+  if (counter.count <= OCC_DAILY_AI_LIMIT) return period;
+  await prisma.usageCounter.updateMany({
+    where: { userId, metric: "occ-ai", period, count: { gt: 0 } },
+    data: { count: { decrement: 1 } },
+  });
+  return null;
+}
+
+export async function refundOccAiRequest(userId: string, period: string): Promise<void> {
+  await prisma.usageCounter.updateMany({
+    where: { userId, metric: "occ-ai", period, count: { gt: 0 } },
+    data: { count: { decrement: 1 } },
+  });
+}

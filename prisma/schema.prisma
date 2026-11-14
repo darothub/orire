@@ -34,6 +34,9 @@ model User {
   entitlement Entitlement?
   usage       UsageCounter[]
   consumedRefineRuns ConsumedRefineRun[]
+  occCareerProfile OccCareerProfile?
+  occAdviceRuns OccAdviceRun[]
+  occCvVersions OccCvVersion[]
   lifecycleEmails LifecycleEmail[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
@@ -136,6 +139,7 @@ model Document {
   updatedAt      DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  occRevision OccCvVersion?
 
   @@index([userId])
 }
@@ -251,4 +255,46 @@ model ProcessedWebhookEvent {
   id          String   @id // Stripe event id, e.g. "evt_..."
   type        String
   processedAt DateTime @default(now())
+}
+
+// OCC data is opt-in, private and cascades on account deletion.
+// No raw CV/JD is retained in the recommendation history.
+model OccCareerProfile {
+  userId       String   @id
+  targetRole   String   @default("")
+  location     String   @default("")
+  workMode     String   @default("")
+  salaryGoal   String   @default("")
+  careerGoal   String   @default("")
+  verifiedNotes String  @default("") @db.Text
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model OccAdviceRun {
+  id              String   @id @default(cuid())
+  userId          String
+  summary         String   @db.Text
+  recommendations Json
+  nextSteps       Json
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/// Provenance for OCC-created library versions. Enables safe undo without
+/// touching the original source or unrelated documents.
+model OccCvVersion {
+  id              String   @id @default(cuid())
+  userId          String
+  sourceDocumentId String
+  documentId      String   @unique
+  savedUpdatedAt  DateTime
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

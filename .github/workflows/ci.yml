@@ -17,7 +17,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, 'feat/occ-*']
   workflow_dispatch:
 
 # Cancel superseded runs on the same ref (e.g. rapid pushes to a PR branch).
@@ -175,6 +175,12 @@ jobs:
         if: steps.docs.outputs.skip != 'true' && steps.tier.outputs.mode == 'full'
         timeout-minutes: 18
         run: npm run test:e2e
+      - name: Run OCC Career-only authorization and versioned-CV E2E
+        if: steps.docs.outputs.skip != 'true'
+        timeout-minutes: 8
+        env:
+          ORIRE_OCC_ENABLED: "true"
+        run: npx playwright test e2e/occ.spec.ts --project=chromium
       - name: Upload Playwright report
         if: ${{ !cancelled() && steps.docs.outputs.skip != 'true' }}
         uses: actions/upload-artifact@v4
