@@ -80,3 +80,38 @@ should add an explicit "use saved profile" setting, dedicated OCC quotas and
 full data-export coverage. The existing Orire model routing and AI rate limit
 are reused. No production enablement until migrations, lint, TypeScript,
 unit, E2E, screenshots and CI checks pass.
+
+## Milestone 5: explicit intelligent context + safe local wording approvals
+
+- `POST /api/occ/advise` accepts `useSavedProfile: true` (default false).
+  Only after Career authorization does the backend load that user's saved
+  profile; otherwise no profile DB read is needed and no stored preferences or
+  notes enter the LLM request. Inline career goal takes precedence. The API
+  returns `usedSavedProfile` for transparent user-facing disclosure.
+- Saved profile preferences and notes are treated as **unverified user input**,
+  not independent proof of qualifications. CV-based evidence checking remains
+  authoritative for quoted experience claims.
+- The OCC workspace has an opt-in checkbox for each AI analysis, OFF by default.
+- Supported quoted evidence can be selected for a **manual, user-authored
+  wording replacement** with preview and explicit approval. Approval changes
+  an in-browser working copy only. The user can reset to the original or copy
+  the draft; the original CV, cloud document and saved history are not altered.
+- This is *not* automatic, LLM-authored CV editing or a full document merge.
+  No CV persistence, export, application submission or agent-initiated action
+  is provided at this milestone.
+
+### Required release gates
+
+The OCC branches remain stacked and unmerged. Before PR/release:
+1. Apply Prisma migration in isolated test DB; regenerate client.
+2. Run lint, `npx tsc --noEmit`, unit tests, Next production build.
+3. Test flag off and anon/Free/Pro denial at every OCC API (including direct URL),
+   Career success, cross-user isolation and deleting saved profiles.
+4. Test context excluded when unchecked, inclusion when checked, edit preview
+   reset/copy, and unchanged original CV after approval.
+5. Record real Orire mobile and desktop screenshots and validate browser UX.
+6. Confirm GitHub Actions green. Do not enable production flag before sign-off.
+
+Follow-up: persist user-approved edits as a **new** document version with
+optimistic concurrency checks and undo, plus agent spend quotas, consent
+auditing and evaluation fixtures.
