@@ -36,6 +36,7 @@ model User {
   consumedRefineRuns ConsumedRefineRun[]
   occCareerProfile OccCareerProfile?
   occAdviceRuns OccAdviceRun[]
+  occCvVersions OccCvVersion[]
   lifecycleEmails LifecycleEmail[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
@@ -277,6 +278,21 @@ model OccAdviceRun {
   nextSteps       Json
   createdAt       DateTime @default(now())
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/// Provenance for OCC-created library versions. Enables safe undo without
+/// touching the original source or unrelated documents.
+model OccCvVersion {
+  id              String   @id @default(cuid())
+  userId          String
+  sourceDocumentId String
+  documentId      String   @unique
+  savedUpdatedAt  DateTime
+  createdAt       DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
