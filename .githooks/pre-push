@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Lightweight local safeguard. No Next.js build, database or Playwright startup.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+if [[ ! -x node_modules/.bin/eslint || ! -x node_modules/.bin/vitest ]]; then
+  echo "Orire pre-push: run npm ci before pushing (dependencies missing)." >&2
+  exit 1
+fi
+base="$(git merge-base HEAD '@{upstream}' 2>/dev/null || git merge-base HEAD origin/main 2>/dev/null || git rev-parse HEAD^)"
+mapfile -d '' changed < <(git diff --diff-filter=ACMR --name-only -z "$base" HEAD)
+files=()
+source_files=()
+for path in "${changed[@]}"; do
+  [[ -f "$path" ]] || continue
+  if [[ "$path" =~ \.(js|jsx|ts|tsx|mjs|cjs)$ ]]; then files+=("$path"); fi
+  if [[ "$path" =~ ^src/.*\.(js|jsx|ts|tsx)$ ]]; then source_files+=("$path"); fi
+done
+if (( ${#files[@]} )); then
+  echo "Orire pre-push: linting ${#files[@]} modified JS/TS files"
+  node_modules/.bin/eslint "${files[@]}"
+fi
+if (( ${#source_files[@]} )); then
+  echo "Orire pre-push: running unit tests related to modified source files"
+  node_modules/.bin/vitest related --run "${source_files[@]}"
+fi
+echo "Orire pre-push: quick checks passed. Full browser validation remains mandatory in CI."
