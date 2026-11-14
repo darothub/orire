@@ -50,7 +50,21 @@ export function OccVersionedCv() {
       setNotice(error instanceof Error ? error.message : "Could not load CV versions.");
     } finally { setPending(false); }
   }
-  useEffect(() => { void refresh(); }, []);
+  useEffect(() => {
+    // Load initial documents asynchronously; no synchronous state updates
+    // from the effect body (react-hooks/set-state-in-effect).
+    let cancelled = false;
+    void fetch("/api/occ/versions", { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("Could not load saved CV versions.");
+        const data = await response.json();
+        if (!cancelled) setDocuments(data.documents);
+      })
+      .catch(error => {
+        if (!cancelled) setNotice(error instanceof Error ? error.message : "Could not load CV versions.");
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   async function saveVersion() {
     if (!canSave || !source || !selected || original === null) return;
