@@ -8,7 +8,7 @@ export function occBudgetPeriod(now = new Date()): string {
   return utcDay(now);
 }
 
-export async function claimOccAiRequest(userId: string): Promise<boolean> {
+export async function claimOccAiRequest(userId: string): Promise<string | null> {
   const period = occBudgetPeriod();
   const where = { userId_metric_period: { userId, metric: "occ-ai", period } };
   const counter = await prisma.usageCounter.upsert({
@@ -16,17 +16,17 @@ export async function claimOccAiRequest(userId: string): Promise<boolean> {
     create: { userId, metric: "occ-ai", period, count: 1 },
     update: { count: { increment: 1 } },
   });
-  if (counter.count <= OCC_DAILY_AI_LIMIT) return true;
+  if (counter.count <= OCC_DAILY_AI_LIMIT) return period;
   await prisma.usageCounter.updateMany({
     where: { userId, metric: "occ-ai", period, count: { gt: 0 } },
     data: { count: { decrement: 1 } },
   });
-  return false;
+  return null;
 }
 
-export async function refundOccAiRequest(userId: string): Promise<void> {
+export async function refundOccAiRequest(userId: string, period: string): Promise<void> {
   await prisma.usageCounter.updateMany({
-    where: { userId, metric: "occ-ai", period: occBudgetPeriod(), count: { gt: 0 } },
+    where: { userId, metric: "occ-ai", period, count: { gt: 0 } },
     data: { count: { decrement: 1 } },
   });
 }
