@@ -44,6 +44,9 @@ no production rollout. Source branch: `feat/occ-versioned-cv`.
 - Save: creates a private, inactive new CV; source data and active pointer stay
   unchanged; source template preserved
 - Undo: remove only the OCC-created version
+- Guest session: protected page/API inaccessible even when flag is enabled
+- Undo denied when created version has been made active
+- Undo denied after an OCC-created version has been subsequently edited
 - Narrow-screen layout and screenshots
 
 ## Items still requiring follow-up
