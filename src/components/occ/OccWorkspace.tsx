@@ -49,7 +49,7 @@ export function OccWorkspace() {
         body: JSON.stringify({ cv, description, goal, saveRun, useSavedProfile }), cache: "no-store",
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "OCC could not analyze your CV.");
+      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : data.error?.message ?? "OCC could not analyze your CV.");
       setAdvice(data.advice as Advice);
       setAnalyzedCv(cv);
       setAnalysisVersion(version => version + 1);
