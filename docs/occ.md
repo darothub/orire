@@ -51,3 +51,32 @@ Orire screenshots. Do not enable `ORIRE_OCC_ENABLED` in production or merge
 without these checks and green GitHub Actions. Upcoming milestones:
 persisted opt-in CareerProfile, spend quotas, conversation/task history,
 user-approved CV changes and agent evaluations.
+
+## Milestone 4: user-controlled career memory and review decisions
+
+Schema additions: `OccCareerProfile` (one opt-in profile per user) and
+`OccAdviceRun` (private, optional saved recommendation sessions). Both
+reference User with cascading deletion. Apply the new Prisma migration
+before deploying any OCC memory APIs, and regenerate Prisma client.
+
+OCC has Career-only, server-authorized endpoints:
+- `GET/PUT/DELETE /api/occ/profile`: view, explicitly save/update, or delete a career profile.
+- `GET /api/occ/runs`: retrieve at most 20 recent private saved sessions.
+- `DELETE /api/occ/runs/:id`: delete an owned session.
+- `PATCH /api/occ/runs/:id/decision`: accept/reject one stored recommendation as a **review decision only**.
+- `POST /api/occ/advise` accepts `saveRun: true` to persist the model's
+  bounded recommendations; default is not to persist them.
+
+The profile stores user-entered career preferences and notes. Saved runs store
+AI summaries, advice, next steps, *and CV evidence excerpts contained in
+recommendations*. They do **not** store the complete CV or job description,
+but excerpts may still contain personal information. The user can delete the
+profile and individual sessions. No application submission, email, export,
+or actual CV modification occurs when a recommendation is accepted.
+
+Note: the persisted profile is not yet automatically supplied to model prompts;
+the user can continue to enter the goal explicitly in the OCC form. Future work
+should add an explicit "use saved profile" setting, dedicated OCC quotas and
+full data-export coverage. The existing Orire model routing and AI rate limit
+are reused. No production enablement until migrations, lint, TypeScript,
+unit, E2E, screenshots and CI checks pass.
