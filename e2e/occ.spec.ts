@@ -112,4 +112,50 @@ test.describe("Career-only OCC feature", () => {
     });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
+  test("anonymous callers cannot access protected OCC endpoints", async ({ page }) => {
+    expect((await page.request.get("/occ")).status()).toBe(404);
+    expect((await page.request.get("/api/occ/profile")).status()).toBe(403);
+    expect((await page.request.get("/api/occ/runs")).status()).toBe(403);
+    expect((await page.request.post("/api/occ/advise", { data: {} })).status()).toBe(403);
+  });
+
+  test("undo refuses to remove an OCC version after it becomes active", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    const source = await db.document.create({
+      data: { userId: e2eUser.id, title: "Original", data: JSON.parse(JSON.stringify(sampleCV)) },
+    });
+    await db.user.update({ where: { id: e2eUser.id }, data: { activeDocumentId: source.id } });
+    await signIn(page);
+    const create = await page.request.post("/api/occ/versions", { data: {
+      sourceId: source.id, expectedUpdatedAt: source.updatedAt.toISOString(),
+      field: { kind: "summary" }, expectedText: sampleCV.basics.summary,
+      replacement: sampleCV.basics.summary + " Confirmed wording updated by the user.",
+    } });
+    expect(create.status()).toBe(201);
+    const { id, undoId } = await create.json();
+    await db.user.update({ where: { id: e2eUser.id }, data: { activeDocumentId: id } });
+    expect((await page.request.delete(`/api/occ/versions/${undoId}`)).status()).toBe(409);
+    expect(await db.document.findUnique({ where: { id } })).not.toBeNull();
+    expect(await db.document.findUnique({ where: { id: source.id } })).not.toBeNull();
+  });
+
+  test("undo refuses a version that was edited after creation", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    const source = await db.document.create({
+      data: { userId: e2eUser.id, title: "Original", data: JSON.parse(JSON.stringify(sampleCV)) },
+    });
+    await db.user.update({ where: { id: e2eUser.id }, data: { activeDocumentId: source.id } });
+    await signIn(page);
+    const create = await page.request.post("/api/occ/versions", { data: {
+      sourceId: source.id, expectedUpdatedAt: source.updatedAt.toISOString(),
+      field: { kind: "summary" }, expectedText: sampleCV.basics.summary,
+      replacement: sampleCV.basics.summary + " User-approved change.",
+    } });
+    expect(create.status()).toBe(201);
+    const { id, undoId } = await create.json();
+    await db.document.update({ where: { id }, data: { title: "Edited after OCC saved" } });
+    expect((await page.request.delete(`/api/occ/versions/${undoId}`)).status()).toBe(409);
+    expect(await db.document.findUnique({ where: { id } })).not.toBeNull();
+  });
+
 });
