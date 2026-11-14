@@ -10,6 +10,7 @@
     "lint": "eslint",
     "test": "vitest run && npm run config:check:test",
     "test:watch": "vitest",
+    "hooks:install": "bash scripts/install-git-hooks.sh",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "smoke": "sh scripts/smoke.sh",
