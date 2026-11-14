@@ -26,6 +26,7 @@ test.describe("Career-only OCC feature", () => {
     await page.goto("/occ");
     await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
 
+    await page.getByRole("navigation", { name: "Career Copilot sections" }).getByRole("button", { name: "CV versions" }).click();
     await page.getByLabel("Source CV").selectOption(original.id);
     await page.getByLabel("Field to revise").selectOption("0");
     const before = await page.getByLabel("Before (original)").inputValue();
@@ -106,12 +107,39 @@ test.describe("Career-only OCC feature", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/occ");
     await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
-    await testInfo.attach("occ-mobile", {
+    await expect(page.getByRole("region", { name: "Career Copilot overview" })).toBeVisible();
+    await testInfo.attach("occ-m7-overview-mobile", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
     });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
+  test("M7 workspace navigation preserves the user's analysis draft and isolates sections", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await expect(page.getByRole("navigation", { name: "Career Copilot sections" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Career Copilot overview" })).toBeVisible();
+    await testInfo.attach("occ-m7-overview-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
+    await page.getByRole("button", { name: "Start CV analysis" }).click();
+    await page.getByLabel("Your career goal (optional)").fill("Remote software engineering");
+    await page.getByLabel("Your current CV text").fill("Experienced engineer creating secure distributed payment systems.");
+    await page.getByLabel("Target job description").fill("Seeking engineer to design secure payment systems and services.");
+    await page.getByRole("navigation", { name: "Career Copilot sections" }).getByRole("button", { name: "Career memory" }).click();
+    await expect(page.getByRole("heading", { name: "Your career memory" })).toBeVisible();
+    await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
+    await page.getByRole("navigation", { name: "Career Copilot sections" }).getByRole("button", { name: "CV analysis" }).click();
+    await expect(page.getByLabel("Your current CV text")).toHaveValue("Experienced engineer creating secure distributed payment systems.");
+    await expect(page.getByLabel("Your career goal (optional)")).toHaveValue("Remote software engineering");
+    await page.getByRole("navigation", { name: "Career Copilot sections" }).getByRole("button", { name: "Recommendations" }).click();
+    await expect(page.getByText("Run an AI analysis to see grounded advice", { exact: false })).toBeVisible();
+    await page.getByRole("navigation", { name: "Career Copilot sections" }).getByRole("button", { name: "CV versions" }).click();
+    await expect(page.getByRole("heading", { name: "Save an approved CV revision" })).toBeVisible();
+  });
+
   test("anonymous callers cannot access protected OCC endpoints", async ({ page }) => {
     expect((await page.request.get("/occ")).status()).toBe(404);
     expect((await page.request.get("/api/occ/profile")).status()).toBe(403);
