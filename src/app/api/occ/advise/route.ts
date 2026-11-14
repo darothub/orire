@@ -7,6 +7,7 @@ import { DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { bodyTooLarge } from "@/lib/ai/server/limits";
+import { prisma } from "@/lib/db/prisma";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -27,11 +28,12 @@ export async function POST(req: Request) {
   let body: unknown;
   try { body = await req.json(); } catch { return response({ error: "Invalid JSON" }, 400); }
   if (!body || typeof body !== "object" || Array.isArray(body)) return response({ error: "Invalid request" }, 400);
-  const { cv, description, goal } = body as Record<string, unknown>;
+  const { cv, description, goal, saveRun } = body as Record<string, unknown>;
   if (typeof cv !== "string" || typeof description !== "string" ||
       cv.trim().length < 30 || description.trim().length < 30 ||
       cv.length > 30000 || description.length > 15000 ||
-      (goal !== undefined && (typeof goal !== "string" || goal.length > 300))) {
+      (goal !== undefined && (typeof goal !== "string" || goal.length > 300)) ||
+      (saveRun !== undefined && typeof saveRun !== "boolean")) {
     return response({ error: "Provide a valid CV, job description and optional career goal." }, 400);
   }
   // Tool step 1: deterministic, auditable comparison; tool output becomes
@@ -54,10 +56,20 @@ export async function POST(req: Request) {
     });
     if (!served.call.ok) return response({ error: "OCC is temporarily unavailable. Try again later." }, 503);
     try {
-      return response({
-        advice: parseGroundedAdvice(served.call.content, cv),
-        comparison,
-      }, 200);
+      const advice = parseGroundedAdvice(served.call.content, cv);
+      let runId: string | null = null;
+      if (saveRun === true) {
+        const saved = await prisma.occAdviceRun.create({
+          data: {
+            userId: access.userId,
+            summary: advice.summary,
+            recommendations: advice.recommendations.map((item) => ({ ...item, decision: "pending" })),
+            nextSteps: advice.nextSteps,
+          },
+        });
+        runId = saved.id;
+      }
+      return response({ advice, comparison, runId }, 200);
     } catch {
       return response({ error: "OCC could not validate its recommendations. Please retry." }, 502);
     }
