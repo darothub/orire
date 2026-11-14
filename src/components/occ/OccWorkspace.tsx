@@ -134,7 +134,7 @@ export function OccWorkspace() {
             const document = savedCvs.find(item => item.id === id);
             if (document) setCv(cvToPlainText(document.data));
           }}>
-            <option value="">I'll paste my CV text</option>
+            <option value="">I will paste my CV text</option>
             {savedCvs.map(document => <option key={document.id} value={document.id}>{document.title}</option>)}
           </select>
         </label>}
