@@ -24,9 +24,13 @@ describe("GitHub Actions CI workflow", () => {
     expect(existsSync(workflowPath)).toBe(true);
   });
 
-  it("triggers on pull requests and pushes to main", () => {
+  it("triggers on pull requests and main pushes, while allowing scoped feature branches", () => {
     expect(workflow).toMatch(/pull_request:/);
-    expect(workflow).toMatch(/push:\s*\n\s*branches:\s*\[main\]/);
+    const pushBranches = workflow.match(/push:\s*\n\s*branches:\s*\[([^\]]+)\]/);
+    expect(pushBranches).not.toBeNull();
+    const branches = pushBranches![1].split(",").map(branch => branch.trim().replace(/^["\x27]|["\x27]$/g, ""));
+    expect(branches).toContain("main");
+    expect(branches.every(branch => branch === "main" || branch === "feat/occ-*")).toBe(true);
   });
 
   it("runs lint, typegen, typecheck and unit tests", () => {
