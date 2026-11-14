@@ -45,6 +45,27 @@ export async function POST(request: Request) {
       if (source.updatedAt.toISOString() !== expectedUpdatedAt) {
         return { error: "This CV has changed since you opened it. Reload before saving.", status: 409 } as const;
       }
+      // Legacy accounts without an active pointer use the most recent CV as
+      // autosave target. Pin that existing target before creating a newer OCC
+      // version, so OCC cannot silently retarget normal editor autosaves.
+      const user = await tx.user.findUnique({
+        where: { id: access.userId }, select: { activeDocumentId: true },
+      });
+      const currentPointer = user?.activeDocumentId
+        ? await tx.document.findFirst({
+            where: { id: user.activeDocumentId, userId: access.userId },
+            select: { id: true },
+          })
+        : null;
+      if (!currentPointer) {
+        const current = await tx.document.findFirst({
+          where: { userId: access.userId }, orderBy: { updatedAt: "desc" },
+          select: { id: true },
+        });
+        if (current) await tx.user.update({
+          where: { id: access.userId }, data: { activeDocumentId: current.id },
+        });
+      }
       const original = source.data as unknown as CVData;
       const revised = patchCvField(original, field, expectedText, replacement);
       if (!revised) return { error: "The original passage no longer matches. Reload and review again.", status: 409 } as const;
