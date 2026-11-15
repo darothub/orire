@@ -2,7 +2,7 @@
  * The interviewer coaches against the answer, not a hiring prediction.
  */
 export type InterviewQuestion = { question: string; focus: string; answerStarters?: [string, string] };
-export type InterviewFeedback = { strength: string; improvement: string; example: string; followUp: string; betterWording?: string; whyBetter?: string };
+export type InterviewFeedback = { strength: string; improvement: string; example: string; followUp: string; betterWording?: string; whyBetter?: string; wordingStatus?: "grounded" | "copyedit" };
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 const clean = (value: unknown, max: number): string => typeof value === "string" ? value.trim().slice(0,max) : "";
 function parse(raw: string): Record<string,unknown> {
@@ -39,9 +39,9 @@ function groundedRewrite(candidate: string, answer: string): boolean {
   const proposed = contentWords(candidate).map(normalizedToken);
   // Every substantive new concept needs explicit candidate-supplied evidence.
   if (proposed.some(w => !source.has(w))) return false;
-  // Do not change an explicitly negated answer into an affirmative claim.
-  if (/\b(?:not|never|no|didn't|don't|cannot|can't|wasn't|weren't)\b/i.test(answer) &&
-      !/\b(?:not|never|no|didn't|don't|cannot|can't|wasn't|weren't)\b/i.test(candidate)) return false;
+  // Negation changes the meaning, even when every other word is present.
+  const negation = (value: string) => /\b(?:not|never|no|didn't|don't|cannot|can't|wasn't|weren't)\b/i.test(value);
+  if (negation(answer) !== negation(candidate)) return false;
   return true;
 }
 function safeCopyedit(text: string): string {
@@ -77,7 +77,7 @@ export function parseInterviewFeedback(raw: string, originalAnswer = ""): Interv
   const explanation = accepted && whyBetter
     ? whyBetter
     : "This keeps your own experience and makes the wording easier to read. Add a real example or result only if it happened.";
-  return { strength, improvement, example, followUp, betterWording, whyBetter: betterWording ? explanation : "" };
+  return { strength, improvement, example, followUp, betterWording, whyBetter: betterWording ? explanation : "", wordingStatus: accepted ? "grounded" : "copyedit" };
 }
 export const INTERVIEW_TOPICS = ["Your experience","How you approach your work","Handling challenges","Working with people","Learning and growth"] as const;
 export const MAX_INTERVIEW_TURNS = INTERVIEW_TOPICS.length;
