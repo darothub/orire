@@ -291,7 +291,7 @@ export function OccWorkspace() {
         <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made. {savedRunId ? "Session saved. You can accept or reject suggestions below." : "This session was not saved."}</p>
       </section>}
       </section>}
-      {section === "interview" && <OccMockInterview cv={cv} jobDescription={description} onRequestRole={() => setSection("analysis")} />}
+      {section === "interview" && <OccMockInterview cv={cv} jobDescription={description} onUpdateRole={setDescription} />}
       {section === "versions" && <section aria-label="CV version workspace"><OccVersionedCv /></section>}
       {section === "memory" && <section aria-label="Career memory workspace"><CareerMemory /></section>}
 
