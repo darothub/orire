@@ -1,9 +1,12 @@
 import { INTERVIEW_BENCHMARK_V1, type EvaluationCase } from "./fixtures";
 import { getInterviewCoverage } from "./coverage";
+import { parseInterviewFeedback } from "../interview";
 
 /**
- * Blind, synthetic-only review material. No ground-truth expectation or risk label
- * is exposed to reviewers, so they cannot simply copy the test oracle.
+ * Blind, synthetic-only review material containing the wording that the product
+ * would ACTUALLY display after server validation. Never ask reviewers to score
+ * a rejected raw model proposal as though the candidate would see it.
+ * No expected outcome, safety classification, or rejection status is leaked.
  * Actual reviewers must be recruited and work independently.
  */
 export type ReviewPacketItem = {
@@ -33,7 +36,13 @@ export function makeBlindInterviewReviewPacket(
     profession: item.discipline,
     question: item.question,
     candidateAnswer: item.originalAnswer,
-    suggestedWording: item.proposedRewrite,
+    suggestedWording: parseInterviewFeedback(JSON.stringify({
+      strength: "Thank you for sharing your experience.",
+      improvement: "Use a genuine example if it helps explain your work.",
+      followUp: "What did you learn from this?",
+      betterWording: item.proposedRewrite,
+      whyBetter: "This makes your answer easier to follow.",
+    }), item.originalAnswer).betterWording ?? "",
     clarity: null,
     recognizability: null,
     meaningPreserved: null,
