@@ -305,7 +305,7 @@ test.describe("Career-only OCC feature", () => {
               improvement: "Mention retry ownership and observability.",
               example: "Illustrative outline: idempotency key, dedupe store, alerts.",
               followUp: "How would you verify retries are safe?",
-              betterWording: "I would use idempotency keys and a shared store to check repeated requests, then test retries between services.",
+              betterWording: "I would add idempotency keys and a shared dedupe store. Then I would test retry behavior across service boundaries.",
               whyBetter: "It explains your plan in an order that is easier to follow.",
             }, turnIndex: body.turnIndex }),
       });
@@ -330,10 +330,10 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Your interview answer").fill("I would add idempotency keys and a shared dedupe store, then test retry behavior across service boundaries.");
     await page.getByRole("button", { name: "Get answer feedback" }).click();
     await expect(page.getByText("You explained idempotency clearly.")).toBeVisible();
-    await expect(page.getByLabel("Suggested clearer answer")).toContainText("I would use idempotency keys");
+    await expect(page.getByLabel("Suggested clearer answer")).toContainText("I would add idempotency keys");
     await expect(page.getByText("It explains your plan in an order that is easier to follow.")).toBeVisible();
     await page.getByRole("button", { name: "Try this wording in my answer" }).click();
-    await expect(page.getByLabel("Your interview answer")).toHaveValue(/I would use idempotency keys/);
+    await expect(page.getByLabel("Your interview answer")).toHaveValue(/I would add idempotency keys/);
     await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
     expect(calls).toBe(2);
     const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
