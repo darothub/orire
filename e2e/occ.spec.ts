@@ -109,6 +109,8 @@ test.describe("Career-only OCC feature", () => {
     await page.goto("/occ");
     await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
     await expect(page.getByRole("region", { name: "Career Copilot conversation" })).toBeVisible();
+    const decline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await decline.isVisible()) await decline.click();
     await testInfo.attach("occ-m7-overview-mobile", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
@@ -137,6 +139,8 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByRole("region", { name: "Career Copilot conversation" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Review my CV for a role" })).toBeVisible();
     await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
+    const decline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await decline.isVisible()) await decline.click();
     await testInfo.attach("occ-m7-conversation-desktop", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
@@ -176,6 +180,32 @@ test.describe("Career-only OCC feature", () => {
     await testInfo.attach("occ-m7-orchestrated-context", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   });
 
+  test("M7.1 contextual review shows readiness and keeps uploaded texts collapsed", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByLabel("Upload CV", { exact: true }).setInputFiles({
+      name: "resume.txt", mimeType: "text/plain",
+      buffer: Buffer.from("Senior software engineer building secure APIs and distributed payment systems. Experienced with Kotlin and Java integration testing."),
+    });
+    await expect(page.getByText("1. Your CV")).toBeVisible();
+    await expect(page.getByText("✓ Ready to review")).toBeVisible();
+    await expect(page.getByRole("button", { name: "View or edit extracted CV text" })).toBeVisible();
+    await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
+    await page.getByLabel("Upload job description", { exact: true }).setInputFiles({
+      name: "role.txt", mimeType: "text/plain",
+      buffer: Buffer.from("We are looking for an engineer responsible for payment API architecture, secure authentication, distributed services and automated testing."),
+    });
+    await expect(page.getByText("✓ Requirements added")).toBeVisible();
+    await expect(page.getByLabel("Target job description")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Review my fit" })).toBeEnabled();
+    const decline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await decline.isVisible()) await decline.click();
+    await testInfo.attach("occ-m7-1-desktop-upload-ready", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+  });
+
   test("M7 compact suggestions and one primary AI review action", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
@@ -207,12 +237,16 @@ test.describe("Career-only OCC feature", () => {
       name: "career.txt", mimeType: "text/plain",
       buffer: Buffer.from("Senior software engineer building reliable payment and authentication services. Experienced with Java, Kotlin and API integration."),
     });
-    await expect(page.getByText("CV attached: career.txt", { exact: false })).toBeVisible();
+    await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("CV ready · career.txt");
     await page.getByLabel("Upload job description", { exact: true }).setInputFiles({
       name: "position.txt", mimeType: "text/plain",
       buffer: Buffer.from("We are looking for an engineer who designs payment systems, Java services and secure authentication APIs for distributed platforms."),
     });
+    await expect(page.getByRole("button", { name: "View or edit extracted CV text" })).toBeVisible();
+    await page.getByRole("button", { name: "View or edit extracted CV text" }).click();
     await expect(page.getByLabel("Your current CV text")).toHaveValue(/Senior software engineer/);
+    await expect(page.getByRole("button", { name: "View or edit job description" })).toBeVisible();
+    await page.getByRole("button", { name: "View or edit job description" }).click();
     await expect(page.getByLabel("Target job description")).toHaveValue(/We are looking for an engineer/);
     await expect(page.getByRole("button", { name: "Review my fit" })).toBeEnabled();
     expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
@@ -234,6 +268,7 @@ test.describe("Career-only OCC feature", () => {
       buffer: Buffer.from("Experienced backend software engineer working on secure Java payment APIs, authentication and automated testing."),
     });
     await expect(page.getByText("CV: updated-cv.txt", { exact: false })).toBeVisible();
+    await page.getByRole("button", { name: "View or edit extracted CV text" }).click();
     await expect(page.getByLabel("Your current CV text")).toHaveValue(/Experienced backend software engineer/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await testInfo.attach("occ-m7-uploads-mobile", {
@@ -254,7 +289,8 @@ test.describe("Career-only OCC feature", () => {
       mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       buffer: await Packer.toBuffer(doc),
     });
-    await expect(page.getByText("CV attached: career.docx", { exact: false })).toBeVisible();
+    await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("CV ready · career.docx");
+    await page.getByRole("button", { name: "View or edit extracted CV text" }).click();
     await expect(page.getByLabel("Your current CV text")).toHaveValue(/Senior engineer creating reliable Java/);
     expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
   });

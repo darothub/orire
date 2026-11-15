@@ -55,6 +55,7 @@ export function OccWorkspace() {
   const [showPrivacyOptions, setShowPrivacyOptions] = useState(false);
   const [showKeywordCheck, setShowKeywordCheck] = useState(false);
   const [showCvText, setShowCvText] = useState(false);
+  const [showRoleText, setShowRoleText] = useState(false);
   const [useSavedProfile, setUseSavedProfile] = useState(false);
   const [analyzedCv, setAnalyzedCv] = useState("");
   const [analysisVersion, setAnalysisVersion] = useState(0);
@@ -104,13 +105,15 @@ export function OccWorkspace() {
         setSelectedCvId("");
         setCv(text);
         setUploadedCvName(file.name);
+        setShowCvText(false);
       } else {
         setDescription(text);
         setUploadedJobName(file.name);
+        setShowRoleText(false);
       }
       setCurrentTask("analysis");
       setSection("analysis");
-      setTurns(current => [...current, { role: "OCC", text: `${kind === "cv" ? "CV" : "Job description"} attached: ${file.name}. ${kind === "cv" ? "Add a target job description to continue." : "Select or upload your CV to continue."} Files are extracted for this session only; nothing was saved to your CV Library.` }]);
+      // Attachment status is displayed in the composer and review preparation, not duplicated as chat messages.
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not read that document.");
     } finally {
@@ -168,28 +171,35 @@ export function OccWorkspace() {
     } catch (e) { setError(e instanceof Error ? e.message : "OCC failed."); }
     finally { setRunning(false); }
   }
-  const field: CSSProperties = { width: "100%", padding: 14, border: "1px solid #c8c1d9", borderRadius: 12, background: "transparent", color: "inherit", font: "inherit" };
+  const field: CSSProperties = { width: "100%", padding: 13, border: "1px solid #bcb4d0", borderRadius: 12, background: "transparent", color: "inherit", font: "inherit" };
+  const surface: CSSProperties = { border: "1px solid #c8c1d9", borderRadius: 20, padding: "clamp(18px, 3vw, 28px)", background: "rgba(118, 83, 167, .025)", boxShadow: "0 4px 24px rgba(44, 21, 82, .045)" };
+  const cvReady = cv.trim().length >= 30;
+  const roleReady = description.trim().length >= 30;
   return (
-    <div style={{ display: "grid", gap: 24 }}>
-      <header>
-        <p style={{ color: "#7953b3", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 12 }}>OCC · Career workspace preview</p>
+    <div style={{ display: "grid", gap: 20, maxWidth: 920, margin: "0 auto" }}>
+      <header style={{ display: "grid", gap: 8 }}>
+        <p style={{ color: "#7953b3", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 12 }}>ORIRE · CAREER COPILOT</p>
         <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 750 }}>Your career, with a copilot.</h1>
-        <p style={{ maxWidth: 700, opacity: 0.8 }}>Describe your goal, and OCC will guide you through the next step. You control when AI is used and when changes are saved.</p>
+        <p style={{ maxWidth: 700, opacity: 0.8 }}>Ask about your next career move. OCC can review your CV, compare roles and help you make changes you approve.</p>
       </header>
-      <section aria-label="Career Copilot conversation" style={{ display: "grid", gap: 16, padding: "clamp(16px, 3vw, 28px)", border: "1px solid #c8c1d9", borderRadius: 18 }}>
+      <section aria-label="Career Copilot conversation" style={{ ...surface, display: "grid", gap: 16 }}>
         {turns.length === 0 && <>
-          <h2 style={{ fontWeight: 750, fontSize: 26 }}>What would you like to achieve today?</h2>
-          <p style={{ opacity: .8 }}>Tell OCC your goal. The appropriate tools appear only when needed.</p>
+          <h2 style={{ fontWeight: 750, fontSize: "clamp(21px, 3vw, 27px)" }}>What would you like to work on?</h2>
+          <p style={{ opacity: .8 }}>Ask a question, choose a starting point or attach a CV.</p>
           <div aria-label="Suggested career questions" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {["Review my CV for a role", "Improve my CV", "Prepare for an interview", "Manage my career memory"].map(text =>
-              <button type="button" key={text} onClick={() => ask(text)} style={{ padding: "8px 12px", textAlign: "left", background: "transparent", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 13, cursor: "pointer" }}>{text}</button>)}
+              <button type="button" key={text} onClick={() => ask(text)} style={{ padding: "7px 11px", textAlign: "left", background: "rgba(125, 93, 180, .045)", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 12, lineHeight: 1.4, cursor: "pointer" }}>{text}</button>)}
           </div>
         </>}
         {turns.map((turn, index) => <div key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
           <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
         </div>)}
+        {(uploadedCvName || uploadedJobName || selectedCvId) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
+          {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
+        </div>}
         {section === "overview" && error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
-        <form onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 10, border: "1px solid #c8c1d9", borderRadius: 16, background: "rgba(114,81,174,.025)" }}>
+        <form onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #b8afd0", borderRadius: 16, background: "rgba(114,81,174,.04)" }}>
           <textarea aria-label="Message your Career Copilot" style={{ width: "100%", background: "transparent", color: "inherit", font: "inherit", border: 0, resize: "vertical", padding: 8, minHeight: 78, outlineOffset: 2 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Tell OCC what you want to achieve..." />
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
@@ -199,13 +209,23 @@ export function OccWorkspace() {
             <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
           </div>
         </form>
-        <p style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · CVs and job descriptions only · Not saved automatically</p>
+        <p style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · Only CVs and job descriptions · You decide when to analyze or save</p>
       </section>
-      {section !== "overview" && <button type="button" onClick={() => setSection("overview")} style={{ justifySelf: "start" }}>Hide tools</button>}
+      {section !== "overview" && <button type="button" onClick={() => setSection("overview")} style={{ justifySelf: "start", fontSize: 13, border: 0, background: "transparent", color: "inherit", textDecoration: "underline", cursor: "pointer" }}>Back to conversation</button>}
       {section === "analysis" && <section aria-label="CV analysis workspace" style={{ display: "grid", gap: 20 }}>
-      <div style={{ display: "grid", gap: 14, padding: "clamp(16px, 3vw, 24px)", border: "1px solid #c8c1d9", borderRadius: 18 }}>
-        <h2 style={{ fontSize: 21, fontWeight: 750 }}>Review your fit for this role</h2>
-        <p style={{ fontSize: 14, opacity: .8 }}>OCC needs your CV and the role requirements. It will explain your strengths, gaps and possible improvements.</p>
+      <div style={{ ...surface, display: "grid", gap: 17 }}>
+        <h2 style={{ fontSize: 23, fontWeight: 750 }}>Review your fit for this role</h2>
+        <p style={{ fontSize: 14, opacity: .8 }}>Add a CV and target role. OCC will explain your strengths, evidence gaps and possible improvements.</p>
+        <div aria-label="Review preparation" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 185px), 1fr))", gap: 9 }}>
+          <div style={{ border: "1px solid #c8c1d9", borderRadius: 12, padding: "11px 13px" }}>
+            <strong style={{ display: "block", fontSize: 13 }}>1. Your CV</strong>
+            <span style={{ opacity: .8, fontSize: 12 }}>{cvReady ? "✓ Ready to review" : "Upload or choose a CV"}</span>
+          </div>
+          <div style={{ border: "1px solid #c8c1d9", borderRadius: 12, padding: "11px 13px" }}>
+            <strong style={{ display: "block", fontSize: 13 }}>2. Target role</strong>
+            <span style={{ opacity: .8, fontSize: 12 }}>{roleReady ? "✓ Requirements added" : "Upload or paste job details"}</span>
+          </div>
+        </div>
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
           {uploadInput("cv", "Upload another CV")}
           {uploadInput("jobDescription", "Upload role description")}
@@ -223,13 +243,17 @@ export function OccWorkspace() {
           </select>
         </label>}
         {selectedCvId && <p style={{ fontSize: 13, opacity: .8 }}>Using your selected Orire CV. The original will not be edited.</p>}
-        {(!selectedCvId && (savedCvs.length === 0 || showCvText || cv.trim().length > 0)) && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Your current CV text
+        {(!selectedCvId && (showCvText || (!uploadedCvName && (savedCvs.length === 0 || cv.trim().length > 0)))) && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Your current CV text
           <textarea style={{ ...field, minHeight: 135, resize: "vertical" }} value={cv} onChange={e => { setCv(e.target.value); setSelectedCvId(""); setUploadedCvName(""); }} maxLength={30000} placeholder="Paste your CV if it is not in Orire" />
         </label>}
+        {uploadedCvName && !selectedCvId && !showCvText && <button type="button" onClick={() => setShowCvText(true)} style={{ justifySelf: "start", fontSize: 13, border: 0, background: "transparent", color: "inherit", textDecoration: "underline" }}>View or edit extracted CV text</button>}
         {!selectedCvId && savedCvs.length > 0 && !showCvText && !cv.trim() && <button type="button" onClick={() => setShowCvText(true)} style={{ justifySelf: "start", textDecoration: "underline" }}>I need to paste a CV</button>}
-        <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Target job description
-          <textarea style={{ ...field, minHeight: description.trim().length >= 30 ? 95 : 130, resize: "vertical" }} value={description} onChange={e => { setDescription(e.target.value); setUploadedJobName(""); }} maxLength={15000} placeholder="Paste the requirements or describe the role in the conversation" />
-        </label>
+        {uploadedJobName && !showRoleText ? <div style={{ display: "grid", gap: 6 }}>
+          <p style={{ fontSize: 13 }}>✓ Job description attached: <strong>{uploadedJobName}</strong></p>
+          <button type="button" onClick={() => setShowRoleText(true)} style={{ justifySelf: "start", fontSize: 13, border: 0, background: "transparent", color: "inherit", textDecoration: "underline" }}>View or edit job description</button>
+        </div> : <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Target job description
+          <textarea style={{ ...field, minHeight: roleReady ? 95 : 130, resize: "vertical" }} value={description} onChange={e => { setDescription(e.target.value); setUploadedJobName(""); }} maxLength={15000} placeholder="Paste the requirements or describe the role in the conversation" />
+        </label>}
         <div style={{ display: "grid", gap: 8 }}>
           <button type="button" disabled={running || cv.trim().length < 30 || description.trim().length < 30}
             onClick={() => void requestAdvice()}
