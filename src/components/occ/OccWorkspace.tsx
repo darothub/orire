@@ -113,7 +113,7 @@ export function OccWorkspace() {
       }
       setCurrentTask("analysis");
       setSection("analysis");
-      setTurns(current => [...current, { role: "OCC", text: `${kind === "cv" ? "CV" : "Job description"} attached: ${file.name}. ${kind === "cv" ? "Add a target job description to continue." : "Select or upload your CV to continue."} Files are extracted for this session only; nothing was saved to your CV Library.` }]);
+      // Attachment status is displayed in the composer and review preparation, not duplicated as chat messages.
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not read that document.");
     } finally {
