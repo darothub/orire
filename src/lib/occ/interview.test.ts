@@ -102,6 +102,22 @@ describe("OCC mock interview schema", () => {
       whyBetter: "It is more specific." });
     expect(parseInterviewFeedback(raw, original).wordingStatus).toBe("copyedit");
   });
+  it.each([
+    ["ownership", "I listened to the customer and explained the process.", "We listened to the customer and explained the process."],
+    ["third-party actor", "The manager reviewed my work.", "I reviewed the manager work."],
+    ["certainty", "I might call the coordinator and check the details.", "I will call the coordinator and check the details."],
+    ["certainty deleted", "I could contact the client and explain the issue.", "I contacted the client and explained the issue."],
+  ])("falls back when a rewrite changes %s", (_risk, original, proposal) => {
+    const result = parseInterviewFeedback(JSON.stringify({
+      strength: "You shared your approach.",
+      improvement: "Give a real example.",
+      followUp: "What happened next?",
+      betterWording: proposal,
+      whyBetter: "It is stronger.",
+    }), original);
+    expect(result.wordingStatus).toBe("copyedit");
+    expect(result.betterWording).toBe(original);
+  });
   it("refuses fabricated first-person achievements in answer starters", () => {
     const response = parseInterviewQuestion(JSON.stringify({
       question: "How would you respond to a guest complaint at reception?",
