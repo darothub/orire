@@ -7,7 +7,7 @@ describe("OCC mock interview schema", () => {
     expect(INTERVIEW_TOPICS).toHaveLength(MAX_INTERVIEW_TURNS);
   });
   it("accepts only structured questions", () => {
-    expect(parseInterviewQuestion(JSON.stringify({ question: "How would you design a secure payment API?", focus: "API security" }))).toEqual({
+    expect(parseInterviewQuestion(JSON.stringify({ question: "How would you design a secure payment API?", focus: "API security" }))).toMatchObject({
       question: "How would you design a secure payment API?", focus: "API security",
     });
     expect(() => parseInterviewQuestion("not json")).toThrow();
@@ -21,6 +21,24 @@ describe("OCC mock interview schema", () => {
       followUp: "How would you monitor duplicate requests?",
     }))).toMatchObject({ improvement: "Clarify idempotency handling." });
     expect(() => parseInterviewFeedback(JSON.stringify({ strength: "Great", improvement: "Add detail" }))).toThrow();
+  });
+  it("provides two general answer starters without invented candidate claims", () => {
+    const result = parseInterviewQuestion(JSON.stringify({
+      question: "How would you help a patient who feels worried before a procedure?",
+      focus: "Patient care",
+      answerStarters: ["I would explain the procedure in clear terms and invite questions.", "I would first listen to the patient and check what they are worried about."],
+    }));
+    expect(result.answerStarters).toHaveLength(2);
+    expect(result.answerStarters?.[0]).toContain("procedure");
+  });
+  it("rejects invented numbers in rephrased answers", () => {
+    const raw = JSON.stringify({
+      strength: "You explained the process.", improvement: "Give a clear example.",
+      followUp: "What would you do next?", betterWording: "I improved results by 50% through careful planning.",
+      whyBetter: "It sounds more specific.",
+    });
+    expect(parseInterviewFeedback(raw, "I planned the work and helped people.").betterWording).toBe("");
+    expect(parseInterviewFeedback(raw, "I improved results by 50% through careful planning.").betterWording).toContain("50%");
   });
   it("removes unexpected fields and caps untrusted text", () => {
     const data = parseInterviewFeedback(JSON.stringify({
