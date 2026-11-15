@@ -54,6 +54,7 @@ describe("OCC mock interview schema", () => {
     const result = parseInterviewFeedback(raw, original);
     expect(result.betterWording).toBe(original);
     expect(result.whyBetter).toContain("your own experience");
+    expect(result.wordingStatus).toBe("copyedit");
   });
   it("preserves truth when wording only changes presentation", () => {
     const original = "i listened to the patient and explained the procedure";
@@ -63,6 +64,7 @@ describe("OCC mock interview schema", () => {
     const result = parseInterviewFeedback(raw, original);
     expect(result.betterWording).toBe("I listened to the patient and explained the procedure.");
     expect(result.whyBetter).toBe("The steps are clear.");
+    expect(result.wordingStatus).toBe("grounded");
   });
   it("protects negation and does not turn a refusal into a positive claim", () => {
     const original = "I did not administer medication; I called the supervisor.";
@@ -70,6 +72,17 @@ describe("OCC mock interview schema", () => {
       followUp: "Why?", betterWording: "I administered medication and called the supervisor.",
       whyBetter: "It is more confident." });
     expect(parseInterviewFeedback(raw, original).betterWording).toBe(original);
+  });
+  it("does not introduce a negation that reverses the candidate's meaning", () => {
+    const original = "I administered medication under supervision.";
+    const result = parseInterviewFeedback(JSON.stringify({
+      strength: "You named supervision.", improvement: "Be clear.",
+      followUp: "How was it checked?",
+      betterWording: "I did not administer medication under supervision.",
+      whyBetter: "It is concise.",
+    }), original);
+    expect(result.betterWording).toBe(original);
+    expect(result.wordingStatus).toBe("copyedit");
   });
   it("refuses fabricated first-person achievements in answer starters", () => {
     const response = parseInterviewQuestion(JSON.stringify({
