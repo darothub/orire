@@ -175,6 +175,16 @@ jobs:
         env:
           ORIRE_OCC_ENABLED: "true"
         run: npx playwright test e2e/occ.spec.ts --project=chromium
+      - name: Preserve OCC visual evidence before full Playwright regression
+        if: ${{ !cancelled() && steps.docs.outputs.skip != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: occ-visual-evidence
+          path: |
+            playwright-report/**
+            test-results/**
+          retention-days: 7
+          if-no-files-found: warn
       - name: Run PR critical smoke
         if: steps.docs.outputs.skip != 'true' && steps.tier.outputs.mode == 'smoke'
         timeout-minutes: 12
