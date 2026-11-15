@@ -3,7 +3,7 @@ import { useState, type CSSProperties } from "react";
 import { MAX_INTERVIEW_TURNS, INTERVIEW_TOPICS, type InterviewFeedback, type InterviewQuestion } from "@/lib/occ/interview";
 
 type SessionState = "ready" | "question" | "feedback" | "finished";
-export function OccMockInterview({ cv, jobDescription, onRequestRole }: { cv: string; jobDescription: string; onRequestRole: () => void }) {
+export function OccMockInterview({ cv, jobDescription, onUpdateRole }: { cv: string; jobDescription: string; onUpdateRole: (next: string) => void }) {
   const [status, setStatus] = useState<SessionState>("ready");
   const [turn, setTurn] = useState(0);
   const [question, setQuestion] = useState<InterviewQuestion | null>(null);
@@ -71,10 +71,10 @@ export function OccMockInterview({ cv, jobDescription, onRequestRole }: { cv: st
       <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>{cv.trim().length >= 30 ? "✓ Your CV included" : "CV optional"}</span>
       {status !== "ready" && <span style={{ fontSize: 12, alignSelf: "center" }}>Question {Math.min(turn + 1, MAX_INTERVIEW_TURNS)} of {MAX_INTERVIEW_TURNS}</span>}
     </div>
-    {!roleReady && <div style={{ ...border, display: "grid", gap: 8 }}>
-      <p>Add a target job description in the OCC conversation to personalize your practice.</p>
-      <button type="button" onClick={onRequestRole} style={{ justifySelf: "start", padding: "9px 14px", borderRadius: 10, border: "1px solid #c8c1d9", background: "transparent", color: "inherit" }}>Add target role</button>
-    </div>}
+    {!roleReady && <label style={{ ...border, display: "grid", gap: 8, fontSize: 14, fontWeight: 600 }}>Target role description
+      <textarea aria-label="Interview target role" rows={4} maxLength={15000} value={jobDescription} onChange={event => onUpdateRole(event.target.value)} placeholder="Paste the responsibilities and requirements of the target role." style={{ border: "1px solid #c8c1d9", borderRadius: 12, padding: 12, font: "inherit", color: "inherit", background: "transparent" }} />
+      <span style={{ fontSize: 12, fontWeight: 400, opacity: .7 }}>Your CV is optional. No interview questions are generated until you select Start.</span>
+    </label>}
     {status === "ready" && <div style={{ display: "grid", gap: 10 }}>
       <p style={{ fontSize: 13, opacity: .8 }}>Topics: {INTERVIEW_TOPICS.join(" · ")}</p>
       <button type="button" disabled={!roleReady || busy} onClick={() => void start(0)} style={{ justifySelf: "start", padding: "12px 20px", borderRadius: 12, border: 0, color: "#fff", background: "#7251ae" }}>{busy ? "Preparing interview…" : "Start mock interview"}</button>
