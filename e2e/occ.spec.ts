@@ -325,11 +325,87 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByLabel("Your current CV text")).toHaveCount(0);
   });
 
+  test("M8 guided mock interview waits for target role and returns answer feedback", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    let calls = 0;
+    await page.route("**/api/occ/interview", async route => {
+      calls++;
+      const body = route.request().postDataJSON() as { mode: string; turnIndex: number };
+      await route.fulfill({
+        status: 200, contentType: "application/json",
+        body: JSON.stringify(body.mode === "question"
+          ? { question: { question: "How would you prevent duplicate payments in a distributed system?", focus: "Payment system reliability", answerStarters: ["I would discuss a safe way to handle repeated requests, then describe a real example.", "I would explain how I would check for duplicates and test that approach."] }, turnIndex: body.turnIndex }
+          : { feedback: {
+              strength: "You explained idempotency clearly.",
+              improvement: "Mention retry ownership and observability.",
+              example: "Illustrative outline: idempotency key, dedupe store, alerts.",
+              followUp: "How would you verify retries are safe?",
+              betterWording: "I would add idempotency keys and a shared dedupe store. Then I would test retry behavior across service boundaries.",
+              whyBetter: "It explains your plan in an order that is easier to follow.",
+            }, turnIndex: body.turnIndex }),
+      });
+    });
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Prepare for an interview" }).click();
+    await expect(page.getByRole("region", { name: "Mock interview workspace" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start mock interview" })).toBeDisabled();
+    expect(calls).toBe(0);
+    await page.getByLabel("Interview target role").fill("Seeking an engineer to design and operate secure distributed payment systems and APIs for financial transactions.");
+    await expect(page.getByRole("button", { name: "Start mock interview" })).toBeEnabled();
+    await page.getByRole("button", { name: "Start mock interview" }).click();
+    await expect(page.getByRole("heading", { name: "How would you prevent duplicate payments in a distributed system?" })).toBeVisible();
+    await page.getByRole("button", { name: "Need help? See 2 answer ideas" }).click();
+    await expect(page.getByLabel("Answer ideas")).toContainText("Idea 1:");
+    await expect(page.getByLabel("Answer ideas")).toContainText("Idea 2:");
+    await testInfo.attach("occ-m8-answer-ideas-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
+    await expect(page.getByRole("button", { name: "Get answer feedback" })).toBeDisabled();
+    await page.getByLabel("Your interview answer").fill("I would add idempotency keys and a shared dedupe store, then test retry behavior across service boundaries.");
+    await page.getByRole("button", { name: "Get answer feedback" }).click();
+    await expect(page.getByText("You explained idempotency clearly.")).toBeVisible();
+    await expect(page.getByLabel("Suggested clearer answer")).toContainText("I would add idempotency keys");
+    await expect(page.getByText("It explains your plan in an order that is easier to follow.")).toBeVisible();
+    await page.getByRole("button", { name: "Try this wording in my answer" }).click();
+    await expect(page.getByLabel("Your interview answer")).toHaveValue(/I would add idempotency keys/);
+    await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
+    expect(calls).toBe(2);
+    const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await cookieDecline.isVisible()) await cookieDecline.click();
+    await testInfo.attach("occ-m8-interview-feedback-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.getByRole("button", { name: "Next question" }).click();
+    await expect(page.getByText("Question 2 of 5")).toBeVisible();
+    expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
+  });
+
+  test("M8 interview is responsive and never starts AI requests just from selecting a suggestion", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    let called = false;
+    await page.route("**/api/occ/interview", route => { called = true; return route.abort(); });
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Prepare for an interview" }).click();
+    await expect(page.getByRole("region", { name: "Mock interview workspace" })).toBeVisible();
+    expect(called).toBe(false);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await cookieDecline.isVisible()) await cookieDecline.click();
+    await testInfo.attach("occ-m8-interview-mobile", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+  });
+
   test("anonymous callers cannot access protected OCC endpoints", async ({ page }) => {
     expect((await page.request.get("/occ")).status()).toBe(404);
     expect((await page.request.get("/api/occ/profile")).status()).toBe(403);
     expect((await page.request.get("/api/occ/runs")).status()).toBe(403);
     expect((await page.request.post("/api/occ/advise", { data: {} })).status()).toBe(403);
+    expect((await page.request.post("/api/occ/interview", { data: {} })).status()).toBe(403);
   });
 
   test("undo refuses to remove an OCC version after it becomes active", async ({ page, db, e2eUser }) => {

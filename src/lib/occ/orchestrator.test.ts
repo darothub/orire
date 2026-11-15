@@ -27,8 +27,8 @@ describe("OCC controlled conversation planning", () => {
     expect(planOccTurn("Improve my CV", empty)).toMatchObject({ task: "versions", panel: "versions" });
   });
 
-  it("does not pretend unfinished interview coaching is available", () => {
-    expect(planOccTurn("Prepare for an interview", empty)).toMatchObject({ task: "interview", panel: "none" });
+  it("routes interview coaching into the bounded guided session", () => {
+    expect(planOccTurn("Prepare for an interview", empty)).toMatchObject({ task: "interview", panel: "interview", missing: ["jobDescription"] });
   });
 
   it("does not execute arbitrary user instructions or infer sensitive actions", () => {

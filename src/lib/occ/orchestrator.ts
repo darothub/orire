@@ -4,7 +4,7 @@
 export type OccTask = "analysis" | "versions" | "memory" | "interview" | "unknown";
 export type OccPlan = {
   task: OccTask;
-  panel: "analysis" | "versions" | "memory" | "none";
+  panel: "analysis" | "versions" | "memory" | "interview" | "none";
   reply: string;
   missing: ("cv" | "jobDescription")[];
   captureJobDescription: boolean;
@@ -29,7 +29,7 @@ export function planOccTurn(message: string, context: OccContext): OccPlan {
     : /(?:version|revision|rewrite|edit|improve|tailor|update)\b/i.test(lower) && isCv ? "versions"
     : /(?:recommendations|advice|compare|apply|role|job|career|match|review|analy[sz]e)/i.test(lower) || isCv ? "analysis"
     : context.priorTask ?? "unknown";
-  if (task === "interview") return { task, panel: "none", reply: "Interview coaching is planned for a later milestone. I can review your CV against the target role now, if you would like.", missing: [], captureJobDescription: false };
+  if (task === "interview") return { task, panel: "interview", reply: "We can practice interview questions for your target role. Add a job description if you have not already provided one; your CV is optional.", missing: context.hasJobDescription ? [] : ["jobDescription"], captureJobDescription: false };
   if (task === "memory") return { task, panel: "memory", reply: "Your career memory is private and editable. You choose what is saved, used or deleted.", missing: [], captureJobDescription: false };
   if (task === "versions") return { task, panel: "versions", reply: "Choose a saved CV and review the passage you want to improve. Nothing is changed until you explicitly approve a new private version.", missing: [], captureJobDescription: false };
   if (task === "unknown") return { task, panel: "none", reply: "Tell me about the role you want, or ask me to review your CV. I will guide you through the next step.", missing: [], captureJobDescription: false };
