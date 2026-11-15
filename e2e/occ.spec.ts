@@ -323,6 +323,8 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByText("You explained idempotency clearly.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
     expect(calls).toBe(2);
+    const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await cookieDecline.isVisible()) await cookieDecline.click();
     await testInfo.attach("occ-m8-interview-feedback-desktop", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
@@ -342,6 +344,8 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByRole("region", { name: "Mock interview workspace" })).toBeVisible();
     expect(called).toBe(false);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await cookieDecline.isVisible()) await cookieDecline.click();
     await testInfo.attach("occ-m8-interview-mobile", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
