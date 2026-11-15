@@ -10,11 +10,25 @@ The benchmark is separate from OCC's user-facing feature. No model, database, pa
 
 ## Case set
 
-`src/lib/occ/evaluation/fixtures.ts` contains 18 editorially created **synthetic** pairs of candidate answer and suggested rewrite. Fields include an ID, profession, interview question, original answer, proposed rewrite, expected safe outcome and risk type.
+`src/lib/occ/evaluation/fixtures.ts` contains 42 editorially created **synthetic** pairs of candidate answer and suggested rewrite. Fields include an ID, profession, interview question, original answer, proposed rewrite, expected safe outcome and risk type.
 
-Initial coverage: **nursing, teaching, accounting, administration, hospitality, engineering, retail and logistics**. The set includes acceptable unchanged answers and risky statements involving fabricated actions, credentials, metrics, quantities, negation and swapped responsibility.
+Initial coverage: **20 occupational families**, including nursing, medicine, law, agriculture, construction, manufacturing, social care, transportation, accounting, public service, engineering, teaching, hospitality, retail, logistics, administration, creative work, research, human resources, and environmental services. The set includes acceptable unchanged answers and risky statements involving fabricated actions, credentials, metrics, quantities, negation and swapped responsibility.
 
-The synthetic expected classification is an engineering *test oracle*, not proof that two humans judged it accurate. Extend this set using consented, de-identified real-world examples only after appropriate review, and document provenance.
+### Occupational coverage and risk-tier reporting
+
+`src/lib/occ/evaluation/coverage.ts` declares **20 covered occupational families**, their documented domain-specific claim risks and a review priority (`elevated` or `standard`). This is a **test-prioritization taxonomy only**: it does not classify users, add new product capabilities, or make regulated career advice safe.
+
+Coverage statuses are deliberately distinct:
+- `not-sampled`: no synthetic case for a registered family;
+- `synthetic-only`: synthetic cases exist, but none has two genuine reviewers;
+- `human-partial`: some cases have independent double reviews;
+- `human-reviewed`: all cases in that family have at least two independent reviews.
+
+The initial report marks all 20 families **synthetic-only**. It also exposes explicitly unsampled areas such as veterinary medicine, pharmacy, dentistry, aviation, maritime work, mining, architecture and sports coaching. This list is representative, **not an exhaustive occupation catalog**: other unlisted professions must not be assumed to be evaluated.
+
+Clinical authority (medicine and nursing), legal representation, agricultural chemicals, safety sign-offs and employment/financial authority receive **elevated review priority**. Do not overclaim regulated qualifications or procedures. New domains require relevant practitioner assessment, realistic scenarios, and special attention to the risks described in the registry. We do not introduce profession-specific prompting or model inference into this benchmark change.
+
+The synthetic expected classification is an engineering *test oracle*, not proof that two humans judged it accurate. A pair of simple examples per family is **not sufficient empirical coverage** and should not be mistaken for production reliability. Extend this set using consented, de-identified real-world examples only after appropriate review, and document provenance.
 
 ## Two distinct assessment tracks
 
@@ -26,7 +40,7 @@ Use:
 npm run eval:occ:interview
 ```
 
-The benchmark returns: total cases; professions covered; unsafe proposals rejected; safe proposals accepted; false acceptances (fabricated proposal passed); false rejections (valid proposal hidden); and pass/fail by profession.
+The benchmark returns: total cases; professions covered; unsafe proposals rejected; safe proposals accepted; false acceptances (fabricated proposal passed); false rejections (valid proposal hidden); pass/fail by profession; synthetic-only, higher-priority and not-yet-sampled coverage.
 
 **Mandatory release criterion for the synthetic regression: zero false acceptances**. Also track false rejections to avoid creating a useless system. This criterion covers the known test set only; it is not a universal guarantee. These checks are conservative, not semantic entailment analysis.
 
