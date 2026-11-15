@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccessOcc, occFeatureEnabled } from "./access";
+import { canAccessOcc, occBetaEmailAllowed, occFeatureEnabled } from "./access";
 
 describe("OCC feature access", () => {
   it("is off by default and only recognizes explicit true", () => {
@@ -15,6 +15,15 @@ describe("OCC feature access", () => {
     expect(canAccessOcc("free", false)).toBe(false);
     expect(canAccessOcc("pro", false)).toBe(false);
     expect(canAccessOcc("career", false)).toBe(false);
+  });
+
+  it("denies beta access without an explicit server-side allowlist", () => {
+    expect(occBetaEmailAllowed("darotudeen+career@gmail.com", undefined)).toBe(false);
+    expect(occBetaEmailAllowed(null, "darotudeen+career@gmail.com")).toBe(false);
+    expect(occBetaEmailAllowed("other@example.com", "darotudeen+career@gmail.com")).toBe(false);
+    expect(occBetaEmailAllowed("darotudeen+career@gmail.com.evil", "darotudeen+career@gmail.com")).toBe(false);
+    expect(occBetaEmailAllowed("darotudeen+career@gmail.com", "darotudeen+career@gmail.com")).toBe(true);
+    expect(occBetaEmailAllowed(" DAROTUDEEN+CAREER@GMAIL.COM ", " darotudeen+career@gmail.com, another@example.com ")).toBe(true);
   });
 
   it("allows only Career with the feature enabled", () => {
