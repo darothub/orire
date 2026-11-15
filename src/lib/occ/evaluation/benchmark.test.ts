@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { evaluateInterviewBenchmark, summarizeHumanReviews, type HumanReview } from "./benchmark";
 import { INTERVIEW_BENCHMARK_V1 } from "./fixtures";
+import humanReviewRecords from "./human-reviews.json";
 
 describe("OCC profession-diverse interview benchmark v1 (synthetic)", () => {
   it("covers varied real-world disciplines and multiple hallucination risks", () => {
@@ -22,6 +23,24 @@ describe("OCC profession-diverse interview benchmark v1 (synthetic)", () => {
     expect(result.falseRejections).toEqual([]);
     expect(result.safeAccepted).toBe(result.safeTotal);
     expect(result.professions).toHaveLength(8);
+  });
+
+  it("reports the versioned benchmark without making AI calls or fabricating human scores", () => {
+    const machine = evaluateInterviewBenchmark();
+    const human = summarizeHumanReviews(humanReviewRecords as HumanReview[]);
+    console.info("[OCC INTERVIEW BENCHMARK v1]", JSON.stringify({
+      fixtureCount: machine.fixtureCount,
+      professions: machine.professions,
+      unsafeRejected: machine.unsafeRejected,
+      unsafeTotal: machine.unsafeTotal,
+      safeAccepted: machine.safeAccepted,
+      safeTotal: machine.safeTotal,
+      falseAcceptances: machine.falseAcceptances,
+      falseRejections: machine.falseRejections,
+      humanReview: human,
+    }));
+    expect(human.casesPending + human.casesReviewedTwice).toBe(machine.fixtureCount);
+    // Human-review completion is measured and reported separately, not mocked.
   });
 
   it("reports pending human review honestly rather than fabricating a quality score", () => {
