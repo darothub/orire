@@ -167,6 +167,14 @@ jobs:
           fi
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
           echo "Selected $MODE Playwright coverage" >> "$GITHUB_STEP_SUMMARY"
+      # Run OCC's focused E2E first: fast feedback for UI/selector regressions,
+      # without an extra build, new job or more tests.
+      - name: Run OCC Career-only authorization and versioned-CV E2E
+        if: steps.docs.outputs.skip != 'true'
+        timeout-minutes: 8
+        env:
+          ORIRE_OCC_ENABLED: "true"
+        run: npx playwright test e2e/occ.spec.ts --project=chromium
       - name: Run PR critical smoke
         if: steps.docs.outputs.skip != 'true' && steps.tier.outputs.mode == 'smoke'
         timeout-minutes: 12
@@ -175,12 +183,6 @@ jobs:
         if: steps.docs.outputs.skip != 'true' && steps.tier.outputs.mode == 'full'
         timeout-minutes: 18
         run: npm run test:e2e
-      - name: Run OCC Career-only authorization and versioned-CV E2E
-        if: steps.docs.outputs.skip != 'true'
-        timeout-minutes: 8
-        env:
-          ORIRE_OCC_ENABLED: "true"
-        run: npx playwright test e2e/occ.spec.ts --project=chromium
       - name: Upload Playwright report
         if: ${{ !cancelled() && steps.docs.outputs.skip != 'true' }}
         uses: actions/upload-artifact@v4
