@@ -7,10 +7,11 @@ import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validat
 import { CareerMemory } from "./CareerMemory";
 import { OccDraftReview } from "./OccDraftReview";
 import { OccVersionedCv } from "./OccVersionedCv";
+import { OccMockInterview } from "./OccMockInterview";
 
 type Advice = { summary: string; recommendations: { requirement: string; cvEvidence: string | null; assessment: "supported" | "needs-clarification" | "not-found"; suggestion: string; question: string | null }[]; nextSteps: string[]; disclaimer: string };
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
-type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory";
+type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory" | "interview";
 type Turn = { role: "you" | "OCC"; text: string };
 export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
@@ -109,7 +110,7 @@ export function OccWorkspace() {
         setUploadedJobName(file.name);
       }
       setCurrentTask("analysis");
-      setSection("analysis");
+      setSection(currentTask === "interview" ? "interview" : "analysis");
       setTurns(current => [...current, { role: "OCC", text: `${kind === "cv" ? "CV" : "Job description"} attached: ${file.name}. ${kind === "cv" ? "Add a target job description to continue." : "Select or upload your CV to continue."} Files are extracted for this session only; nothing was saved to your CV Library.` }]);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not read that document.");
@@ -290,6 +291,7 @@ export function OccWorkspace() {
         <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made. {savedRunId ? "Session saved. You can accept or reject suggestions below." : "This session was not saved."}</p>
       </section>}
       </section>}
+      {section === "interview" && <OccMockInterview cv={cv} jobDescription={description} onRequestRole={() => setSection("analysis")} />}
       {section === "versions" && <section aria-label="CV version workspace"><OccVersionedCv /></section>}
       {section === "memory" && <section aria-label="Career memory workspace"><CareerMemory /></section>}
 
