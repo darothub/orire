@@ -109,7 +109,7 @@ export function OccWorkspace() {
         setDescription(text);
         setUploadedJobName(file.name);
       }
-      setCurrentTask("analysis");
+      setCurrentTask(currentTask === "interview" ? "interview" : "analysis");
       setSection(currentTask === "interview" ? "interview" : "analysis");
       setTurns(current => [...current, { role: "OCC", text: `${kind === "cv" ? "CV" : "Job description"} attached: ${file.name}. ${kind === "cv" ? "Add a target job description to continue." : "Select or upload your CV to continue."} Files are extracted for this session only; nothing was saved to your CV Library.` }]);
     } catch (error) {
