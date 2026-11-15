@@ -60,7 +60,7 @@ function groundedRewrite(candidate: string, answer: string): boolean {
     .map(token => token === "i've" || token === "i'm" || token === "me" || token === "my" || token === "mine" ? "i"
       : token === "us" || token === "our" || token === "ours" ? "we"
       : token === "his" ? "he" : token === "her" ? "she" : token === "their" ? "they" : token);
-  if (actor(answer).join("|") !== actor(candidate).join("|")) return false;
+  if ([...new Set(actor(answer))].sort().join("|") !== [...new Set(actor(candidate))].sort().join("|")) return false;
   const certainty = (value: string) => (value.toLowerCase().match(/\b(?:might|may|could|would|should|can|will|must|always|never|probably|possibly|guarantee|guaranteed)\b/g) ?? []).sort();
   if (certainty(answer).join("|") !== certainty(candidate).join("|")) return false;
   return true;
