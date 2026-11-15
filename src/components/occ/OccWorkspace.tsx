@@ -243,7 +243,7 @@ export function OccWorkspace() {
           </select>
         </label>}
         {selectedCvId && <p style={{ fontSize: 13, opacity: .8 }}>Using your selected Orire CV. The original will not be edited.</p>}
-        {(!selectedCvId && (savedCvs.length === 0 || showCvText || (!uploadedCvName && cv.trim().length > 0))) && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Your current CV text
+        {(!selectedCvId && (showCvText || (!uploadedCvName && (savedCvs.length === 0 || cv.trim().length > 0)))) && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Your current CV text
           <textarea style={{ ...field, minHeight: 135, resize: "vertical" }} value={cv} onChange={e => { setCv(e.target.value); setSelectedCvId(""); setUploadedCvName(""); }} maxLength={30000} placeholder="Paste your CV if it is not in Orire" />
         </label>}
         {uploadedCvName && !selectedCvId && !showCvText && <button type="button" onClick={() => setShowCvText(true)} style={{ justifySelf: "start", fontSize: 13, border: 0, background: "transparent", color: "inherit", textDecoration: "underline" }}>View or edit extracted CV text</button>}
