@@ -84,6 +84,24 @@ describe("OCC mock interview schema", () => {
     expect(result.betterWording).toBe(original);
     expect(result.wordingStatus).toBe("copyedit");
   });
+  it("rejects reordered factual roles even when all terms are present", () => {
+    const original = "The manager reviewed my work and I thanked the team.";
+    const raw = JSON.stringify({ strength: "You described teamwork.", improvement: "Explain the context.",
+      followUp: "What happened next?",
+      betterWording: "I reviewed the manager work and thanked the team.",
+      whyBetter: "It is more direct." });
+    const result = parseInterviewFeedback(raw, original);
+    expect(result.wordingStatus).toBe("copyedit");
+    expect(result.betterWording).toBe(original);
+  });
+  it("blocks numerical achievements expressed as words", () => {
+    const original = "I supported people in my department.";
+    const raw = JSON.stringify({ strength: "You helped others.", improvement: "Give a specific real example.",
+      followUp: "How did you help?",
+      betterWording: "I supported three people in my department.",
+      whyBetter: "It is more specific." });
+    expect(parseInterviewFeedback(raw, original).wordingStatus).toBe("copyedit");
+  });
   it("refuses fabricated first-person achievements in answer starters", () => {
     const response = parseInterviewQuestion(JSON.stringify({
       question: "How would you respond to a guest complaint at reception?",
