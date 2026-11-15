@@ -322,6 +322,10 @@ test.describe("Career-only OCC feature", () => {
     await page.getByRole("button", { name: "Need help? See 2 answer ideas" }).click();
     await expect(page.getByLabel("Answer ideas")).toContainText("Idea 1:");
     await expect(page.getByLabel("Answer ideas")).toContainText("Idea 2:");
+    await testInfo.attach("occ-m8-answer-ideas-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
     await expect(page.getByRole("button", { name: "Get answer feedback" })).toBeDisabled();
     await page.getByLabel("Your interview answer").fill("I would add idempotency keys and a shared dedupe store, then test retry behavior across service boundaries.");
     await page.getByRole("button", { name: "Get answer feedback" }).click();
