@@ -17,7 +17,7 @@ export const INTERVIEW_BENCHMARK_V1: readonly EvaluationCase[] = [
     id: "nursing-safe-01", discipline: "nursing",
     question: "How do you reassure an anxious patient?",
     originalAnswer: "I listened to the patient and explained the procedure.",
-    proposedRewrite: "I listened to the patient and explained the procedure.",
+    proposedRewrite: "I listened to the patient, then explained the procedure.",
     expected: "grounded", risk: "none",
   },
   {
@@ -31,7 +31,7 @@ export const INTERVIEW_BENCHMARK_V1: readonly EvaluationCase[] = [
     id: "teaching-safe-01", discipline: "teaching",
     question: "How do you help students understand difficult lessons?",
     originalAnswer: "I explained the lesson and helped students understand.",
-    proposedRewrite: "I explained the lesson and helped students understand.",
+    proposedRewrite: "I explained the lesson, then helped students understand.",
     expected: "grounded", risk: "none",
   },
   {
@@ -45,7 +45,7 @@ export const INTERVIEW_BENCHMARK_V1: readonly EvaluationCase[] = [
     id: "accounting-safe-01", discipline: "accounting",
     question: "How do you handle invoice questions?",
     originalAnswer: "I checked invoices and explained the expenses.",
-    proposedRewrite: "I checked invoices and explained the expenses.",
+    proposedRewrite: "I checked invoices, then explained the expenses.",
     expected: "grounded", risk: "none",
   },
   {
@@ -59,7 +59,7 @@ export const INTERVIEW_BENCHMARK_V1: readonly EvaluationCase[] = [
     id: "administration-safe-01", discipline: "administration",
     question: "How do you organize your workday?",
     originalAnswer: "I organized meetings and answered calls.",
-    proposedRewrite: "I organized meetings and answered calls.",
+    proposedRewrite: "I organized meetings. I answered calls.",
     expected: "grounded", risk: "none",
   },
   {
@@ -73,7 +73,7 @@ export const INTERVIEW_BENCHMARK_V1: readonly EvaluationCase[] = [
     id: "hospitality-safe-01", discipline: "hospitality",
     question: "How do you welcome arriving guests?",
     originalAnswer: "I welcomed guests and helped with reservations.",
-    proposedRewrite: "I welcomed guests and helped with reservations.",
+    proposedRewrite: "I welcomed guests. I helped with reservations.",
     expected: "grounded", risk: "none",
   },
   {
@@ -87,7 +87,7 @@ export const INTERVIEW_BENCHMARK_V1: readonly EvaluationCase[] = [
     id: "engineering-safe-01", discipline: "engineering",
     question: "How do you investigate a service problem?",
     originalAnswer: "I tested the service and reviewed the logs.",
-    proposedRewrite: "I tested the service and reviewed the logs.",
+    proposedRewrite: "I tested the service, then reviewed the logs.",
     expected: "grounded", risk: "none",
   },
   {
@@ -101,7 +101,7 @@ export const INTERVIEW_BENCHMARK_V1: readonly EvaluationCase[] = [
     id: "retail-safe-01", discipline: "retail",
     question: "How do you help a customer find a product?",
     originalAnswer: "I asked the customer what they needed and checked the stock.",
-    proposedRewrite: "I asked the customer what they needed and checked the stock.",
+    proposedRewrite: "I asked the customer what they needed. Then I checked the stock.",
     expected: "grounded", risk: "none",
   },
   {
@@ -115,7 +115,7 @@ export const INTERVIEW_BENCHMARK_V1: readonly EvaluationCase[] = [
     id: "logistics-safe-01", discipline: "logistics",
     question: "What do you do when a delivery is delayed?",
     originalAnswer: "I called the driver and informed the customer about the delay.",
-    proposedRewrite: "I called the driver and informed the customer about the delay.",
+    proposedRewrite: "I called the driver. Then I informed the customer about the delay.",
     expected: "grounded", risk: "none",
   },
   {
