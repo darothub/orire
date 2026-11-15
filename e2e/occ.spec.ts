@@ -299,12 +299,14 @@ test.describe("Career-only OCC feature", () => {
       await route.fulfill({
         status: 200, contentType: "application/json",
         body: JSON.stringify(body.mode === "question"
-          ? { question: { question: "How would you prevent duplicate payments in a distributed system?", focus: "Payment system reliability" }, turnIndex: body.turnIndex }
+          ? { question: { question: "How would you prevent duplicate payments in a distributed system?", focus: "Payment system reliability", answerStarters: ["I would discuss a safe way to handle repeated requests, then describe a real example.", "I would explain how I would check for duplicates and test that approach."] }, turnIndex: body.turnIndex }
           : { feedback: {
               strength: "You explained idempotency clearly.",
               improvement: "Mention retry ownership and observability.",
               example: "Illustrative outline: idempotency key, dedupe store, alerts.",
               followUp: "How would you verify retries are safe?",
+              betterWording: "I would use idempotency keys and a shared store to check repeated requests, then test retries between services.",
+              whyBetter: "It explains your plan in an order that is easier to follow.",
             }, turnIndex: body.turnIndex }),
       });
     });
@@ -317,10 +319,17 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByRole("button", { name: "Start mock interview" })).toBeEnabled();
     await page.getByRole("button", { name: "Start mock interview" }).click();
     await expect(page.getByRole("heading", { name: "How would you prevent duplicate payments in a distributed system?" })).toBeVisible();
+    await page.getByRole("button", { name: "Need help? See 2 answer ideas" }).click();
+    await expect(page.getByLabel("Answer ideas")).toContainText("Idea 1:");
+    await expect(page.getByLabel("Answer ideas")).toContainText("Idea 2:");
     await expect(page.getByRole("button", { name: "Get answer feedback" })).toBeDisabled();
     await page.getByLabel("Your interview answer").fill("I would add idempotency keys and a shared dedupe store, then test retry behavior across service boundaries.");
     await page.getByRole("button", { name: "Get answer feedback" }).click();
     await expect(page.getByText("You explained idempotency clearly.")).toBeVisible();
+    await expect(page.getByLabel("Suggested clearer answer")).toContainText("I would use idempotency keys");
+    await expect(page.getByText("It explains your plan in an order that is easier to follow.")).toBeVisible();
+    await page.getByRole("button", { name: "Try this wording in my answer" }).click();
+    await expect(page.getByLabel("Your interview answer")).toHaveValue(/I would use idempotency keys/);
     await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
     expect(calls).toBe(2);
     const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
