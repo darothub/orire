@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { INTERVIEW_BENCHMARK_V1 } from "./fixtures";
 import { makeBlindInterviewReviewPacket, reviewReadinessSummary } from "./reviewerPacket";
+import { parseInterviewFeedback } from "../interview";
 
 describe("OCC M8.1 blinded human evaluation preparation", () => {
   it("produces a complete review packet without leaking oracle labels or risk classifications", () => {
@@ -17,6 +18,26 @@ describe("OCC M8.1 blinded human evaluation preparation", () => {
       expect(item.meaningPreserved).toBeNull();
       expect(item.fabricatedClaim).toBeNull();
       expect(item.notes).toBe("");
+    }
+  });
+
+  it("shows what Orire would display, not unsafe rejected raw proposals", () => {
+    const cases = INTERVIEW_BENCHMARK_V1.filter(item => item.expected === "copyedit");
+    const packet = makeBlindInterviewReviewPacket(cases);
+    expect(packet.length).toBeGreaterThan(0);
+    for (let i = 0; i < cases.length; i++) {
+      const item = cases[i];
+      const output = parseInterviewFeedback(JSON.stringify({
+        strength: "Thank you for sharing your experience.",
+        improvement: "Use a real example.",
+        followUp: "What did you learn?",
+        betterWording: item.proposedRewrite,
+      }), item.originalAnswer);
+      expect(output.wordingStatus).toBe("copyedit");
+      expect(packet[i].suggestedWording).toBe(output.betterWording);
+      expect(packet[i].suggestedWording).not.toBe(item.proposedRewrite);
+      expect(packet[i]).not.toHaveProperty("wordingStatus");
+      expect(packet[i]).not.toHaveProperty("risk");
     }
   });
 
