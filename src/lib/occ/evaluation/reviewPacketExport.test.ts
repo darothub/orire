@@ -38,8 +38,11 @@ describe("OCC #241 real reviewer handoff (synthetic-only)", () => {
     }
     const file = renderCsv(pilot);
     expect(file).toContain("caseId,profession,question,candidateAnswer,suggestedWording");
-    expect(file).not.toContain("expected");
-    expect(file).not.toContain("risk");
+    // Inspect the exported schema, not arbitrary text within synthetic case IDs.
+    // IDs such as "nursing-risk-01" are intentionally retained for traceability.
+    const exportedColumns = file.split("\n", 1)[0].split(",");
+    expect(exportedColumns).not.toContain("expected");
+    expect(exportedColumns).not.toContain("risk");
     const requestedDir = process.env.OCC_REVIEW_EXPORT_DIR;
     if (requestedDir) {
       const dir = resolve(requestedDir);
