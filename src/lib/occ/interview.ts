@@ -37,5 +37,5 @@ export function parseInterviewFeedback(raw: string, originalAnswer = ""): Interv
     ? proposedWording : "";
   return { strength, improvement, example, followUp, betterWording, whyBetter: betterWording ? whyBetter : "" };
 }
-export const INTERVIEW_TOPICS = ["Experience and impact","Technical decisions","Problem solving","Collaboration","Reflection"] as const;
+export const INTERVIEW_TOPICS = ["Your experience","How you approach your work","Handling challenges","Working with people","Learning and growth"] as const;
 export const MAX_INTERVIEW_TURNS = INTERVIEW_TOPICS.length;
