@@ -54,6 +54,15 @@ function groundedRewrite(candidate: string, answer: string): boolean {
   // Negation changes the meaning, even when every other word is present.
   const negation = (value: string) => /\b(?:not|never|no|didn't|don't|cannot|can't|wasn't|weren't)\b/i.test(value);
   if (negation(answer) !== negation(candidate)) return false;
+  // Pronouns and levels of certainty can change ownership or exaggerate an answer
+  // while leaving all of its substantive words untouched.
+  const actor = (value: string) => (value.toLowerCase().match(/\b(?:i|i've|i'm|me|my|mine|we|us|our|ours|he|she|they|their|his|her)\b/g) ?? [])
+    .map(token => token === "i've" || token === "i'm" || token === "me" || token === "my" || token === "mine" ? "i"
+      : token === "us" || token === "our" || token === "ours" ? "we"
+      : token === "his" ? "he" : token === "her" ? "she" : token === "their" ? "they" : token);
+  if ([...new Set(actor(answer))].sort().join("|") !== [...new Set(actor(candidate))].sort().join("|")) return false;
+  const certainty = (value: string) => (value.toLowerCase().match(/\b(?:might|may|could|would|should|can|will|must|always|never|probably|possibly|guarantee|guaranteed)\b/g) ?? []).sort();
+  if (certainty(answer).join("|") !== certainty(candidate).join("|")) return false;
   return true;
 }
 function safeCopyedit(text: string): string {
