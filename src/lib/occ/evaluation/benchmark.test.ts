@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { evaluateInterviewBenchmark, summarizeHumanReviews, type HumanReview } from "./benchmark";
 import { INTERVIEW_BENCHMARK_V1 } from "./fixtures";
 import humanReviewRecords from "./human-reviews.json";
+import { getInterviewCoverage, OCCUPATIONAL_FAMILIES, NOT_YET_SAMPLED_FAMILIES } from "./coverage";
 
 describe("OCC profession-diverse interview benchmark v1 (synthetic)", () => {
   it("covers varied real-world disciplines and multiple hallucination risks", () => {
     const disciplines = new Set(INTERVIEW_BENCHMARK_V1.map(c => c.discipline));
-    expect(disciplines.size).toBeGreaterThanOrEqual(8);
-    expect(INTERVIEW_BENCHMARK_V1.length).toBeGreaterThanOrEqual(16);
+    expect(disciplines.size).toBeGreaterThanOrEqual(20);
+    expect(INTERVIEW_BENCHMARK_V1.length).toBeGreaterThanOrEqual(42);
     expect(INTERVIEW_BENCHMARK_V1.every(c => c.id && c.question && c.originalAnswer && c.proposedRewrite)).toBe(true);
     expect(new Set(INTERVIEW_BENCHMARK_V1.map(c => c.id)).size).toBe(INTERVIEW_BENCHMARK_V1.length);
     expect(INTERVIEW_BENCHMARK_V1.some(c => c.risk === "negation")).toBe(true);
@@ -22,12 +23,13 @@ describe("OCC profession-diverse interview benchmark v1 (synthetic)", () => {
     expect(result.unsafeRejected).toBe(result.unsafeTotal);
     expect(result.falseRejections).toEqual([]);
     expect(result.safeAccepted).toBe(result.safeTotal);
-    expect(result.professions).toHaveLength(8);
+    expect(result.professions).toHaveLength(20);
   });
 
   it("reports the versioned benchmark without making AI calls or fabricating human scores", () => {
     const machine = evaluateInterviewBenchmark();
     const human = summarizeHumanReviews(humanReviewRecords as HumanReview[]);
+    const coverage = getInterviewCoverage(INTERVIEW_BENCHMARK_V1, humanReviewRecords as HumanReview[]);
     console.info("[OCC INTERVIEW BENCHMARK v1]", JSON.stringify({
       fixtureCount: machine.fixtureCount,
       professions: machine.professions,
@@ -38,9 +40,31 @@ describe("OCC profession-diverse interview benchmark v1 (synthetic)", () => {
       falseAcceptances: machine.falseAcceptances,
       falseRejections: machine.falseRejections,
       humanReview: human,
+      coverage: {
+        families: coverage.sampled.length,
+        syntheticOnly: coverage.sampled.filter(x => x.status === "synthetic-only").map(x => x.id),
+        elevatedPriority: coverage.sampled.filter(x => x.priority === "elevated").map(x => x.id),
+        notSampled: coverage.explicitlyNotSampled,
+        unregistered: coverage.unregisteredFixtureFamilies,
+      },
     }));
     expect(human.casesPending + human.casesReviewedTwice).toBe(machine.fixtureCount);
     // Human-review completion is measured and reported separately, not mocked.
+  });
+
+  it("reports 20 family categories with explicit evaluation gaps", () => {
+    const report = getInterviewCoverage();
+    expect(OCCUPATIONAL_FAMILIES).toHaveLength(20);
+    expect(report.sampled).toHaveLength(20);
+    expect(report.sampled.every(x => x.syntheticCases >= 2 && x.safeCases >= 1 && x.unsafeCases >= 1)).toBe(true);
+    expect(report.sampled.every(x => x.status === "synthetic-only" && x.doubleReviewedCases === 0)).toBe(true);
+    expect(report.sampled.filter(x => x.priority === "elevated").map(x => x.id)).toContain("medicine");
+    expect(report.sampled.filter(x => x.priority === "elevated").map(x => x.id)).toContain("law");
+    expect(report.sampled.filter(x => x.priority === "elevated").map(x => x.id)).toContain("agriculture");
+    expect(report.explicitlyNotSampled).toEqual([...NOT_YET_SAMPLED_FAMILIES]);
+    expect(report.unregisteredFixtureFamilies).toEqual([]);
+    expect(report.explicitlyNotSampled).toContain("veterinary-medicine");
+    expect(report.explicitlyNotSampled).toContain("aviation");
   });
 
   it("reports pending human review honestly rather than fabricating a quality score", () => {
