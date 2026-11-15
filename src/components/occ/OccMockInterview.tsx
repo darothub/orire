@@ -105,11 +105,11 @@ export function OccMockInterview({ cv, jobDescription, onUpdateRole }: { cv: str
         <p><strong>What worked:</strong> {feedback.strength}</p>
         <p><strong>One way to improve:</strong> {feedback.improvement}</p>
         {feedback.betterWording && <div style={{ display: "grid", gap: 7, border: "1px solid #c8c1d9", borderRadius: 12, padding: 12 }}>
-          <strong>A clearer way to say your answer</strong>
+          <strong>{feedback.wordingStatus === "copyedit" ? "Your answer, lightly polished" : "A clearer way to say your answer"}</strong>
           <p aria-label="Suggested clearer answer" style={{ whiteSpace: "pre-wrap" }}>{feedback.betterWording}</p>
           {feedback.whyBetter && <p style={{ fontSize: 13 }}><strong>Why this works better:</strong> {feedback.whyBetter}</p>}
           <button type="button" onClick={() => setAnswer(feedback.betterWording!)} style={{ justifySelf: "start", border: "1px solid #c8c1d9", borderRadius: 10, padding: "8px 12px", background: "transparent", color: "inherit" }}>Try this wording in my answer</button>
-          <p style={{ fontSize: 12, opacity: .75 }}>Check that the wording matches what you really did. You can change it before using it.</p>
+          <p style={{ fontSize: 12, opacity: .75 }}>Only your original answer is treated as evidence. Check the wording and change anything that does not reflect your experience.</p>
         </div>}
         {feedback.example && <details><summary style={{ cursor: "pointer", fontSize: 13 }}>Another way to organize your answer</summary><p style={{ paddingTop: 8 }}>{feedback.example}</p></details>}
         <p><strong>Follow-up to consider:</strong> {feedback.followUp}</p>
