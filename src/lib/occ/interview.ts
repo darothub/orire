@@ -35,10 +35,22 @@ function groundedRewrite(candidate: string, answer: string): boolean {
   if (!candidate || !answer.trim()) return false;
   const numbers = candidate.match(/\b\d+(?:[.,]\d+)*(?:%|\b)/g) ?? [];
   if (numbers.some(n => !answer.includes(n))) return false;
-  const source = new Set(contentWords(answer).map(normalizedToken));
+  const originalTerms = contentWords(answer).map(normalizedToken);
   const proposed = contentWords(candidate).map(normalizedToken);
+  const source = new Set(originalTerms);
   // Every substantive new concept needs explicit candidate-supplied evidence.
   if (proposed.some(w => !source.has(w))) return false;
+  // Preserve the order of factual concepts. A reordered subject/action/object
+  // can change who did what even when vocabulary is otherwise identical.
+  let cursor = 0;
+  for (const word of proposed) {
+    const found = originalTerms.indexOf(word, cursor);
+    if (found < 0) return false;
+    cursor = found + 1;
+  }
+  const numberWords = /\b(?:zero|one|two|three|four|five|six|seven|eight|nine|ten|twenty|thirty|forty|fifty|hundred|thousand|million|billion|first|second|third)\b/gi;
+  const countWords = (value: string) => (value.match(numberWords) ?? []).map(w => w.toLowerCase());
+  if (countWords(candidate).some(w => !countWords(answer).includes(w))) return false;
   // Negation changes the meaning, even when every other word is present.
   const negation = (value: string) => /\b(?:not|never|no|didn't|don't|cannot|can't|wasn't|weren't)\b/i.test(value);
   if (negation(answer) !== negation(candidate)) return false;
