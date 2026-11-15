@@ -32,7 +32,7 @@ export function parseInterviewFeedback(raw: string, originalAnswer = ""): Interv
   const proposedWording = clean(data.betterWording, 750);
   const whyBetter = clean(data.whyBetter, 280);
   // Refuse unverified numeric claims in suggested wording. Never treat examples as facts.
-  const numbers = proposedWording.match(/\\b\\d+(?:[.,]\\d+)*(?:%|\\b)/g) ?? [];
+  const numbers = proposedWording.match(/\b\d+(?:[.,]\d+)*(?:%|\b)/g) ?? [];
   const betterWording = numbers.every(num => originalAnswer.includes(num))
     ? proposedWording : "";
   return { strength, improvement, example, followUp, betterWording, whyBetter: betterWording ? whyBetter : "" };
