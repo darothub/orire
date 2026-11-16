@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { CVData } from "@/lib/cv/schema";
 import { getTemplate, TEMPLATES } from "@/components/templates/registry";
 
@@ -14,6 +14,7 @@ export function OccTemplatePreview({ document }: {
 }) {
   const [chosen, setChosen] = useState<{ documentId: string; template: string } | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const templatePickerId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -42,8 +43,8 @@ export function OccTemplatePreview({ document }: {
   const template = getTemplate(templateId);
   const Renderer = template.Component;
   return <section aria-label="CV template preview" className="occ2-preview-section">
-    <label htmlFor="occ2-preview-template">Preview template</label>
-    <select id="occ2-preview-template" value={template.id}
+    <label htmlFor={templatePickerId}>Preview template</label>
+    <select id={templatePickerId} value={template.id}
       onChange={event => setChosen({ documentId: document.id, template: event.target.value })}>
       {TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}{t.ats ? " · Single column" : " · Design"}</option>)}
     </select>
