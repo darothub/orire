@@ -197,7 +197,14 @@ export function OccWorkspace() {
         <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 750 }}>Your career, with a copilot.</h1>
         <p style={{ maxWidth: 700, opacity: 0.8 }}>Ask about your next career move. OCC can review your CV, compare roles and help you make changes you approve.</p>
       </header>
-      <section aria-label="Career Copilot conversation" style={{ ...surface, display: "grid", gap: 16 }}>
+      <section aria-label="Career Copilot conversation" className="occ2-conversation" style={{ ...surface, display: "grid", gap: 16 }}>
+        <div className="occ2-agent-toolbar">
+          <label htmlFor="occ2-agent-picker">Agent</label>
+          <select id="occ2-agent-picker" value={selectedAgent} onChange={event => chooseAgent(event.target.value as OccAgentId)}>
+            {OCC_AGENTS.map(agent => <option key={agent.id} value={agent.id}>{agent.label}</option>)}
+          </select>
+          <span>Switch agents without losing your CV or target role</span>
+        </div>
         {turns.length === 0 && <>
           <h2 style={{ fontWeight: 750, fontSize: "clamp(21px, 3vw, 27px)" }}>What would you like to work on?</h2>
           <p style={{ opacity: .8 }}>Ask a question, choose a starting point or attach a CV.</p>
@@ -206,9 +213,11 @@ export function OccWorkspace() {
               <button type="button" key={text} onClick={() => ask(text)} style={{ padding: "7px 11px", textAlign: "left", background: "rgba(125, 93, 180, .045)", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 12, lineHeight: 1.4, cursor: "pointer" }}>{text}</button>)}
           </div>
         </>}
-        {turns.map((turn, index) => <div key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
+        {turns.map((turn, index) => <div id={"occ-message-" + index} key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
           <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
         </div>)}
+        <div ref={bottomRef} />
+        {turns.length > 2 && <button type="button" className="occ2-jump" onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}>↓ Jump to latest</button>}
         {(uploadedCvName || uploadedJobName || selectedCvId) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
           {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
