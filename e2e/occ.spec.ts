@@ -273,17 +273,18 @@ test.describe("Career-only OCC feature", () => {
     await page.getByRole("button", { name: "Prepare for an interview" }).click();
     const conversation = page.getByRole("region", { name: "Career Copilot conversation" });
     await expect(conversation.getByRole("region", { name: "Mock interview workspace" })).toBeVisible();
-    await conversation.getByLabel("Interview target role").fill(
+    await conversation.getByRole("button", { name: "Paste JD" }).click();
+    await conversation.getByLabel("Paste full job description").fill(
       "Hiring a software engineer to design APIs, explain technical decisions and collaborate with teams.");
     await conversation.getByRole("button", { name: "Start mock interview" }).click();
     const prompt = "How would you explain a complex technical decision to your team?";
     await expect(conversation.getByRole("heading", { name: prompt })).toBeVisible();
-    await conversation.getByLabel("Your interview answer").fill("I would explain the tradeoffs with a concrete example and ask the team for feedback.");
+    await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).fill("I would explain the tradeoffs with a concrete example and ask the team for feedback.");
     await conversation.getByLabel("Agent", { exact: true }).selectOption("review");
-    await expect(conversation.getByRole("region", { name: "Mock interview workspace" })).toBeHidden();
+    await expect(conversation.getByRole("region", { name: "Mock interview workspace" })).toHaveCount(0);
     await conversation.getByLabel("Agent", { exact: true }).selectOption("interview");
     await expect(conversation.getByRole("heading", { name: prompt })).toBeVisible();
-    await expect(conversation.getByLabel("Your interview answer")).toHaveValue(/tradeoffs with a concrete example/);
+    await expect(conversation.getByRole("textbox", { name: "Message your Career Copilot" })).toHaveValue(/tradeoffs with a concrete example/);
     page.once("dialog", dialog => void dialog.accept());
     await page.getByRole("button", { name: "＋ New conversation" }).click();
     await conversation.getByLabel("Agent", { exact: true }).selectOption("interview");
@@ -706,34 +707,38 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByRole("region", { name: "Mock interview workspace" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Start mock interview" })).toBeDisabled();
     expect(calls).toBe(0);
-    await page.getByLabel("Interview target role").fill("Seeking an engineer to design and operate secure distributed payment systems and APIs for financial transactions.");
+    await page.getByRole("button", { name: "Paste JD" }).click();
+    await page.getByLabel("Paste full job description").fill("Seeking an engineer to design and operate secure distributed payment systems and APIs for financial transactions.");
     await expect(page.getByRole("button", { name: "Start mock interview" })).toBeEnabled();
     await page.getByRole("button", { name: "Start mock interview" }).click();
     await expect(page.getByRole("heading", { name: "How would you prevent duplicate payments in a distributed system?" })).toBeVisible();
-    await page.getByRole("button", { name: "Need help? See 2 answer ideas" }).click();
+    await page.getByRole("button", { name: "See 2 answer starters" }).click();
     await expect(page.getByLabel("Answer ideas")).toContainText("Idea 1:");
     await expect(page.getByLabel("Answer ideas")).toContainText("Idea 2:");
     await testInfo.attach("occ-m8-answer-ideas-desktop", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
     });
-    await expect(page.getByRole("button", { name: "Get answer feedback" })).toBeDisabled();
-    await page.getByLabel("Your interview answer").fill("I would add idempotency keys and a shared dedupe store, then test retry behavior across service boundaries.");
-    await page.getByRole("button", { name: "Get answer feedback" }).click();
+    await expect(page.getByRole("button", { name: "Get feedback" })).toBeDisabled();
+    await page.getByRole("textbox", { name: "Message your Career Copilot" }).fill("I would add idempotency keys and a shared dedupe store, then test retry behavior across service boundaries.");
+    await page.getByRole("button", { name: "Get feedback" }).click();
     await expect(page.getByText("You explained idempotency clearly.")).toBeVisible();
-    await expect(page.getByLabel("Suggested clearer answer")).toContainText("I would add idempotency keys");
+    await page.getByText("Suggested clearer wording").click();
+    await expect(page.getByText("I would add idempotency keys and a shared dedupe store.", { exact: false })).toBeVisible();
     await expect(page.getByText("It explains your plan in an order that is easier to follow.")).toBeVisible();
-    await page.getByRole("button", { name: "Try this wording in my answer" }).click();
-    await expect(page.getByLabel("Your interview answer")).toHaveValue(/I would add idempotency keys/);
+    await page.getByRole("button", { name: "Edit this wording in composer" }).click();
+    await expect(page.getByRole("textbox", { name: "Message your Career Copilot" })).toHaveValue(/I would add idempotency keys/);
+    await expect(page.getByRole("button", { name: "Get feedback" })).toBeEnabled();
+    await page.getByRole("button", { name: "Get feedback" }).click();
     await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
-    expect(calls).toBe(2);
+    expect(calls).toBe(3);
     const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
     if (await cookieDecline.isVisible()) await cookieDecline.click();
     await testInfo.attach("occ-m8-interview-feedback-desktop", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
     await page.getByRole("button", { name: "Next question" }).click();
-    await expect(page.getByText("Question 2 of 5")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Interview coach question" }).last()).toContainText("Question 2 of 5");
     expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
   });
 

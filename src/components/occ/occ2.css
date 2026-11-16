@@ -312,3 +312,29 @@
 .occ2-review-action:focus-visible { outline:3px solid #9773cc; outline-offset:2px; }
 .occ2-input-note { font-size:12px; opacity:.74; line-height:1.5; }
 @media(max-width:540px) { .occ2-composer-cta { width:100%; } .occ2-composer-cta button { flex:1; } }
+
+/* P7B: Interview Coach is a first-class chronological conversation participant. */
+.occ2-interview-card { display:grid; gap:11px; min-width:0; width:min(100%,720px);
+  padding:clamp(15px,2.2vw,22px); border:1px solid #b7a4d7; border-radius:17px;
+  background:color-mix(in srgb,var(--bg-2,#fff) 93%,#8868bb 7%); overflow-wrap:anywhere; }
+.occ2-interview-eyebrow { color:#9270cb; font-size:11px; letter-spacing:.06em; font-weight:800; }
+.occ2-interview-topic,.occ2-interview-helper { font-size:12px; opacity:.75; line-height:1.5; }
+.occ2-interview-card h3 { font-size:clamp(17px,2vw,21px); font-weight:750; line-height:1.4; }
+.occ2-interview-card div > p { margin:7px 0 0; line-height:1.6; }
+.occ2-interview-card blockquote { margin:10px 0; border-left:3px solid #7251ae; padding:7px 12px; }
+.occ2-interview-card details { border:1px solid #a99bba; border-radius:10px; padding:12px; }
+.occ2-interview-card summary { cursor:pointer; font-weight:700; font-size:13px; }
+.occ2-interview-card summary:focus-visible { outline:3px solid #9773cc; outline-offset:3px; }
+.occ2-interview-ideas { display:grid; gap:7px; }
+.occ2-interview-ideas p { margin:0; padding:10px 12px; border:1px solid #a99bba; border-radius:10px; font-size:13px; }
+.occ2-interview-actions { display:flex; gap:8px; }
+.occ2-interview-actions button,.occ2-interview-actions-panel > button {
+  background:#7251ae; color:#fff; border:0; border-radius:12px; padding:11px 16px; font-weight:700; cursor:pointer; }
+.occ2-interview-actions button:disabled,.occ2-interview-actions-panel > button:disabled { opacity:.55; cursor:not-allowed; }
+.occ2-interview-actions-panel { display:grid; gap:10px; width:min(100%,720px);
+  padding:16px; border:1px solid #b7a4d7; border-radius:15px; background:rgba(114,81,174,.055); }
+.occ2-interview-actions-panel h2 { font-size:17px; font-weight:750; }
+.occ2-interview-actions-panel p { font-size:13px; opacity:.8; }
+.occ2-interview-actions-panel > button { justify-self:start; }
+.occ2-interview-actions-panel button:focus-visible,.occ2-interview-actions button:focus-visible { outline:3px solid #9773cc; outline-offset:3px; }
+@media(max-width:540px) { .occ2-interview-card { width:100%; } }
