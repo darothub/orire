@@ -18,7 +18,7 @@ import { OccTemplatePreview } from "./OccTemplatePreview";
 type Advice = OccAdvice;
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory" | "interview";
-type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number; interviewEventId?: number; keywordEventId?: number; cvAction?: boolean };
+type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number; interviewEventId?: number; keywordEventId?: number; cvAction?: boolean; memoryAction?: boolean };
 type InterviewEvent = { id: number; index: number; question: InterviewQuestion; feedback?: InterviewFeedback };
 type ReviewEvent = { id: number; advice: Advice; original: string; profileUsed: boolean; savedRunId: string | null };
 type OccSessionSummary = { id: string; title: string; primaryAgent: string; usedAgents: string[]; updatedAt: string };
@@ -46,6 +46,22 @@ export function OccWorkspace() {
   const [pasteCvOpen, setPasteCvOpen] = useState(false);
   const [pasteRoleOpen, setPasteRoleOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [showJumpToLatest, setShowJumpToLatest] = useState(false);
+  useEffect(() => {
+    const marker = bottomRef.current;
+    if (!marker || turns.length < 3) {
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      setShowJumpToLatest(!entry.isIntersecting);
+    }, { threshold: 0 });
+    observer.observe(marker);
+    return () => observer.disconnect();
+  }, [turns.length]);
+  const scrollToTurn = (element: HTMLElement | null, block: ScrollLogicalPosition = "center") => {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    element?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block });
+  };
   const pendingMilestoneRef = useRef<string | null>(null);
   const pendingEditorRef = useRef<"cv" | "jobDescription" | null>(null);
   useEffect(() => {
@@ -79,7 +95,7 @@ export function OccWorkspace() {
     const anchor = pendingMilestoneRef.current;
     pendingMilestoneRef.current = null;
     const frame = requestAnimationFrame(() => {
-      document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById(anchor)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     });
     return () => cancelAnimationFrame(frame);
   }, [section]);
@@ -100,7 +116,7 @@ export function OccWorkspace() {
     setUsedAgents(current => current.includes(id) ? current : [...current, id]);
     setCurrentTask(agent.task);
     setSection(agent.task === "analysis" ? "analysis" : agent.task);
-    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available.", cvAction: id === "improve" }]);
+    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available.", cvAction: id === "improve", memoryAction: id === "memory" }]);
   }
 
   const [composer, setComposer] = useState("");
@@ -296,7 +312,7 @@ export function OccWorkspace() {
     }
     if (plan.captureJobDescription) setDescription(text.slice(0, 15000));
     setCurrentTask(plan.task);
-    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: plan.reply, cvAction: plan.task === "versions" }]);
+    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: plan.reply, cvAction: plan.task === "versions", memoryAction: plan.task === "memory" }]);
     setSection(plan.panel === "none" ? "overview" : plan.panel);
     setComposer("");
     setError("");
@@ -565,6 +581,16 @@ export function OccWorkspace() {
                 <p>{keywordEvent.data.unverifiedTerms.join(", ") || "No missing keywords identified."}</p></details>
               <p className="occ2-review-note">{keywordEvent.data.disclaimer}</p>
             </section>}
+            {turn.memoryAction && <section aria-label="Career memory conversation card" className="occ2-memory-message">
+              <p className="occ2-review-kicker">Career Memory · Private and optional</p>
+              <h3>Manage information you choose to remember</h3>
+              <p>Only information you explicitly save is retained. Notes are self-reported, and saving a memory does not save CV/JD attachments or coaching result cards.</p>
+              {index === turns.findLastIndex(message => message.memoryAction) && <details className="occ2-memory-controls">
+                <summary>Review, edit, or delete saved career memory</summary>
+                <div className="occ2-memory-details"><CareerMemory /></div>
+              </details>}
+              {index !== turns.findLastIndex(message => message.memoryAction) && <p className="occ2-review-note">This is an earlier memory entry. Open the most recent Career Memory card to make changes.</p>}
+            </section>}
             {turn.cvAction && <OccCvActionsMessage document={selectedStructuredCv} availableDocuments={savedCvs} onChooseDocument={selectSavedCv} />}
             {review && <OccReviewMessage advice={review.advice} original={review.original} analysisId={review.id}
               profileUsed={review.profileUsed} savedRunId={review.savedRunId}
@@ -581,7 +607,7 @@ export function OccWorkspace() {
                   awaitingAnswer={interviewPhase === "question" && interviewEvent.id === interviewEvents[interviewEvents.length - 1]?.id} />)}
           </div>;
         })}
-        {turns.length > 2 && <button type="button" className="occ2-jump" onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}>↓ Jump to latest</button>}
+        {turns.length > 2 && showJumpToLatest && <button type="button" className="occ2-jump" onClick={() => scrollToTurn(bottomRef.current, "end")}>↓ Jump to latest</button>}
         {(cvReady || roleReady) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
           {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
@@ -628,7 +654,7 @@ export function OccWorkspace() {
         {interviewPhase === "feedback" && <p>Review the feedback above, then choose the next question or try clearer wording.</p>}
       </section>}
       
-      {section === "memory" && <section aria-label="Career memory workspace"><CareerMemory /></section>}
+
       <div ref={bottomRef} className="occ2-bottom-anchor" aria-hidden="true" />
       {(running || interviewBusy) && <p role="status" aria-live="polite" className="occ2-working-status">{interviewBusy ? "OCC is preparing your interview coaching…" : "OCC is reviewing the supplied information…"}</p>}
         <form className="occ2-sticky-composer" onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #b8afd0", borderRadius: 16, background: "rgba(114,81,174,.04)" }}>
@@ -685,7 +711,7 @@ export function OccWorkspace() {
             aria-label={"Go to milestone " + (index + 1) + ": " + (turn.reviewEventId ? "CV review findings" : turn.interviewEventId ? "Interview coaching" : turn.cvAction ? "CV revision actions" : turn.text.slice(0, 40))}
             onClick={() => {
               setContextRailOpen(false);
-              document.getElementById("occ-message-" + index)?.scrollIntoView({ behavior: "smooth", block: "center" });
+              scrollToTurn(document.getElementById("occ-message-" + index));
             }}>
             <span className="occ2-milestone-dot" aria-hidden="true" />
             <span>{turn.reviewEventId ? "CV review findings" : turn.interviewEventId ? "Interview coaching" : turn.cvAction ? "CV revision actions" : turn.text.length > 60 ? turn.text.slice(0, 60) + "…" : turn.text}</span>
