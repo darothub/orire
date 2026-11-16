@@ -728,8 +728,10 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByText("It explains your plan in an order that is easier to follow.")).toBeVisible();
     await page.getByRole("button", { name: "Edit this wording in composer" }).click();
     await expect(page.getByRole("textbox", { name: "Message your Career Copilot" })).toHaveValue(/I would add idempotency keys/);
+    await expect(page.getByRole("button", { name: "Get feedback" })).toBeEnabled();
+    await page.getByRole("button", { name: "Get feedback" }).click();
     await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
-    expect(calls).toBe(2);
+    expect(calls).toBe(3);
     const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
     if (await cookieDecline.isVisible()) await cookieDecline.click();
     await testInfo.attach("occ-m8-interview-feedback-desktop", {
