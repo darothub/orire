@@ -184,10 +184,6 @@ export function OccWorkspace() {
   const [showCvText, setShowCvText] = useState(false);
   const [showRoleText, setShowRoleText] = useState(false);
   const [useSavedProfile, setUseSavedProfile] = useState(false);
-  const [analyzedCv, setAnalyzedCv] = useState("");
-  const [analysisVersion, setAnalysisVersion] = useState(0);
-  const [profileUsed, setProfileUsed] = useState(false);
-  const [savedRunId, setSavedRunId] = useState<string | null>(null);
   const [uploading, setUploading] = useState<"cv" | "jobDescription" | null>(null);
   const [uploadedCvName, setUploadedCvName] = useState("");
   const [uploadedJobName, setUploadedJobName] = useState("");
@@ -215,7 +211,6 @@ export function OccWorkspace() {
     setCurrentTask("unknown");
     setInterviewEpoch(current => current + 1);
     setSection("overview");
-    setSavedRunId(null);
     setError("");
     setPasteCvOpen(false);
     setPasteRoleOpen(false);
@@ -293,7 +288,6 @@ export function OccWorkspace() {
     setError("");
     setResult(null);
     setAdvice(null);
-    setSavedRunId(null);
     setRunning(true);
     try {
       const response = await fetch("/api/occ/match", {
@@ -311,7 +305,6 @@ export function OccWorkspace() {
     setRunning(true);
     setError("");
     setAdvice(null);
-    setSavedRunId(null);
     try {
       const response = await fetch("/api/occ/advise", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -325,10 +318,6 @@ export function OccWorkspace() {
       setReviewEvents(current => [...current, { id: eventId, advice: responseAdvice, original: cv, profileUsed: data.usedSavedProfile === true, savedRunId: data.runId ?? null }]);
       setSection("recommendations");
       setTurns(current => [...current, { role: "OCC", text: "I reviewed the supplied CV against the role. Here are the findings, with evidence you can inspect before accepting any wording changes.", reviewEventId: eventId }]);
-      setAnalyzedCv(cv);
-      setAnalysisVersion(version => version + 1);
-      setProfileUsed(data.usedSavedProfile === true);
-      setSavedRunId(data.runId ?? null);
     } catch (e) { setError(e instanceof Error ? e.message : "OCC failed."); }
     finally { setRunning(false); }
   }
@@ -399,10 +388,13 @@ export function OccWorkspace() {
           <button type="button" onClick={() => setSessionRailOpen(value => !value)} aria-expanded={sessionRailOpen} aria-controls="occ2-session-sidebar">☰ Sessions</button>
           <button type="button" onClick={() => setContextRailOpen(value => !value)} aria-expanded={contextRailOpen} aria-controls="occ2-context-sidebar">Documents & milestones</button>
         </div>
-      <header style={{ display: "grid", gap: 8 }}>
-        <p style={{ color: "#7953b3", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 12 }}>ORIRE · CAREER COPILOT</p>
-        <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 750 }}>Your career, with a copilot.</h1>
-        <p style={{ maxWidth: 700, opacity: 0.8 }}>Ask about your next career move. OCC can review your CV, compare roles and help you make changes you approve.</p>
+      <header className="occ2-chat-header">
+        <div className="occ2-chat-logo" aria-hidden="true">✦</div>
+        <div>
+          <p className="occ2-chat-eyebrow">ORIRE CAREER COPILOT · PRIVATE BETA</p>
+          <h1>{turns.length === 0 ? "Where should we take your career?" : "Career Copilot"}</h1>
+          {turns.length === 0 && <p className="occ2-chat-intro">Ask a question, attach your CV, or choose a specialist. Your experience stays yours to verify.</p>}
+        </div>
       </header>
       <section aria-label="Career Copilot conversation" className="occ2-conversation" style={{ ...surface, display: "grid", gap: 16 }}>
         <div className="occ2-agent-toolbar">
