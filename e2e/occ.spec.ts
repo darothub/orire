@@ -204,7 +204,7 @@ test.describe("Career-only OCC feature", () => {
     await area.getByRole("button", { name: "Approve wording in local draft" }).click();
     await expect(area.getByLabel("Working draft (not saved to Orire)")).toHaveValue(/Tested payment APIs and built Kotlin services/);
     await area.getByRole("button", { name: "Undo last local change" }).click();
-    await expect(area.getByLabel("Working draft (not saved to Orire)")).toHaveValue(new RegExp(evidence.replace(/[.*+?^${}()|[\]\\]/g, "\\await expect(area.getByLabel("Working draft (not saved to Orire)")).toContainText(evidence);")));
+    await expect(area.getByLabel("Working draft (not saved to Orire)")).toHaveValue("Summary: Experienced engineer. " + evidence);
     await area.getByLabel("CV passage to review").selectOption("0");
     await area.getByRole("button", { name: "Reject this suggestion" }).click();
     await expect(area.getByText("Suggested wording rejected.", { exact: false })).toBeVisible();
