@@ -11,19 +11,28 @@ import "./occ2.css";
 import { CareerMemory } from "./CareerMemory";
 import { OccReviewMessage } from "./OccReviewMessage";
 import { OccVersionedCv } from "./OccVersionedCv";
-import { OccMockInterview } from "./OccMockInterview";
+import { OccInterviewQuestionMessage, OccInterviewFeedbackMessage } from "./OccInterviewMessages";
+import { MAX_INTERVIEW_TURNS, type InterviewFeedback, type InterviewQuestion } from "@/lib/occ/interview";
 import { OccTemplatePreview } from "./OccTemplatePreview";
 
 type Advice = OccAdvice;
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory" | "interview";
-type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number };
+type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number; interviewEventId?: number };
+type InterviewEvent = { id: number; index: number; question: InterviewQuestion; feedback?: InterviewFeedback };
 type ReviewEvent = { id: number; advice: Advice; original: string; profileUsed: boolean; savedRunId: string | null };
 type OccSessionSummary = { id: string; title: string; primaryAgent: string; usedAgents: string[]; updatedAt: string };
 
 export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
-  const [interviewEpoch, setInterviewEpoch] = useState(0);
+  const [interviewPhase, setInterviewPhase] = useState<"idle" | "question" | "feedback">("idle");
+  const [interviewBusy, setInterviewBusy] = useState(false);
+  const [interviewIndex, setInterviewIndex] = useState(0);
+  const [interviewQuestion, setInterviewQuestion] = useState<InterviewQuestion | null>(null);
+  const [interviewEvents, setInterviewEvents] = useState<InterviewEvent[]>([]);
+  const nextInterviewEventId = useRef(1);
+  const interviewGeneration = useRef(0);
+  const [interviewContext, setInterviewContext] = useState<{ cv: string; description: string } | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
   const [primaryAgent, setPrimaryAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
   const [usedAgents, setUsedAgents] = useState<OccAgentId[]>([DEFAULT_OCC_AGENT]);
@@ -124,7 +133,7 @@ export function OccWorkspace() {
       setSavedFingerprint(JSON.stringify({ turns: loaded, primaryAgent: firstAgent, usedAgents: agents }));
       setCv(""); setDescription(""); setSelectedCvId(""); setUploadedCvName(""); setUploadedJobName("");
       setAdvice(null); setReviewEvents([]); setResult(null); setComposer("");
-      setCurrentTask("unknown"); setSection("overview"); setInterviewEpoch(current => current + 1);
+      setCurrentTask("unknown"); setSection("overview"); resetInterviewState();
       setPasteCvOpen(false); setPasteRoleOpen(false);
       setSessionNotice("Conversation restored. Reattach your CV and job description to continue. Historical coaching result cards were not included in this transcript-only save.");
       setSessionRailOpen(false);
@@ -209,7 +218,7 @@ export function OccWorkspace() {
     setSavedFingerprint("");
     setSessionNotice("");
     setCurrentTask("unknown");
-    setInterviewEpoch(current => current + 1);
+    resetInterviewState();
     setSection("overview");
     setError("");
     setPasteCvOpen(false);
