@@ -1,9 +1,12 @@
 "use client";
-import { useEffect, useState, type ChangeEvent, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
+import Link from "next/link";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
+import { DEFAULT_OCC_AGENT, OCC_AGENTS, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
+import "./occ2.css";
 import { CareerMemory } from "./CareerMemory";
 import { OccDraftReview } from "./OccDraftReview";
 import { OccVersionedCv } from "./OccVersionedCv";
@@ -15,6 +18,18 @@ type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions"
 type Turn = { role: "you" | "OCC"; text: string };
 export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
+  const [selectedAgent, setSelectedAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
+  const [pasteCvOpen, setPasteCvOpen] = useState(false);
+  const [pasteRoleOpen, setPasteRoleOpen] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  function chooseAgent(id: OccAgentId) {
+    const agent = getOccAgent(id);
+    setSelectedAgent(id);
+    setCurrentTask(agent.task);
+    setSection(agent.task === "analysis" ? "analysis" : agent.task);
+    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available." }]);
+  }
+
   const [composer, setComposer] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentTask, setCurrentTask] = useState<OccTask>("unknown");
@@ -65,6 +80,30 @@ export function OccWorkspace() {
   const [uploading, setUploading] = useState<"cv" | "jobDescription" | null>(null);
   const [uploadedCvName, setUploadedCvName] = useState("");
   const [uploadedJobName, setUploadedJobName] = useState("");
+  const [sessionRailOpen, setSessionRailOpen] = useState(false);
+  const [contextRailOpen, setContextRailOpen] = useState(false);
+  function newConversation() {
+    if ((turns.length || cv.trim() || description.trim()) &&
+        !window.confirm("Start a new conversation? Unsaved messages and attachments in this conversation will be cleared.")) return;
+    setTurns([]);
+    setComposer("");
+    setCv("");
+    setDescription("");
+    setResult(null);
+    setAdvice(null);
+    setSelectedCvId("");
+    setUploadedCvName("");
+    setUploadedJobName("");
+    setSelectedAgent(DEFAULT_OCC_AGENT);
+    setCurrentTask("unknown");
+    setSection("overview");
+    setSavedRunId(null);
+    setError("");
+    setPasteCvOpen(false);
+    setPasteRoleOpen(false);
+    setSessionRailOpen(false);
+    setContextRailOpen(false);
+  }
 
   async function uploadDocument(kind: "cv" | "jobDescription", event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
@@ -177,13 +216,36 @@ export function OccWorkspace() {
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
   return (
-    <div style={{ display: "grid", gap: 20, maxWidth: 920, margin: "0 auto" }}>
+    <div className="occ2-layout">
+      <aside id="occ2-session-sidebar" className={"occ2-side occ2-side-left" + (sessionRailOpen ? " occ2-side-open" : "")} aria-label="Career Copilot conversations">
+        <div className="occ2-side-heading"><strong>Career Copilot</strong><small>BETA</small></div>
+        <button type="button" className="occ2-new-chat" onClick={newConversation}>＋ New conversation</button>
+        <h2 className="occ2-side-label">CURRENT SESSION</h2>
+        <p className="occ2-unsaved-chat">✧ This conversation <small>Not saved to history</small></p>
+        <h2 className="occ2-side-label">SPECIALISTS</h2>
+        <nav className="occ2-side-agents" aria-label="Career Copilot specialists">
+          {OCC_AGENTS.map(agent => <button type="button" key={agent.id} className={selectedAgent === agent.id ? "occ2-selected-agent" : ""} onClick={() => { chooseAgent(agent.id); setSessionRailOpen(false); }} aria-current={selectedAgent === agent.id ? "true" : undefined}>{agent.label}</button>)}
+        </nav>
+        <p className="occ2-rail-note">Saved history and automatic service collections will appear here when private session storage is introduced.</p>
+      </aside>
+      <div className="occ2-content">
+        <div className="occ2-mobile-actions">
+          <button type="button" onClick={() => setSessionRailOpen(value => !value)} aria-expanded={sessionRailOpen} aria-controls="occ2-session-sidebar">☰ Sessions</button>
+          <button type="button" onClick={() => setContextRailOpen(value => !value)} aria-expanded={contextRailOpen} aria-controls="occ2-context-sidebar">Documents & milestones</button>
+        </div>
       <header style={{ display: "grid", gap: 8 }}>
         <p style={{ color: "#7953b3", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 12 }}>ORIRE · CAREER COPILOT</p>
         <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 750 }}>Your career, with a copilot.</h1>
         <p style={{ maxWidth: 700, opacity: 0.8 }}>Ask about your next career move. OCC can review your CV, compare roles and help you make changes you approve.</p>
       </header>
-      <section aria-label="Career Copilot conversation" style={{ ...surface, display: "grid", gap: 16 }}>
+      <section aria-label="Career Copilot conversation" className="occ2-conversation" style={{ ...surface, display: "grid", gap: 16 }}>
+        <div className="occ2-agent-toolbar">
+          <label htmlFor="occ2-agent-picker">Agent</label>
+          <select id="occ2-agent-picker" value={selectedAgent} onChange={event => chooseAgent(event.target.value as OccAgentId)}>
+            {OCC_AGENTS.map(agent => <option key={agent.id} value={agent.id}>{agent.label}</option>)}
+          </select>
+          <span>Switch agents without losing your CV or target role</span>
+        </div>
         {turns.length === 0 && <>
           <h2 style={{ fontWeight: 750, fontSize: "clamp(21px, 3vw, 27px)" }}>What would you like to work on?</h2>
           <p style={{ opacity: .8 }}>Ask a question, choose a starting point or attach a CV.</p>
@@ -192,10 +254,12 @@ export function OccWorkspace() {
               <button type="button" key={text} onClick={() => ask(text)} style={{ padding: "7px 11px", textAlign: "left", background: "rgba(125, 93, 180, .045)", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 12, lineHeight: 1.4, cursor: "pointer" }}>{text}</button>)}
           </div>
         </>}
-        {turns.map((turn, index) => <div key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
+        {turns.map((turn, index) => <div id={"occ-message-" + index} key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
           <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
         </div>)}
-        {(uploadedCvName || uploadedJobName || selectedCvId) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <div ref={bottomRef} />
+        {turns.length > 2 && <button type="button" className="occ2-jump" onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}>↓ Jump to latest</button>}
+        {(cvReady || roleReady) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
           {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
         </div>}
@@ -206,9 +270,17 @@ export function OccWorkspace() {
             <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
               {uploadInput("cv", "Upload CV", true)}
               {uploadInput("jobDescription", "Upload job description", true)}
+              <button type="button" className="occ2-quiet-action" aria-expanded={pasteCvOpen} onClick={() => setPasteCvOpen(value => !value)}>Paste CV</button>
+              <button type="button" className="occ2-quiet-action" aria-expanded={pasteRoleOpen} onClick={() => setPasteRoleOpen(value => !value)}>Paste JD</button>
             </div>
             <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
           </div>
+          {pasteCvOpen && <label className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
+            <textarea aria-label="Paste full CV" maxLength={30000} rows={6} value={cv} onChange={event => { setCv(event.target.value); setSelectedCvId(""); setUploadedCvName(""); }} placeholder="Paste your complete CV here" />
+          </label>}
+          {pasteRoleOpen && <label className="occ2-paste-editor">Job description <small>Up to 15,000 characters; not sent as a chat message</small>
+            <textarea aria-label="Paste full job description" maxLength={15000} rows={6} value={description} onChange={event => { setDescription(event.target.value); setUploadedJobName(""); }} placeholder="Paste the full job description here" />
+          </label>}
         </form>
         <p style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · Only CVs and job descriptions · You decide when to analyze or save</p>
       </section>
@@ -296,7 +368,7 @@ export function OccWorkspace() {
           <p>Run an AI analysis to see grounded advice and safely review possible CV wording changes. Your original CV stays unchanged.</p>
           <button type="button" onClick={() => setSection("analysis")}>Go to CV analysis</button>
         </div>}
-      {advice && <section aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
+      {advice && <section id="occ2-advice-results" aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>OCC career recommendations</h2>
         <p>{advice.summary}</p>
         <p style={{ fontSize: 13, opacity: .8 }}>Saved career profile used: {profileUsed ? "Yes" : "No"}.</p>
@@ -318,7 +390,22 @@ export function OccWorkspace() {
       {section === "interview" && <OccMockInterview cv={cv} jobDescription={description} onUpdateRole={setDescription} />}
       {section === "versions" && <section aria-label="CV version workspace"><OccVersionedCv /></section>}
       {section === "memory" && <section aria-label="Career memory workspace"><CareerMemory /></section>}
-
+      </div>
+      <aside id="occ2-context-sidebar" className={"occ2-side occ2-side-right" + (contextRailOpen ? " occ2-side-open" : "")} aria-label="Current conversation documents and milestones">
+        <h2>Session context</h2>
+        <h3 className="occ2-side-label">DOCUMENTS</h3>
+        <div className="occ2-document"><strong>CV</strong><span>{cvReady ? uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted CV" : "Not attached"}</span></div>
+        <div className="occ2-document"><strong>Job description</strong><span>{roleReady ? uploadedJobName || "Pasted role description" : "Not attached"}</span></div>
+        <h3 className="occ2-side-label">MILESTONES</h3>
+        <nav aria-label="Conversation milestones" className="occ2-milestones">
+          {turns.length === 0 && <p>No milestones yet.</p>}
+          {turns.map((turn, index) => turn.role === "OCC" ? <button key={index} type="button" onClick={() => { setContextRailOpen(false); document.getElementById("occ-message-" + index)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>{turn.text.length > 64 ? turn.text.slice(0, 64) + "…" : turn.text}</button> : null)}
+          {advice && <button type="button" onClick={() => { setContextRailOpen(false); setSection("recommendations"); document.getElementById("occ2-advice-results")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>CV recommendations</button>}
+        </nav>
+        <h3 className="occ2-side-label">CV TEMPLATE</h3>
+        <p className="occ2-rail-note">Preview your saved CV using existing Orire templates in the workspace. An integrated preview follows in the document workstream.</p>
+        <Link className="occ2-template-link" href="/">Open CV workspace</Link>
+      </aside>
     </div>
   );
 }

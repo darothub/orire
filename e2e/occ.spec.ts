@@ -16,6 +16,47 @@ test("OCC is unavailable when the feature switch is off", async ({ page }) => {
 
 test.describe("Career-only OCC feature", () => {
   test.skip(process.env.ORIRE_OCC_ENABLED !== "true", "Run with ORIRE_OCC_ENABLED=true");
+  test("OCC 2.0 agent picker and document paste stay in the same conversation", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await expect(page.getByRole("navigation", { name: "Career Copilot specialists" })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "Current conversation documents and milestones" })).toBeVisible();
+    const agent = page.getByLabel("Agent", { exact: true });
+    await expect(agent).toHaveValue("review");
+    await page.getByRole("button", { name: "Paste CV" }).click();
+    await page.getByLabel("Paste full CV").fill("Experienced senior engineer specializing in Java microservices, database transactions, reliable distributed systems and integration testing.");
+    await page.getByRole("button", { name: "Paste JD" }).click();
+    await page.getByLabel("Paste full job description").fill("We need an engineer responsible for designing Java APIs, secure payments and production microservices with integration testing.");
+    await expect(page.getByText("✓ CV ready", { exact: false })).toBeVisible();
+    await agent.selectOption("interview");
+    await expect(page.getByRole("region", { name: "Mock interview workspace" })).toBeVisible();
+    await agent.selectOption("review");
+    await expect(page.getByLabel("Paste full CV")).toHaveValue(/Experienced senior engineer/);
+    await expect(page.getByLabel("Paste full job description")).toHaveValue(/We need an engineer/);
+    await expect(page.getByRole("navigation", { name: "Conversation milestones" }).getByRole("button").first()).toBeVisible();
+    await testInfo.attach("occ2-desktop-conversation-rails", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
+  });
+
+  test("OCC 2.0 mobile exposes session and context rails on demand", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "☰ Sessions" }).click();
+    await expect(page.getByRole("complementary", { name: "Career Copilot conversations" })).toBeVisible();
+    await page.getByRole("button", { name: "Documents & milestones" }).click();
+    await expect(page.getByRole("complementary", { name: "Current conversation documents and milestones" })).toBeVisible();
+    await testInfo.attach("occ2-mobile-context-rails", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
   test("Career user can save an inactive private CV version and safely undo", async ({ page, db, e2eUser }, testInfo) => {
     const original = await db.document.create({
       data: { userId: e2eUser.id, title: "Sample Master CV", template: "aurora",
@@ -201,11 +242,11 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     await page.goto("/occ");
     await page.getByRole("button", { name: "Review my CV for a role" }).click();
-    await expect(page.getByText("First select a CV from your Orire library", { exact: false })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("First select a CV from your Orire library", { exact: false })).toBeVisible();
     await page.getByLabel("Select your CV").selectOption({ label: "My Career CV" });
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
     await page.getByRole("button", { name: "Send" }).click();
-    await expect(page.getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
     const jd = "We are looking for a senior engineer with experience with payment platforms, responsible for API architecture, authentication, quality testing and reliable services.";
     await page.getByLabel("Message your Career Copilot").fill(jd);
     await page.getByRole("button", { name: "Send" }).click();
