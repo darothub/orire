@@ -8,15 +8,17 @@ import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validat
 import { DEFAULT_OCC_AGENT, OCC_AGENTS, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
 import "./occ2.css";
 import { CareerMemory } from "./CareerMemory";
-import { OccDraftReview } from "./OccDraftReview";
+import { OccReviewMessage } from "./OccReviewMessage";
 import { OccVersionedCv } from "./OccVersionedCv";
 import { OccMockInterview } from "./OccMockInterview";
 import { OccTemplatePreview } from "./OccTemplatePreview";
 
-type Advice = { summary: string; recommendations: { requirement: string; cvEvidence: string | null; assessment: "supported" | "needs-clarification" | "not-found"; suggestion: string; question: string | null }[]; nextSteps: string[]; disclaimer: string };
+import type { OccAdvice } from "@/lib/occ/recommendations";
+type Advice = OccAdvice;
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory" | "interview";
-type Turn = { role: "you" | "OCC"; text: string };
+type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number };
+type ReviewEvent = { id: number; advice: Advice; original: string; profileUsed: boolean; savedRunId: string | null };
 type OccSessionSummary = { id: string; title: string; primaryAgent: string; usedAgents: string[]; updatedAt: string };
 
 export function OccWorkspace() {
@@ -57,6 +59,8 @@ export function OccWorkspace() {
 
   const [composer, setComposer] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
+  const nextReviewId = useRef(1);
+  const [reviewEvents, setReviewEvents] = useState<ReviewEvent[]>([]);
   const [currentTask, setCurrentTask] = useState<OccTask>("unknown");
   const currentFingerprint = JSON.stringify({ turns, primaryAgent, usedAgents });
   const hasUnsavedTranscript = turns.length > 0 && currentFingerprint !== savedFingerprint;
@@ -119,7 +123,7 @@ export function OccWorkspace() {
       setSavedSessionId(conversation.id);
       setSavedFingerprint(JSON.stringify({ turns: loaded, primaryAgent: firstAgent, usedAgents: agents }));
       setCv(""); setDescription(""); setSelectedCvId(""); setUploadedCvName(""); setUploadedJobName("");
-      setAdvice(null); setResult(null); setComposer("");
+      setAdvice(null); setReviewEvents([]); setResult(null); setComposer("");
       setCurrentTask("unknown"); setSection("overview"); setInterviewEpoch(current => current + 1);
       setPasteCvOpen(false); setPasteRoleOpen(false);
       setSessionNotice("Conversation restored. Reattach your CV and job description to continue; document text was not saved.");
@@ -193,6 +197,7 @@ export function OccWorkspace() {
     if ((hasUnsavedTranscript || cv.trim() || description.trim()) &&
         !window.confirm("Start a new conversation? Unsaved messages and current document attachments will be cleared. Previously saved transcripts remain in your history.")) return;
     setTurns([]);
+    setReviewEvents([]);
     setComposer("");
     setCv("");
     setDescription("");
@@ -314,9 +319,12 @@ export function OccWorkspace() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : data.error?.message ?? "OCC could not analyze your CV.");
-      setAdvice(data.advice as Advice);
+      const responseAdvice = data.advice as Advice;
+      const eventId = nextReviewId.current++;
+      setAdvice(responseAdvice);
+      setReviewEvents(current => [...current, { id: eventId, advice: responseAdvice, original: cv, profileUsed: data.usedSavedProfile === true, savedRunId: data.runId ?? null }]);
       setSection("recommendations");
-      setTurns(current => [...current, { role: "OCC", text: "Here are grounded recommendations. No CV changes were made automatically." }]);
+      setTurns(current => [...current, { role: "OCC", text: "I reviewed the supplied CV against the role. Here are the findings, with evidence you can inspect before accepting any wording changes.", reviewEventId: eventId }]);
       setAnalyzedCv(cv);
       setAnalysisVersion(version => version + 1);
       setProfileUsed(data.usedSavedProfile === true);
@@ -412,9 +420,17 @@ export function OccWorkspace() {
               <button type="button" key={text} onClick={() => ask(text)} style={{ padding: "7px 11px", textAlign: "left", background: "rgba(125, 93, 180, .045)", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 12, lineHeight: 1.4, cursor: "pointer" }}>{text}</button>)}
           </div>
         </>}
-        {turns.map((turn, index) => <div id={"occ-message-" + index} key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
-          <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
-        </div>)}
+        {turns.map((turn, index) => {
+          const review = reviewEvents.find(event => event.id === turn.reviewEventId);
+          return <div id={"occ-message-" + index} key={index} className={"occ2-turn " + (turn.role === "you" ? "occ2-turn-user" : "occ2-turn-assistant")}>
+            <div className="occ2-message-bubble">
+              <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
+            </div>
+            {review && <OccReviewMessage advice={review.advice} original={review.original} analysisId={review.id}
+              profileUsed={review.profileUsed} savedRunId={review.savedRunId}
+              isLatest={review.id === reviewEvents[reviewEvents.length - 1]?.id} />}
+          </div>;
+        })}
         {turns.length > 2 && <button type="button" className="occ2-jump" onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}>↓ Jump to latest</button>}
         {(cvReady || roleReady) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
@@ -496,31 +512,6 @@ export function OccWorkspace() {
         </div>
         <p style={{ fontSize: 13, opacity: .8 }}>{result.disclaimer}</p>
 
-      </section>}
-      </section>}
-      {(section === "recommendations" || (section === "analysis" && advice)) && <section aria-label="OCC recommendations workspace" style={{ display: "grid", gap: 16 }}>
-        {!advice && <div style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 12 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700 }}>Recommendations</h2>
-          <p>Run an AI analysis to see grounded advice and safely review possible CV wording changes. Your original CV stays unchanged.</p>
-          <button type="button" onClick={() => setSection("analysis")}>Go to CV analysis</button>
-        </div>}
-      {advice && <section id="occ2-advice-results" aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>OCC career recommendations</h2>
-        <p>{advice.summary}</p>
-        <p style={{ fontSize: 13, opacity: .8 }}>Saved career profile used: {profileUsed ? "Yes" : "No"}.</p>
-        <div style={{ display: "grid", gap: 12 }}>
-          {advice.recommendations.map((item, i) => <article key={i} style={{ border: "1px solid #c8c1d9", borderRadius: 12, padding: 16 }}>
-            <h3 style={{ fontWeight: 700 }}>{item.requirement}</h3>
-            <p style={{ fontSize: 13, opacity: .8 }}>Evidence status: {item.assessment}</p>
-            {item.cvEvidence && <blockquote style={{ borderLeft: "3px solid #7953b3", paddingLeft: 12, margin: "12px 0" }}>{item.cvEvidence}</blockquote>}
-            <p>{item.suggestion}</p>
-            {item.question && <p><strong>To clarify:</strong> {item.question}</p>}
-          </article>)}
-        </div>
-        {advice.nextSteps.length > 0 && <div><h3 style={{ fontWeight: 700 }}>Suggested next steps</h3><ul style={{ paddingLeft: 20 }}>{advice.nextSteps.map((step, i) => <li key={i}>{step}</li>)}</ul></div>}
-        <p style={{ fontSize: 13, opacity: .8 }}>{advice.disclaimer}</p>
-        <OccDraftReview key={analysisVersion} original={analyzedCv} recommendations={advice.recommendations} />
-        <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made. {savedRunId ? "Recommendation run saved privately. You can accept or reject suggestions below." : "This recommendation run was not saved."}</p>
       </section>}
       </section>}
       <div hidden={section !== "interview"} className="occ2-inthread-tool" aria-label="Interview coach conversation panel"><OccMockInterview key={interviewEpoch} cv={cv} jobDescription={description} onUpdateRole={setDescription} /></div>
