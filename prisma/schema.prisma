@@ -37,6 +37,7 @@ model User {
   occCareerProfile OccCareerProfile?
   occAdviceRuns OccAdviceRun[]
   occCvVersions OccCvVersion[]
+  occConversations OccConversation[]
   lifecycleEmails LifecycleEmail[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
@@ -297,4 +298,36 @@ model OccCvVersion {
   document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+// User-controlled, private OCC transcript history. Full CV/JD text is NOT
+// persisted in conversation messages; attachments remain ephemeral for now.
+model OccConversation {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String   @default("New conversation")
+  primaryAgent String   @default("review")
+  usedAgents   String[] @default([])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages OccMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+model OccMessage {
+  id             String   @id @default(cuid())
+  conversationId String
+  sender         String
+  text           String   @db.Text
+  agentId        String?
+  sequence       Int
+  createdAt      DateTime @default(now())
+
+  conversation OccConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, sequence])
+  @@index([conversationId, createdAt])
 }
