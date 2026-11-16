@@ -215,7 +215,23 @@ export function OccWorkspace() {
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
   return (
-    <div style={{ display: "grid", gap: 20, maxWidth: 920, margin: "0 auto" }}>
+    <div className="occ2-layout">
+      <aside id="occ2-session-sidebar" className={"occ2-side occ2-side-left" + (sessionRailOpen ? " occ2-side-open" : "")} aria-label="Career Copilot conversations">
+        <div className="occ2-side-heading"><strong>Career Copilot</strong><small>BETA</small></div>
+        <button type="button" className="occ2-new-chat" onClick={newConversation}>＋ New conversation</button>
+        <h2 className="occ2-side-label">CURRENT SESSION</h2>
+        <p className="occ2-unsaved-chat">✧ This conversation <small>Not saved to history</small></p>
+        <h2 className="occ2-side-label">SPECIALISTS</h2>
+        <nav className="occ2-side-agents" aria-label="Career Copilot specialists">
+          {OCC_AGENTS.map(agent => <button type="button" key={agent.id} className={selectedAgent === agent.id ? "occ2-selected-agent" : ""} onClick={() => { chooseAgent(agent.id); setSessionRailOpen(false); }} aria-current={selectedAgent === agent.id ? "true" : undefined}>{agent.label}</button>)}
+        </nav>
+        <p className="occ2-rail-note">Saved history and automatic service collections will appear here when private session storage is introduced.</p>
+      </aside>
+      <div className="occ2-content">
+        <div className="occ2-mobile-actions">
+          <button type="button" onClick={() => setSessionRailOpen(value => !value)} aria-expanded={sessionRailOpen} aria-controls="occ2-session-sidebar">☰ Sessions</button>
+          <button type="button" onClick={() => setContextRailOpen(value => !value)} aria-expanded={contextRailOpen} aria-controls="occ2-context-sidebar">Documents & milestones</button>
+        </div>
       <header style={{ display: "grid", gap: 8 }}>
         <p style={{ color: "#7953b3", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 12 }}>ORIRE · CAREER COPILOT</p>
         <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 750 }}>Your career, with a copilot.</h1>
