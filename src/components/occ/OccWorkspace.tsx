@@ -11,6 +11,7 @@ import { CareerMemory } from "./CareerMemory";
 import { OccDraftReview } from "./OccDraftReview";
 import { OccVersionedCv } from "./OccVersionedCv";
 import { OccMockInterview } from "./OccMockInterview";
+import { OccTemplatePreview } from "./OccTemplatePreview";
 
 type Advice = { summary: string; recommendations: { requirement: string; cvEvidence: string | null; assessment: "supported" | "needs-clarification" | "not-found"; suggestion: string; question: string | null }[]; nextSteps: string[]; disclaimer: string };
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
@@ -144,7 +145,7 @@ export function OccWorkspace() {
     setError("");
   }
   const [cv, setCv] = useState("");
-  const [savedCvs, setSavedCvs] = useState<{ id: string; title: string; data: CVData }[]>([]);
+  const [savedCvs, setSavedCvs] = useState<{ id: string; title: string; template: string; data: CVData }[]>([]);
   const [selectedCvId, setSelectedCvId] = useState("");
   useEffect(() => {
     let cancelled = false;
@@ -314,6 +315,35 @@ export function OccWorkspace() {
   const surface: CSSProperties = { border: "1px solid #c8c1d9", borderRadius: 20, padding: "clamp(18px, 3vw, 28px)", background: "rgba(118, 83, 167, .025)", boxShadow: "0 4px 24px rgba(44, 21, 82, .045)" };
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
+  const selectedStructuredCv = savedCvs.find(item => item.id === selectedCvId) ?? null;
+  function useSavedCv(id: string) {
+    const document = savedCvs.find(item => item.id === id);
+    if (!document) return;
+    setSelectedCvId(document.id);
+    setCv(cvToPlainText(document.data));
+    setUploadedCvName("");
+    setShowCvText(false);
+    setPasteCvOpen(false);
+  }
+  function detachDocument(kind: "cv" | "jobDescription") {
+    if (kind === "cv") {
+      setCv("");
+      setSelectedCvId("");
+      setUploadedCvName("");
+      setShowCvText(false);
+      setPasteCvOpen(false);
+      setAdvice(null);
+      setResult(null);
+    } else {
+      setDescription("");
+      setUploadedJobName("");
+      setShowRoleText(false);
+      setPasteRoleOpen(false);
+      setAdvice(null);
+      setResult(null);
+    }
+  }
+
   return (
     <div className="occ2-layout">
       <aside id="occ2-session-sidebar" className={"occ2-side occ2-side-left" + (sessionRailOpen ? " occ2-side-open" : "")} aria-label="Career Copilot conversations">
@@ -390,10 +420,10 @@ export function OccWorkspace() {
             </div>
             <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
           </div>
-          {pasteCvOpen && <label className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
+          {pasteCvOpen && <label id="occ2-cv-text-panel" className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
             <textarea aria-label="Paste full CV" maxLength={30000} rows={6} value={cv} onChange={event => { setCv(event.target.value); setSelectedCvId(""); setUploadedCvName(""); }} placeholder="Paste your complete CV here" />
           </label>}
-          {pasteRoleOpen && <label className="occ2-paste-editor">Job description <small>Up to 15,000 characters; not sent as a chat message</small>
+          {pasteRoleOpen && <label id="occ2-jd-text-panel" className="occ2-paste-editor">Job description <small>Up to 15,000 characters; not sent as a chat message</small>
             <textarea aria-label="Paste full job description" maxLength={15000} rows={6} value={description} onChange={event => { setDescription(event.target.value); setUploadedJobName(""); }} placeholder="Paste the full job description here" />
           </label>}
         </form>
@@ -422,9 +452,8 @@ export function OccWorkspace() {
         {savedCvs.length > 0 && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Select your CV
           <select style={field} value={selectedCvId} onChange={event => {
             const id = event.target.value;
-            setSelectedCvId(id);
-            const document = savedCvs.find(item => item.id === id);
-            if (document) { setCv(cvToPlainText(document.data)); setUploadedCvName(""); }
+            if (id) useSavedCv(id);
+            else { setSelectedCvId(""); setCv(""); setUploadedCvName(""); setShowCvText(true); }
           }}>
             <option value="">Paste CV text manually</option>
             {savedCvs.map(document => <option key={document.id} value={document.id}>{document.title}</option>)}
@@ -509,8 +538,26 @@ export function OccWorkspace() {
       <aside id="occ2-context-sidebar" className={"occ2-side occ2-side-right" + (contextRailOpen ? " occ2-side-open" : "")} aria-label="Current conversation documents and milestones">
         <h2>Session context</h2>
         <h3 className="occ2-side-label">DOCUMENTS</h3>
-        <div className="occ2-document"><strong>CV</strong><span>{cvReady ? uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted CV" : "Not attached"}</span></div>
-        <div className="occ2-document"><strong>Job description</strong><span>{roleReady ? uploadedJobName || "Pasted role description" : "Not attached"}</span></div>
+        <section className="occ2-document" aria-label="Current CV attachment">
+          <strong>CV</strong><span>{cvReady ? uploadedCvName || selectedStructuredCv?.title || "Pasted CV" : "Not attached"}</span>
+          {cvReady && <div className="occ2-document-actions">
+            <button type="button" onClick={() => { setPasteCvOpen(true); setContextRailOpen(false); document.getElementById("occ2-cv-text-panel")?.scrollIntoView({ behavior: "smooth" }); }}>View / edit</button>
+            <button type="button" onClick={() => detachDocument("cv")}>Remove</button>
+          </div>}
+          {!cvReady && savedCvs.length > 0 && <label className="occ2-rail-select">Choose saved CV
+            <select aria-label="Use saved Orire CV" value="" onChange={event => useSavedCv(event.target.value)}>
+              <option value="">Select a CV</option>
+              {savedCvs.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
+            </select>
+          </label>}
+        </section>
+        <section className="occ2-document" aria-label="Current job-description attachment">
+          <strong>Job description</strong><span>{roleReady ? uploadedJobName || "Pasted role description" : "Not attached"}</span>
+          {roleReady && <div className="occ2-document-actions">
+            <button type="button" onClick={() => { setPasteRoleOpen(true); setContextRailOpen(false); document.getElementById("occ2-jd-text-panel")?.scrollIntoView({ behavior: "smooth" }); }}>View / edit</button>
+            <button type="button" onClick={() => detachDocument("jobDescription")}>Remove</button>
+          </div>}
+        </section>
         <h3 className="occ2-side-label">MILESTONES</h3>
         <nav aria-label="Conversation milestones" className="occ2-milestones">
           {turns.length === 0 && <p>No milestones yet.</p>}
@@ -518,8 +565,8 @@ export function OccWorkspace() {
           {advice && <button type="button" onClick={() => { setContextRailOpen(false); setSection("recommendations"); document.getElementById("occ2-advice-results")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>CV recommendations</button>}
         </nav>
         <h3 className="occ2-side-label">CV TEMPLATE</h3>
-        <p className="occ2-rail-note">Preview your saved CV using existing Orire templates in the workspace. An integrated preview follows in the document workstream.</p>
-        <Link className="occ2-template-link" href="/">Open CV workspace</Link>
+        <OccTemplatePreview document={selectedStructuredCv} />
+        <Link className="occ2-context-link" href="/">Open Orire CV library</Link>
       </aside>
     </div>
   );
