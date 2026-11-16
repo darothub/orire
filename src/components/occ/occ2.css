@@ -365,3 +365,28 @@
   .occ2-cv-action-body { padding: 8px; }
   .occ2-cv-action-body > section { padding: 8px !important; }
 }
+
+/* P7D.2 — lightweight composer-first review controls, no duplicated document form. */
+.occ2-analysis-inline {
+  width: min(100%,720px); min-width: 0; display: grid; gap: 11px;
+  padding: 14px 17px; border: 1px solid #ab9bc8; border-radius: 16px;
+  background: color-mix(in srgb,var(--bg-2,#fff) 95%,#8868bb 5%);
+}
+.occ2-analysis-inline h2 { font-size: 17px; font-weight: 750; }
+.occ2-analysis-inline > p { font-size: 13px; line-height: 1.55; }
+.occ2-inline-cv-picker { display: grid; gap: 6px; font-size: 12px; font-weight: 650; }
+.occ2-inline-cv-picker select { background: transparent; color: inherit; border: 1px solid #a99bba; border-radius: 10px; padding: 10px; width: 100%; }
+.occ2-review-ready { display: flex; flex-wrap: wrap; gap: 9px; font-size: 12px; }
+.occ2-review-ready span { border: 1px solid #afa4c6; border-radius: 999px; padding: 7px 11px; }
+.occ2-review-options { border: 1px solid #afa4c6; border-radius: 11px; }
+.occ2-review-options summary { cursor: pointer; padding: 11px 12px; font-size: 13px; font-weight: 650; }
+.occ2-review-options-body { display: grid; gap: 12px; border-top: 1px solid #afa4c6; padding: 12px; font-size: 13px; }
+.occ2-review-options-body label { display: flex; gap: 8px; align-items: flex-start; }
+.occ2-review-options-body button { justify-self: start; }
+.occ2-keyword-message { width: min(100%,720px); display: grid; gap: 10px; border: 1px solid #ab9bc8; border-radius: 15px; padding: 16px; overflow-wrap: anywhere; }
+.occ2-keyword-message h3 { font-size: 17px; font-weight: 750; }
+.occ2-keyword-message details { border: 1px solid #afa4c6; border-radius: 10px; padding: 11px; }
+.occ2-keyword-message summary { cursor: pointer; font-size: 13px; font-weight: 650; }
+.occ2-keyword-message p { font-size: 13px; line-height: 1.5; }
+.occ2-review-options summary:focus-visible,.occ2-keyword-message summary:focus-visible,.occ2-inline-cv-picker select:focus-visible { outline: 3px solid #9773cc; outline-offset: 2px; }
+@media(max-width:540px) { .occ2-analysis-inline { padding: 12px; } .occ2-review-ready { display: grid; } }
