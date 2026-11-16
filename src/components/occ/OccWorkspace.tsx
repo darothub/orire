@@ -229,9 +229,17 @@ export function OccWorkspace() {
             <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
               {uploadInput("cv", "Upload CV", true)}
               {uploadInput("jobDescription", "Upload job description", true)}
+              <button type="button" className="occ2-quiet-action" aria-expanded={pasteCvOpen} onClick={() => setPasteCvOpen(value => !value)}>Paste CV</button>
+              <button type="button" className="occ2-quiet-action" aria-expanded={pasteRoleOpen} onClick={() => setPasteRoleOpen(value => !value)}>Paste JD</button>
             </div>
             <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
           </div>
+          {pasteCvOpen && <label className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
+            <textarea aria-label="Paste full CV" maxLength={30000} rows={6} value={cv} onChange={event => { setCv(event.target.value); setSelectedCvId(""); setUploadedCvName(""); }} placeholder="Paste your complete CV here" />
+          </label>}
+          {pasteRoleOpen && <label className="occ2-paste-editor">Job description <small>Up to 15,000 characters; not sent as a chat message</small>
+            <textarea aria-label="Paste full job description" maxLength={15000} rows={6} value={description} onChange={event => { setDescription(event.target.value); setUploadedJobName(""); }} placeholder="Paste the full job description here" />
+          </label>}
         </form>
         <p style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · Only CVs and job descriptions · You decide when to analyze or save</p>
       </section>
