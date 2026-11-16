@@ -244,3 +244,19 @@
 @media (prefers-reduced-motion: reduce) {
   .occ2-sticky-composer { backdrop-filter: none; }
 }
+
+/* Nested review cards contain width:100% form controls plus padding. Use
+   border-box so the new in-thread layout cannot expand the mobile viewport. */
+.occ2-conversation,
+.occ2-conversation * { box-sizing: border-box; }
+.occ2-conversation > *,
+.occ2-conversation > section,
+.occ2-conversation > section > *,
+.occ2-conversation textarea,
+.occ2-conversation select { min-width: 0; max-width: 100%; }
+.occ2-conversation p,
+.occ2-conversation blockquote { overflow-wrap: anywhere; }
+@media (max-width: 540px) {
+  .occ2-conversation { overflow-x: clip; }
+  .occ2-conversation > section { width: 100%; }
+}
