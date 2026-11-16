@@ -167,8 +167,8 @@ export function OccWorkspace() {
   const [sessionRailOpen, setSessionRailOpen] = useState(false);
   const [contextRailOpen, setContextRailOpen] = useState(false);
   function newConversation() {
-    if ((turns.length || cv.trim() || description.trim()) &&
-        !window.confirm("Start a new conversation? Unsaved messages and attachments in this conversation will be cleared.")) return;
+    if ((hasUnsavedTranscript || cv.trim() || description.trim()) &&
+        !window.confirm("Start a new conversation? Unsaved messages and current document attachments will be cleared. Previously saved transcripts remain in your history.")) return;
     setTurns([]);
     setComposer("");
     setCv("");
@@ -179,6 +179,11 @@ export function OccWorkspace() {
     setUploadedCvName("");
     setUploadedJobName("");
     setSelectedAgent(DEFAULT_OCC_AGENT);
+    setPrimaryAgent(DEFAULT_OCC_AGENT);
+    setUsedAgents([DEFAULT_OCC_AGENT]);
+    setSavedSessionId(null);
+    setSavedFingerprint("");
+    setSessionNotice("");
     setCurrentTask("unknown");
     setSection("overview");
     setSavedRunId(null);
@@ -305,12 +310,28 @@ export function OccWorkspace() {
         <div className="occ2-side-heading"><strong>Career Copilot</strong><small>BETA</small></div>
         <button type="button" className="occ2-new-chat" onClick={newConversation}>＋ New conversation</button>
         <h2 className="occ2-side-label">CURRENT SESSION</h2>
-        <p className="occ2-unsaved-chat">✧ This conversation <small>Not saved to history</small></p>
+        <p className="occ2-unsaved-chat">✧ Current conversation <small>{savedSessionId ? hasUnsavedTranscript ? "Unsaved changes" : "Saved privately" : "Not saved"}</small></p>
+        <button type="button" className="occ2-new-chat" disabled={sessionBusy || !turns.length || !hasUnsavedTranscript} onClick={() => void saveConversation()}>Save transcript privately</button>
+        <p className="occ2-rail-note">Saving is optional and stores chat messages only, not CV/JD attachments. You can delete saved conversations.</p>
+        {sessionNotice && <p role="status" className="occ2-rail-note">{sessionNotice}</p>}
+        <h2 className="occ2-side-label">SAVED CONVERSATIONS</h2>
+        <input aria-label="Search saved conversations" value={sessionFilter} onChange={event => setSessionFilter(event.target.value)} placeholder="Search conversations" className="occ2-history-search" />
+        {OCC_AGENTS.map(agent => {
+          const entries = sessions.filter(item => (item.primaryAgent === agent.id || item.usedAgents.includes(agent.id)) &&
+            item.title.toLowerCase().includes(sessionFilter.trim().toLowerCase()));
+          return entries.length ? <section key={agent.id} aria-label={agent.label + " sessions"} className="occ2-history-group">
+            <h3>{agent.label}</h3>
+            {entries.map(item => <div key={item.id} className="occ2-history-entry">
+              <button type="button" disabled={sessionBusy} aria-current={item.id === savedSessionId ? "page" : undefined} onClick={() => void openConversation(item.id)}>{item.title}</button>
+              <button type="button" disabled={sessionBusy} aria-label={"Delete conversation: " + item.title} onClick={() => void deleteConversation(item.id)}>×</button>
+            </div>)}
+          </section> : null;
+        })}
         <h2 className="occ2-side-label">SPECIALISTS</h2>
         <nav className="occ2-side-agents" aria-label="Career Copilot specialists">
           {OCC_AGENTS.map(agent => <button type="button" key={agent.id} className={selectedAgent === agent.id ? "occ2-selected-agent" : ""} onClick={() => { chooseAgent(agent.id); setSessionRailOpen(false); }} aria-current={selectedAgent === agent.id ? "true" : undefined}>{agent.label}</button>)}
         </nav>
-        <p className="occ2-rail-note">Saved history and automatic service collections will appear here when private session storage is introduced.</p>
+        <p className="occ2-rail-note">Each conversation is stored once and automatically appears under the specialist services used during that session.</p>
       </aside>
       <div className="occ2-content">
         <div className="occ2-mobile-actions">
