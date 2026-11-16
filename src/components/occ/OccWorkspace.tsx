@@ -16,15 +16,27 @@ type Advice = { summary: string; recommendations: { requirement: string; cvEvide
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory" | "interview";
 type Turn = { role: "you" | "OCC"; text: string };
+type OccSessionSummary = { id: string; title: string; primaryAgent: string; usedAgents: string[]; updatedAt: string };
+
 export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
   const [selectedAgent, setSelectedAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
+  const [primaryAgent, setPrimaryAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
+  const [usedAgents, setUsedAgents] = useState<OccAgentId[]>([DEFAULT_OCC_AGENT]);
+  const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
+  const [savedFingerprint, setSavedFingerprint] = useState("");
+  const [sessions, setSessions] = useState<OccSessionSummary[]>([]);
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const [sessionNotice, setSessionNotice] = useState("");
+  const [sessionFilter, setSessionFilter] = useState("");
+
   const [pasteCvOpen, setPasteCvOpen] = useState(false);
   const [pasteRoleOpen, setPasteRoleOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   function chooseAgent(id: OccAgentId) {
     const agent = getOccAgent(id);
     setSelectedAgent(id);
+    setUsedAgents(current => current.includes(id) ? current : [...current, id]);
     setCurrentTask(agent.task);
     setSection(agent.task === "analysis" ? "analysis" : agent.task);
     setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available." }]);
@@ -33,6 +45,88 @@ export function OccWorkspace() {
   const [composer, setComposer] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentTask, setCurrentTask] = useState<OccTask>("unknown");
+  const currentFingerprint = JSON.stringify({ turns, primaryAgent, usedAgents });
+  const hasUnsavedTranscript = turns.length > 0 && currentFingerprint !== savedFingerprint;
+  async function refreshSessions() {
+    try {
+      const response = await fetch("/api/occ/conversations", { cache: "no-store" });
+      if (!response.ok) throw new Error("History unavailable");
+      const data = await response.json();
+      setSessions(Array.isArray(data.conversations) ? data.conversations : []);
+    } catch { setSessionNotice("Saved conversation history is temporarily unavailable."); }
+  }
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/occ/conversations", { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("History unavailable");
+        const data = await response.json();
+        if (active) setSessions(Array.isArray(data.conversations) ? data.conversations : []);
+      })
+      .catch(() => { if (active) setSessionNotice("Saved conversation history is temporarily unavailable."); });
+    return () => { active = false; };
+  }, []);
+  async function saveConversation() {
+    if (!turns.length || sessionBusy) return;
+    setSessionBusy(true);
+    setSessionNotice("");
+    try {
+      const firstUserText = turns.find(turn => turn.role === "you")?.text ?? "";
+      const title = firstUserText.slice(0, 100).trim() || "Career Copilot conversation";
+      const response = await fetch("/api/occ/conversations", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        cache: "no-store",
+        body: JSON.stringify({ ...(savedSessionId ? { id: savedSessionId } : {}),
+          title, primaryAgent, usedAgents, turns }),
+      });
+      if (!response.ok) throw new Error("Could not save this conversation. Your current chat remains visible.");
+      const result = await response.json();
+      setSavedSessionId(result.id);
+      setSavedFingerprint(currentFingerprint);
+      setSessionNotice("Transcript saved privately. CV and job-description attachments were not saved.");
+      await refreshSessions();
+    } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Could not save conversation."); }
+    finally { setSessionBusy(false); }
+  }
+  async function openConversation(id: string) {
+    if (sessionBusy || (hasUnsavedTranscript && !window.confirm("Open another conversation? Unsaved changes in the current conversation will be lost."))) return;
+    setSessionBusy(true);
+    setSessionNotice("");
+    try {
+      const response = await fetch("/api/occ/conversations/" + encodeURIComponent(id), { cache: "no-store" });
+      if (!response.ok) throw new Error("Could not open the saved conversation.");
+      const { conversation } = await response.json();
+      const loaded: Turn[] = conversation.messages.map((message: { sender: "you" | "OCC"; text: string }) => ({ role: message.sender, text: message.text }));
+      const firstAgent = getOccAgent(conversation.primaryAgent).id;
+      const agents = [...new Set([firstAgent, ...conversation.usedAgents.filter((id: string) => OCC_AGENTS.some(a => a.id === id))])] as OccAgentId[];
+      setTurns(loaded);
+      setSelectedAgent(firstAgent);
+      setPrimaryAgent(firstAgent);
+      setUsedAgents(agents);
+      setSavedSessionId(conversation.id);
+      setSavedFingerprint(JSON.stringify({ turns: loaded, primaryAgent: firstAgent, usedAgents: agents }));
+      setCv(""); setDescription(""); setSelectedCvId(""); setUploadedCvName(""); setUploadedJobName("");
+      setAdvice(null); setResult(null); setComposer("");
+      setCurrentTask("unknown"); setSection("overview");
+      setPasteCvOpen(false); setPasteRoleOpen(false);
+      setSessionNotice("Conversation restored. Reattach your CV and job description to continue; document text was not saved.");
+      setSessionRailOpen(false);
+    } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Unable to load conversation."); }
+    finally { setSessionBusy(false); }
+  }
+  async function deleteConversation(id: string) {
+    if (sessionBusy || !window.confirm("Permanently delete this saved conversation and all its messages?")) return;
+    setSessionBusy(true);
+    try {
+      const response = await fetch("/api/occ/conversations/" + encodeURIComponent(id), { method: "DELETE", cache: "no-store" });
+      if (!response.ok) throw new Error("Could not delete conversation.");
+      setSessions(current => current.filter(item => item.id !== id));
+      if (savedSessionId === id) { setSavedSessionId(null); setSavedFingerprint(""); }
+      setSessionNotice("Saved conversation deleted.");
+    } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Unable to delete conversation."); }
+    finally { setSessionBusy(false); }
+  }
+
   function ask(value: string) {
     const text = value.trim();
     if (!text || running) return;
@@ -83,8 +177,8 @@ export function OccWorkspace() {
   const [sessionRailOpen, setSessionRailOpen] = useState(false);
   const [contextRailOpen, setContextRailOpen] = useState(false);
   function newConversation() {
-    if ((turns.length || cv.trim() || description.trim()) &&
-        !window.confirm("Start a new conversation? Unsaved messages and attachments in this conversation will be cleared.")) return;
+    if ((hasUnsavedTranscript || cv.trim() || description.trim()) &&
+        !window.confirm("Start a new conversation? Unsaved messages and current document attachments will be cleared. Previously saved transcripts remain in your history.")) return;
     setTurns([]);
     setComposer("");
     setCv("");
@@ -95,6 +189,11 @@ export function OccWorkspace() {
     setUploadedCvName("");
     setUploadedJobName("");
     setSelectedAgent(DEFAULT_OCC_AGENT);
+    setPrimaryAgent(DEFAULT_OCC_AGENT);
+    setUsedAgents([DEFAULT_OCC_AGENT]);
+    setSavedSessionId(null);
+    setSavedFingerprint("");
+    setSessionNotice("");
     setCurrentTask("unknown");
     setSection("overview");
     setSavedRunId(null);
@@ -221,12 +320,28 @@ export function OccWorkspace() {
         <div className="occ2-side-heading"><strong>Career Copilot</strong><small>BETA</small></div>
         <button type="button" className="occ2-new-chat" onClick={newConversation}>＋ New conversation</button>
         <h2 className="occ2-side-label">CURRENT SESSION</h2>
-        <p className="occ2-unsaved-chat">✧ This conversation <small>Not saved to history</small></p>
+        <p className="occ2-unsaved-chat">✧ Current conversation <small>{savedSessionId ? hasUnsavedTranscript ? "Unsaved changes" : "Saved privately" : "Not saved"}</small></p>
+        <button type="button" className="occ2-new-chat" disabled={sessionBusy || !turns.length || !hasUnsavedTranscript} onClick={() => void saveConversation()}>Save transcript privately</button>
+        <p className="occ2-rail-note">Saving is optional and stores chat messages only, not CV/JD attachments. You can delete saved conversations.</p>
+        {sessionNotice && <p role="status" className="occ2-rail-note">{sessionNotice}</p>}
+        <h2 className="occ2-side-label">SAVED CONVERSATIONS</h2>
+        <input aria-label="Search saved conversations" value={sessionFilter} onChange={event => setSessionFilter(event.target.value)} placeholder="Search conversations" className="occ2-history-search" />
+        {OCC_AGENTS.map(agent => {
+          const entries = sessions.filter(item => (item.primaryAgent === agent.id || item.usedAgents.includes(agent.id)) &&
+            item.title.toLowerCase().includes(sessionFilter.trim().toLowerCase()));
+          return entries.length ? <section key={agent.id} aria-label={agent.label + " sessions"} className="occ2-history-group">
+            <h3>{agent.label}</h3>
+            {entries.map(item => <div key={item.id} className="occ2-history-entry">
+              <button type="button" disabled={sessionBusy} aria-current={item.id === savedSessionId ? "page" : undefined} onClick={() => void openConversation(item.id)}>{item.title}</button>
+              <button type="button" disabled={sessionBusy} aria-label={"Delete conversation: " + item.title} onClick={() => void deleteConversation(item.id)}>×</button>
+            </div>)}
+          </section> : null;
+        })}
         <h2 className="occ2-side-label">SPECIALISTS</h2>
         <nav className="occ2-side-agents" aria-label="Career Copilot specialists">
           {OCC_AGENTS.map(agent => <button type="button" key={agent.id} className={selectedAgent === agent.id ? "occ2-selected-agent" : ""} onClick={() => { chooseAgent(agent.id); setSessionRailOpen(false); }} aria-current={selectedAgent === agent.id ? "true" : undefined}>{agent.label}</button>)}
         </nav>
-        <p className="occ2-rail-note">Saved history and automatic service collections will appear here when private session storage is introduced.</p>
+        <p className="occ2-rail-note">Each conversation is stored once and automatically appears under the specialist services used during that session.</p>
       </aside>
       <div className="occ2-content">
         <div className="occ2-mobile-actions">

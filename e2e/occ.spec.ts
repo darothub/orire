@@ -57,6 +57,64 @@ test.describe("Career-only OCC feature", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 
+  test("OCC 2.0 explicitly saved transcript can be reopened and deleted without storing CV/JD", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Review my CV for a role" }).click();
+    await page.getByRole("button", { name: "Paste CV" }).click();
+    await page.getByLabel("Paste full CV").fill("Senior engineer experienced in secure Java payment microservices and integration testing.");
+    await page.getByRole("button", { name: "Paste JD" }).click();
+    await page.getByLabel("Paste full job description").fill("Senior backend engineer needed to build Java microservices and secure payment APIs.");
+    await page.getByRole("button", { name: "Save transcript privately" }).click();
+    await expect(page.getByText("Transcript saved privately.", { exact: false })).toBeVisible();
+    await testInfo.attach("occ2-private-session-history-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
+    const sessions = await db.occConversation.findMany({
+      where: { userId: e2eUser.id }, include: { messages: true },
+    });
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].messages.length).toBeGreaterThan(0);
+    expect(JSON.stringify(sessions[0])).not.toContain("Senior engineer experienced");
+    expect(JSON.stringify(sessions[0])).not.toContain("Senior backend engineer needed");
+    page.once("dialog", dialog => void dialog.accept());
+    await page.getByRole("button", { name: "＋ New conversation" }).click();
+    await expect(page.getByLabel("Paste full CV")).toHaveCount(0);
+    const history = page.getByRole("region", { name: "CV Review sessions" });
+    await expect(history.getByRole("button").first()).toBeVisible();
+    await history.getByRole("button").first().click();
+    await expect(page.getByText("Conversation restored. Reattach", { exact: false })).toBeVisible();
+    expect((await db.occConversation.count({ where: { userId: e2eUser.id } }))).toBe(1);
+    page.once("dialog", dialog => void dialog.accept());
+    await history.getByRole("button", { name: /Delete conversation:/ }).click();
+    await expect.poll(() => db.occConversation.count({ where: { userId: e2eUser.id } })).toBe(0);
+    await expect.poll(() => db.occMessage.count({ where: { conversationId: sessions[0].id } })).toBe(0);
+  });
+
+  test("OCC transcript API rejects another Career user's conversation", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    const other = await db.user.create({ data: { name: "Isolated other user" } });
+    try {
+      const conversation = await db.occConversation.create({
+        data: { userId: other.id, title: "Private notes", messages: { create: { sequence: 0, sender: "you", text: "Confidential test" } } },
+      });
+      await signIn(page);
+      expect((await page.request.get("/api/occ/conversations/" + conversation.id)).status()).toBe(404);
+      expect((await page.request.delete("/api/occ/conversations/" + conversation.id)).status()).toBe(404);
+      const attack = await page.request.post("/api/occ/conversations", { data: {
+        id: conversation.id, title: "Overwrite", primaryAgent: "review",
+        usedAgents: ["review"], turns: [{ role: "you", text: "Overwrite attempted" }],
+      } });
+      expect(attack.status()).toBe(404);
+      const unchanged = await db.occMessage.findFirst({ where: { conversationId: conversation.id } });
+      expect(unchanged?.text).toBe("Confidential test");
+    } finally {
+      await db.user.delete({ where: { id: other.id } });
+    }
+  });
+
   test("Career user can save an inactive private CV version and safely undo", async ({ page, db, e2eUser }, testInfo) => {
     const original = await db.document.create({
       data: { userId: e2eUser.id, title: "Sample Master CV", template: "aurora",

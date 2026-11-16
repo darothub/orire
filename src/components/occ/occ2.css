@@ -131,3 +131,47 @@
 @media (prefers-reduced-motion: reduce) {
   .occ2-layout * { scroll-behavior: auto !important; }
 }
+
+/* Session history is one canonical record rendered in virtual service groups. */
+.occ2-history-search {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #a99bba;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.occ2-history-group { display: grid; gap: 4px; }
+.occ2-history-group h3 { font-size: 12px; font-weight: 750; opacity: .8; }
+.occ2-history-entry { display: flex; align-items: center; gap: 3px; }
+.occ2-history-entry button:first-child {
+  min-width: 0;
+  flex: 1;
+  background: transparent;
+  color: inherit;
+  border: 0;
+  padding: 8px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.occ2-history-entry button:last-child {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 19px;
+  padding: 6px;
+  cursor: pointer;
+}
+.occ2-history-entry [aria-current="page"] { background: rgba(114,81,174,.13) !important; border-radius: 8px !important; }
+.occ2-history-entry button:focus-visible, .occ2-history-search:focus-visible {
+  outline: 3px solid #9773cc;
+  outline-offset: 2px;
+}
+.occ2-new-chat:disabled { opacity: .55; cursor: not-allowed; }
