@@ -260,3 +260,55 @@
   .occ2-conversation { overflow-x: clip; }
   .occ2-conversation > section { width: 100%; }
 }
+
+/* P7A: genuine review messages. Existing feature forms can remain as temporary
+   inline tools, but review results belong at the assistant turn that produced them. */
+.occ2-chat-header { display: flex; gap: 12px; align-items: center; padding: 4px 0 0; }
+.occ2-chat-logo { flex: 0 0 38px; width: 38px; height: 38px; display: grid; place-items: center;
+  color: #fff; background: linear-gradient(135deg,#51338d,#9a7be5); border-radius: 13px; font-size: 21px; }
+.occ2-chat-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .1em; opacity: .72; }
+.occ2-chat-header h1 { font-size: clamp(20px, 2.4vw, 28px); line-height: 1.2; font-weight: 750; margin: 4px 0; }
+.occ2-chat-intro { font-size: 13px; opacity: .77; max-width: 620px; }
+.occ2-turn { width: 100%; min-width: 0; display: grid; gap: 10px; justify-items: start; scroll-margin-top: 22px; }
+.occ2-turn-user { justify-items: end; }
+.occ2-message-bubble { padding: 11px 15px; border-radius: 16px; max-width: min(88%, 700px);
+  background: rgba(114,81,174,.075); line-height: 1.55; overflow-wrap: anywhere; }
+.occ2-turn-user .occ2-message-bubble { background: #7251ae; color: #fff; border-bottom-right-radius: 5px; }
+.occ2-turn-assistant .occ2-message-bubble { border-bottom-left-radius: 5px; }
+.occ2-review-message { width: min(100%, 720px); min-width: 0; display: grid; gap: 13px;
+  border: 1px solid #b7a4d7; border-radius: 17px; padding: clamp(14px,2.3vw,22px);
+  background: color-mix(in srgb, var(--bg-2,#fff) 93%, #8868bb 7%); overflow-wrap: anywhere; }
+.occ2-review-heading { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 8px; }
+.occ2-review-kicker { font-size: 11px; font-weight: 800; letter-spacing: .05em; color: #9270cb; }
+.occ2-review-count { font-size: 11px; border: 1px solid #a895ce; border-radius: 999px; padding: 4px 9px; }
+.occ2-review-message h2 { font-size: clamp(17px,2.1vw,21px); font-weight: 750; margin: 0; }
+.occ2-review-message > p { margin: 0; line-height: 1.55; }
+.occ2-review-facts,.occ2-review-note { font-size: 12px; opacity: .75; }
+.occ2-review-findings { display: grid; gap: 7px; min-width: 0; }
+.occ2-review-finding,.occ2-review-next,.occ2-review-edit { border: 1px solid #a99bba; border-radius: 12px;
+  background: rgba(114,81,174,.035); min-width: 0; }
+.occ2-review-finding summary { display: flex; align-items: center; cursor: pointer; gap: 10px; padding: 12px 13px; }
+.occ2-review-finding summary::marker { content: ""; }
+.occ2-review-finding summary::-webkit-details-marker { display:none; }
+.occ2-review-number { width: 23px; height: 23px; flex: 0 0 23px; border-radius: 8px; display:grid; place-items:center; background:rgba(114,81,174,.15); font-size:12px; }
+.occ2-review-requirement { flex:1; min-width:0; font-weight:650; font-size:13px; }
+.occ2-review-assessment { font-size: 11px; opacity: .8; text-align:right; }
+.occ2-review-finding-body { border-top:1px solid #a99bba; padding: 12px 14px; display:grid; gap:11px; font-size:13px; }
+.occ2-review-finding-body blockquote { margin:0; border-left:3px solid #7251ae; padding-left:12px; }
+.occ2-review-finding-body p { margin:0; line-height:1.55; }
+.occ2-review-next summary,.occ2-review-edit > summary { cursor:pointer; padding:11px 13px; font-size:13px; font-weight:700; }
+.occ2-review-next ol { margin: 0; padding: 0 24px 16px 34px; font-size:13px; }
+.occ2-review-edit > section { border:0 !important; background:transparent; padding:14px !important; }
+.occ2-review-message summary:focus-visible { outline:3px solid #9773cc; outline-offset:3px; }
+@media(max-width:540px) {
+  .occ2-review-message { width:100%; padding:13px; }
+  .occ2-message-bubble { max-width:95%; }
+  .occ2-review-assessment { max-width:92px; }
+}
+
+.occ2-composer-cta { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; align-items:center; }
+.occ2-review-action { border:1px solid #8865c8; background:rgba(114,81,174,.1); color:inherit; border-radius:11px; padding:9px 12px; cursor:pointer; font-weight:700; font-size:12px; }
+.occ2-review-action:disabled { opacity:.55; cursor:wait; }
+.occ2-review-action:focus-visible { outline:3px solid #9773cc; outline-offset:2px; }
+.occ2-input-note { font-size:12px; opacity:.74; line-height:1.5; }
+@media(max-width:540px) { .occ2-composer-cta { width:100%; } .occ2-composer-cta button { flex:1; } }

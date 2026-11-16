@@ -201,6 +201,7 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Your current CV text").fill("Summary: Experienced engineer. " + evidence);
     await page.getByLabel("Target job description").fill("We are looking for an engineer responsible for Kotlin services and payment APIs.");
     await page.getByRole("button", { name: "Review my fit" }).click();
+    await page.getByText("Review and approve suggested CV wording").click();
     const area = page.getByRole("heading", { name: "Review CV wording changes" }).locator("..");
     await area.getByLabel("CV passage to review").selectOption("0");
     await expect(area.getByLabel("OCC suggested CV rewrite")).toContainText("Tested payment APIs");
@@ -239,6 +240,11 @@ test.describe("Career-only OCC feature", () => {
     await conversation.getByRole("button", { name: "Review my fit" }).click();
     await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
     await expect(conversation.getByText("Synthetic grounded role review.")).toBeVisible();
+    await expect(conversation.getByRole("button", { name: "Review my fit" })).toHaveCount(0);
+    await expect(conversation.getByText("Review findings")).toBeVisible();
+    const findings = conversation.getByRole("region", { name: "OCC recommendations workspace" });
+    await findings.locator("details").first().locator("summary").click();
+    await expect(findings.getByText("Built secure Java services", { exact: true })).toBeVisible();
     await expect(conversation.getByRole("textbox", { name: "Message your Career Copilot" })).toBeVisible();
     await expect(conversation.getByRole("button", { name: "↓ Jump to latest" })).toBeVisible();
     await testInfo.attach("occ2-unified-review-desktop", {
@@ -284,6 +290,45 @@ test.describe("Career-only OCC feature", () => {
     await expect(conversation.getByRole("button", { name: "Start mock interview" })).toBeDisabled();
   });
 
+  test("P7A composer runs a review only after explicit action and displays it in the assistant timeline", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    let aiCalls = 0;
+    await page.route("**/api/occ/advise", route => {
+      aiCalls++;
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        advice: { summary: "Synthetic, evidence-based role review.",
+          recommendations: [{
+            requirement: "Secure Java services", assessment: "supported",
+            cvEvidence: "Built secure Java services", suggestion: "Emphasize the documented work.",
+            sampleWording: null, question: null,
+          }],
+          nextSteps: ["Check each detail."], disclaimer: "Synthetic review; verify all claims." },
+        usedSavedProfile: false, runId: null,
+      }) });
+    });
+    await page.goto("/occ");
+    const conversation = page.getByRole("region", { name: "Career Copilot conversation" });
+    await conversation.getByRole("button", { name: "Paste CV" }).click();
+    await conversation.getByLabel("Paste full CV").fill("Backend engineer. Built secure Java services for a payment platform.");
+    await conversation.getByRole("button", { name: "Paste JD" }).click();
+    await conversation.getByLabel("Paste full job description").fill("Hiring an engineer to design and operate reliable secure Java payment services.");
+    expect(aiCalls).toBe(0);
+    await expect(conversation.getByRole("button", { name: "Review attached CV" })).toBeVisible();
+    await conversation.getByRole("button", { name: "Review attached CV" }).click();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByText("Synthetic, evidence-based role review.")).toBeVisible();
+    expect(aiCalls).toBe(1);
+    await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).fill("Could you clarify what I should verify?");
+    await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).press("Enter");
+    await expect(conversation.getByText("Could you clarify what I should verify?", { exact: false })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await testInfo.attach("occ2-p7a-chat-review-desktop", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ2-p7a-chat-review-mobile", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
   test("Career user can save an inactive private CV version and safely undo", async ({ page, db, e2eUser }, testInfo) => {
     const original = await db.document.create({
       data: { userId: e2eUser.id, title: "Sample Master CV", template: "aurora",
@@ -294,7 +339,7 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     expect((await (await page.request.get("/api/occ/access")).json()).permitted).toBe(true);
     await page.goto("/occ");
-    await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Where should we take your career?" })).toBeVisible();
 
     await page.getByRole("button", { name: "Improve my CV" }).click();
     await page.getByLabel("Source CV").selectOption(original.id);
@@ -345,7 +390,7 @@ test.describe("Career-only OCC feature", () => {
     expect(access.status()).toBe(200);
     expect((await access.json()).permitted).toBe(true);
     await page.goto("/occ");
-    await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Where should we take your career?" })).toBeVisible();
   });
 
   test("signed beta email with mismatched database identity is denied", async ({ page, db, e2eUser }) => {
@@ -410,7 +455,7 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/occ");
-    await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Where should we take your career?" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Career Copilot conversation" })).toBeVisible();
     const decline = page.getByRole("button", { name: "Decline", exact: true });
     if (await decline.isVisible()) await decline.click();
