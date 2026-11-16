@@ -47,6 +47,33 @@ export function OccWorkspace() {
   const [pasteRoleOpen, setPasteRoleOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pendingMilestoneRef = useRef<string | null>(null);
+  const pendingEditorRef = useRef<"cv" | "jobDescription" | null>(null);
+  useEffect(() => {
+    const kind = pendingEditorRef.current;
+    if (!kind || (kind === "cv" ? !pasteCvOpen : !pasteRoleOpen)) return;
+    pendingEditorRef.current = null;
+    const id = kind === "cv" ? "occ2-cv-text-panel" : "occ2-jd-text-panel";
+    const frame = requestAnimationFrame(() => {
+      const editor = document.getElementById(id);
+      editor?.scrollIntoView({ behavior: "auto", block: "nearest" });
+      editor?.querySelector("textarea")?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [pasteCvOpen, pasteRoleOpen]);
+  function editAttachedDocument(kind: "cv" | "jobDescription") {
+    pendingEditorRef.current = kind;
+    if (kind === "cv") setPasteCvOpen(true);
+    else setPasteRoleOpen(true);
+    setContextRailOpen(false);
+    // A second click must still focus the already-mounted editor.
+    const id = kind === "cv" ? "occ2-cv-text-panel" : "occ2-jd-text-panel";
+    const existing = document.getElementById(id);
+    if (existing) {
+      pendingEditorRef.current = null;
+      existing.scrollIntoView({ behavior: "auto", block: "nearest" });
+      existing.querySelector("textarea")?.focus({ preventScroll: true });
+    }
+  }
   useEffect(() => {
     if (!pendingMilestoneRef.current) return;
     const anchor = pendingMilestoneRef.current;
@@ -555,7 +582,7 @@ export function OccWorkspace() {
           {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
         </div>}
         {error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
-        <p className="occ2-input-note">PDF, DOCX or TXT · Your CV and JD are sent to the AI provider only when you explicitly request a review · Saving conversations is optional</p>
+        <p className="occ2-input-note">PDF and DOCX files are parsed when uploaded. CV and role text is used for AI review only when you choose Review · Saving conversations is optional</p>
       {section === "analysis" && <section aria-label="CV analysis workspace" style={{ display: "grid", gap: 20 }}>
       <div style={{ ...surface, display: "grid", gap: 17 }}>
         <h2 style={{ fontSize: 23, fontWeight: 750 }}>Review your fit for this role</h2>
@@ -677,7 +704,7 @@ export function OccWorkspace() {
         <section className="occ2-document" aria-label="Current CV attachment">
           <strong>CV</strong><span>{cvReady ? uploadedCvName || selectedStructuredCv?.title || "Pasted CV" : "Not attached"}</span>
           {cvReady && <div className="occ2-document-actions">
-            <button type="button" onClick={() => { setPasteCvOpen(true); setContextRailOpen(false); document.getElementById("occ2-cv-text-panel")?.scrollIntoView({ behavior: "smooth" }); }}>View / edit</button>
+            <button type="button" onClick={() => editAttachedDocument("cv")}>View / edit</button>
             <button type="button" onClick={() => detachDocument("cv")}>Remove</button>
           </div>}
           {!cvReady && savedCvs.length > 0 && <label className="occ2-rail-select">Choose saved CV
@@ -690,7 +717,7 @@ export function OccWorkspace() {
         <section className="occ2-document" aria-label="Current job-description attachment">
           <strong>Job description</strong><span>{roleReady ? uploadedJobName || "Pasted role description" : "Not attached"}</span>
           {roleReady && <div className="occ2-document-actions">
-            <button type="button" onClick={() => { setPasteRoleOpen(true); setContextRailOpen(false); document.getElementById("occ2-jd-text-panel")?.scrollIntoView({ behavior: "smooth" }); }}>View / edit</button>
+            <button type="button" onClick={() => editAttachedDocument("jobDescription")}>View / edit</button>
             <button type="button" onClick={() => detachDocument("jobDescription")}>Remove</button>
           </div>}
         </section>
