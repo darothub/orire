@@ -79,6 +79,30 @@ export function OccWorkspace() {
   const [uploading, setUploading] = useState<"cv" | "jobDescription" | null>(null);
   const [uploadedCvName, setUploadedCvName] = useState("");
   const [uploadedJobName, setUploadedJobName] = useState("");
+  const [sessionRailOpen, setSessionRailOpen] = useState(false);
+  const [contextRailOpen, setContextRailOpen] = useState(false);
+  function newConversation() {
+    if ((turns.length || cv.trim() || description.trim()) &&
+        !window.confirm("Start a new conversation? Unsaved messages and attachments in this conversation will be cleared.")) return;
+    setTurns([]);
+    setComposer("");
+    setCv("");
+    setDescription("");
+    setResult(null);
+    setAdvice(null);
+    setSelectedCvId("");
+    setUploadedCvName("");
+    setUploadedJobName("");
+    setSelectedAgent(DEFAULT_OCC_AGENT);
+    setCurrentTask("unknown");
+    setSection("overview");
+    setSavedRunId(null);
+    setError("");
+    setPasteCvOpen(false);
+    setPasteRoleOpen(false);
+    setSessionRailOpen(false);
+    setContextRailOpen(false);
+  }
 
   async function uploadDocument(kind: "cv" | "jobDescription", event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
