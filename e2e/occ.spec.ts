@@ -298,7 +298,9 @@ test.describe("Career-only OCC feature", () => {
     await findings.locator("details").first().locator("summary").click();
     await expect(findings.getByText("Built secure Java services", { exact: true })).toBeVisible();
     await expect(conversation.getByRole("textbox", { name: "Message your Career Copilot" })).toBeVisible();
-    await expect(conversation.getByRole("button", { name: "↓ Jump to latest" })).toBeVisible();
+    // The jump control is contextual: it appears only if the newest content
+    // is outside the viewport, never merely because several turns exist.
+    await expect(conversation.getByRole("textbox", { name: "Message your Career Copilot" })).toBeVisible();
     await testInfo.attach("occ2-unified-review-desktop", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
@@ -592,11 +594,37 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Paste full job description").fill("Seeking engineer to design secure payment systems and services.");
     await page.getByLabel("Message your Career Copilot").fill("Manage my career memory");
     await page.getByRole("button", { name: "Send" }).click();
-    await expect(page.getByRole("heading", { name: "Your career memory" })).toBeVisible();
+    const memoryCard = page.getByRole("region", { name: "Career memory conversation card" });
+    await expect(memoryCard).toBeVisible();
+    await memoryCard.getByText("Review, edit, or delete saved career memory").click();
+    await expect(memoryCard.getByRole("heading", { name: "Your career memory" })).toBeVisible();
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByLabel("Paste full CV")).toHaveValue("Experienced engineer creating secure distributed payment systems.");
     await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("OCC:", { exact: false }).first()).toBeVisible();
+  });
+
+  test("P7D Career Memory is a chronological private assistant card with editable controls", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    const thread = page.getByRole("region", { name: "Career Copilot conversation" });
+    await thread.getByRole("button", { name: "Manage my career memory" }).click();
+    const memory = thread.getByRole("region", { name: "Career memory conversation card" });
+    await expect(memory).toBeVisible();
+    await expect(memory.getByRole("heading", { name: "Your career memory" })).toHaveCount(0);
+    await memory.getByText("Review, edit, or delete saved career memory").click();
+    await expect(memory.getByRole("heading", { name: "Your career memory" })).toBeVisible();
+    await expect(memory.getByRole("button", { name: "Save career memory" })).toBeVisible();
+    await expect(thread.getByRole("region", { name: "Career memory workspace" })).toHaveCount(0);
+    await testInfo.attach("occ2-p7d-career-memory-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.setViewportSize({ width: 320, height: 700 });
+    await testInfo.attach("occ2-p7d-career-memory-mobile-320px", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 
   test("M7 orchestrator asks for the missing job description and accepts a follow-up", async ({ page, db, e2eUser }, testInfo) => {
