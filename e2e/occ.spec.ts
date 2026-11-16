@@ -151,7 +151,8 @@ test.describe("Career-only OCC feature", () => {
     expect(unchanged.template).toBe("aurora");
     expect(unchanged.data).toEqual(JSON.parse(JSON.stringify(sampleCV)));
     await page.getByRole("region", { name: "Current CV attachment" }).getByRole("button", { name: "Remove" }).click();
-    await expect(page.getByRole("region", { name: "CV template preview" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Open full CV preview" })).toHaveCount(0);
+    await expect(page.getByText("Choose a saved Orire CV to preview it", { exact: false })).toBeVisible();
     expect((await db.document.count({ where: { userId: e2eUser.id } }))).toBe(1);
   });
 
