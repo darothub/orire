@@ -146,7 +146,15 @@ export function OccWorkspace() {
     }
   }
   function restartInterview() {
-    resetInterviewState();
+    // Keep historical cards in this conversation. Only a new or restored
+    // conversation should clear the event timeline.
+    interviewGeneration.current++;
+    setInterviewPhase("idle");
+    setInterviewBusy(false);
+    setInterviewIndex(0);
+    setInterviewQuestion(null);
+    setInterviewContext(null);
+    setComposer("");
     setTurns(current => [...current, { role: "OCC", text: "Practice complete. Start another mock interview when ready. Answers were not saved automatically." }]);
   }
 
@@ -526,7 +534,7 @@ export function OccWorkspace() {
                   onRestart={restartInterview}
                   onUseWording={text => { setComposer(text); setInterviewPhase("question"); setSelectedAgent("interview"); }} />
               : <OccInterviewQuestionMessage question={interviewEvent.question} index={interviewEvent.index}
-                  awaitingAnswer={interviewPhase === "question" && interviewIndex === interviewEvent.index} />)}
+                  awaitingAnswer={interviewPhase === "question" && interviewEvent.id === interviewEvents[interviewEvents.length - 1]?.id} />)}
           </div>;
         })}
         {turns.length > 2 && <button type="button" className="occ2-jump" onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}>↓ Jump to latest</button>}
