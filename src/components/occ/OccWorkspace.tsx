@@ -47,17 +47,6 @@ export function OccWorkspace() {
   const [pasteRoleOpen, setPasteRoleOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showJumpToLatest, setShowJumpToLatest] = useState(false);
-  useEffect(() => {
-    const marker = bottomRef.current;
-    if (!marker || turns.length < 3) {
-      return;
-    }
-    const observer = new IntersectionObserver(([entry]) => {
-      setShowJumpToLatest(!entry.isIntersecting);
-    }, { threshold: 0 });
-    observer.observe(marker);
-    return () => observer.disconnect();
-  }, [turns.length]);
   const scrollToTurn = (element: HTMLElement | null, block: ScrollLogicalPosition = "center") => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     element?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block });
@@ -121,6 +110,18 @@ export function OccWorkspace() {
 
   const [composer, setComposer] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
+  useEffect(() => {
+    const marker = bottomRef.current;
+    if (!marker || turns.length < 3) {
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      setShowJumpToLatest(!entry.isIntersecting);
+    }, { threshold: 0 });
+    observer.observe(marker);
+    return () => observer.disconnect();
+  }, [turns.length]);
+
   const nextReviewId = useRef(1);
   const [reviewEvents, setReviewEvents] = useState<ReviewEvent[]>([]);
   const [currentTask, setCurrentTask] = useState<OccTask>("unknown");
