@@ -8,8 +8,11 @@ import { OccTemplatePreview } from "./OccTemplatePreview";
 /** In-thread, opt-in access to existing safe structured CV edit/preview flows.
  * It never applies text from an AI recommendation to a stored CV silently.
  */
-export function OccCvActionsMessage({ document }: {
-  document: { id: string; title: string; template: string; data: CVData } | null;
+type SavedCv = { id: string; title: string; template: string; data: CVData };
+export function OccCvActionsMessage({ document, availableDocuments, onChooseDocument }: {
+  document: SavedCv | null;
+  availableDocuments: SavedCv[];
+  onChooseDocument: (id: string) => void;
 }) {
   const [versionOpen, setVersionOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -26,7 +29,17 @@ export function OccCvActionsMessage({ document }: {
     <details className="occ2-cv-action-details" onToggle={event => setPreviewOpen(event.currentTarget.open)}>
       <summary>Preview a saved CV in an Orire template</summary>
       <div className="occ2-cv-action-body">
-        {previewOpen && <OccTemplatePreview document={document} />}
+        {previewOpen && <>
+          <label className="occ2-rail-select">Select a saved Orire CV
+            <select aria-label="Select saved CV for conversation preview"
+              value={document?.id ?? ""}
+              onChange={event => onChooseDocument(event.target.value)}>
+              <option value="">Choose a CV</option>
+              {availableDocuments.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
+            </select>
+          </label>
+          <OccTemplatePreview document={document} />
+        </>}
       </div>
     </details>
     <p className="occ2-review-note">Creating a version never overwrites or activates your source CV. Template previews are read-only. Pasted CV text must first be converted into a structured CV with your approval.</p>
