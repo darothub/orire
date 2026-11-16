@@ -181,6 +181,54 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByLabel("Paste full job description")).toHaveCount(0);
   });
 
+  test("P7D document context opens and focuses the actual composer editor after it mounts", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Paste JD" }).click();
+    const editor = page.getByLabel("Paste full job description");
+    await editor.fill("We are seeking a backend engineer to design payment services, own monitoring and maintain secure Java APIs.");
+    await page.getByRole("button", { name: "Paste JD" }).click();
+    await expect(editor).toHaveCount(0);
+    const context = page.getByRole("region", { name: "Current job-description attachment" });
+    await context.getByRole("button", { name: "View / edit" }).click();
+    await expect(editor).toBeVisible();
+    await expect(editor).toBeFocused();
+    await context.getByRole("button", { name: "View / edit" }).click();
+    await expect(editor).toBeFocused();
+  });
+
+  test("P7D CV preview restores keyboard focus after Escape and backdrop close at 320px", async ({ page, db, e2eUser }, testInfo) => {
+    const doc = await db.document.create({ data: {
+      userId: e2eUser.id, title: "Accessible preview CV", template: "aurora",
+      data: JSON.parse(JSON.stringify(sampleCV)),
+    } });
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.setViewportSize({ width: 320, height: 700 });
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Documents & milestones" }).click();
+    await page.getByLabel("Use saved Orire CV").selectOption(doc.id);
+    const open = page.getByRole("button", { name: "Open full CV preview" });
+    await open.click();
+    const dialog = page.getByRole("dialog", { name: "Preview Accessible preview CV" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Close CV template preview" })).toBeFocused();
+    await testInfo.attach("occ2-p7d-preview-320px", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await expect(open).toBeFocused();
+    await open.click();
+    await expect(dialog).toBeVisible();
+    await page.locator(".occ2-preview-overlay").click({ position: { x: 3, y: 3 } });
+    await expect(dialog).toHaveCount(0);
+    await expect(open).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    expect((await db.document.findUniqueOrThrow({ where: { id: doc.id } })).template).toBe("aurora");
+  });
+
   test("OCC guarded rewrite is editable, requires confirmation, and supports reject and local undo", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
