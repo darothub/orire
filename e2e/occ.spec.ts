@@ -242,11 +242,11 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     await page.goto("/occ");
     await page.getByRole("button", { name: "Review my CV for a role" }).click();
-    await expect(page.getByText("First select a CV from your Orire library", { exact: false })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("First select a CV from your Orire library", { exact: false })).toBeVisible();
     await page.getByLabel("Select your CV").selectOption({ label: "My Career CV" });
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
     await page.getByRole("button", { name: "Send" }).click();
-    await expect(page.getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
     const jd = "We are looking for a senior engineer with experience with payment platforms, responsible for API architecture, authentication, quality testing and reliable services.";
     await page.getByLabel("Message your Career Copilot").fill(jd);
     await page.getByRole("button", { name: "Send" }).click();
