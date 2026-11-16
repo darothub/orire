@@ -1,5 +1,6 @@
 import { test, expect, signIn } from "./fixtures";
 import { sampleCV } from "../src/lib/cv/sample";
+import { addSessionCookie } from "./session";
 import { Document, Packer, Paragraph } from "docx";
 
 /** Executed twice in CI: baseline E2E with OCC off, and OCC-enabled gate suite. */
@@ -54,6 +55,16 @@ test.describe("Career-only OCC feature", () => {
 
     await expect.poll(async () => db.document.count({ where: { userId: e2eUser.id } })).toBe(1);
     expect(await db.document.findUnique({ where: { id: original.id } })).not.toBeNull();
+  });
+
+  test("Career account with a non-allowlisted email is denied", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    // Change the signed-in identity's claimed email: it no longer matches
+    // either the exact beta allowlist or the tightly scoped E2E fixture.
+    await addSessionCookie(page.context(), { ...e2eUser, email: "not-allowed@example.com" });
+    expect((await (await page.request.get("/api/occ/access")).json()).permitted).toBe(false);
+    expect((await page.request.get("/api/occ/profile")).status()).toBe(403);
+    expect((await page.request.get("/occ")).status()).toBe(404);
   });
 
   for (const plan of ["free", "pro"] as const) {
