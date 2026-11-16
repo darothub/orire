@@ -1,9 +1,11 @@
+import { validateEvidenceRewrite } from "./evidenceRewrite";
 /** Grounded OCC advice schema. Text supplied by an LLM is not trusted. */
 export type OccRecommendation = {
   requirement: string;
   cvEvidence: string | null;
   assessment: "supported" | "needs-clarification" | "not-found";
   suggestion: string;
+  sampleWording: string | null;
   question: string | null;
 };
 export type OccAdvice = { summary: string; recommendations: OccRecommendation[]; nextSteps: string[]; disclaimer: string };
@@ -31,6 +33,7 @@ export function parseGroundedAdvice(raw: string, cv: string): OccAdvice {
       cvEvidence: grounded ? proposedEvidence : null,
       assessment,
       suggestion,
+      sampleWording: assessment === "supported" && grounded ? validateEvidenceRewrite(proposedEvidence, item.sampleWording) : null,
       question: str(item.question, 200) || null,
     }];
   });
