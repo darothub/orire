@@ -176,6 +176,57 @@ test.describe("Career-only OCC feature", () => {
     expect(await db.occMessage.count({ where: { conversationId: conversation.id } })).toBe(2);
   });
 
+  test("P6B ordinary transcript save does not persist coaching excerpts until user checks explicit opt-in", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.route("**/api/occ/advise", route => route.fulfill({
+      status: 200, contentType: "application/json", body: JSON.stringify({
+        advice: {
+          summary: "Synthetic and evidence-limited role review.",
+          recommendations: [{ requirement: "Java payment services", assessment: "supported",
+            cvEvidence: "Built secure Java services", suggestion: "Describe only the documented work.",
+            sampleWording: null, question: null }],
+          nextSteps: ["Verify the wording."], disclaimer: "Self-reported experience only.",
+        },
+        usedSavedProfile: false, runId: null,
+      }),
+    }));
+    await page.goto("/occ");
+    const thread = page.getByRole("region", { name: "Career Copilot conversation" });
+    await thread.getByRole("button", { name: "Review my CV for a role" }).click();
+    await thread.getByRole("button", { name: "Paste CV" }).click();
+    await thread.getByLabel("Paste full CV").fill("Built secure Java services for a financial payments team. Other personal CV content stays ephemeral.");
+    await thread.getByRole("button", { name: "Paste JD" }).click();
+    await thread.getByLabel("Paste full job description").fill("Seeking a senior engineer to design Java payment APIs and production transaction services.");
+    await thread.getByRole("button", { name: "Review attached CV" }).click();
+    await expect(thread.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    const sidebar = page.getByRole("complementary", { name: "Career Copilot conversations" });
+    const history = sidebar.getByRole("region", { name: "Private coaching history consent" });
+    await expect(history).toBeVisible();
+    await expect(history.getByRole("button", { name: "Save coaching results (1)" })).toBeDisabled();
+    await sidebar.getByRole("button", { name: "Save transcript privately" }).click();
+    const convo = await db.occConversation.findFirstOrThrow({ where: { userId: e2eUser.id } });
+    expect(await db.occCoachingSnapshot.count({ where: { conversationId: convo.id } })).toBe(0);
+    await history.getByRole("checkbox", { name: /I agree to save these sensitive CV excerpts/ }).check();
+    await expect(history.getByRole("button", { name: "Save coaching results (1)" })).toBeEnabled();
+    await history.getByRole("button", { name: "Save coaching results (1)" }).click();
+    await expect(sidebar.getByText("Coaching results saved with explicit consent.", { exact: false })).toBeVisible();
+    const saved = await db.occCoachingSnapshot.findFirstOrThrow({ where: { conversationId: convo.id } });
+    expect(saved.kind).toBe("review");
+    expect(JSON.stringify(saved.payload)).not.toContain("Other personal CV content stays ephemeral");
+    await testInfo.attach("occ2-p6b-explicit-consent-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.reload();
+    await sidebar.getByRole("button", { name: "Review my CV for a role" }).click();
+    await expect(thread.getByRole("region", { name: "Saved CV review results" })).toBeVisible();
+    page.once("dialog", dialog => void dialog.accept());
+    await sidebar.getByRole("button", { name: "Delete saved coaching results (1)" }).click();
+    await expect(sidebar.getByText("Saved coaching result cards deleted", { exact: false })).toBeVisible();
+    expect(await db.occCoachingSnapshot.count({ where: { conversationId: convo.id } })).toBe(0);
+    expect(await db.occMessage.count({ where: { conversationId: convo.id } })).toBeGreaterThan(0);
+  });
+
   test("P6B restores sensitive coaching only as an explicitly saved, read-only conversation card", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     const convo = await db.occConversation.create({ data: {
