@@ -256,7 +256,7 @@ export function OccWorkspace() {
       setSavedSessionId(conversation.id);
       setSavedFingerprint(JSON.stringify({ turns: loaded, primaryAgent: firstAgent, usedAgents: agents }));
       setCv(""); setDescription(""); setSelectedCvId(""); setUploadedCvName(""); setUploadedJobName("");
-      setAdvice(null); setReviewEvents([]); setKeywordEvents([]); setResult(null); setComposer("");
+      setAdvice(null); setReviewEvents([]); setKeywordEvents([]); setComposer("");
       setCurrentTask("unknown"); setSection("overview"); resetInterviewState();
       setPasteCvOpen(false); setPasteRoleOpen(false);
       setSessionNotice("Conversation restored. Reattach your CV and job description to continue. Historical coaching result cards were not included in this transcript-only save.");
@@ -315,7 +315,6 @@ export function OccWorkspace() {
   }, []);
   const [description, setDescription] = useState("");
 
-  const [result, setResult] = useState<Result | null>(null);
   const [keywordEvents, setKeywordEvents] = useState<{ id: number; data: Result }[]>([]);
   const nextKeywordId = useRef(1);
   const [advice, setAdvice] = useState<Advice | null>(null);
@@ -337,7 +336,7 @@ export function OccWorkspace() {
     setComposer("");
     setCv("");
     setDescription("");
-    setResult(null);
+
     setAdvice(null);
     setSelectedCvId("");
     setUploadedCvName("");
@@ -424,7 +423,7 @@ export function OccWorkspace() {
 
   async function run() {
     setError("");
-    setResult(null);
+
     setAdvice(null);
     setRunning(true);
     try {
@@ -436,7 +435,7 @@ export function OccWorkspace() {
       if (!response.ok) throw new Error(data.error ?? "Could not compare the documents.");
       const comparison = data as Result;
       const keywordEventId = nextKeywordId.current++;
-      setResult(comparison);
+
       setKeywordEvents(current => [...current, { id: keywordEventId, data: comparison }]);
       setTurns(current => [...current, { role: "OCC", text: "Here is your keyword-only comparison. This is not a hiring score.", keywordEventId }]);
     } catch (e) { setError(e instanceof Error ? e.message : "Analysis failed."); }
@@ -480,13 +479,13 @@ export function OccWorkspace() {
       setUploadedCvName("");
         setPasteCvOpen(false);
       setAdvice(null);
-      setResult(null);
+
     } else {
       setDescription("");
       setUploadedJobName("");
         setPasteRoleOpen(false);
       setAdvice(null);
-      setResult(null);
+
     }
   }
 
