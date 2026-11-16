@@ -54,7 +54,15 @@ test.describe("Career-only OCC feature", () => {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
     });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const overflow = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      viewportWidth: window.innerWidth,
+      offenders: Array.from(document.querySelectorAll<HTMLElement>("body *"))
+        .filter(element => element.getBoundingClientRect().right > window.innerWidth + 2 &&
+          getComputedStyle(element).display !== "none")
+        .slice(0, 8).map(element => ({ tag: element.tagName, className: String(element.className).slice(0, 90), width: Math.ceil(element.getBoundingClientRect().width) })),
+    }));
+    expect(overflow.scrollWidth, JSON.stringify(overflow)).toBeLessThanOrEqual(overflow.viewportWidth);
   });
 
   test("OCC 2.0 explicitly saved transcript can be reopened and deleted without storing CV/JD", async ({ page, db, e2eUser }, testInfo) => {
@@ -464,6 +472,13 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("First select a CV from your Orire library", { exact: false })).toBeVisible();
     await page.getByLabel("Select your CV").selectOption({ label: "My Career CV" });
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
+    // The fixed consent banner overlaps the now-sticky composer until the user
+    // makes a choice. Exercise the real Decline control instead of forcing clicks.
+    const cookieBanner = page.getByRole("dialog", { name: "Cookie consent" });
+    await cookieBanner.waitFor({ state: "visible", timeout: 3000 }).catch(() => {});
+    if (await cookieBanner.isVisible()) {
+      await cookieBanner.getByRole("button", { name: "Decline" }).click();
+    }
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
     const jd = "We are looking for a senior engineer with experience with payment platforms, responsible for API architecture, authentication, quality testing and reliable services.";
