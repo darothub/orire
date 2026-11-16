@@ -115,6 +115,64 @@ test.describe("Career-only OCC feature", () => {
     }
   });
 
+  test("OCC 2.0 previews a saved CV with the real template renderer without modifying its document", async ({ page, db, e2eUser }, testInfo) => {
+    const saved = await db.document.create({ data: {
+      userId: e2eUser.id, title: "Preview CV", template: "aurora",
+      data: JSON.parse(JSON.stringify(sampleCV)),
+    } });
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByLabel("Use saved Orire CV").selectOption(saved.id);
+    await expect(page.getByRole("region", { name: "CV template preview" })).toBeVisible();
+    const previewSelector = page.getByLabel("Preview template");
+    await expect(previewSelector).toHaveValue("aurora");
+    await previewSelector.selectOption("noir");
+    await page.getByRole("button", { name: "Open full CV preview" }).click();
+    const dialog = page.getByRole("dialog", { name: "Preview Preview CV" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText(sampleCV.basics.fullName, { exact: false }).first()).toBeVisible();
+    await testInfo.attach("occ2-real-noir-template-preview", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
+    await dialog.getByRole("button", { name: "Close CV template preview" }).click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole("button", { name: "Documents & milestones" }).click();
+    await page.getByRole("button", { name: "Open full CV preview" }).click();
+    await expect(dialog).toBeVisible();
+    await testInfo.attach("occ2-real-noir-template-preview-mobile", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
+    await dialog.getByRole("button", { name: "Close CV template preview" }).click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const unchanged = await db.document.findUniqueOrThrow({ where: { id: saved.id } });
+    expect(unchanged.template).toBe("aurora");
+    expect(unchanged.data).toEqual(JSON.parse(JSON.stringify(sampleCV)));
+    await page.getByRole("region", { name: "Current CV attachment" }).getByRole("button", { name: "Remove" }).click();
+    await expect(page.getByRole("button", { name: "Open full CV preview" })).toHaveCount(0);
+    await expect(page.getByText("Choose a saved Orire CV to preview it", { exact: false })).toBeVisible();
+    expect((await db.document.count({ where: { userId: e2eUser.id } }))).toBe(1);
+  });
+
+  test("OCC document context lets users edit and remove pasted job descriptions", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Paste JD" }).click();
+    await page.getByLabel("Paste full job description").fill(
+      "We need a backend engineer to design secure Java services, integrate payment APIs and lead production testing."
+    );
+    const context = page.getByRole("region", { name: "Current job-description attachment" });
+    await expect(context.getByText("Pasted role description")).toBeVisible();
+    await context.getByRole("button", { name: "View / edit" }).click();
+    await expect(page.getByLabel("Paste full job description")).toBeVisible();
+    await context.getByRole("button", { name: "Remove" }).click();
+    await expect(context.getByText("Not attached")).toBeVisible();
+    await expect(page.getByLabel("Paste full job description")).toHaveCount(0);
+  });
+
   test("Career user can save an inactive private CV version and safely undo", async ({ page, db, e2eUser }, testInfo) => {
     const original = await db.document.create({
       data: { userId: e2eUser.id, title: "Sample Master CV", template: "aurora",
