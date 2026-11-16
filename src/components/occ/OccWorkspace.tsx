@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
+import Link from "next/link";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
@@ -403,7 +404,7 @@ export function OccWorkspace() {
         </nav>
         <h3 className="occ2-side-label">CV TEMPLATE</h3>
         <p className="occ2-rail-note">Preview your saved CV using existing Orire templates in the workspace. An integrated preview follows in the document workstream.</p>
-        <a className="occ2-template-link" href="/">Open CV workspace</a>
+        <Link className="occ2-template-link" href="/">Open CV workspace</Link>
       </aside>
     </div>
   );
