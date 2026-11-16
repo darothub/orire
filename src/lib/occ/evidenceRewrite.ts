@@ -10,7 +10,7 @@ const connective = new Set([
   "while","with","within","through","have","has","had",
 ]);
 const negations = new Set(["not","never","no","without","none","neither","nor"]);
-const words = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}]+(?:[+.#-][\p{L}\p{N}]+)*/gu) ?? [];
+const words = (text: string): string[] => text.toLowerCase().match(/[\p{L}\p{N}]+(?:[+.#-][\p{L}\p{N}]+)*/gu) ?? [];
 
 export function validateEvidenceRewrite(evidence: string, proposed: unknown): string | null {
   if (typeof proposed !== "string") return null;
