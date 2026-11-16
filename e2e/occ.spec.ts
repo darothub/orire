@@ -672,6 +672,51 @@ test.describe("Career-only OCC feature", () => {
     await testInfo.attach("occ-m7-compact-action-desktop", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   });
 
+  test("P7D.2 keyword-only review is an assistant turn and never calls an AI provider", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    let aiCalls = 0;
+    let matchCalls = 0;
+    await page.route("**/api/occ/advise", async route => {
+      aiCalls++;
+      await route.fulfill({ status: 500, body: "AI should not run" });
+    });
+    await page.route("**/api/occ/match", async route => {
+      matchCalls++;
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        matchedTerms: ["java", "payments"], unverifiedTerms: ["agriculture"],
+        checked: 3, disclaimer: "Synthetic text-only comparison; no AI used.",
+      }) });
+    });
+    await page.goto("/occ");
+    const conversation = page.getByRole("region", { name: "Career Copilot conversation" });
+    await conversation.getByRole("button", { name: "Review my CV for a role" }).click();
+    await conversation.getByRole("button", { name: "Paste CV" }).click();
+    await conversation.getByLabel("Paste full CV").fill("Experienced engineer delivering Java payment systems and reliable APIs.");
+    await conversation.getByRole("button", { name: "Paste JD" }).click();
+    await conversation.getByLabel("Paste full job description").fill("We are seeking an engineer for Java payments and agriculture service integration work.");
+    await conversation.getByText("Review preferences and keyword-only comparison").click();
+    await conversation.getByRole("button", { name: "Run keyword check (no AI)" }).click();
+    const keyword = conversation.getByRole("region", { name: "Keyword comparison results" });
+    await expect(keyword).toBeVisible();
+    await expect(keyword).toContainText("3 role terms checked");
+    await keyword.getByText("Mentioned in your CV (2)").click();
+    await expect(keyword).toContainText("java, payments");
+    await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).fill("How should I phrase my experience?");
+    await conversation.getByRole("button", { name: "Send" }).click();
+    await expect(keyword).toBeVisible();
+    expect(matchCalls).toBe(1);
+    expect(aiCalls).toBe(0);
+    await testInfo.attach("occ2-p7d2-keyword-conversation-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.setViewportSize({ width: 320, height: 700 });
+    await testInfo.attach("occ2-p7d2-keyword-conversation-mobile-320px", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
   test("M7 supports CV and job-description files from the conversation start", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
