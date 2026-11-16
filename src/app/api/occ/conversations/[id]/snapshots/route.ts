@@ -39,9 +39,13 @@ export async function POST(request: Request, { params }: Params) {
         const turn = bySequence.get(messageSequence);
         if (!turn || turn.sender !== "OCC") return false;
         // Typed cards can only attach to the correct type of assistant turn.
-        return kind === "review"
-          ? turn.text.includes("reviewed the supplied CV")
-          : turn.text.startsWith("Feedback on your answer");
+        if (kind === "review") return turn.text.includes("reviewed the supplied CV");
+        const answerTurn = bySequence.get(messageSequence - 1);
+        const stored = input.snapshots.find(item => item.messageSequence === messageSequence);
+        return turn.text.startsWith("Feedback on your answer") &&
+          answerTurn?.sender === "you" &&
+          stored?.payload.kind === "interview" &&
+          answerTurn.text === stored.payload.answer;
       });
       if (!valid) return false;
       // Replace as one atomic consented set to avoid stale associations.
