@@ -175,3 +175,35 @@
   outline-offset: 2px;
 }
 .occ2-new-chat:disabled { opacity: .55; cursor: not-allowed; }
+
+/* Contextual CV/JD controls and actual (not generated) Orire template preview. */
+.occ2-document-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.occ2-document-actions button, .occ2-preview-section button, .occ2-context-link {
+  background: rgba(114,81,174,.09);
+  border: 1px solid #a99bba;
+  border-radius: 9px;
+  color: inherit;
+  padding: 7px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.occ2-context-link { text-decoration: none; text-align: center; }
+.occ2-rail-select, .occ2-preview-section { display: grid; gap: 8px; min-width: 0; font-size: 12px; }
+.occ2-rail-select select, .occ2-preview-section select {
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  color: inherit;
+  padding: 9px;
+  border: 1px solid #a99bba;
+  border-radius: 9px;
+}
+.occ2-preview-overlay { position: fixed; z-index: 10010; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(12,10,24,.82); }
+.occ2-preview-dialog { background: #faf9ff; color: #191626; width: min(94vw, 980px); max-height: 94dvh; border-radius: 16px; overflow: hidden; display: grid; grid-template-rows: auto minmax(0,1fr); }
+.occ2-preview-dialog header { padding: 15px 20px; border-bottom: 1px solid #d3cde3; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.occ2-preview-dialog header span { display: block; font-size: 12px; opacity: .7; }
+.occ2-preview-dialog header button { background: #7251ae; color: #fff; padding: 10px 14px; border: 0; border-radius: 9px; cursor: pointer; }
+.occ2-preview-scroll { overflow: auto; padding: 16px; background: #dbd8e3; }
+.occ2-preview-page { margin: 0 auto; width: min(100%, 794px); max-width: 794px; min-height: 920px; background: #fff; box-shadow: 0 3px 18px #0002; }
+.occ2-document-actions button:focus-visible, .occ2-preview-section button:focus-visible, .occ2-preview-section select:focus-visible, .occ2-rail-select select:focus-visible, .occ2-preview-dialog button:focus-visible { outline: 3px solid #9773cc; outline-offset: 3px; }
