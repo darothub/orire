@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CVData } from "@/lib/cv/schema";
 import { getTemplate, TEMPLATES } from "@/components/templates/registry";
@@ -18,14 +18,17 @@ export function OccTemplatePreview({ document }: {
   const templatePickerId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const closePreview = useCallback(() => {
+    setExpanded(false);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
   useEffect(() => {
     if (!expanded) return;
     closeRef.current?.focus();
     function handleKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();
-        setExpanded(false);
-        triggerRef.current?.focus();
+        closePreview();
       }
       if (event.key === "Tab") {
         // A closed preview has a single keyboard action; do not tab into the
@@ -36,7 +39,7 @@ export function OccTemplatePreview({ document }: {
     }
     window.document.addEventListener("keydown", handleKey);
     return () => window.document.removeEventListener("keydown", handleKey);
-  }, [expanded]);
+  }, [expanded, closePreview]);
   if (!document) {
     return <p className="occ2-rail-note">Choose a saved Orire CV to preview it in an actual template. Uploaded or pasted plain text cannot be rendered as a structured CV without conversion and your approval.</p>;
   }
@@ -52,12 +55,12 @@ export function OccTemplatePreview({ document }: {
     <p className="occ2-rail-note">Previewing {document.title}. This does not change or save your CV.</p>
     <button ref={triggerRef} type="button" className="occ2-template-link" onClick={() => setExpanded(true)}>Open full CV preview</button>
     {expanded && createPortal(<div className="occ2-preview-overlay" role="presentation" onMouseDown={event => {
-      if (event.target === event.currentTarget) setExpanded(false);
+      if (event.target === event.currentTarget) closePreview();
     }}>
       <section role="dialog" aria-modal="true" aria-label={"Preview " + document.title} className="occ2-preview-dialog">
         <header>
           <div><strong>{document.title}</strong><span>{template.name} · Read-only preview</span></div>
-          <button type="button" ref={closeRef} onClick={() => { setExpanded(false); triggerRef.current?.focus(); }} aria-label="Close CV template preview">Close ×</button>
+          <button type="button" ref={closeRef} onClick={closePreview} aria-label="Close CV template preview">Close ×</button>
         </header>
         <div className="occ2-preview-scroll">
           <div className="paper occ2-preview-page"><Renderer cv={document.data} /></div>
