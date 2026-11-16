@@ -93,7 +93,7 @@ test.describe("Career-only OCC feature", () => {
     const history = page.getByRole("region", { name: "CV Review sessions" });
     await expect(history.getByRole("button").first()).toBeVisible();
     await history.getByRole("button").first().click();
-    await expect(page.getByText("Conversation restored. Reattach", { exact: false })).toBeVisible();
+    await expect(page.getByText("Transcript restored without structured coaching results.", { exact: false })).toBeVisible();
     expect((await db.occConversation.count({ where: { userId: e2eUser.id } }))).toBe(1);
     page.once("dialog", dialog => void dialog.accept());
     await history.getByRole("button", { name: /Delete conversation:/ }).click();
@@ -205,6 +205,7 @@ test.describe("Career-only OCC feature", () => {
     await expect(history).toBeVisible();
     await expect(history.getByRole("button", { name: "Save coaching results (1)" })).toBeDisabled();
     await sidebar.getByRole("button", { name: "Save transcript privately" }).click();
+    await expect(sidebar.getByText("Transcript saved privately.", { exact: false })).toBeVisible();
     const convo = await db.occConversation.findFirstOrThrow({ where: { userId: e2eUser.id } });
     expect(await db.occCoachingSnapshot.count({ where: { conversationId: convo.id } })).toBe(0);
     await history.getByRole("checkbox", { name: /I agree to save these sensitive CV excerpts/ }).check();
@@ -218,7 +219,7 @@ test.describe("Career-only OCC feature", () => {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
     await page.reload();
-    await sidebar.getByRole("button", { name: "Review my CV for a role" }).click();
+    await sidebar.getByRole("button", { name: "Review my CV for a role", exact: true }).click();
     await expect(thread.getByRole("region", { name: "Saved CV review results" })).toBeVisible();
     page.once("dialog", dialog => void dialog.accept());
     await sidebar.getByRole("button", { name: "Delete saved coaching results (1)" }).click();
@@ -248,7 +249,7 @@ test.describe("Career-only OCC feature", () => {
     } });
     await signIn(page);
     await page.goto("/occ");
-    await page.getByRole("button", { name: "Saved clinical outreach coaching" }).click();
+    await page.getByRole("button", { name: "Saved clinical outreach coaching", exact: true }).click();
     const card = page.getByRole("region", { name: "Saved CV review results" });
     await expect(card).toBeVisible();
     await expect(card).toContainText("Previously saved review");
