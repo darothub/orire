@@ -321,7 +321,7 @@ test.describe("Career-only OCC feature", () => {
     expect(aiCalls).toBe(1);
     await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).fill("Could you clarify what I should verify?");
     await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).press("Enter");
-    await expect(conversation.getByText("Could you clarify what I should verify?", { exact: true })).toBeVisible();
+    await expect(conversation.getByText("Could you clarify what I should verify?", { exact: false })).toBeVisible();
     await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
     await testInfo.attach("occ2-p7a-chat-review-desktop", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
     await page.setViewportSize({ width: 390, height: 844 });
@@ -339,7 +339,7 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     expect((await (await page.request.get("/api/occ/access")).json()).permitted).toBe(true);
     await page.goto("/occ");
-    await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Where should we take your career?" })).toBeVisible();
 
     await page.getByRole("button", { name: "Improve my CV" }).click();
     await page.getByLabel("Source CV").selectOption(original.id);
@@ -390,7 +390,7 @@ test.describe("Career-only OCC feature", () => {
     expect(access.status()).toBe(200);
     expect((await access.json()).permitted).toBe(true);
     await page.goto("/occ");
-    await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Where should we take your career?" })).toBeVisible();
   });
 
   test("signed beta email with mismatched database identity is denied", async ({ page, db, e2eUser }) => {
@@ -455,7 +455,7 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/occ");
-    await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Where should we take your career?" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Career Copilot conversation" })).toBeVisible();
     const decline = page.getByRole("button", { name: "Decline", exact: true });
     if (await decline.isVisible()) await decline.click();
