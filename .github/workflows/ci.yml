@@ -174,6 +174,8 @@ jobs:
         timeout-minutes: 8
         env:
           ORIRE_OCC_ENABLED: "true"
+          # Synthetic CI account only; never use production beta emails in tests.
+          ORIRE_OCC_BETA_EMAILS: "occ-beta-ci@orire.test"
         run: npx playwright test e2e/occ.spec.ts --project=chromium
       - name: Preserve OCC screenshots before the full regression replaces the report
         if: ${{ !cancelled() && steps.docs.outputs.skip != 'true' }}
