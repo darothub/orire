@@ -273,17 +273,18 @@ test.describe("Career-only OCC feature", () => {
     await page.getByRole("button", { name: "Prepare for an interview" }).click();
     const conversation = page.getByRole("region", { name: "Career Copilot conversation" });
     await expect(conversation.getByRole("region", { name: "Mock interview workspace" })).toBeVisible();
-    await conversation.getByLabel("Interview target role").fill(
+    await conversation.getByRole("button", { name: "Paste JD" }).click();
+    await conversation.getByLabel("Paste full job description").fill(
       "Hiring a software engineer to design APIs, explain technical decisions and collaborate with teams.");
     await conversation.getByRole("button", { name: "Start mock interview" }).click();
     const prompt = "How would you explain a complex technical decision to your team?";
     await expect(conversation.getByRole("heading", { name: prompt })).toBeVisible();
-    await conversation.getByLabel("Your interview answer").fill("I would explain the tradeoffs with a concrete example and ask the team for feedback.");
+    await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).fill("I would explain the tradeoffs with a concrete example and ask the team for feedback.");
     await conversation.getByLabel("Agent", { exact: true }).selectOption("review");
-    await expect(conversation.getByRole("region", { name: "Mock interview workspace" })).toBeHidden();
+    await expect(conversation.getByRole("region", { name: "Mock interview workspace" })).toHaveCount(0);
     await conversation.getByLabel("Agent", { exact: true }).selectOption("interview");
     await expect(conversation.getByRole("heading", { name: prompt })).toBeVisible();
-    await expect(conversation.getByLabel("Your interview answer")).toHaveValue(/tradeoffs with a concrete example/);
+    await expect(conversation.getByRole("textbox", { name: "Message your Career Copilot" })).toHaveValue(/tradeoffs with a concrete example/);
     page.once("dialog", dialog => void dialog.accept());
     await page.getByRole("button", { name: "＋ New conversation" }).click();
     await conversation.getByLabel("Agent", { exact: true }).selectOption("interview");
