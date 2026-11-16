@@ -71,6 +71,85 @@ export function OccWorkspace() {
   const nextReviewId = useRef(1);
   const [reviewEvents, setReviewEvents] = useState<ReviewEvent[]>([]);
   const [currentTask, setCurrentTask] = useState<OccTask>("unknown");
+  function resetInterviewState() {
+    interviewGeneration.current++;
+    setInterviewPhase("idle");
+    setInterviewBusy(false);
+    setInterviewIndex(0);
+    setInterviewQuestion(null);
+    setInterviewEvents([]);
+    setInterviewContext(null);
+  }
+  async function postInterview(mode: "question" | "feedback", index: number, context: { cv: string; description: string }, question?: string, answer?: string) {
+    const response = await fetch("/api/occ/interview", {
+      method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
+      body: JSON.stringify({ mode, cv: context.cv, description: context.description,
+        turnIndex: index, ...(mode === "feedback" ? { question, answer } : {}) }),
+    });
+    const result = await response.json() as { error?: string; question?: InterviewQuestion; feedback?: InterviewFeedback };
+    if (!response.ok) throw new Error(result.error || "Interview coaching is temporarily unavailable.");
+    return result;
+  }
+  async function startInterview(index = 0) {
+    if (interviewBusy || interviewPhase === "question" || index >= MAX_INTERVIEW_TURNS || description.trim().length < 30) return;
+    const generation = interviewGeneration.current;
+    const context = index === 0 || !interviewContext ? { cv, description } : interviewContext;
+    setInterviewBusy(true);
+    setError("");
+    try {
+      const response = await postInterview("question", index, context);
+      if (generation !== interviewGeneration.current) return;
+      if (!response.question) throw new Error("The interview question could not be validated.");
+      const eventId = nextInterviewEventId.current++;
+      setInterviewEvents(current => [...current, { id: eventId, question: response.question!, index }]);
+      setTurns(current => [...current, { role: "OCC", text: "Question " + (index + 1) + " of " + MAX_INTERVIEW_TURNS, interviewEventId: eventId }]);
+      setInterviewQuestion(response.question);
+      setInterviewContext(context);
+      setInterviewIndex(index);
+      setInterviewPhase("question");
+      setSelectedAgent("interview");
+      setCurrentTask("interview");
+      setSection("interview");
+    } catch (cause) {
+      if (generation === interviewGeneration.current) setError(cause instanceof Error ? cause.message : "Interview coaching unavailable.");
+    } finally {
+      if (generation === interviewGeneration.current) setInterviewBusy(false);
+    }
+  }
+  async function submitInterviewAnswer(answer: string) {
+    if (interviewPhase !== "question" || !interviewQuestion || !interviewContext || interviewBusy) return;
+    if (answer.length < 20 || answer.length > 4000) {
+      setError("Write at least 20 characters to receive interview feedback.");
+      return;
+    }
+    const generation = interviewGeneration.current;
+    setInterviewBusy(true);
+    setError("");
+    try {
+      const response = await postInterview("feedback", interviewIndex, interviewContext, interviewQuestion.question, answer);
+      if (generation !== interviewGeneration.current) return;
+      if (!response.feedback) throw new Error("The interview feedback could not be validated.");
+      const eventId = nextInterviewEventId.current++;
+      setInterviewEvents(current => [...current, {
+        id: eventId, index: interviewIndex, question: interviewQuestion!, feedback: response.feedback!,
+      }]);
+      setTurns(current => [...current,
+        { role: "you", text: answer },
+        { role: "OCC", text: "Feedback on your answer", interviewEventId: eventId },
+      ]);
+      setInterviewPhase("feedback");
+      setComposer("");
+    } catch (cause) {
+      if (generation === interviewGeneration.current) setError(cause instanceof Error ? cause.message : "Unable to review your answer.");
+    } finally {
+      if (generation === interviewGeneration.current) setInterviewBusy(false);
+    }
+  }
+  function restartInterview() {
+    resetInterviewState();
+    setTurns(current => [...current, { role: "OCC", text: "Practice complete. Start another mock interview when ready. Answers were not saved automatically." }]);
+  }
+
   const currentFingerprint = JSON.stringify({ turns, primaryAgent, usedAgents });
   const hasUnsavedTranscript = turns.length > 0 && currentFingerprint !== savedFingerprint;
   async function refreshSessions() {
