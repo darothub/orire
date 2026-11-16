@@ -254,7 +254,7 @@ export function OccWorkspace() {
     try {
       const response = await fetch("/api/occ/conversations/" + encodeURIComponent(savedSessionId) + "/snapshots", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input), cache: "no-store",
+        body: JSON.stringify({ consent: true, snapshots: input.snapshots.map(({ messageSequence, payload }) => ({ messageSequence, payload })) }), cache: "no-store",
       });
       if (!response.ok) throw new Error("Could not save the coaching results. They remain visible here.");
       setSavedCoachingSnapshots(input.snapshots);
