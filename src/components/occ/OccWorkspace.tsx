@@ -234,7 +234,11 @@ export function OccWorkspace() {
 
   function ask(value: string) {
     const text = value.trim();
-    if (!text || running) return;
+    if (!text || running || interviewBusy) return;
+    if (selectedAgent === "interview" && interviewPhase === "question") {
+      void submitInterviewAnswer(text);
+      return;
+    }
     const plan = planOccTurn(text, {
       priorTask: currentTask,
       hasCv: cv.trim().length >= 30,
@@ -502,6 +506,7 @@ export function OccWorkspace() {
         </>}
         {turns.map((turn, index) => {
           const review = reviewEvents.find(event => event.id === turn.reviewEventId);
+          const interviewEvent = interviewEvents.find(event => event.id === turn.interviewEventId);
           return <div id={"occ-message-" + index} key={index} className={"occ2-turn " + (turn.role === "you" ? "occ2-turn-user" : "occ2-turn-assistant")}>
             <div className="occ2-message-bubble">
               <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
@@ -509,6 +514,15 @@ export function OccWorkspace() {
             {review && <OccReviewMessage advice={review.advice} original={review.original} analysisId={review.id}
               profileUsed={review.profileUsed} savedRunId={review.savedRunId}
               isLatest={review.id === reviewEvents[reviewEvents.length - 1]?.id} />}
+            {interviewEvent && (interviewEvent.feedback
+              ? <OccInterviewFeedbackMessage feedback={interviewEvent.feedback}
+                  busy={interviewBusy} hasNext={interviewEvent.index + 1 < MAX_INTERVIEW_TURNS}
+                  isLatest={interviewPhase === "feedback" && interviewEvent.id === interviewEvents[interviewEvents.length - 1]?.id}
+                  onNext={() => void startInterview(interviewEvent.index + 1)}
+                  onRestart={restartInterview}
+                  onUseWording={text => setComposer(text)} />
+              : <OccInterviewQuestionMessage question={interviewEvent.question} index={interviewEvent.index}
+                  awaitingAnswer={interviewPhase === "question" && interviewIndex === interviewEvent.index} />)}
           </div>;
         })}
         {turns.length > 2 && <button type="button" className="occ2-jump" onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}>↓ Jump to latest</button>}
