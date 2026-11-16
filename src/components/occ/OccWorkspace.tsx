@@ -1,9 +1,11 @@
 "use client";
-import { useEffect, useState, type ChangeEvent, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
+import { DEFAULT_OCC_AGENT, OCC_AGENTS, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
+import "./occ2.css";
 import { CareerMemory } from "./CareerMemory";
 import { OccDraftReview } from "./OccDraftReview";
 import { OccVersionedCv } from "./OccVersionedCv";
@@ -15,6 +17,18 @@ type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions"
 type Turn = { role: "you" | "OCC"; text: string };
 export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
+  const [selectedAgent, setSelectedAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
+  const [pasteCvOpen, setPasteCvOpen] = useState(false);
+  const [pasteRoleOpen, setPasteRoleOpen] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  function chooseAgent(id: OccAgentId) {
+    const agent = getOccAgent(id);
+    setSelectedAgent(id);
+    setCurrentTask(agent.task);
+    setSection(agent.task === "analysis" ? "analysis" : agent.task);
+    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available." }]);
+  }
+
   const [composer, setComposer] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const [currentTask, setCurrentTask] = useState<OccTask>("unknown");
