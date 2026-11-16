@@ -75,6 +75,7 @@ test.describe("Career-only OCC feature", () => {
     expect(sessions[0].messages.length).toBeGreaterThan(0);
     expect(JSON.stringify(sessions[0])).not.toContain("Senior engineer experienced");
     expect(JSON.stringify(sessions[0])).not.toContain("Senior backend engineer needed");
+    page.once("dialog", dialog => void dialog.accept());
     await page.getByRole("button", { name: "＋ New conversation" }).click();
     await expect(page.getByLabel("Paste full CV")).toHaveCount(0);
     const history = page.getByRole("region", { name: "CV Review sessions" });
