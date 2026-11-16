@@ -390,3 +390,14 @@
 .occ2-keyword-message p { font-size: 13px; line-height: 1.5; }
 .occ2-review-options summary:focus-visible,.occ2-keyword-message summary:focus-visible,.occ2-inline-cv-picker select:focus-visible { outline: 3px solid #9773cc; outline-offset: 2px; }
 @media(max-width:540px) { .occ2-analysis-inline { padding: 12px; } .occ2-review-ready { display: grid; } }
+
+/* P7D final: Career Memory is a chronological assistant card, not a second workspace. */
+.occ2-memory-message { width:min(100%,720px);min-width:0;display:grid;gap:11px;padding:clamp(13px,2vw,19px);border:1px solid #ab9bc8;border-radius:16px;background:color-mix(in srgb,var(--bg-2,#fff) 95%,#8868bb 5%); }
+.occ2-memory-message h3 {font-size:17px;font-weight:750;}
+.occ2-memory-message p {font-size:13px;line-height:1.55;}
+.occ2-memory-controls {min-width:0;border:1px solid #afa4c6;border-radius:11px;}
+.occ2-memory-controls > summary {cursor:pointer;font-size:13px;font-weight:700;padding:12px;}
+.occ2-memory-controls > summary:focus-visible {outline:3px solid #9773cc;outline-offset:2px;}
+.occ2-memory-details {min-width:0;padding:10px;border-top:1px solid #afa4c6;}
+.occ2-memory-details > section {min-width:0;box-sizing:border-box;width:100%;padding:12px!important;}
+@media (max-width:540px) {.occ2-memory-message {width:100%;padding:12px;} .occ2-memory-details {padding:6px;} .occ2-memory-details > section {padding:8px!important;} }
