@@ -137,6 +137,16 @@ test.describe("Career-only OCC feature", () => {
       contentType: "image/png",
     });
     await dialog.getByRole("button", { name: "Close CV template preview" }).click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole("button", { name: "Documents & milestones" }).click();
+    await page.getByRole("button", { name: "Open full CV preview" }).click();
+    await expect(dialog).toBeVisible();
+    await testInfo.attach("occ2-real-noir-template-preview-mobile", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
+    await dialog.getByRole("button", { name: "Close CV template preview" }).click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     const unchanged = await db.document.findUniqueOrThrow({ where: { id: saved.id } });
     expect(unchanged.template).toBe("aurora");
     expect(unchanged.data).toEqual(JSON.parse(JSON.stringify(sampleCV)));
