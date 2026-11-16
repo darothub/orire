@@ -55,7 +55,17 @@ export function OccWorkspace() {
       setSessions(Array.isArray(data.conversations) ? data.conversations : []);
     } catch { setSessionNotice("Saved conversation history is temporarily unavailable."); }
   }
-  useEffect(() => { void refreshSessions(); }, []);
+  useEffect(() => {
+    let active = true;
+    void fetch("/api/occ/conversations", { cache: "no-store" })
+      .then(async response => {
+        if (!response.ok) throw new Error("History unavailable");
+        const data = await response.json();
+        if (active) setSessions(Array.isArray(data.conversations) ? data.conversations : []);
+      })
+      .catch(() => { if (active) setSessionNotice("Saved conversation history is temporarily unavailable."); });
+    return () => { active = false; };
+  }, []);
   async function saveConversation() {
     if (!turns.length || sessionBusy) return;
     setSessionBusy(true);
