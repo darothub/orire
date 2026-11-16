@@ -18,7 +18,7 @@ import { OccTemplatePreview } from "./OccTemplatePreview";
 type Advice = OccAdvice;
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory" | "interview";
-type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number; interviewEventId?: number; cvAction?: boolean };
+type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number; interviewEventId?: number; keywordEventId?: number; cvAction?: boolean };
 type InterviewEvent = { id: number; index: number; question: InterviewQuestion; feedback?: InterviewFeedback };
 type ReviewEvent = { id: number; advice: Advice; original: string; profileUsed: boolean; savedRunId: string | null };
 type OccSessionSummary = { id: string; title: string; primaryAgent: string; usedAgents: string[]; updatedAt: string };
@@ -256,7 +256,7 @@ export function OccWorkspace() {
       setSavedSessionId(conversation.id);
       setSavedFingerprint(JSON.stringify({ turns: loaded, primaryAgent: firstAgent, usedAgents: agents }));
       setCv(""); setDescription(""); setSelectedCvId(""); setUploadedCvName(""); setUploadedJobName("");
-      setAdvice(null); setReviewEvents([]); setResult(null); setComposer("");
+      setAdvice(null); setReviewEvents([]); setKeywordEvents([]); setResult(null); setComposer("");
       setCurrentTask("unknown"); setSection("overview"); resetInterviewState();
       setPasteCvOpen(false); setPasteRoleOpen(false);
       setSessionNotice("Conversation restored. Reattach your CV and job description to continue. Historical coaching result cards were not included in this transcript-only save.");
@@ -316,6 +316,8 @@ export function OccWorkspace() {
   const [description, setDescription] = useState("");
 
   const [result, setResult] = useState<Result | null>(null);
+  const [keywordEvents, setKeywordEvents] = useState<{ id: number; data: Result }[]>([]);
+  const nextKeywordId = useRef(1);
   const [advice, setAdvice] = useState<Advice | null>(null);
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
@@ -331,6 +333,7 @@ export function OccWorkspace() {
         !window.confirm("Start a new conversation? Unsaved messages and current document attachments will be cleared. Previously saved transcripts remain in your history.")) return;
     setTurns([]);
     setReviewEvents([]);
+    setKeywordEvents([]);
     setComposer("");
     setCv("");
     setDescription("");
@@ -431,8 +434,11 @@ export function OccWorkspace() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Could not compare the documents.");
-      setResult(data as Result);
-      setTurns(current => [...current, { role: "OCC", text: "Your evidence comparison is ready below. This is not a hiring score." }]);
+      const comparison = data as Result;
+      const keywordEventId = nextKeywordId.current++;
+      setResult(comparison);
+      setKeywordEvents(current => [...current, { id: keywordEventId, data: comparison }]);
+      setTurns(current => [...current, { role: "OCC", text: "Here is your keyword-only comparison. This is not a hiring score.", keywordEventId }]);
     } catch (e) { setError(e instanceof Error ? e.message : "Analysis failed."); }
     finally { setRunning(false); }
   }
@@ -545,10 +551,20 @@ export function OccWorkspace() {
         {turns.map((turn, index) => {
           const review = reviewEvents.find(event => event.id === turn.reviewEventId);
           const interviewEvent = interviewEvents.find(event => event.id === turn.interviewEventId);
+          const keywordEvent = keywordEvents.find(event => event.id === turn.keywordEventId);
           return <div id={"occ-message-" + index} key={index} className={"occ2-turn " + (turn.role === "you" ? "occ2-turn-user" : "occ2-turn-assistant")}>
             <div className="occ2-message-bubble">
               <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
             </div>
+            {keywordEvent && <section aria-label="Keyword comparison results" className="occ2-keyword-message">
+              <h3>Keyword-only evidence check</h3>
+              <p>{keywordEvent.data.checked} role terms checked. This is not a hiring score, match percentage or AI advice.</p>
+              <details><summary>Mentioned in your CV ({keywordEvent.data.matchedTerms.length})</summary>
+                <p>{keywordEvent.data.matchedTerms.join(", ") || "No exact overlapping terms found."}</p></details>
+              <details><summary>Not found in CV text ({keywordEvent.data.unverifiedTerms.length})</summary>
+                <p>{keywordEvent.data.unverifiedTerms.join(", ") || "No missing keywords identified."}</p></details>
+              <p className="occ2-review-note">{keywordEvent.data.disclaimer}</p>
+            </section>}
             {turn.cvAction && <OccCvActionsMessage document={selectedStructuredCv} availableDocuments={savedCvs} onChooseDocument={selectSavedCv} />}
             {review && <OccReviewMessage advice={review.advice} original={review.original} analysisId={review.id}
               profileUsed={review.profileUsed} savedRunId={review.savedRunId}
