@@ -201,6 +201,7 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Your current CV text").fill("Summary: Experienced engineer. " + evidence);
     await page.getByLabel("Target job description").fill("We are looking for an engineer responsible for Kotlin services and payment APIs.");
     await page.getByRole("button", { name: "Review my fit" }).click();
+    await page.getByText("Review and approve suggested CV wording").click();
     const area = page.getByRole("heading", { name: "Review CV wording changes" }).locator("..");
     await area.getByLabel("CV passage to review").selectOption("0");
     await expect(area.getByLabel("OCC suggested CV rewrite")).toContainText("Tested payment APIs");
@@ -239,6 +240,11 @@ test.describe("Career-only OCC feature", () => {
     await conversation.getByRole("button", { name: "Review my fit" }).click();
     await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
     await expect(conversation.getByText("Synthetic grounded role review.")).toBeVisible();
+    await expect(conversation.getByRole("button", { name: "Review my fit" })).toHaveCount(0);
+    await expect(conversation.getByText("Review findings")).toBeVisible();
+    const findings = conversation.getByRole("region", { name: "OCC recommendations workspace" });
+    await findings.locator("details").first().locator("summary").click();
+    await expect(findings.getByText("Built secure Java services", { exact: true })).toBeVisible();
     await expect(conversation.getByRole("textbox", { name: "Message your Career Copilot" })).toBeVisible();
     await expect(conversation.getByRole("button", { name: "↓ Jump to latest" })).toBeVisible();
     await testInfo.attach("occ2-unified-review-desktop", {
