@@ -305,3 +305,10 @@
   .occ2-message-bubble { max-width:95%; }
   .occ2-review-assessment { max-width:92px; }
 }
+
+.occ2-composer-cta { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; align-items:center; }
+.occ2-review-action { border:1px solid #8865c8; background:rgba(114,81,174,.1); color:inherit; border-radius:11px; padding:9px 12px; cursor:pointer; font-weight:700; font-size:12px; }
+.occ2-review-action:disabled { opacity:.55; cursor:wait; }
+.occ2-review-action:focus-visible { outline:3px solid #9773cc; outline-offset:2px; }
+.occ2-input-note { font-size:12px; opacity:.74; line-height:1.5; }
+@media(max-width:540px) { .occ2-composer-cta { width:100%; } .occ2-composer-cta button { flex:1; } }
