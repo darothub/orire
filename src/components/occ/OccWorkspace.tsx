@@ -43,7 +43,7 @@ export function OccWorkspace() {
       document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     return () => cancelAnimationFrame(frame);
-  }, [section, advice]);
+  }, [section]);
 
   function chooseAgent(id: OccAgentId) {
     const agent = getOccAgent(id);
@@ -327,7 +327,7 @@ export function OccWorkspace() {
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
   const selectedStructuredCv = savedCvs.find(item => item.id === selectedCvId) ?? null;
-  function useSavedCv(id: string) {
+  function selectSavedCv(id: string) {
     const document = savedCvs.find(item => item.id === id);
     if (!document) return;
     setSelectedCvId(document.id);
@@ -463,7 +463,7 @@ export function OccWorkspace() {
         {savedCvs.length > 0 && <label style={{ display: "grid", gap: 6, fontWeight: 600 }}>Select your CV
           <select style={field} value={selectedCvId} onChange={event => {
             const id = event.target.value;
-            if (id) useSavedCv(id);
+            if (id) selectSavedCv(id);
             else { setSelectedCvId(""); setCv(""); setUploadedCvName(""); setShowCvText(true); }
           }}>
             <option value="">Paste CV text manually</option>
@@ -556,7 +556,7 @@ export function OccWorkspace() {
             <button type="button" onClick={() => detachDocument("cv")}>Remove</button>
           </div>}
           {!cvReady && savedCvs.length > 0 && <label className="occ2-rail-select">Choose saved CV
-            <select aria-label="Use saved Orire CV" value="" onChange={event => useSavedCv(event.target.value)}>
+            <select aria-label="Use saved Orire CV" value="" onChange={event => selectSavedCv(event.target.value)}>
               <option value="">Select a CV</option>
               {savedCvs.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
             </select>
