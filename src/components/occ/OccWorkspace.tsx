@@ -245,6 +245,10 @@ export function OccWorkspace() {
       hasJobDescription: description.trim().length >= 30,
       hasAdvice: advice !== null,
     });
+    if (plan.task === "interview") {
+      setSelectedAgent("interview");
+      setUsedAgents(current => current.includes("interview") ? current : [...current, "interview"]);
+    }
     if (plan.captureJobDescription) setDescription(text.slice(0, 15000));
     setCurrentTask(plan.task);
     setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: plan.reply }]);
