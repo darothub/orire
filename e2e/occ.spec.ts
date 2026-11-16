@@ -57,7 +57,7 @@ test.describe("Career-only OCC feature", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 
-  test("OCC 2.0 explicitly saved transcript can be reopened and deleted without storing CV/JD", async ({ page, db, e2eUser }) => {
+  test("OCC 2.0 explicitly saved transcript can be reopened and deleted without storing CV/JD", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
     await page.goto("/occ");
@@ -68,6 +68,10 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Paste full job description").fill("Senior backend engineer needed to build Java microservices and secure payment APIs.");
     await page.getByRole("button", { name: "Save transcript privately" }).click();
     await expect(page.getByText("Transcript saved privately.", { exact: false })).toBeVisible();
+    await testInfo.attach("occ2-private-session-history-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }),
+      contentType: "image/png",
+    });
     const sessions = await db.occConversation.findMany({
       where: { userId: e2eUser.id }, include: { messages: true },
     });
