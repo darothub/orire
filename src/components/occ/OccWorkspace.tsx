@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
+import type { OccAdvice } from "@/lib/occ/recommendations";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import { DEFAULT_OCC_AGENT, OCC_AGENTS, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
 import "./occ2.css";
@@ -13,7 +14,6 @@ import { OccVersionedCv } from "./OccVersionedCv";
 import { OccMockInterview } from "./OccMockInterview";
 import { OccTemplatePreview } from "./OccTemplatePreview";
 
-import type { OccAdvice } from "@/lib/occ/recommendations";
 type Advice = OccAdvice;
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory" | "interview";
@@ -126,7 +126,7 @@ export function OccWorkspace() {
       setAdvice(null); setReviewEvents([]); setResult(null); setComposer("");
       setCurrentTask("unknown"); setSection("overview"); setInterviewEpoch(current => current + 1);
       setPasteCvOpen(false); setPasteRoleOpen(false);
-      setSessionNotice("Conversation restored. Reattach your CV and job description to continue; document text was not saved.");
+      setSessionNotice("Conversation restored. Reattach your CV and job description to continue. Historical coaching result cards were not included in this transcript-only save.");
       setSessionRailOpen(false);
     } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Unable to load conversation."); }
     finally { setSessionBusy(false); }
@@ -429,7 +429,7 @@ export function OccWorkspace() {
           {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
         </div>}
         {section === "overview" && error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
-        <p style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · Only CVs and job descriptions · You decide when to analyze or save</p>
+        <p className="occ2-input-note">PDF, DOCX or TXT · Your CV and JD are sent to the AI provider only when you explicitly request a review · Saving conversations is optional</p>
       {section === "analysis" && <section aria-label="CV analysis workspace" style={{ display: "grid", gap: 20 }}>
       <div style={{ ...surface, display: "grid", gap: 17 }}>
         <h2 style={{ fontSize: 23, fontWeight: 750 }}>Review your fit for this role</h2>
@@ -512,7 +512,7 @@ export function OccWorkspace() {
       <div ref={bottomRef} className="occ2-bottom-anchor" aria-hidden="true" />
       {running && <p role="status" aria-live="polite" className="occ2-working-status">OCC is reviewing the supplied information…</p>}
         <form className="occ2-sticky-composer" onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #b8afd0", borderRadius: 16, background: "rgba(114,81,174,.04)" }}>
-          <textarea aria-label="Message your Career Copilot" style={{ width: "100%", background: "transparent", color: "inherit", font: "inherit", border: 0, resize: "vertical", padding: 8, minHeight: 78, outlineOffset: 2 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Tell OCC what you want to achieve..." />
+          <textarea aria-label="Message your Career Copilot" style={{ width: "100%", background: "transparent", color: "inherit", font: "inherit", border: 0, resize: "vertical", padding: 8, minHeight: 78, outlineOffset: 2 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(composer); } }} placeholder="Tell OCC what you want to achieve..." />
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
               {uploadInput("cv", "Upload CV", true)}
@@ -520,7 +520,10 @@ export function OccWorkspace() {
               <button type="button" className="occ2-quiet-action" aria-expanded={pasteCvOpen} onClick={() => setPasteCvOpen(value => !value)}>Paste CV</button>
               <button type="button" className="occ2-quiet-action" aria-expanded={pasteRoleOpen} onClick={() => setPasteRoleOpen(value => !value)}>Paste JD</button>
             </div>
-            <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
+            <div className="occ2-composer-cta">
+              {selectedAgent === "review" && cvReady && roleReady && <button type="button" className="occ2-review-action" disabled={running} onClick={() => void requestAdvice()}>✦ {running ? "Reviewing…" : "Review attached CV"}</button>}
+              <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
+            </div>
           </div>
           {pasteCvOpen && <label id="occ2-cv-text-panel" className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
             <textarea aria-label="Paste full CV" maxLength={30000} rows={6} value={cv} onChange={event => { setCv(event.target.value); setSelectedCvId(""); setUploadedCvName(""); }} placeholder="Paste your complete CV here" />
