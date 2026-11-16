@@ -67,6 +67,30 @@ test.describe("Career-only OCC feature", () => {
     expect((await page.request.get("/occ")).status()).toBe(404);
   });
 
+  test("allowlisted Career account can access OCC", async ({ page, db, e2eUser }) => {
+    const betaEmail = "occ-beta-ci@orire.test";
+    test.skip(process.env.ORIRE_OCC_BETA_EMAILS !== betaEmail, "Requires hermetic CI beta allowlist");
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await db.user.update({ where: { id: e2eUser.id }, data: { email: betaEmail } });
+    await addSessionCookie(page.context(), { ...e2eUser, email: betaEmail });
+    const access = await page.request.get("/api/occ/access");
+    expect(access.status()).toBe(200);
+    expect((await access.json()).permitted).toBe(true);
+    await page.goto("/occ");
+    await expect(page.getByRole("heading", { name: "Your career, with a copilot." })).toBeVisible();
+  });
+
+  test("signed beta email with mismatched database identity is denied", async ({ page, db, e2eUser }) => {
+    const betaEmail = "occ-beta-ci@orire.test";
+    test.skip(process.env.ORIRE_OCC_BETA_EMAILS !== betaEmail, "Requires hermetic CI beta allowlist");
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    // Do not update DB: the JWT's email differs from the canonical account.
+    await addSessionCookie(page.context(), { ...e2eUser, email: betaEmail });
+    expect((await (await page.request.get("/api/occ/access")).json()).permitted).toBe(false);
+    expect((await page.request.get("/api/occ/profile")).status()).toBe(403);
+    expect((await page.request.get("/occ")).status()).toBe(404);
+  });
+
   for (const plan of ["free", "pro"] as const) {
     test(`${plan} users cannot access OCC routes`, async ({ page, db, e2eUser }) => {
       await db.entitlement.create({ data: { userId: e2eUser.id, plan } });
