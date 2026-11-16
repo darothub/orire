@@ -211,6 +211,71 @@ test.describe("Career-only OCC feature", () => {
     expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
   });
 
+  test("OCC 2.0 review cards and composer remain in the same conversation", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.route("**/api/occ/advise", route => route.fulfill({
+      status: 200, contentType: "application/json", body: JSON.stringify({
+        advice: { summary: "Synthetic grounded role review.",
+          recommendations: [{ requirement: "Payment systems", cvEvidence: "Built secure Java services", assessment: "supported",
+            suggestion: "Describe the work you performed.", sampleWording: null, question: null }],
+          nextSteps: ["Confirm that all wording is accurate."], disclaimer: "Test fixture only." },
+        usedSavedProfile: false, runId: null,
+      }),
+    }));
+    await page.goto("/occ");
+    const conversation = page.getByRole("region", { name: "Career Copilot conversation" });
+    await conversation.getByRole("button", { name: "Review my CV for a role" }).click();
+    await conversation.getByLabel("Your current CV text").fill("Senior engineer. Built secure Java services integrating payment platforms and APIs.");
+    await conversation.getByLabel("Target job description").fill("Hiring an engineer to design reliable secure Java APIs and financial payment services.");
+    await conversation.getByRole("button", { name: "Review my fit" }).click();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByText("Synthetic grounded role review.")).toBeVisible();
+    await expect(conversation.getByRole("textbox", { name: "Message your Career Copilot" })).toBeVisible();
+    await expect(conversation.getByRole("button", { name: "↓ Jump to latest" })).toBeVisible();
+    await testInfo.attach("occ2-unified-review-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await testInfo.attach("occ2-unified-review-mobile", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
+  test("OCC 2.0 preserves an active interview while navigating between agents, but resets on new session", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.route("**/api/occ/interview", route => route.fulfill({
+      status: 200, contentType: "application/json",
+      body: JSON.stringify({ question: {
+        question: "How would you explain a complex technical decision to your team?",
+        focus: "Communication",
+        answerStarters: ["Describe your own example.", "Explain your reasoning."],
+      }, turnIndex: 0 }),
+    }));
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Prepare for an interview" }).click();
+    const conversation = page.getByRole("region", { name: "Career Copilot conversation" });
+    await expect(conversation.getByRole("region", { name: "Mock interview workspace" })).toBeVisible();
+    await conversation.getByLabel("Interview target role").fill(
+      "Hiring a software engineer to design APIs, explain technical decisions and collaborate with teams.");
+    await conversation.getByRole("button", { name: "Start mock interview" }).click();
+    const prompt = "How would you explain a complex technical decision to your team?";
+    await expect(conversation.getByRole("heading", { name: prompt })).toBeVisible();
+    await conversation.getByLabel("Your interview answer").fill("I would explain the tradeoffs with a concrete example and ask the team for feedback.");
+    await conversation.getByLabel("Agent", { exact: true }).selectOption("review");
+    await expect(conversation.getByRole("region", { name: "Mock interview workspace" })).toBeHidden();
+    await conversation.getByLabel("Agent", { exact: true }).selectOption("interview");
+    await expect(conversation.getByRole("heading", { name: prompt })).toBeVisible();
+    await expect(conversation.getByLabel("Your interview answer")).toHaveValue(/tradeoffs with a concrete example/);
+    page.once("dialog", dialog => void dialog.accept());
+    await page.getByRole("button", { name: "＋ New conversation" }).click();
+    await conversation.getByLabel("Agent", { exact: true }).selectOption("interview");
+    await expect(conversation.getByRole("button", { name: "Start mock interview" })).toBeDisabled();
+  });
+
   test("Career user can save an inactive private CV version and safely undo", async ({ page, db, e2eUser }, testInfo) => {
     const original = await db.document.create({
       data: { userId: e2eUser.id, title: "Sample Master CV", template: "aurora",
