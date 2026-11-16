@@ -57,6 +57,16 @@ export function OccWorkspace() {
     return () => cancelAnimationFrame(frame);
   }, [section]);
 
+  function openCvActions() {
+    setSelectedAgent("improve");
+    setUsedAgents(current => current.includes("improve") ? current : [...current, "improve"]);
+    setCurrentTask("versions");
+    setSection("versions");
+    setTurns(current => [...current, {
+      role: "OCC", text: "You can compare a saved CV field, preview a template, or create a new version after reviewing your wording. Nothing is applied automatically.",
+      cvAction: true,
+    }]);
+  }
   function chooseAgent(id: OccAgentId) {
     const agent = getOccAgent(id);
     setSelectedAgent(id);
@@ -526,7 +536,8 @@ export function OccWorkspace() {
             {turn.cvAction && <OccCvActionsMessage document={selectedStructuredCv} />}
             {review && <OccReviewMessage advice={review.advice} original={review.original} analysisId={review.id}
               profileUsed={review.profileUsed} savedRunId={review.savedRunId}
-              isLatest={review.id === reviewEvents[reviewEvents.length - 1]?.id} />}
+              isLatest={review.id === reviewEvents[reviewEvents.length - 1]?.id}
+              onOpenCvActions={openCvActions} />}
             {interviewEvent && (interviewEvent.feedback
               ? <OccInterviewFeedbackMessage feedback={interviewEvent.feedback}
                   busy={interviewBusy} hasNext={interviewEvent.index + 1 < MAX_INTERVIEW_TURNS}
@@ -686,7 +697,15 @@ export function OccWorkspace() {
         <h3 className="occ2-side-label">MILESTONES</h3>
         <nav aria-label="Conversation milestones" className="occ2-milestones">
           {turns.length === 0 && <p>No milestones yet.</p>}
-          {turns.map((turn, index) => turn.role === "OCC" ? <button key={index} type="button" onClick={() => { setContextRailOpen(false); document.getElementById("occ-message-" + index)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>{turn.text.length > 64 ? turn.text.slice(0, 64) + "…" : turn.text}</button> : null)}
+          {turns.map((turn, index) => turn.role === "OCC" ? <button key={index} type="button"
+            aria-label={"Go to milestone " + (index + 1) + ": " + (turn.reviewEventId ? "CV review findings" : turn.interviewEventId ? "Interview coaching" : turn.cvAction ? "CV revision actions" : turn.text.slice(0, 40))}
+            onClick={() => {
+              setContextRailOpen(false);
+              document.getElementById("occ-message-" + index)?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}>
+            <span className="occ2-milestone-dot" aria-hidden="true" />
+            <span>{turn.reviewEventId ? "CV review findings" : turn.interviewEventId ? "Interview coaching" : turn.cvAction ? "CV revision actions" : turn.text.length > 60 ? turn.text.slice(0, 60) + "…" : turn.text}</span>
+          </button> : null)}
 
         </nav>
         <h3 className="occ2-side-label">CV TEMPLATE</h3>
