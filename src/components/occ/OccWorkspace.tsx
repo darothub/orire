@@ -367,7 +367,7 @@ export function OccWorkspace() {
           <p>Run an AI analysis to see grounded advice and safely review possible CV wording changes. Your original CV stays unchanged.</p>
           <button type="button" onClick={() => setSection("analysis")}>Go to CV analysis</button>
         </div>}
-      {advice && <section aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
+      {advice && <section id="occ2-advice-results" aria-live="polite" style={{ padding: 24, border: "1px solid #c8c1d9", borderRadius: 18, display: "grid", gap: 16 }}>
         <h2 style={{ fontSize: 22, fontWeight: 700 }}>OCC career recommendations</h2>
         <p>{advice.summary}</p>
         <p style={{ fontSize: 13, opacity: .8 }}>Saved career profile used: {profileUsed ? "Yes" : "No"}.</p>
@@ -389,7 +389,22 @@ export function OccWorkspace() {
       {section === "interview" && <OccMockInterview cv={cv} jobDescription={description} onUpdateRole={setDescription} />}
       {section === "versions" && <section aria-label="CV version workspace"><OccVersionedCv /></section>}
       {section === "memory" && <section aria-label="Career memory workspace"><CareerMemory /></section>}
-
+      </div>
+      <aside id="occ2-context-sidebar" className={"occ2-side occ2-side-right" + (contextRailOpen ? " occ2-side-open" : "")} aria-label="Current conversation documents and milestones">
+        <h2>Session context</h2>
+        <h3 className="occ2-side-label">DOCUMENTS</h3>
+        <div className="occ2-document"><strong>CV</strong><span>{cvReady ? uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted CV" : "Not attached"}</span></div>
+        <div className="occ2-document"><strong>Job description</strong><span>{roleReady ? uploadedJobName || "Pasted role description" : "Not attached"}</span></div>
+        <h3 className="occ2-side-label">MILESTONES</h3>
+        <nav aria-label="Conversation milestones" className="occ2-milestones">
+          {turns.length === 0 && <p>No milestones yet.</p>}
+          {turns.map((turn, index) => turn.role === "OCC" ? <button key={index} type="button" onClick={() => { setContextRailOpen(false); document.getElementById("occ-message-" + index)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>{turn.text.length > 64 ? turn.text.slice(0, 64) + "…" : turn.text}</button> : null)}
+          {advice && <button type="button" onClick={() => { setContextRailOpen(false); setSection("recommendations"); document.getElementById("occ2-advice-results")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>CV recommendations</button>}
+        </nav>
+        <h3 className="occ2-side-label">CV TEMPLATE</h3>
+        <p className="occ2-rail-note">Preview your saved CV using existing Orire templates in the workspace. An integrated preview follows in the document workstream.</p>
+        <a className="occ2-template-link" href="/">Open CV workspace</a>
+      </aside>
     </div>
   );
 }
