@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CVData } from "@/lib/cv/schema";
 import { getTemplate, TEMPLATES } from "@/components/templates/registry";
 
@@ -50,7 +51,7 @@ export function OccTemplatePreview({ document }: {
     </select>
     <p className="occ2-rail-note">Previewing {document.title}. This does not change or save your CV.</p>
     <button ref={triggerRef} type="button" className="occ2-template-link" onClick={() => setExpanded(true)}>Open full CV preview</button>
-    {expanded && <div className="occ2-preview-overlay" role="presentation" onMouseDown={event => {
+    {expanded && createPortal(<div className="occ2-preview-overlay" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget) setExpanded(false);
     }}>
       <section role="dialog" aria-modal="true" aria-label={"Preview " + document.title} className="occ2-preview-dialog">
@@ -62,6 +63,6 @@ export function OccTemplatePreview({ document }: {
           <div className="paper occ2-preview-page"><Renderer cv={document.data} /></div>
         </div>
       </section>
-    </div>}
+    </div>, window.document.body)}
   </section>;
 }
