@@ -533,7 +533,7 @@ export function OccWorkspace() {
             <div className="occ2-message-bubble">
               <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
             </div>
-            {turn.cvAction && <OccCvActionsMessage document={selectedStructuredCv} />}
+            {turn.cvAction && <OccCvActionsMessage document={selectedStructuredCv} availableDocuments={savedCvs} onChooseDocument={selectSavedCv} />}
             {review && <OccReviewMessage advice={review.advice} original={review.original} analysisId={review.id}
               profileUsed={review.profileUsed} savedRunId={review.savedRunId}
               isLatest={review.id === reviewEvents[reviewEvents.length - 1]?.id}
