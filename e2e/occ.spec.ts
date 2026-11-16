@@ -759,6 +759,12 @@ test.describe("Career-only OCC feature", () => {
       buffer: Buffer.from("Experienced backend software engineer working on secure Java payment APIs, authentication and automated testing."),
     });
     await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("updated-cv.txt");
+    // At 390px the consent dialog legitimately overlaps the sticky composer.
+    // Make the explicit privacy choice before interacting with underlying tools.
+    const consentDialog = page.getByRole("dialog", { name: "Cookie consent" });
+    if (await consentDialog.isVisible()) {
+      await consentDialog.getByRole("button", { name: "Decline" }).click();
+    }
     await page.getByRole("button", { name: "Paste CV" }).click();
     await expect(page.getByLabel("Paste full CV")).toHaveValue(/Experienced backend software engineer/);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
