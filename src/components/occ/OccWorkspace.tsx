@@ -34,6 +34,17 @@ export function OccWorkspace() {
   const [pasteCvOpen, setPasteCvOpen] = useState(false);
   const [pasteRoleOpen, setPasteRoleOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const pendingMilestoneRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!pendingMilestoneRef.current) return;
+    const anchor = pendingMilestoneRef.current;
+    pendingMilestoneRef.current = null;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [section, advice]);
+
   function chooseAgent(id: OccAgentId) {
     const agent = getOccAgent(id);
     setSelectedAgent(id);
@@ -562,7 +573,7 @@ export function OccWorkspace() {
         <nav aria-label="Conversation milestones" className="occ2-milestones">
           {turns.length === 0 && <p>No milestones yet.</p>}
           {turns.map((turn, index) => turn.role === "OCC" ? <button key={index} type="button" onClick={() => { setContextRailOpen(false); document.getElementById("occ-message-" + index)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>{turn.text.length > 64 ? turn.text.slice(0, 64) + "…" : turn.text}</button> : null)}
-          {advice && <button type="button" onClick={() => { setContextRailOpen(false); setSection("recommendations"); document.getElementById("occ2-advice-results")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>CV recommendations</button>}
+          {advice && <button type="button" onClick={() => { pendingMilestoneRef.current = "occ2-advice-results"; setContextRailOpen(false); setSection("recommendations"); }}>CV recommendations</button>}
         </nav>
         <h3 className="occ2-side-label">CV TEMPLATE</h3>
         <OccTemplatePreview document={selectedStructuredCv} />
