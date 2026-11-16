@@ -91,7 +91,7 @@ export function OccWorkspace() {
     return result;
   }
   async function startInterview(index = 0) {
-    if (interviewBusy || interviewPhase === "question" || index >= MAX_INTERVIEW_TURNS || description.trim().length < 30) return;
+    if (interviewBusy || interviewPhase === "question" || index >= MAX_INTERVIEW_TURNS || (index === 0 ? description : interviewContext?.description ?? "").trim().length < 30) return;
     const generation = interviewGeneration.current;
     const context = index === 0 || !interviewContext ? { cv, description } : interviewContext;
     setInterviewBusy(true);
@@ -524,7 +524,7 @@ export function OccWorkspace() {
                   isLatest={interviewPhase === "feedback" && interviewEvent.id === interviewEvents[interviewEvents.length - 1]?.id}
                   onNext={() => void startInterview(interviewEvent.index + 1)}
                   onRestart={restartInterview}
-                  onUseWording={text => setComposer(text)} />
+                  onUseWording={text => { setComposer(text); setInterviewPhase("question"); setSelectedAgent("interview"); }} />
               : <OccInterviewQuestionMessage question={interviewEvent.question} index={interviewEvent.index}
                   awaitingAnswer={interviewPhase === "question" && interviewIndex === interviewEvent.index} />)}
           </div>;
