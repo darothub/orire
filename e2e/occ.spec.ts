@@ -173,6 +173,44 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByLabel("Paste full job description")).toHaveCount(0);
   });
 
+  test("OCC guarded rewrite is editable, requires confirmation, and supports reject and local undo", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    const evidence = "Built Kotlin services and tested payment APIs.";
+    await page.route("**/api/occ/advise", async route => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        advice: {
+          summary: "Evidence-based synthetic review.",
+          recommendations: [{ requirement: "Kotlin services", cvEvidence: evidence, assessment: "supported",
+            suggestion: "Emphasize supported work without inventing metrics.",
+            sampleWording: "Tested payment APIs and built Kotlin services.", question: null }],
+          nextSteps: [], disclaimer: "Review all proposed wording."
+        }, usedSavedProfile: false, runId: null,
+      }) });
+    });
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Review my CV for a role" }).click();
+    await page.getByLabel("Your current CV text").fill("Summary: Experienced engineer. " + evidence);
+    await page.getByLabel("Target job description").fill("We are looking for an engineer responsible for Kotlin services and payment APIs.");
+    await page.getByRole("button", { name: "Review my fit" }).click();
+    const area = page.getByRole("heading", { name: "Review CV wording changes" }).locator("..");
+    await area.getByLabel("CV passage to review").selectOption("0");
+    await expect(area.getByLabel("OCC suggested CV rewrite")).toContainText("Tested payment APIs");
+    await expect(area.getByRole("button", { name: "Approve wording in local draft" })).toBeDisabled();
+    await testInfo.attach("occ2-evidence-grounded-rewrite-before", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await area.getByRole("checkbox").check();
+    await area.getByRole("button", { name: "Approve wording in local draft" }).click();
+    await expect(area.getByLabel("Working draft (not saved to Orire)")).toContainText("Tested payment APIs and built Kotlin services.");
+    await area.getByRole("button", { name: "Undo last local change" }).click();
+    await expect(area.getByLabel("Working draft (not saved to Orire)")).toContainText(evidence);
+    await area.getByLabel("CV passage to review").selectOption("0");
+    await area.getByRole("button", { name: "Reject this suggestion" }).click();
+    await expect(area.getByText("Suggested wording rejected.", { exact: false })).toBeVisible();
+    expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
+  });
+
   test("Career user can save an inactive private CV version and safely undo", async ({ page, db, e2eUser }, testInfo) => {
     const original = await db.document.create({
       data: { userId: e2eUser.id, title: "Sample Master CV", template: "aurora",
