@@ -32,8 +32,8 @@ export function OccTemplatePreview({ document }: {
         closeRef.current?.focus();
       }
     }
-    document.addEventListener("keydown", handleKey);
-    return () => document.removeEventListener("keydown", handleKey);
+    window.document.addEventListener("keydown", handleKey);
+    return () => window.document.removeEventListener("keydown", handleKey);
   }, [expanded]);
   if (!document) {
     return <p className="occ2-rail-note">Choose a saved Orire CV to preview it in an actual template. Uploaded or pasted plain text cannot be rendered as a structured CV without conversion and your approval.</p>;
