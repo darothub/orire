@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } from "react";
 import Link from "next/link";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
@@ -461,6 +461,7 @@ export function OccWorkspace() {
     } catch (e) { setError(e instanceof Error ? e.message : "OCC failed."); }
     finally { setRunning(false); }
   }
+  const surface: CSSProperties = { border: "1px solid #c8c1d9", borderRadius: 20, padding: "clamp(18px, 3vw, 28px)", background: "rgba(118, 83, 167, .025)", boxShadow: "0 4px 24px rgba(44, 21, 82, .045)" };
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
   const selectedStructuredCv = savedCvs.find(item => item.id === selectedCvId) ?? null;
