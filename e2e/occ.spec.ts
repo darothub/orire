@@ -624,7 +624,8 @@ test.describe("Career-only OCC feature", () => {
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("Role ready");
     await expect(page.getByRole("button", { name: "Review attached CV" })).toBeEnabled();
-    await expect(page.getByRole("button", { name: "Run keyword check (no AI)" })).toHaveCount(0);
+    await page.getByText("Review preferences and keyword-only comparison").click();
+    await expect(page.getByRole("button", { name: "Run keyword check (no AI)" })).toBeEnabled();
     await testInfo.attach("occ-m7-orchestrated-context", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   });
 
@@ -636,7 +637,6 @@ test.describe("Career-only OCC feature", () => {
       name: "resume.txt", mimeType: "text/plain",
       buffer: Buffer.from("Senior software engineer building secure APIs and distributed payment systems. Experienced with Kotlin and Java integration testing."),
     });
-    await expect(page.getByText("1. Your CV")).toBeVisible();
     await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("CV ready");
     await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("resume.txt");
     await expect(page.getByLabel("Paste full CV")).toHaveCount(0);
@@ -646,7 +646,7 @@ test.describe("Career-only OCC feature", () => {
     });
     await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("Role ready");
     await expect(page.getByLabel("Paste full job description")).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Review my fit" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Review attached CV" })).toBeEnabled();
     const decline = page.getByRole("button", { name: "Decline", exact: true });
     if (await decline.isVisible()) await decline.click();
     await testInfo.attach("occ-m7-1-desktop-upload-ready", {
@@ -694,7 +694,7 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByLabel("Paste full CV")).toHaveValue(/Senior software engineer/);
     await page.getByRole("button", { name: "Paste JD" }).click();
     await expect(page.getByLabel("Paste full job description")).toHaveValue(/We are looking for an engineer/);
-    await expect(page.getByRole("button", { name: "Review my fit" })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Review attached CV" })).toBeEnabled();
     expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(0);
     await testInfo.attach("occ-m7-uploads-desktop", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
