@@ -264,6 +264,26 @@ export function OccWorkspace() {
       setSessionNotice(error instanceof Error ? error.message : "Could not save coaching results.");
     } finally { setSessionBusy(false); }
   }
+  function exportCoachingHistory() {
+    if (!savedCoachingSnapshots.length || !savedSessionId) return;
+    // Export only records already approved for retention; never include CV/JD
+    // attachments, authentication material or raw provider requests.
+    const exportData = {
+      schemaVersion: 1,
+      conversationId: savedSessionId,
+      disclaimer: "Contains self-reported CV excerpts and interview answers. Treat as private.",
+      coachingSnapshots: savedCoachingSnapshots,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "orire-private-coaching-history.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
   async function eraseCoachingHistory() {
     if (!savedSessionId || sessionBusy ||
         !window.confirm("Permanently delete saved CV evidence excerpts and interview feedback from this conversation? Your text transcript will remain.")) return;
@@ -360,7 +380,7 @@ export function OccWorkspace() {
       const response = await fetch("/api/occ/conversations/" + encodeURIComponent(id), { method: "DELETE", cache: "no-store" });
       if (!response.ok) throw new Error("Could not delete conversation.");
       setSessions(current => current.filter(item => item.id !== id));
-      if (savedSessionId === id) { setSavedSessionId(null); setSavedFingerprint(""); }
+      if (savedSessionId === id) { setSavedSessionId(null); setSavedFingerprint(""); setSavedCoachingSnapshots([]); setHistoryConsent(false); }
       setSessionNotice("Saved conversation deleted.");
     } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Unable to delete conversation."); }
     finally { setSessionBusy(false); }
@@ -601,8 +621,11 @@ export function OccWorkspace() {
                 onClick={() => void saveCoachingHistory()}>Save coaching results ({coachingSnapshotsForCurrentTurns().length})</button>
               {(!savedSessionId || hasUnsavedTranscript) && <p>Save the current text transcript first, then separately approve saving its structured results.</p>}
             </>}
-            {savedCoachingSnapshots.length > 0 && <button type="button" disabled={!savedSessionId || sessionBusy}
-              onClick={() => void eraseCoachingHistory()}>Delete saved coaching results ({savedCoachingSnapshots.length})</button>}
+            {savedCoachingSnapshots.length > 0 && <>
+              <button type="button" disabled={!savedSessionId || sessionBusy} onClick={exportCoachingHistory}>Export saved coaching results</button>
+              <button type="button" disabled={!savedSessionId || sessionBusy}
+                onClick={() => void eraseCoachingHistory()}>Delete saved coaching results ({savedCoachingSnapshots.length})</button>
+            </>}
           </section>}
 
         {sessionNotice && <p role="status" className="occ2-rail-note">{sessionNotice}</p>}
