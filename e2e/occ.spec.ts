@@ -388,7 +388,7 @@ test.describe("Career-only OCC feature", () => {
     await expect(action).toBeVisible();
     await action.getByText("Preview a saved CV in an Orire template").click();
     await action.getByText("Choose a saved Orire CV to preview it", { exact: false }).toBeVisible();
-    await page.getByLabel("Use saved Orire CV").selectOption(original.id);
+    await action.getByLabel("Select saved CV for conversation preview").selectOption(original.id);
     await expect(action.getByRole("region", { name: "CV template preview" })).toBeVisible();
     const preview = action.getByRole("region", { name: "CV template preview" });
     await preview.getByLabel("Preview template").selectOption("noir");
