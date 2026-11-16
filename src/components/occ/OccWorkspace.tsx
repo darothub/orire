@@ -10,7 +10,7 @@ import { DEFAULT_OCC_AGENT, OCC_AGENTS, getOccAgent, type OccAgentId } from "@/l
 import "./occ2.css";
 import { CareerMemory } from "./CareerMemory";
 import { OccReviewMessage } from "./OccReviewMessage";
-import { OccVersionedCv } from "./OccVersionedCv";
+import { OccCvActionsMessage } from "./OccCvActionsMessage";
 import { OccInterviewQuestionMessage, OccInterviewFeedbackMessage } from "./OccInterviewMessages";
 import { MAX_INTERVIEW_TURNS, type InterviewFeedback, type InterviewQuestion } from "@/lib/occ/interview";
 import { OccTemplatePreview } from "./OccTemplatePreview";
@@ -18,7 +18,7 @@ import { OccTemplatePreview } from "./OccTemplatePreview";
 type Advice = OccAdvice;
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 type WorkspaceSection = "overview" | "analysis" | "recommendations" | "versions" | "memory" | "interview";
-type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number; interviewEventId?: number };
+type Turn = { role: "you" | "OCC"; text: string; reviewEventId?: number; interviewEventId?: number; cvAction?: boolean };
 type InterviewEvent = { id: number; index: number; question: InterviewQuestion; feedback?: InterviewFeedback };
 type ReviewEvent = { id: number; advice: Advice; original: string; profileUsed: boolean; savedRunId: string | null };
 type OccSessionSummary = { id: string; title: string; primaryAgent: string; usedAgents: string[]; updatedAt: string };
@@ -57,13 +57,23 @@ export function OccWorkspace() {
     return () => cancelAnimationFrame(frame);
   }, [section]);
 
+  function openCvActions() {
+    setSelectedAgent("improve");
+    setUsedAgents(current => current.includes("improve") ? current : [...current, "improve"]);
+    setCurrentTask("versions");
+    setSection("versions");
+    setTurns(current => [...current, {
+      role: "OCC", text: "You can compare a saved CV field, preview a template, or create a new version after reviewing your wording. Nothing is applied automatically.",
+      cvAction: true,
+    }]);
+  }
   function chooseAgent(id: OccAgentId) {
     const agent = getOccAgent(id);
     setSelectedAgent(id);
     setUsedAgents(current => current.includes(id) ? current : [...current, id]);
     setCurrentTask(agent.task);
     setSection(agent.task === "analysis" ? "analysis" : agent.task);
-    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available." }]);
+    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available.", cvAction: id === "improve" }]);
   }
 
   const [composer, setComposer] = useState("");
@@ -259,7 +269,7 @@ export function OccWorkspace() {
     }
     if (plan.captureJobDescription) setDescription(text.slice(0, 15000));
     setCurrentTask(plan.task);
-    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: plan.reply }]);
+    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: plan.reply, cvAction: plan.task === "versions" }]);
     setSection(plan.panel === "none" ? "overview" : plan.panel);
     setComposer("");
     setError("");
@@ -523,9 +533,11 @@ export function OccWorkspace() {
             <div className="occ2-message-bubble">
               <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
             </div>
+            {turn.cvAction && <OccCvActionsMessage document={selectedStructuredCv} availableDocuments={savedCvs} onChooseDocument={selectSavedCv} />}
             {review && <OccReviewMessage advice={review.advice} original={review.original} analysisId={review.id}
               profileUsed={review.profileUsed} savedRunId={review.savedRunId}
-              isLatest={review.id === reviewEvents[reviewEvents.length - 1]?.id} />}
+              isLatest={review.id === reviewEvents[reviewEvents.length - 1]?.id}
+              onOpenCvActions={openCvActions} />}
             {interviewEvent && (interviewEvent.feedback
               ? <OccInterviewFeedbackMessage feedback={interviewEvent.feedback}
                   busy={interviewBusy} hasNext={interviewEvent.index + 1 < MAX_INTERVIEW_TURNS}
@@ -631,7 +643,7 @@ export function OccWorkspace() {
         {interviewPhase === "question" && <p role="status">Write your own answer in the chat composer below. Use at least 20 characters to receive feedback.</p>}
         {interviewPhase === "feedback" && <p>Review the feedback above, then choose the next question or try clearer wording.</p>}
       </section>}
-      {section === "versions" && <section aria-label="CV version workspace"><OccVersionedCv /></section>}
+      
       {section === "memory" && <section aria-label="Career memory workspace"><CareerMemory /></section>}
       <div ref={bottomRef} className="occ2-bottom-anchor" aria-hidden="true" />
       {(running || interviewBusy) && <p role="status" aria-live="polite" className="occ2-working-status">{interviewBusy ? "OCC is preparing your interview coaching…" : "OCC is reviewing the supplied information…"}</p>}
@@ -685,8 +697,16 @@ export function OccWorkspace() {
         <h3 className="occ2-side-label">MILESTONES</h3>
         <nav aria-label="Conversation milestones" className="occ2-milestones">
           {turns.length === 0 && <p>No milestones yet.</p>}
-          {turns.map((turn, index) => turn.role === "OCC" ? <button key={index} type="button" onClick={() => { setContextRailOpen(false); document.getElementById("occ-message-" + index)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>{turn.text.length > 64 ? turn.text.slice(0, 64) + "…" : turn.text}</button> : null)}
-          {advice && <button type="button" onClick={() => { pendingMilestoneRef.current = "occ2-advice-results"; setContextRailOpen(false); setSection("recommendations"); }}>CV recommendations</button>}
+          {turns.map((turn, index) => turn.role === "OCC" ? <button key={index} type="button"
+            aria-label={"Go to milestone " + (index + 1) + ": " + (turn.reviewEventId ? "CV review findings" : turn.interviewEventId ? "Interview coaching" : turn.cvAction ? "CV revision actions" : turn.text.slice(0, 40))}
+            onClick={() => {
+              setContextRailOpen(false);
+              document.getElementById("occ-message-" + index)?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}>
+            <span className="occ2-milestone-dot" aria-hidden="true" />
+            <span>{turn.reviewEventId ? "CV review findings" : turn.interviewEventId ? "Interview coaching" : turn.cvAction ? "CV revision actions" : turn.text.length > 60 ? turn.text.slice(0, 60) + "…" : turn.text}</span>
+          </button> : null)}
+
         </nav>
         <h3 className="occ2-side-label">CV TEMPLATE</h3>
         <OccTemplatePreview document={selectedStructuredCv} />

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CVData } from "@/lib/cv/schema";
 import { getTemplate, TEMPLATES } from "@/components/templates/registry";
 
@@ -14,6 +15,7 @@ export function OccTemplatePreview({ document }: {
 }) {
   const [chosen, setChosen] = useState<{ documentId: string; template: string } | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const templatePickerId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -42,14 +44,14 @@ export function OccTemplatePreview({ document }: {
   const template = getTemplate(templateId);
   const Renderer = template.Component;
   return <section aria-label="CV template preview" className="occ2-preview-section">
-    <label htmlFor="occ2-preview-template">Preview template</label>
-    <select id="occ2-preview-template" value={template.id}
+    <label htmlFor={templatePickerId}>Preview template</label>
+    <select id={templatePickerId} value={template.id}
       onChange={event => setChosen({ documentId: document.id, template: event.target.value })}>
       {TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}{t.ats ? " · Single column" : " · Design"}</option>)}
     </select>
     <p className="occ2-rail-note">Previewing {document.title}. This does not change or save your CV.</p>
     <button ref={triggerRef} type="button" className="occ2-template-link" onClick={() => setExpanded(true)}>Open full CV preview</button>
-    {expanded && <div className="occ2-preview-overlay" role="presentation" onMouseDown={event => {
+    {expanded && createPortal(<div className="occ2-preview-overlay" role="presentation" onMouseDown={event => {
       if (event.target === event.currentTarget) setExpanded(false);
     }}>
       <section role="dialog" aria-modal="true" aria-label={"Preview " + document.title} className="occ2-preview-dialog">
@@ -61,6 +63,6 @@ export function OccTemplatePreview({ document }: {
           <div className="paper occ2-preview-page"><Renderer cv={document.data} /></div>
         </div>
       </section>
-    </div>}
+    </div>, window.document.body)}
   </section>;
 }

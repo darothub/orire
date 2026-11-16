@@ -10,12 +10,13 @@ type Props = {
   profileUsed: boolean;
   savedRunId: string | null;
   isLatest: boolean;
+  onOpenCvActions?: () => void;
 };
 
 /** A result attached to its assistant turn, never an unrelated page section.
  * Historical in-memory results are read-only with respect to saved CV data.
  */
-export function OccReviewMessage({ advice, original, analysisId, profileUsed, savedRunId, isLatest }: Props) {
+export function OccReviewMessage({ advice, original, analysisId, profileUsed, savedRunId, isLatest, onOpenCvActions }: Props) {
   return <section
     id={isLatest ? "occ2-advice-results" : undefined}
     aria-label="OCC recommendations workspace"
@@ -52,6 +53,10 @@ export function OccReviewMessage({ advice, original, analysisId, profileUsed, sa
       <summary>Review and approve suggested CV wording</summary>
       <OccDraftReview key={analysisId} original={original} recommendations={advice.recommendations} />
     </details>
+    {onOpenCvActions && <button type="button" className="occ2-review-action" onClick={onOpenCvActions}>
+      Create a separate saved CV version
+    </button>}
+    <p className="occ2-review-note">Your working draft is not linked to a saved CV automatically. To create a saved version, you must select the correct CV field and approve its exact replacement yourself.</p>
     <p className="occ2-review-note">{advice.disclaimer}</p>
     <p className="occ2-review-note">Saved career profile used: {profileUsed ? "Yes" : "No"} · {savedRunId ? "Recommendation run saved separately" : "Recommendation run not saved"}. The current chat transcript and its result cards are not automatically saved.</p>
   </section>;

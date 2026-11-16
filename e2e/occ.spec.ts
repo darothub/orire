@@ -343,6 +343,9 @@ test.describe("Career-only OCC feature", () => {
     await expect(page.getByRole("heading", { name: "Where should we take your career?" })).toBeVisible();
 
     await page.getByRole("button", { name: "Improve my CV" }).click();
+    const cvActions = page.getByRole("region", { name: "CV revision and template actions" });
+    await expect(cvActions).toBeVisible();
+    await cvActions.getByText("Save an approved revision as a new CV version").click();
     await page.getByLabel("Source CV").selectOption(original.id);
     await page.getByLabel("Field to revise").selectOption("0");
     const before = await page.getByLabel("Before (original)").inputValue();
@@ -369,6 +372,41 @@ test.describe("Career-only OCC feature", () => {
 
     await expect.poll(async () => db.document.count({ where: { userId: e2eUser.id } })).toBe(1);
     expect(await db.document.findUnique({ where: { id: original.id } })).not.toBeNull();
+  });
+
+  test("P7C keeps real CV preview and revision actions inside conversation, without editing saved CV", async ({ page, db, e2eUser }, testInfo) => {
+    const original = await db.document.create({ data: {
+      userId: e2eUser.id, title: "In-thread CV", template: "aurora",
+      data: JSON.parse(JSON.stringify(sampleCV)),
+    } });
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ");
+    const thread = page.getByRole("region", { name: "Career Copilot conversation" });
+    await thread.getByRole("button", { name: "Improve my CV" }).click();
+    const action = thread.getByRole("region", { name: "CV revision and template actions" });
+    await expect(action).toBeVisible();
+    await action.getByText("Preview a saved CV in an Orire template").click();
+    await expect(action.getByText("Choose a saved Orire CV to preview it", { exact: false })).toBeVisible();
+    await action.getByLabel("Select saved CV for conversation preview").selectOption(original.id);
+    await expect(action.getByRole("region", { name: "CV template preview" })).toBeVisible();
+    const preview = action.getByRole("region", { name: "CV template preview" });
+    await preview.getByLabel("Preview template").selectOption("noir");
+    await preview.getByRole("button", { name: "Open full CV preview" }).click();
+    await expect(page.getByRole("dialog", { name: "Preview In-thread CV" })).toBeVisible();
+    await testInfo.attach("occ2-p7c-cv-inline-preview-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.getByRole("button", { name: "Close CV template preview" }).click();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ2-p7c-cv-inline-actions-mobile", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const unchanged = await db.document.findUniqueOrThrow({ where: { id: original.id } });
+    expect(unchanged.template).toBe("aurora");
+    expect(unchanged.data).toEqual(JSON.parse(JSON.stringify(sampleCV)));
+    expect(await db.document.count({ where: { userId: e2eUser.id } })).toBe(1);
   });
 
   test("Career account with a non-allowlisted email is denied", async ({ page, db, e2eUser }) => {
