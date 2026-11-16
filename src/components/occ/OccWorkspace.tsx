@@ -21,6 +21,7 @@ type OccSessionSummary = { id: string; title: string; primaryAgent: string; used
 
 export function OccWorkspace() {
   const [section, setSection] = useState<WorkspaceSection>("overview");
+  const [interviewEpoch, setInterviewEpoch] = useState(0);
   const [selectedAgent, setSelectedAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
   const [primaryAgent, setPrimaryAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
   const [usedAgents, setUsedAgents] = useState<OccAgentId[]>([DEFAULT_OCC_AGENT]);
@@ -119,7 +120,7 @@ export function OccWorkspace() {
       setSavedFingerprint(JSON.stringify({ turns: loaded, primaryAgent: firstAgent, usedAgents: agents }));
       setCv(""); setDescription(""); setSelectedCvId(""); setUploadedCvName(""); setUploadedJobName("");
       setAdvice(null); setResult(null); setComposer("");
-      setCurrentTask("unknown"); setSection("overview");
+      setCurrentTask("unknown"); setSection("overview"); setInterviewEpoch(current => current + 1);
       setPasteCvOpen(false); setPasteRoleOpen(false);
       setSessionNotice("Conversation restored. Reattach your CV and job description to continue; document text was not saved.");
       setSessionRailOpen(false);
@@ -207,6 +208,7 @@ export function OccWorkspace() {
     setSavedFingerprint("");
     setSessionNotice("");
     setCurrentTask("unknown");
+    setInterviewEpoch(current => current + 1);
     setSection("overview");
     setSavedRunId(null);
     setError("");
@@ -413,34 +415,13 @@ export function OccWorkspace() {
         {turns.map((turn, index) => <div id={"occ-message-" + index} key={index} style={{ justifySelf: turn.role === "you" ? "end" : "start", maxWidth: "85%", padding: "12px 16px", borderRadius: 14, background: turn.role === "you" ? "#7251ae" : "rgba(114,81,174,.09)", color: turn.role === "you" ? "#fff" : "inherit" }}>
           <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
         </div>)}
-        <div ref={bottomRef} />
         {turns.length > 2 && <button type="button" className="occ2-jump" onClick={() => bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })}>↓ Jump to latest</button>}
         {(cvReady || roleReady) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
           {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
         </div>}
         {section === "overview" && error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
-        <form onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #b8afd0", borderRadius: 16, background: "rgba(114,81,174,.04)" }}>
-          <textarea aria-label="Message your Career Copilot" style={{ width: "100%", background: "transparent", color: "inherit", font: "inherit", border: 0, resize: "vertical", padding: 8, minHeight: 78, outlineOffset: 2 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Tell OCC what you want to achieve..." />
-          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-              {uploadInput("cv", "Upload CV", true)}
-              {uploadInput("jobDescription", "Upload job description", true)}
-              <button type="button" className="occ2-quiet-action" aria-expanded={pasteCvOpen} onClick={() => setPasteCvOpen(value => !value)}>Paste CV</button>
-              <button type="button" className="occ2-quiet-action" aria-expanded={pasteRoleOpen} onClick={() => setPasteRoleOpen(value => !value)}>Paste JD</button>
-            </div>
-            <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
-          </div>
-          {pasteCvOpen && <label id="occ2-cv-text-panel" className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
-            <textarea aria-label="Paste full CV" maxLength={30000} rows={6} value={cv} onChange={event => { setCv(event.target.value); setSelectedCvId(""); setUploadedCvName(""); }} placeholder="Paste your complete CV here" />
-          </label>}
-          {pasteRoleOpen && <label id="occ2-jd-text-panel" className="occ2-paste-editor">Job description <small>Up to 15,000 characters; not sent as a chat message</small>
-            <textarea aria-label="Paste full job description" maxLength={15000} rows={6} value={description} onChange={event => { setDescription(event.target.value); setUploadedJobName(""); }} placeholder="Paste the full job description here" />
-          </label>}
-        </form>
         <p style={{ fontSize: 12, opacity: .7 }}>PDF, DOCX or TXT · Only CVs and job descriptions · You decide when to analyze or save</p>
-      </section>
-      {section !== "overview" && <button type="button" onClick={() => setSection("overview")} style={{ justifySelf: "start", fontSize: 13, border: 0, background: "transparent", color: "inherit", textDecoration: "underline", cursor: "pointer" }}>Back to conversation</button>}
       {section === "analysis" && <section aria-label="CV analysis workspace" style={{ display: "grid", gap: 20 }}>
       <div style={{ ...surface, display: "grid", gap: 17 }}>
         <h2 style={{ fontSize: 23, fontWeight: 750 }}>Review your fit for this role</h2>
@@ -539,12 +520,34 @@ export function OccWorkspace() {
         {advice.nextSteps.length > 0 && <div><h3 style={{ fontWeight: 700 }}>Suggested next steps</h3><ul style={{ paddingLeft: 20 }}>{advice.nextSteps.map((step, i) => <li key={i}>{step}</li>)}</ul></div>}
         <p style={{ fontSize: 13, opacity: .8 }}>{advice.disclaimer}</p>
         <OccDraftReview key={analysisVersion} original={analyzedCv} recommendations={advice.recommendations} />
-        <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made. {savedRunId ? "Session saved. You can accept or reject suggestions below." : "This session was not saved."}</p>
+        <p style={{ fontSize: 13 }}>Recommendations are review-only. No CV changes have been made. {savedRunId ? "Recommendation run saved privately. You can accept or reject suggestions below." : "This recommendation run was not saved."}</p>
       </section>}
       </section>}
-      {section === "interview" && <OccMockInterview cv={cv} jobDescription={description} onUpdateRole={setDescription} />}
+      <div hidden={section !== "interview"} className="occ2-inthread-tool" aria-label="Interview coach conversation panel"><OccMockInterview key={interviewEpoch} cv={cv} jobDescription={description} onUpdateRole={setDescription} /></div>
       {section === "versions" && <section aria-label="CV version workspace"><OccVersionedCv /></section>}
       {section === "memory" && <section aria-label="Career memory workspace"><CareerMemory /></section>}
+      <div ref={bottomRef} className="occ2-bottom-anchor" aria-hidden="true" />
+      {running && <p role="status" aria-live="polite" className="occ2-working-status">OCC is reviewing the supplied information…</p>}
+        <form className="occ2-sticky-composer" onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #b8afd0", borderRadius: 16, background: "rgba(114,81,174,.04)" }}>
+          <textarea aria-label="Message your Career Copilot" style={{ width: "100%", background: "transparent", color: "inherit", font: "inherit", border: 0, resize: "vertical", padding: 8, minHeight: 78, outlineOffset: 2 }} maxLength={1200} value={composer} onChange={event => setComposer(event.target.value)} placeholder="Tell OCC what you want to achieve..." />
+          <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+              {uploadInput("cv", "Upload CV", true)}
+              {uploadInput("jobDescription", "Upload job description", true)}
+              <button type="button" className="occ2-quiet-action" aria-expanded={pasteCvOpen} onClick={() => setPasteCvOpen(value => !value)}>Paste CV</button>
+              <button type="button" className="occ2-quiet-action" aria-expanded={pasteRoleOpen} onClick={() => setPasteRoleOpen(value => !value)}>Paste JD</button>
+            </div>
+            <button type="submit" disabled={!composer.trim()} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
+          </div>
+          {pasteCvOpen && <label id="occ2-cv-text-panel" className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
+            <textarea aria-label="Paste full CV" maxLength={30000} rows={6} value={cv} onChange={event => { setCv(event.target.value); setSelectedCvId(""); setUploadedCvName(""); }} placeholder="Paste your complete CV here" />
+          </label>}
+          {pasteRoleOpen && <label id="occ2-jd-text-panel" className="occ2-paste-editor">Job description <small>Up to 15,000 characters; not sent as a chat message</small>
+            <textarea aria-label="Paste full job description" maxLength={15000} rows={6} value={description} onChange={event => { setDescription(event.target.value); setUploadedJobName(""); }} placeholder="Paste the full job description here" />
+          </label>}
+        </form>
+
+      </section>
       </div>
       <aside id="occ2-context-sidebar" className={"occ2-side occ2-side-right" + (contextRailOpen ? " occ2-side-open" : "")} aria-label="Current conversation documents and milestones">
         <h2>Session context</h2>

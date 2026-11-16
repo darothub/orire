@@ -207,3 +207,56 @@
 .occ2-preview-scroll { overflow: auto; padding: 16px; background: #dbd8e3; }
 .occ2-preview-page { margin: 0 auto; width: min(100%, 794px); max-width: 794px; min-height: 920px; background: #fff; box-shadow: 0 3px 18px #0002; }
 .occ2-document-actions button:focus-visible, .occ2-preview-section button:focus-visible, .occ2-preview-section select:focus-visible, .occ2-rail-select select:focus-visible, .occ2-preview-dialog button:focus-visible { outline: 3px solid #9773cc; outline-offset: 3px; }
+
+/* OCC 2.0: specialist tools and results stay inside the chat timeline. */
+.occ2-conversation {
+  min-width: 0;
+  isolation: isolate;
+  align-content: start;
+}
+.occ2-conversation > section,
+.occ2-inthread-tool,
+.occ2-conversation > div { min-width: 0; }
+.occ2-inthread-tool[hidden] { display: none !important; }
+.occ2-inthread-tool { width: 100%; }
+.occ2-bottom-anchor { height: 1px; scroll-margin-bottom: 180px; }
+.occ2-sticky-composer {
+  position: sticky;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  z-index: 5;
+  width: 100%;
+  min-width: 0;
+  backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--background, #fff) 92%, #7251ae 8%) !important;
+  box-shadow: 0 8px 30px rgba(30, 20, 50, .16);
+}
+.occ2-conversation [aria-label="OCC recommendations workspace"],
+.occ2-conversation [aria-label="CV analysis workspace"],
+.occ2-conversation [aria-label="CV version workspace"],
+.occ2-conversation [aria-label="Career memory workspace"] {
+  scroll-margin-top: 20px;
+}
+.occ2-working-status { font-size: 13px; font-weight: 600; }
+@media (max-width: 540px) {
+  .occ2-sticky-composer { bottom: 0; border-radius: 13px !important; }
+  .occ2-sticky-composer textarea { font-size: 16px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .occ2-sticky-composer { backdrop-filter: none; }
+}
+
+/* Nested review cards contain width:100% form controls plus padding. Use
+   border-box so the new in-thread layout cannot expand the mobile viewport. */
+.occ2-conversation,
+.occ2-conversation * { box-sizing: border-box; }
+.occ2-conversation > *,
+.occ2-conversation > section,
+.occ2-conversation > section > *,
+.occ2-conversation textarea,
+.occ2-conversation select { min-width: 0; max-width: 100%; }
+.occ2-conversation p,
+.occ2-conversation blockquote { overflow-wrap: anywhere; }
+@media (max-width: 540px) {
+  .occ2-conversation { overflow-x: clip; }
+  .occ2-conversation > section { width: 100%; }
+}
