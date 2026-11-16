@@ -338,3 +338,30 @@
 .occ2-interview-actions-panel > button { justify-self:start; }
 .occ2-interview-actions-panel button:focus-visible,.occ2-interview-actions button:focus-visible { outline:3px solid #9773cc; outline-offset:3px; }
 @media(max-width:540px) { .occ2-interview-card { width:100%; } }
+
+/* P7C: CV decisions are contextual to the assistant message that offered them. */
+.occ2-cv-actions-message {
+  min-width: 0;
+  width: min(100%, 720px);
+  display: grid;
+  gap: 11px;
+  padding: clamp(14px, 2vw, 20px);
+  border: 1px solid #b7a4d7;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg-2, #fff) 93%, #8868bb 7%);
+}
+.occ2-cv-actions-message h3 { font-size: 19px; font-weight: 750; }
+.occ2-cv-actions-message > p { font-size: 13px; line-height: 1.6; }
+.occ2-cv-action-details { min-width: 0; border: 1px solid #a99bba; border-radius: 12px; }
+.occ2-cv-action-details > summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 13px; }
+.occ2-cv-action-body { min-width: 0; padding: 13px; border-top: 1px solid #a99bba; }
+.occ2-cv-action-body > section { min-width: 0; width: 100%; box-sizing: border-box; padding: 12px !important; }
+.occ2-cv-action-details summary:focus-visible { outline: 3px solid #9773cc; outline-offset: 2px; }
+.occ2-review-message > .occ2-review-action { justify-self: start; }
+.occ2-milestones button { display: flex; align-items: center; gap: 9px; }
+.occ2-milestone-dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: #9372cc; }
+@media (max-width: 540px) {
+  .occ2-cv-actions-message { width: 100%; }
+  .occ2-cv-action-body { padding: 8px; }
+  .occ2-cv-action-body > section { padding: 8px !important; }
+}
