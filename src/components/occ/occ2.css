@@ -401,3 +401,24 @@
 .occ2-memory-details {min-width:0;padding:10px;border-top:1px solid #afa4c6;}
 .occ2-memory-details > section {min-width:0;box-sizing:border-box;width:100%;padding:12px!important;}
 @media (max-width:540px) {.occ2-memory-message {width:100%;padding:12px;} .occ2-memory-details {padding:6px;} .occ2-memory-details > section {padding:8px!important;} }
+
+/* Conversation composer V1: permanent, readable input with contextual agent/CV tools. */
+.occ2-composer-v1 { display:grid;gap:10px;padding:13px;border:1px solid #afa0cb;border-radius:18px;background:color-mix(in srgb,var(--background,#fff) 94%,#7351ac 6%); }
+.occ2-composer-input-label {font-size:12px;font-weight:700;color:inherit;opacity:.8;}
+.occ2-composer-textarea {width:100%;min-height:90px;max-height:280px;resize:vertical;background:transparent;color:inherit;border:0;border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;line-height:1.55;outline-offset:2px;}
+.occ2-composer-textarea::placeholder {opacity:.67;}
+.occ2-composer-textarea:focus-visible {outline:2px solid #8561be;}
+.occ2-composer-tools {display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.occ2-composer-agent {display:flex;align-items:center;gap:6px;border:1px solid #a99bba;border-radius:12px;padding:5px 8px;font-size:12px;font-weight:700;}
+.occ2-composer-agent select {min-width:0;max-width:160px;border:0;background:transparent;color:inherit;font:inherit;padding:6px 3px;}
+.occ2-composer-cv-menu {position:relative;}
+.occ2-composer-cv-menu summary {cursor:pointer;border:1px solid #a99bba;border-radius:11px;padding:9px 12px;font-size:12px;font-weight:750;list-style:none;}
+.occ2-composer-cv-menu summary::-webkit-details-marker {display:none;}
+.occ2-composer-cv-options {position:absolute;bottom:calc(100% + 8px);left:0;z-index:15;min-width:min(290px,75vw);max-width:90vw;display:grid;gap:10px;padding:14px;border:1px solid #aa96ce;border-radius:14px;background:var(--background,#fff);box-shadow:0 12px 35px rgba(30,20,50,.16);}
+.occ2-composer-cv-options label {display:grid;gap:6px;font-size:12px;}
+.occ2-composer-cv-options select {width:100%;padding:10px;border:1px solid #a99bba;border-radius:9px;background:transparent;color:inherit;}
+.occ2-composer-attachments {display:flex;flex-wrap:wrap;gap:7px;}
+.occ2-attachment-chip {display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #9a85bf;border-radius:999px;font-size:12px;overflow-wrap:anywhere;}
+.occ2-attachment-chip button {background:transparent;border:0;color:inherit;cursor:pointer;font-size:18px;line-height:1;}
+.occ2-composer-v1 :is(summary,select,button):focus-visible {outline:3px solid #9773cc;outline-offset:2px;}
+@media(max-width:540px){.occ2-composer-v1 {padding:10px;gap:8px;}.occ2-composer-textarea {font-size:16px;min-height:86px;}.occ2-composer-tools {gap:6px;}.occ2-composer-agent span {display:none;}.occ2-composer-agent select {max-width:118px;}.occ2-composer-cv-options {min-width:min(280px,82vw);}}
