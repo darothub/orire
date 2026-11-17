@@ -99,3 +99,13 @@
 }
 @media(max-width:360px) { .occ3-agent { font-size:11px; padding:0 5px; } .occ3-attach { width:30px; } .occ3-send { width:36px; height:36px; } }
 @media(prefers-reduced-motion:reduce) { .occ3-shell * { scroll-behavior:auto!important; transition:none!important; } }
+
+.occ3-interview-card { display:grid;gap:10px;margin-top:12px;border:1px solid rgba(235,192,255,.25);border-radius:15px;padding:15px;min-width:0; }
+.occ3-interview-card .occ3-interview-question { font-weight:650;font-size:15px;line-height:1.6; }
+.occ3-interview-card strong { font-size:13px; }
+.occ3-interview-card small {font-size:12px;color:#e5c9ec;line-height:1.6;}
+.occ3-interview-card details {border-top:1px solid rgba(225,192,246,.2);padding-top:10px;font-size:13px;}
+.occ3-interview-card summary {cursor:pointer;color:#ffc5a0;}
+.occ3-interview-card ol {padding-left:22px;}.occ3-interview-card li {margin:8px 0;line-height:1.5;font-size:12px;}
+.occ3-next-question {justify-self:start;border:0;border-radius:999px;background:#ffc5a0;color:#2b0a45;padding:10px 16px;font-weight:700;font-size:12px;cursor:pointer;}
+.occ3-next-question:disabled{opacity:.55;cursor:not-allowed;}
