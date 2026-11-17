@@ -820,14 +820,14 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Paste full job description").fill("Seeking engineer to design secure payment systems and services.");
     await page.getByRole("form", { name: "OCC conversation composer" }).getByLabel("Agent", { exact: true }).selectOption("memory");
     await page.getByLabel("Message your Career Copilot").fill("Manage my career memory");
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send", exact: true }).click();
     const memoryCard = page.getByRole("region", { name: "Career memory conversation card" });
     await expect(memoryCard).toBeVisible();
     await memoryCard.getByText("Review, edit, or delete saved career memory").click();
     await expect(memoryCard.getByRole("heading", { name: "Your career memory" })).toBeVisible();
     await page.getByRole("form", { name: "OCC conversation composer" }).getByLabel("Agent", { exact: true }).selectOption("review");
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send", exact: true }).click();
     await expect(page.getByLabel("Paste full CV")).toHaveValue("Experienced engineer creating secure distributed payment systems.");
     await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("OCC:", { exact: false }).first()).toBeVisible();
   });
@@ -883,8 +883,7 @@ test.describe("Career-only OCC feature", () => {
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("Role ready");
     await expect(page.getByRole("button", { name: "Review attached CV" })).toBeEnabled();
-    await page.getByText("Review preferences and keyword-only comparison").click();
-    await expect(page.getByRole("button", { name: "Run keyword check (no AI)" })).toBeEnabled();
+    await expect(page.getByText("Synthetic follow-up review")).toBeVisible();
     await testInfo.attach("occ-m7-orchestrated-context", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   });
 
