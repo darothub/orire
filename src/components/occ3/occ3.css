@@ -33,10 +33,11 @@
 .occ3-message { display:flex; align-items:flex-start; gap:12px; max-width:100%; }
 .occ3-message-content { max-width:min(100%,690px); background:rgba(218,159,255,.12); border:1px solid rgba(209,154,244,.09); border-radius:20px; padding:17px 20px; min-width:0; overflow-wrap:anywhere; }
 .occ3-message-content p { margin:0; line-height:1.65; font-size:14px; }
-.occ3-you { justify-content:flex-end; flex-direction:row-reverse; }
-.occ3-you .occ3-message-content { background:rgba(176,111,219,.22); }
+.occ3-you { justify-content:flex-end; align-self:stretch; flex-direction:row; }
+.occ3-you .occ3-message-content { margin-left:auto; max-width:min(82%,590px); background:#ffc9a7; color:#2c123d; border:1px solid rgba(255,225,202,.8); border-radius:20px 20px 6px 20px; }
 .occ3-message-icon { color:#e2b3ff; background:#4b1d6c; font-size:21px; }
-.occ3-you .occ3-message-icon { font-size:11px; color:#fff; }
+.occ3-you .occ3-message-icon { display:none; }
+.occ3-occ .occ3-message-content { border-radius:20px 20px 20px 6px; }
 .occ3-file { display:flex; gap:12px; align-items:center; min-width:175px; max-width:100%; }
 .occ3-file>span:first-child { font-size:27px; color:#e3baff; }
 .occ3-file strong { display:block; font-size:13px; overflow-wrap:anywhere; }
@@ -92,6 +93,8 @@
   .occ3-hero { gap:11px; }
   .occ3-flower { font-size:40px; }
   .occ3-message-content { padding:13px; border-radius:15px; }
+  .occ3-you .occ3-message-content { max-width:87%; border-radius:15px 15px 5px 15px; }
+  .occ3-occ .occ3-message-content { border-radius:15px 15px 15px 5px; }
   .occ3-agent { padding:0 8px; }
   .occ3-composer-main { gap:4px; }
   .occ3-composer textarea { font-size:16px; padding:10px 3px; }
