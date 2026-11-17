@@ -41,6 +41,122 @@ test.describe("Career-only OCC feature", () => {
     });
   });
 
+  test("Composer V1 displays typed text, selected agent, saved CV, and anchored composer on desktop/mobile", async ({ page, db, e2eUser }, testInfo) => {
+    const saved = await db.document.create({ data: {
+      userId: e2eUser.id, title: "Composer UI fixture CV", template: "aurora",
+      data: JSON.parse(JSON.stringify(sampleCV)),
+    } });
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/occ");
+    const cookie = page.getByRole("dialog", { name: "Cookie consent" });
+    if (await cookie.isVisible()) await cookie.getByRole("button", { name: "Decline" }).click();
+    const composer = page.getByRole("form", { name: "OCC conversation composer" });
+    const message = composer.getByRole("textbox", { name: "Message your Career Copilot" });
+    await expect(composer).toBeVisible();
+    await expect(message).toBeVisible();
+    await message.fill("Review this job description for a senior engineering role.");
+    await expect(message).toHaveValue("Review this job description for a senior engineering role.");
+    await composer.getByLabel("Agent", { exact: true }).selectOption("review");
+    await composer.getByText("Saved CV", { exact: true }).click();
+    await composer.getByLabel("Choose existing CV in composer").selectOption(saved.id);
+    await composer.getByText("Saved CV", { exact: true }).click();
+    await expect(composer.getByLabel("Composer attachments")).toContainText("Composer UI fixture CV");
+    const colors = await composer.evaluate(element => ({
+      background: getComputedStyle(element).backgroundColor,
+      input: getComputedStyle(element.querySelector("textarea")!).color,
+    }));
+    expect(colors.background).toBe("rgb(28, 22, 44)");
+    expect(colors.input).toBe("rgb(247, 242, 255)");
+    await testInfo.attach("occ-composer-v1-desktop-1440", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    const position = await composer.evaluate(element => getComputedStyle(element).position);
+    expect(position).toBe("sticky");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ-composer-v1-mobile-390", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await expect(message).toHaveValue("Review this job description for a senior engineering role.");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.setViewportSize({ width: 320, height: 700 });
+    await expect(composer.getByRole("button", { name: "Send" })).toBeInViewport({ ratio: 0.75 });
+    await testInfo.attach("occ-composer-v1-mobile-320", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
+  test("Composer V2 Send respects the selected agent and renders review results in chat at desktop and mobile", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    let adviceCalls = 0;
+    await page.route("**/api/occ/advise", async route => {
+      adviceCalls++;
+      const body = route.request().postDataJSON();
+      expect(body.goal).toContain("interview");
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        advice: { summary: "Synthetic V2 review result", recommendations: [], nextSteps: ["Verify evidence"], disclaimer: "Synthetic fixture" },
+        usedSavedProfile: false, runId: null,
+      }) });
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/occ");
+    const composer = page.getByRole("form", { name: "OCC conversation composer" });
+    await composer.getByRole("button", { name: "Paste CV" }).click();
+    await composer.getByLabel("Paste full CV").fill("Experienced backend engineer with Java services, integration testing, payment security and technical ownership.");
+    await composer.getByRole("button", { name: "Paste JD" }).click();
+    await composer.getByLabel("Paste full job description").fill("We are hiring an engineer responsible for reliable Java services and secure payment APIs.");
+    await composer.getByLabel("Agent", { exact: true }).selectOption("review");
+    await composer.getByRole("textbox", { name: "Message your Career Copilot" }).fill("Could this CV support an interview for this role?");
+    expect(adviceCalls).toBe(0);
+    await composer.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByText("Synthetic V2 review result")).toBeVisible();
+    expect(adviceCalls).toBe(1);
+    await expect(composer.getByLabel("Agent", { exact: true })).toHaveValue("review");
+    await testInfo.attach("occ-composer-v2-review-desktop-1440", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ-composer-v2-review-mobile-390", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.setViewportSize({ width: 320, height: 700 });
+    await testInfo.attach("occ-composer-v2-review-mobile-320", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
+  test("Composer V3 places Review and Interview controls inside the latest assistant message on desktop and mobile", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/occ");
+    const conversation = page.getByRole("region", { name: "Career Copilot conversation" });
+    const prompt = conversation.getByRole("button", { name: "Review my CV for a role" });
+    await prompt.click();
+    const review = conversation.getByRole("region", { name: "CV review controls" });
+    await expect(review).toBeVisible();
+    const tools = conversation.getByLabel("Current agent tools in conversation");
+    await expect(tools).toContainText("Review the documents in this conversation");
+    expect(await review.evaluate(node => Boolean(node.closest(".occ2-turn-assistant")))).toBe(true);
+    await testInfo.attach("occ-composer-v3-review-inline-desktop-1440", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByLabel("Agent", { exact: true }).selectOption("interview");
+    const interview = conversation.getByRole("region", { name: "Mock interview workspace" });
+    await expect(interview).toBeVisible();
+    expect(await interview.evaluate(node => Boolean(node.closest(".occ2-turn-assistant")))).toBe(true);
+    await expect(conversation.getByRole("region", { name: "CV review controls" })).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ-composer-v3-interview-inline-mobile-390", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.setViewportSize({ width: 320, height: 700 });
+    await testInfo.attach("occ-composer-v3-interview-inline-mobile-320", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
   test("OCC 2.0 mobile exposes session and context rails on demand", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
@@ -93,7 +209,7 @@ test.describe("Career-only OCC feature", () => {
     const history = page.getByRole("region", { name: "CV Review sessions" });
     await expect(history.getByRole("button").first()).toBeVisible();
     await history.getByRole("button").first().click();
-    await expect(page.getByText("Conversation restored. Reattach", { exact: false })).toBeVisible();
+    await expect(page.getByText("Transcript restored without structured coaching results.", { exact: false })).toBeVisible();
     expect((await db.occConversation.count({ where: { userId: e2eUser.id } }))).toBe(1);
     page.once("dialog", dialog => void dialog.accept());
     await history.getByRole("button", { name: /Delete conversation:/ }).click();
@@ -121,6 +237,149 @@ test.describe("Career-only OCC feature", () => {
     } finally {
       await db.user.delete({ where: { id: other.id } });
     }
+  });
+
+  test("P6B requires independent snapshot consent, enforces conversation ownership and supports independent deletion", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    const privateReview = {
+      kind: "review", summary: "Synthetic grounded review.",
+      recommendations: [{ requirement: "Java payments", assessment: "supported",
+        cvEvidence: "Built secure Java services", suggestion: "Use only what is true.",
+        sampleWording: null, question: null }],
+      nextSteps: ["Check the evidence."], disclaimer: "Claims were not independently verified.",
+    };
+    const conversation = await db.occConversation.create({ data: {
+      userId: e2eUser.id, title: "Sensitive coaching history",
+      messages: { create: [
+        { sequence: 0, sender: "you", text: "Review my real experience." },
+        { sequence: 1, sender: "OCC", text: "I reviewed the supplied CV against the role. Here are the findings." },
+      ] },
+    } });
+    await signIn(page);
+    const url = "/api/occ/conversations/" + conversation.id + "/snapshots";
+    const nonConsented = await page.request.post(url, { data: { consent: false, snapshots: [{ messageSequence: 1, payload: privateReview }] } });
+    expect(nonConsented.status()).toBe(400);
+    const sneaky = await page.request.post(url, { data: { consent: true, snapshots: [{
+      messageSequence: 1, payload: { ...privateReview, cv: "Complete private CV" },
+    }] } });
+    expect(sneaky.status()).toBe(400);
+    expect(await db.occCoachingSnapshot.count({ where: { conversationId: conversation.id } })).toBe(0);
+    const saved = await page.request.post(url, { data: {
+      consent: true, snapshots: [{ messageSequence: 1, payload: privateReview }],
+    } });
+    expect(saved.status()).toBe(200);
+    expect((await saved.json()).saved).toBe(1);
+    const restored = await page.request.get("/api/occ/conversations/" + conversation.id);
+    expect(restored.status()).toBe(200);
+    const result = await restored.json();
+    expect(result.conversation.coachingSnapshots[0].payload).toEqual(privateReview);
+    expect(JSON.stringify(result)).not.toContain("Complete private CV");
+
+    const other = await db.user.create({ data: { name: "Isolated snapshot owner" } });
+    try {
+      const foreignConversation = await db.occConversation.create({ data: {
+        userId: other.id, title: "Other person's coaching",
+        messages: { create: { sequence: 0, sender: "OCC", text: "I reviewed the supplied CV against the role." } },
+      } });
+      expect((await page.request.post("/api/occ/conversations/" + foreignConversation.id + "/snapshots", {
+        data: { consent: true, snapshots: [{ messageSequence: 0, payload: privateReview }] },
+      })).status()).toBe(404);
+      expect((await page.request.delete("/api/occ/conversations/" + foreignConversation.id + "/snapshots")).status()).toBe(404);
+    } finally { await db.user.delete({ where: { id: other.id } }); }
+    const del = await page.request.delete(url);
+    expect(del.status()).toBe(200);
+    expect(await db.occCoachingSnapshot.count({ where: { conversationId: conversation.id } })).toBe(0);
+    expect(await db.occMessage.count({ where: { conversationId: conversation.id } })).toBe(2);
+  });
+
+  test("P6B ordinary transcript save does not persist coaching excerpts until user checks explicit opt-in", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.route("**/api/occ/advise", route => route.fulfill({
+      status: 200, contentType: "application/json", body: JSON.stringify({
+        advice: {
+          summary: "Synthetic and evidence-limited role review.",
+          recommendations: [{ requirement: "Java payment services", assessment: "supported",
+            cvEvidence: "Built secure Java services", suggestion: "Describe only the documented work.",
+            sampleWording: null, question: null }],
+          nextSteps: ["Verify the wording."], disclaimer: "Self-reported experience only.",
+        },
+        usedSavedProfile: false, runId: null,
+      }),
+    }));
+    await page.goto("/occ");
+    const thread = page.getByRole("region", { name: "Career Copilot conversation" });
+    await thread.getByRole("button", { name: "Review my CV for a role" }).click();
+    await thread.getByRole("button", { name: "Paste CV" }).click();
+    await thread.getByLabel("Paste full CV").fill("Built secure Java services for a financial payments team. Other personal CV content stays ephemeral.");
+    await thread.getByRole("button", { name: "Paste JD" }).click();
+    await thread.getByLabel("Paste full job description").fill("Seeking a senior engineer to design Java payment APIs and production transaction services.");
+    await thread.getByRole("button", { name: "Review attached CV" }).click();
+    await expect(thread.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    const sidebar = page.getByRole("complementary", { name: "Career Copilot conversations" });
+    const history = sidebar.getByRole("region", { name: "Private coaching history consent" });
+    await expect(history).toBeVisible();
+    await expect(history.getByRole("button", { name: "Save coaching results (1)" })).toBeDisabled();
+    await sidebar.getByRole("button", { name: "Save transcript privately" }).click();
+    await expect(sidebar.getByText("Transcript saved privately.", { exact: false })).toBeVisible();
+    const convo = await db.occConversation.findFirstOrThrow({ where: { userId: e2eUser.id } });
+    expect(await db.occCoachingSnapshot.count({ where: { conversationId: convo.id } })).toBe(0);
+    await history.getByRole("checkbox", { name: /I agree to save these sensitive CV excerpts/ }).check();
+    await expect(history.getByRole("button", { name: "Save coaching results (1)" })).toBeEnabled();
+    await history.getByRole("button", { name: "Save coaching results (1)" }).click();
+    await expect(sidebar.getByText("Coaching results saved with explicit consent.", { exact: false })).toBeVisible();
+    const saved = await db.occCoachingSnapshot.findFirstOrThrow({ where: { conversationId: convo.id } });
+    expect(saved.kind).toBe("review");
+    expect(JSON.stringify(saved.payload)).not.toContain("Other personal CV content stays ephemeral");
+    await testInfo.attach("occ2-p6b-explicit-consent-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.reload();
+    await sidebar.getByRole("button", { name: "Review my CV for a role", exact: true }).click();
+    await expect(thread.getByRole("region", { name: "Saved CV review results" })).toBeVisible();
+    page.once("dialog", dialog => void dialog.accept());
+    await sidebar.getByRole("button", { name: "Delete saved coaching results (1)" }).click();
+    await expect(sidebar.getByText("Saved coaching result cards deleted", { exact: false })).toBeVisible();
+    expect(await db.occCoachingSnapshot.count({ where: { conversationId: convo.id } })).toBe(0);
+    expect(await db.occMessage.count({ where: { conversationId: convo.id } })).toBeGreaterThan(0);
+  });
+
+  test("P6B restores sensitive coaching only as an explicitly saved, read-only conversation card", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    const convo = await db.occConversation.create({ data: {
+      userId: e2eUser.id, title: "Saved clinical outreach coaching",
+      messages: { create: [
+        { sequence: 0, sender: "you", text: "Review my CV for a health outreach role." },
+        { sequence: 1, sender: "OCC", text: "I reviewed the supplied CV against the role. Here are the findings." },
+      ] },
+    } });
+    await db.occCoachingSnapshot.create({ data: {
+      conversationId: convo.id, messageSequence: 1, schemaVersion: 1, kind: "review",
+      payload: {
+        kind: "review", summary: "Review the documented outreach evidence.",
+        recommendations: [{ requirement: "Community outreach", assessment: "supported",
+          cvEvidence: "Coordinated community health education",
+          suggestion: "Clarify how you collaborated with the team.", sampleWording: null, question: null }],
+        nextSteps: ["Confirm all claims."], disclaimer: "Self-reported evidence; no independent verification.",
+      },
+    } });
+    await signIn(page);
+    await page.goto("/occ");
+    await page.getByRole("button", { name: "Saved clinical outreach coaching", exact: true }).click();
+    const card = page.getByRole("region", { name: "Saved CV review results" });
+    await expect(card).toBeVisible();
+    await expect(card).toContainText("Previously saved review");
+    await expect(card).toContainText("Review the documented outreach evidence.");
+    await expect(page.getByRole("region", { name: "Private coaching history consent" })).toBeVisible();
+    await expect(page.getByText("CV ready", { exact: false })).toHaveCount(0);
+    await testInfo.attach("occ2-p6b-restored-review-desktop", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ2-p6b-restored-review-mobile", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 
   test("OCC 2.0 previews a saved CV with the real template renderer without modifying its document", async ({ page, db, e2eUser }, testInfo) => {
@@ -290,7 +549,7 @@ test.describe("Career-only OCC feature", () => {
     await conversation.getByRole("button", { name: "Paste JD" }).click();
     await conversation.getByLabel("Paste full job description").fill("Hiring an engineer to design reliable secure Java APIs and financial payment services.");
     await conversation.getByRole("button", { name: "Review attached CV" }).click();
-    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" }).last()).toBeVisible();
     await expect(conversation.getByText("Synthetic grounded role review.")).toBeVisible();
     await expect(conversation.getByRole("button", { name: "Review my fit", exact: true })).toHaveCount(0);
     await expect(conversation.getByText("Review findings")).toBeVisible();
@@ -305,7 +564,7 @@ test.describe("Career-only OCC feature", () => {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" }).last()).toBeVisible();
     await testInfo.attach("occ2-unified-review-mobile", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
@@ -371,13 +630,13 @@ test.describe("Career-only OCC feature", () => {
     expect(aiCalls).toBe(0);
     await expect(conversation.getByRole("button", { name: "Review attached CV" })).toBeVisible();
     await conversation.getByRole("button", { name: "Review attached CV" }).click();
-    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" }).last()).toBeVisible();
     await expect(conversation.getByText("Synthetic, evidence-based role review.")).toBeVisible();
     expect(aiCalls).toBe(1);
     await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).fill("Could you clarify what I should verify?");
     await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).press("Enter");
     await expect(conversation.getByText("Could you clarify what I should verify?", { exact: false })).toBeVisible();
-    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" }).last()).toBeVisible();
     await testInfo.attach("occ2-p7a-chat-review-desktop", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
     await page.setViewportSize({ width: 390, height: 844 });
     await testInfo.attach("occ2-p7a-chat-review-mobile", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
@@ -592,14 +851,16 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Paste full CV").fill("Experienced engineer creating secure distributed payment systems.");
     await page.getByRole("button", { name: "Paste JD" }).click();
     await page.getByLabel("Paste full job description").fill("Seeking engineer to design secure payment systems and services.");
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByLabel("Agent", { exact: true }).selectOption("memory");
     await page.getByLabel("Message your Career Copilot").fill("Manage my career memory");
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send", exact: true }).click();
     const memoryCard = page.getByRole("region", { name: "Career memory conversation card" });
     await expect(memoryCard).toBeVisible();
     await memoryCard.getByText("Review, edit, or delete saved career memory").click();
     await expect(memoryCard.getByRole("heading", { name: "Your career memory" })).toBeVisible();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByLabel("Agent", { exact: true }).selectOption("review");
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
-    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send", exact: true }).click();
     await expect(page.getByLabel("Paste full CV")).toHaveValue("Experienced engineer creating secure distributed payment systems.");
     await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("OCC:", { exact: false }).first()).toBeVisible();
   });
@@ -646,14 +907,16 @@ test.describe("Career-only OCC feature", () => {
       await cookieBanner.getByRole("button", { name: "Decline" }).click();
     }
     await page.getByRole("button", { name: "Send" }).click();
-    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("please attach job description", { exact: false })).toBeVisible();
     const jd = "We are looking for a senior engineer with experience with payment platforms, responsible for API architecture, authentication, quality testing and reliable services.";
+    await page.route("**/api/occ/advise", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      advice: { summary: "Synthetic follow-up review", recommendations: [], nextSteps: [], disclaimer: "Synthetic fixture" }, usedSavedProfile: false, runId: null,
+    }) }));
     await page.getByLabel("Message your Career Copilot").fill(jd);
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("Role ready");
     await expect(page.getByRole("button", { name: "Review attached CV" })).toBeEnabled();
-    await page.getByText("Review preferences and keyword-only comparison").click();
-    await expect(page.getByRole("button", { name: "Run keyword check (no AI)" })).toBeEnabled();
+    await expect(page.getByText("Synthetic follow-up review")).toBeVisible();
     await testInfo.attach("occ-m7-orchestrated-context", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
   });
 
@@ -734,7 +997,7 @@ test.describe("Career-only OCC feature", () => {
     await conversation.getByRole("button", { name: "Send" }).click();
     await expect(keyword).toBeVisible();
     expect(matchCalls).toBe(1);
-    expect(aiCalls).toBe(0);
+    expect(aiCalls).toBe(1); // Explicit Send now requests Review AI; keyword-only comparison remains a separate, no-AI action.
     await testInfo.attach("occ2-p7d2-keyword-conversation-desktop", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
@@ -888,17 +1151,17 @@ test.describe("Career-only OCC feature", () => {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
     });
-    await expect(page.getByRole("button", { name: "Get feedback" })).toBeDisabled();
+    await expect(page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send" })).toBeDisabled();
     await page.getByRole("textbox", { name: "Message your Career Copilot" }).fill("I would add idempotency keys and a shared dedupe store, then test retry behavior across service boundaries.");
-    await page.getByRole("button", { name: "Get feedback" }).click();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send" }).click();
     await expect(page.getByText("You explained idempotency clearly.")).toBeVisible();
     await page.getByText("Suggested clearer wording").click();
     await expect(page.getByText("I would add idempotency keys and a shared dedupe store.", { exact: false })).toBeVisible();
     await expect(page.getByText("It explains your plan in an order that is easier to follow.")).toBeVisible();
     await page.getByRole("button", { name: "Edit this wording in composer" }).click();
     await expect(page.getByRole("textbox", { name: "Message your Career Copilot" })).toHaveValue(/I would add idempotency keys/);
-    await expect(page.getByRole("button", { name: "Get feedback" })).toBeEnabled();
-    await page.getByRole("button", { name: "Get feedback" }).click();
+    await expect(page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send" })).toBeEnabled();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send" }).click();
     await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
     expect(calls).toBe(3);
     const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });

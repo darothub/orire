@@ -401,3 +401,94 @@
 .occ2-memory-details {min-width:0;padding:10px;border-top:1px solid #afa4c6;}
 .occ2-memory-details > section {min-width:0;box-sizing:border-box;width:100%;padding:12px!important;}
 @media (max-width:540px) {.occ2-memory-message {width:100%;padding:12px;} .occ2-memory-details {padding:6px;} .occ2-memory-details > section {padding:8px!important;} }
+
+/* P6B privacy-first, independent structured coaching-history consent. */
+.occ2-coaching-history-controls {min-width:0;display:grid;gap:9px;border:1px solid #a997c6;border-radius:12px;padding:12px;background:rgba(114,81,174,.045);}
+.occ2-coaching-history-controls h3 {font-size:13px;font-weight:750;}
+.occ2-coaching-history-controls p,.occ2-coaching-history-controls label {font-size:12px;line-height:1.55;}
+.occ2-coaching-history-controls label {display:flex;align-items:flex-start;gap:8px;cursor:pointer;}
+.occ2-coaching-history-controls input {margin-top:4px;flex-shrink:0;}
+.occ2-coaching-history-controls button {font:inherit;font-size:12px;font-weight:700;min-height:39px;border:1px solid #a997c6;border-radius:10px;padding:9px 10px;color:inherit;background:rgba(114,81,174,.09);cursor:pointer;}
+.occ2-coaching-history-controls button:disabled {opacity:.5;cursor:not-allowed;}
+.occ2-coaching-history-controls button:focus-visible {outline:3px solid #9773cc;outline-offset:2px;}
+.occ2-saved-coaching {min-width:0;overflow-wrap:anywhere;}
+.occ2-saved-coaching > details {border:1px solid #a997c6;border-radius:10px;padding:10px;min-width:0;}
+.occ2-saved-coaching > details summary {cursor:pointer;font-weight:700;font-size:13px;}
+.occ2-saved-coaching > details summary:focus-visible {outline:3px solid #9773cc;outline-offset:2px;}
+
+/* Conversation composer V1: permanent, readable input with contextual agent/CV tools. */
+.occ2-composer-v1 { display:grid;gap:10px;padding:13px;border:1px solid #afa0cb;border-radius:18px;background:color-mix(in srgb,var(--background,#fff) 94%,#7351ac 6%);max-height:min(42dvh,340px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin; }
+.occ2-composer-input-label {font-size:12px;font-weight:700;color:inherit;opacity:.8;}
+.occ2-composer-textarea {width:100%;min-height:90px;max-height:280px;resize:vertical;background:transparent;color:inherit;border:0;border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;line-height:1.55;outline-offset:2px;}
+.occ2-composer-textarea::placeholder {opacity:.67;}
+.occ2-composer-textarea:focus-visible {outline:2px solid #8561be;}
+.occ2-composer-tools {display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.occ2-composer-agent {display:flex;align-items:center;gap:6px;border:1px solid #a99bba;border-radius:12px;padding:5px 8px;font-size:12px;font-weight:700;}
+.occ2-composer-agent select {min-width:0;max-width:160px;border:0;background:transparent;color:inherit;font:inherit;padding:6px 3px;}
+.occ2-composer-cv-menu {position:relative;}
+.occ2-composer-cv-menu summary {cursor:pointer;border:1px solid #a99bba;border-radius:11px;padding:9px 12px;font-size:12px;font-weight:750;list-style:none;}
+.occ2-composer-cv-menu summary::-webkit-details-marker {display:none;}
+.occ2-composer-cv-options {position:relative;z-index:1;min-width:min(290px,75vw);max-width:90vw;display:grid;gap:10px;padding:14px;border:1px solid #aa96ce;border-radius:14px;background:var(--background,#fff);box-shadow:0 12px 35px rgba(30,20,50,.16);}
+.occ2-composer-cv-options label {display:grid;gap:6px;font-size:12px;}
+.occ2-composer-cv-options select {width:100%;padding:10px;border:1px solid #a99bba;border-radius:9px;background:transparent;color:inherit;}
+.occ2-composer-attachments {display:flex;flex-wrap:wrap;gap:7px;}
+.occ2-attachment-chip {display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #9a85bf;border-radius:999px;font-size:12px;overflow-wrap:anywhere;}
+.occ2-attachment-chip button {background:transparent;border:0;color:inherit;cursor:pointer;font-size:18px;line-height:1;}
+.occ2-composer-v1 :is(summary,select,button):focus-visible {outline:3px solid #9773cc;outline-offset:2px;}
+@media(max-width:540px){.occ2-composer-v1 {padding:10px;gap:8px;}.occ2-composer-textarea {font-size:16px;min-height:86px;}.occ2-composer-tools {gap:6px;}.occ2-composer-agent span {display:none;}.occ2-composer-agent select {max-width:118px;}.occ2-composer-cv-options {min-width:min(280px,82vw);}}
+
+/* Royal Iris contrast: do not fall back to white on the dark OCC workspace.
+ * This is intentionally stronger than the earlier sticky-composer rule. */
+.occ2-sticky-composer.occ2-composer-v1 {
+  background: #1c162c !important;
+  color: #f7f2ff;
+  border-color: #76648f;
+}
+.occ2-composer-v1 .occ2-composer-textarea,
+.occ2-composer-v1 .occ2-composer-agent,
+.occ2-composer-v1 .occ2-composer-agent select,
+.occ2-composer-v1 .occ2-composer-cv-menu summary,
+.occ2-composer-v1 .occ2-composer-cv-options,
+.occ2-composer-v1 .occ2-composer-cv-options select {
+  background-color: #1c162c;
+  color: #f7f2ff;
+}
+.occ2-composer-v1 .occ2-composer-textarea::placeholder { color: #c2b5d7; opacity: 1; }
+.occ2-composer-v1 .occ2-composer-input-label { color: #d8c5f1; opacity: 1; }
+.occ2-composer-v1 .occ2-quiet-action { color:#f7f2ff; }
+.occ2-composer-v1 select option { color: #f7f2ff; background: #1c162c; }
+
+/* Keep Send visible even if 320px screens require scrolling attachment tools. */
+.occ2-composer-v1 .occ2-composer-cta {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  width: 100%;
+  background: #1c162c;
+  padding: 7px 2px;
+  border-top: 1px solid #65547b;
+}
+@media(max-width:540px){
+  .occ2-composer-v1 .occ2-composer-cta button[type=submit] { min-height: 44px; }
+}
+
+/* V3: action controls follow the agent's message instead of occupying a detached workspace. */
+.occ2-inline-agent-tools {
+  width: min(100%, 740px);
+  max-width: 100%;
+  margin-top: 10px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.occ2-inline-agent-tools > section { width: 100%; min-width: 0; max-width: 100%; }
+.occ2-turn-assistant .occ2-inline-agent-tools .occ2-analysis-inline,
+.occ2-turn-assistant .occ2-inline-agent-tools .occ2-interview-actions-panel {
+  border: 1px solid var(--occ-border, #c8c1d9);
+  border-radius: 16px;
+  box-shadow: none;
+}
+@media (max-width: 540px) {
+  .occ2-inline-agent-tools { width: 100%; margin-top: 8px; }
+  .occ2-inline-agent-tools > section { padding: 12px; }
+}
