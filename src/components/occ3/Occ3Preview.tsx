@@ -5,11 +5,12 @@ import { cvToPlainText } from "@/lib/export/plaintext";
 import type { CVData } from "@/lib/cv/schema";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import type { OccAdvice } from "@/lib/occ/recommendations";
+import { MAX_INTERVIEW_TURNS, type InterviewQuestion, type InterviewFeedback } from "@/lib/occ/interview";
 import "./occ3.css";
 
 type Agent = "review" | "coach" | "interview" | "improve" | "memory";
 type Mode = "start" | "choice" | "awaiting-jd" | "ready";
-type Message = { id: number; role: "you" | "occ"; text?: string; file?: string; advice?: OccAdvice; mode?: "general" | "targeted"; choice?: boolean; jdPrompt?: boolean };
+type Message = { id: number; role: "you" | "occ"; text?: string; file?: string; advice?: OccAdvice; mode?: "general" | "targeted"; choice?: boolean; jdPrompt?: boolean; interviewQuestion?: InterviewQuestion; interviewFeedback?: InterviewFeedback; interviewNumber?: number };
 type SavedCV = { id: string; title: string; data: CVData };
 const AGENTS: { id: Agent; name: string }[] = [
   { id: "review", name: "Review" }, { id: "coach", name: "Coach" },
@@ -37,6 +38,10 @@ export function Occ3Preview() {
   const [savedCvs, setSavedCvs] = useState<SavedCV[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [interviewPhase, setInterviewPhase] = useState<"idle" | "question" | "feedback">("idle");
+  const [interviewQuestion, setInterviewQuestion] = useState<InterviewQuestion | null>(null);
+  const [interviewIndex, setInterviewIndex] = useState(0);
+  const interviewGeneration = useRef(0);
   const end = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -58,7 +63,8 @@ export function Occ3Preview() {
   function reset() {
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
-    setMenu(false); setAgentMenu(false); setSidebarOpen(false);
+    setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false);
+    interviewGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
   }
   function chooseSaved(item: SavedCV) {
     setCv(cvToPlainText(item.data)); setCvName(item.title); setAttached("cv");
@@ -118,9 +124,12 @@ export function Occ3Preview() {
     } finally { setBusy(false); }
   }
   function afterCV(file?: string) {
+    const isInterview = agent === "interview";
     append(message("you", { text: draft.trim() || undefined, file: file || cvName || "CV" }),
-      message("occ", { text: "I've received your CV. Would you like a general review, or should I review it against a specific job description?", choice: true }));
-    setMode("choice"); setDraft(""); setAttached(null);
+      message("occ", isInterview
+        ? { text: "I've received your CV. Paste or attach a job description for the mock interview.", jdPrompt: true }
+        : { text: "I've received your CV. Would you like a general review, or should I review it against a specific job description?", choice: true }));
+    setMode(isInterview ? "awaiting-jd" : "choice"); setDraft(""); setAttached(null);
   }
   function chooseJD() {
     append(message("you", { text: "I have a job description" }),
@@ -128,10 +137,82 @@ export function Occ3Preview() {
     setMode("awaiting-jd");
     setAttached(null); setDraft(""); setAgent("review");
   }
+
+  async function askInterviewQuestion(index: number, description: string) {
+    if (busy || index >= MAX_INTERVIEW_TURNS) return;
+    const generation = ++interviewGeneration.current;
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/occ/interview", {
+        method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "question", cv, description, turnIndex: index }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.question) throw new Error(data.error || "Unable to prepare interview question.");
+      if (generation !== interviewGeneration.current) return;
+      const question = data.question as InterviewQuestion;
+      setInterviewQuestion(question); setInterviewIndex(index); setInterviewPhase("question"); setMode("ready");
+      append(message("occ", { text: "Question " + (index + 1) + " of " + MAX_INTERVIEW_TURNS, interviewQuestion: question, interviewNumber: index + 1 }));
+    } catch (cause) {
+      if (generation === interviewGeneration.current) setError(cause instanceof Error ? cause.message : "Interview unavailable.");
+    } finally { if (generation === interviewGeneration.current) setBusy(false); }
+  }
+  async function respondToInterview(answer: string) {
+    if (!interviewQuestion || answer.length < 20 || busy) {
+      setError("Use at least 20 characters to answer the question in your own words."); return;
+    }
+    const generation = ++interviewGeneration.current;
+    const question = interviewQuestion;
+    append(message("you", { text: answer })); setDraft(""); setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/occ/interview", {
+        method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "feedback", cv, description: jd, question: question.question, answer, turnIndex: interviewIndex }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.feedback) throw new Error(data.error || "Unable to evaluate answer.");
+      if (generation !== interviewGeneration.current) return;
+      setInterviewPhase("feedback");
+      append(message("occ", { text: "Here's your interview feedback.", interviewFeedback: data.feedback as InterviewFeedback, interviewNumber: interviewIndex + 1 }));
+    } catch (cause) {
+      if (generation !== interviewGeneration.current) return;
+      setError(cause instanceof Error ? cause.message : "Feedback unavailable.");
+      append(message("occ", { text: "I couldn't evaluate that answer. Please try again with your own words." }));
+    } finally { if (generation === interviewGeneration.current) setBusy(false); }
+  }
+  function selectAgent(next: Agent) {
+    if (busy) return;
+    setAgentMenu(false);
+    if (next === agent) return;
+    interviewGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
+    setAgent(next);
+    if (next === "interview" && cvReady && mode !== "start") {
+      if (looksLikeJobDescription(jd)) {
+        append(message("occ", { text: "Interview selected. I have the CV and job description. Type Start interview and press Send." }));
+        setMode("ready");
+      } else {
+        append(message("occ", { text: "Interview selected. Paste or attach the target job description to begin.", jdPrompt: true }));
+        setMode("awaiting-jd");
+      }
+    } else if (agent === "interview" && next === "review" && cvReady && mode === "awaiting-jd") {
+      append(message("occ", { text: "Review selected. Would you prefer a general or job-specific review?", choice: true }));
+      setMode("choice");
+    }
+  }
   async function send() {
     if (!canSend) return;
     if (!cvReady) { setError("Attach your CV using the paperclip before sending."); return; }
     if (mode === "start" || (mode === "choice" && attached === "cv")) { afterCV(cvName); return; }
+    if (agent === "interview" && interviewPhase === "question") {
+      await respondToInterview(draft.trim()); return;
+    }
+    if (agent === "interview" && interviewPhase === "feedback") {
+      setError("Use Next question in the conversation to continue."); return;
+    }
+    if (agent === "interview" && mode === "ready" && looksLikeJobDescription(jd)) {
+      append(message("you", { text: draft.trim() || "Start interview" })); setDraft("");
+      await askInterviewQuestion(0, jd); return;
+    }
     if (isJDStep) {
       const roleText = attached === "jd" ? jd : draft.trim();
       if (roleText.length < 30 || !looksLikeJobDescription(roleText)) {
@@ -141,7 +222,8 @@ export function Occ3Preview() {
       setJd(roleText);
       append(message("you", { text: attached === "jd" ? undefined : draft.trim(), file: attached === "jd" ? jdName : undefined }));
       setDraft(""); setAttached(null);
-      await review("targeted", roleText);
+      if (agent === "interview") await askInterviewQuestion(0, roleText);
+      else await review("targeted", roleText);
       return;
     }
     const text = draft.trim();
@@ -185,6 +267,26 @@ export function Occ3Preview() {
               <button type="button" onClick={chooseJD} disabled={busy}>I have a job description</button>
             </div>}
             {entry.jdPrompt && mode === "awaiting-jd" && <div className="occ3-jd-tip">Paste a job description below, or use the paperclip to attach one.</div>}
+
+            {entry.interviewQuestion && <section role="region" aria-label={"Interview question " + entry.interviewNumber} className="occ3-interview-card">
+              <p className="occ3-interview-question">{entry.interviewQuestion.question}</p>
+              <small>Focus: {entry.interviewQuestion.focus}</small>
+              {entry.interviewQuestion.answerStarters && <details><summary>Two suggested answer approaches</summary>
+                <ol>{entry.interviewQuestion.answerStarters.map((starter, i) => <li key={i}>{starter}</li>)}</ol>
+                <small>Outlines only — use your real experience, not invented claims.</small>
+              </details>}
+              <small>Write your answer in the composer below.</small>
+            </section>}
+            {entry.interviewFeedback && <section role="region" aria-label={"Interview feedback " + entry.interviewNumber} className="occ3-interview-card">
+              <strong>What worked</strong><p>{entry.interviewFeedback.strength}</p>
+              <strong>What to improve</strong><p>{entry.interviewFeedback.improvement}</p>
+              {entry.interviewFeedback.betterWording && <details><summary>Clearer wording suggestion</summary><p>{entry.interviewFeedback.betterWording}</p><small>{entry.interviewFeedback.whyBetter}</small></details>}
+              {entry.interviewFeedback.followUp && <small>Consider: {entry.interviewFeedback.followUp}</small>}
+              {agent === "interview" && interviewPhase === "feedback" && entry.interviewNumber === interviewIndex + 1 &&
+                (interviewIndex + 1 < MAX_INTERVIEW_TURNS
+                  ? <button type="button" className="occ3-next-question" disabled={busy} onClick={() => void askInterviewQuestion(interviewIndex + 1, jd)}>Next question</button>
+                  : <small>Practice complete. Start a new chat for another session.</small>)}
+            </section>}
             {entry.advice && <section className="occ3-review" aria-label={entry.mode === "general" ? "General CV review" : "Targeted CV review"}>
               <div className="occ3-review-title"><strong>CV Review</strong><span>{entry.mode === "general" ? "General" : "Job-specific"}</span></div>
               <p>{entry.advice.summary}</p>
@@ -215,11 +317,11 @@ export function Occ3Preview() {
               </div>}
               <input ref={fileInput} type="file" aria-label={isJDStep ? "Upload job description" : "Upload CV"} accept=".pdf,.docx,.txt" hidden onChange={event => void parseFile(event)} />
             </div>
-            <textarea aria-label="Message Orire Career Copilot" rows={1} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }} placeholder={isJDStep ? "Paste a job description or type a message…" : cvReady ? "Message Orire Career Copilot…" : "Attach your CV to get started…"} />
+            <textarea aria-label="Message Orire Career Copilot" rows={1} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }} placeholder={agent === "interview" && interviewPhase === "question" ? "Answer in your own words…" : isJDStep ? "Paste a job description or type a message…" : cvReady ? "Message Orire Career Copilot…" : "Attach your CV to get started…"} />
             <div className="occ3-agent-wrap">
               <button type="button" aria-haspopup="listbox" aria-expanded={agentMenu} aria-label="Select agent" className="occ3-agent" onClick={() => { setAgentMenu(value => !value); setMenu(false); }}>✧ {AGENTS.find(item => item.id === agent)?.name} <span>⌄</span></button>
               {agentMenu && <div role="listbox" aria-label="OCC agents" className="occ3-popup occ3-agent-menu">
-                {AGENTS.map(item => <button role="option" aria-selected={agent === item.id} type="button" key={item.id} onClick={() => { setAgent(item.id); setAgentMenu(false); }}>{item.name}{agent === item.id && <span>✓</span>}</button>)}
+                {AGENTS.map(item => <button role="option" aria-selected={agent === item.id} type="button" key={item.id} onClick={() => selectAgent(item.id)}>{item.name}{agent === item.id && <span>✓</span>}</button>)}
               </div>}
             </div>
             <button type="submit" className="occ3-send" disabled={!canSend} aria-label="Send message">➤</button>
