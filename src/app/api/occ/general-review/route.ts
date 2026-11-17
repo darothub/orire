@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireOccAccess } from "@/lib/occ/requireAccess";
 import { parseGroundedAdvice } from "@/lib/occ/recommendations";
+import { looksLikeCV } from "@/lib/occ/document-validation";
 import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import { DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
   try { data = await req.json(); } catch { return send({ error: "Invalid JSON" }, 400); }
   if (!data || Array.isArray(data) || typeof data !== "object") return send({ error: "Invalid request" }, 400);
   const { cv } = data as Record<string, unknown>;
-  if (typeof cv !== "string" || cv.trim().length < 30 || cv.length > 30000)
+  if (typeof cv !== "string" || cv.length > 30000 || !looksLikeCV(cv))
     return send({ error: "Provide a valid CV to review." }, 400);
   const { provider } = routeTask("agent-analyze");
   const limited = await aiRateLimit(req, provider, access.userId);
