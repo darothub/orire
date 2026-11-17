@@ -177,7 +177,7 @@ export function OccChatPreview() {
                   <button disabled={busy} onClick={()=>chooseReview("general")}>General review</button>
                   <button disabled={busy} onClick={()=>chooseReview("jd")}>I have a job description</button>
                 </div>}
-                {message.advice && <div className="occ3-review" aria-label={message.reviewKind === "general" ? "General CV review" : "Job-specific CV review"}>
+                {message.advice && <div className="occ3-review" role="region" aria-label={message.reviewKind === "general" ? "General CV review" : "Job-specific CV review"}>
                   <h2>CV Review <span>{message.reviewKind === "general" ? "General" : "Job-specific"}</span></h2>
                   <p>{message.advice.summary}</p>
                   {message.advice.recommendations.map((item,i)=><div className="occ3-finding" key={i}>
