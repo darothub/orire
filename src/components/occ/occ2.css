@@ -403,7 +403,7 @@
 @media (max-width:540px) {.occ2-memory-message {width:100%;padding:12px;} .occ2-memory-details {padding:6px;} .occ2-memory-details > section {padding:8px!important;} }
 
 /* Conversation composer V1: permanent, readable input with contextual agent/CV tools. */
-.occ2-composer-v1 { display:grid;gap:10px;padding:13px;border:1px solid #afa0cb;border-radius:18px;background:color-mix(in srgb,var(--background,#fff) 94%,#7351ac 6%); }
+.occ2-composer-v1 { display:grid;gap:10px;padding:13px;border:1px solid #afa0cb;border-radius:18px;background:color-mix(in srgb,var(--background,#fff) 94%,#7351ac 6%);max-height:min(42dvh,340px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin; }
 .occ2-composer-input-label {font-size:12px;font-weight:700;color:inherit;opacity:.8;}
 .occ2-composer-textarea {width:100%;min-height:90px;max-height:280px;resize:vertical;background:transparent;color:inherit;border:0;border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;line-height:1.55;outline-offset:2px;}
 .occ2-composer-textarea::placeholder {opacity:.67;}
