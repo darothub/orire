@@ -762,15 +762,8 @@ export function OccWorkspace() {
                   onUseWording={text => { setComposer(text); setInterviewPhase("question"); setSelectedAgent("interview"); }} />
               : <OccInterviewQuestionMessage question={interviewEvent.question} index={interviewEvent.index}
                   awaitingAnswer={interviewPhase === "question" && interviewEvent.id === interviewEvents[interviewEvents.length - 1]?.id} />)}
-          </div>;
-        })}
-        {turns.length > 2 && showJumpToLatest && <button type="button" className="occ2-jump" onClick={() => scrollToTurn(bottomRef.current, "end")}>↓ Jump to latest</button>}
-        {(cvReady || roleReady) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
-          {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
-        </div>}
-        {error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
-        <p className="occ2-input-note">PDF and DOCX files are parsed when uploaded. CV and role text is used for AI review only when you choose Review · Saving conversations is optional</p>
+            {index === turns.findLastIndex(message => message.role === "OCC") && (
+              <div className="occ2-inline-agent-tools" aria-label="Current agent tools in conversation">
       {section === "analysis" && <section aria-label="CV review controls" className="occ2-analysis-inline">
         <p className="occ2-review-kicker">CV Review · Conversation tools</p>
         <h2>Review the documents in this conversation</h2>
@@ -810,8 +803,17 @@ export function OccWorkspace() {
         {interviewPhase === "question" && <p role="status">Write your own answer in the chat composer below. Use at least 20 characters to receive feedback.</p>}
         {interviewPhase === "feedback" && <p>Review the feedback above, then choose the next question or try clearer wording.</p>}
       </section>}
-      
-
+              </div>
+            )}
+          </div>;
+        })}
+        {turns.length > 2 && showJumpToLatest && <button type="button" className="occ2-jump" onClick={() => scrollToTurn(bottomRef.current, "end")}>↓ Jump to latest</button>}
+        {(cvReady || roleReady) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
+          {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
+        </div>}
+        {error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
+        <p className="occ2-input-note">PDF and DOCX files are parsed on upload. Sending a message runs the selected agent; saving conversation history is optional.</p>
       <div ref={bottomRef} className="occ2-bottom-anchor" aria-hidden="true" />
       {(running || interviewBusy) && <p role="status" aria-live="polite" className="occ2-working-status">{interviewBusy ? "OCC is preparing your interview coaching…" : "OCC is reviewing the supplied information…"}</p>}
         <form aria-label="OCC conversation composer" className="occ2-sticky-composer occ2-composer-v1" onSubmit={event => { event.preventDefault(); ask(composer); }}>

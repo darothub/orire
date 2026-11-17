@@ -471,3 +471,24 @@
 @media(max-width:540px){
   .occ2-composer-v1 .occ2-composer-cta button[type=submit] { min-height: 44px; }
 }
+
+/* V3: action controls follow the agent's message instead of occupying a detached workspace. */
+.occ2-inline-agent-tools {
+  width: min(100%, 740px);
+  max-width: 100%;
+  margin-top: 10px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.occ2-inline-agent-tools > section { width: 100%; min-width: 0; max-width: 100%; }
+.occ2-turn-assistant .occ2-inline-agent-tools .occ2-analysis-inline,
+.occ2-turn-assistant .occ2-inline-agent-tools .occ2-interview-actions-panel {
+  border: 1px solid var(--occ-border, #c8c1d9);
+  border-radius: 16px;
+  box-shadow: none;
+}
+@media (max-width: 540px) {
+  .occ2-inline-agent-tools { width: 100%; margin-top: 8px; }
+  .occ2-inline-agent-tools > section { padding: 12px; }
+}

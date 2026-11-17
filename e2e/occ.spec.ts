@@ -124,6 +124,39 @@ test.describe("Career-only OCC feature", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 
+  test("Composer V3 places Review and Interview controls inside the latest assistant message on desktop and mobile", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/occ");
+    const conversation = page.getByRole("region", { name: "Career Copilot conversation" });
+    const prompt = conversation.getByRole("button", { name: "Review my CV for a role" });
+    await prompt.click();
+    const review = conversation.getByRole("region", { name: "CV review controls" });
+    await expect(review).toBeVisible();
+    const tools = conversation.getByLabel("Current agent tools in conversation");
+    await expect(tools).toContainText("Review the documents in this conversation");
+    expect(await review.evaluate(node => Boolean(node.closest(".occ2-turn-assistant")))).toBe(true);
+    await testInfo.attach("occ-composer-v3-review-inline-desktop-1440", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByLabel("Agent", { exact: true }).selectOption("interview");
+    const interview = conversation.getByRole("region", { name: "Mock interview workspace" });
+    await expect(interview).toBeVisible();
+    expect(await interview.evaluate(node => Boolean(node.closest(".occ2-turn-assistant")))).toBe(true);
+    await expect(conversation.getByRole("region", { name: "CV review controls" })).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ-composer-v3-interview-inline-mobile-390", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.setViewportSize({ width: 320, height: 700 });
+    await testInfo.attach("occ-composer-v3-interview-inline-mobile-320", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
   test("OCC 2.0 mobile exposes session and context rails on demand", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
