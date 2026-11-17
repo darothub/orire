@@ -663,11 +663,12 @@ export function OccWorkspace() {
                   {OCC_AGENTS.map(agent => <option key={agent.id} value={agent.id}>{agent.label}</option>)}
                 </select>
               </label>
+              {uploadInput("cv", "Upload CV", true)}
+              <button type="button" className="occ2-quiet-action" aria-expanded={pasteCvOpen} onClick={() => setPasteCvOpen(value => !value)}>Paste CV</button>
               <div className="occ2-composer-cv-menu">
                 <details>
-                  <summary>＋ CV</summary>
+                  <summary>Saved CV</summary>
                   <div className="occ2-composer-cv-options">
-                    {uploadInput("cv", "Upload CV", true)}
                     {savedCvs.length > 0 && <label>Choose from Orire
                       <select aria-label="Choose existing CV in composer" value={selectedCvId} onChange={event => {
                         if (event.target.value) selectSavedCv(event.target.value); else detachDocument("cv");
@@ -676,7 +677,7 @@ export function OccWorkspace() {
                         {savedCvs.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
                       </select>
                     </label>}
-                    <button type="button" className="occ2-quiet-action" onClick={() => setPasteCvOpen(value => !value)}>Paste CV text</button>
+                    {savedCvs.length === 0 && <p>No saved CVs yet. Upload or paste a CV instead.</p>}
                   </div>
                 </details>
               </div>
