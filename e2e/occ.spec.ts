@@ -50,6 +50,8 @@ test.describe("Career-only OCC feature", () => {
     await signIn(page);
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/occ");
+    const cookie = page.getByRole("dialog", { name: "Cookie consent" });
+    if (await cookie.isVisible()) await cookie.getByRole("button", { name: "Decline" }).click();
     const composer = page.getByRole("form", { name: "OCC conversation composer" });
     const message = composer.getByRole("textbox", { name: "Message your Career Copilot" });
     await expect(composer).toBeVisible();
@@ -59,7 +61,14 @@ test.describe("Career-only OCC feature", () => {
     await composer.getByLabel("Agent", { exact: true }).selectOption("review");
     await composer.getByText("Saved CV", { exact: true }).click();
     await composer.getByLabel("Choose existing CV in composer").selectOption(saved.id);
+    await composer.getByText("Saved CV", { exact: true }).click();
     await expect(composer.getByLabel("Composer attachments")).toContainText("Composer UI fixture CV");
+    const colors = await composer.evaluate(element => ({
+      background: getComputedStyle(element).backgroundColor,
+      input: getComputedStyle(element.querySelector("textarea")!).color,
+    }));
+    expect(colors.background).toBe("rgb(28, 22, 44)");
+    expect(colors.input).toBe("rgb(247, 242, 255)");
     await testInfo.attach("occ-composer-v1-desktop-1440", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
