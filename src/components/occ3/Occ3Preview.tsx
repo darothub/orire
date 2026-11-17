@@ -37,6 +37,7 @@ export function Occ3Preview() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savedCvs, setSavedCvs] = useState<SavedCV[]>([]);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ stage: string; detail: string } | null>(null);
   const [error, setError] = useState("");
   const [coachGoal, setCoachGoal] = useState("");
   const coachGeneration = useRef(0);
@@ -65,7 +66,7 @@ export function Occ3Preview() {
   function reset() {
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
-    setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false);
+    setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false); setProgress(null);
     interviewGeneration.current++; coachGeneration.current++; setCoachGoal(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
   }
   function chooseSaved(item: SavedCV) {
@@ -81,6 +82,7 @@ export function Occ3Preview() {
     if (!ext || !["pdf", "docx", "txt"].includes(ext)) { setError("Choose a PDF, DOCX or TXT file."); return; }
     if (file.size === 0 || file.size > (ext === "txt" ? 1024 * 1024 : 15 * 1024 * 1024)) { setError("File is empty or too large."); return; }
     setBusy(true); setError(""); setMenu(false);
+    setProgress({ stage: "Reading document", detail: ext === "txt" ? "Reading your text file on this device." : "Extracting text from your attachment." });
     try {
       let content: string;
       if (ext === "txt") content = await file.text();
@@ -92,6 +94,7 @@ export function Occ3Preview() {
           throw new Error(payload.files?.[0]?.error || "Could not read the file.");
         content = payload.files[0].text;
       }
+      setProgress({ stage: "Checking document", detail: "Checking document type and extracted text before attaching." });
       const text = content.trim();
       const limit = kind === "cv" ? 30000 : 15000;
       if (text.length < 30 || text.length > limit) throw new Error("Document text must be between 30 and " + limit + " characters.");
@@ -102,19 +105,22 @@ export function Occ3Preview() {
       setAttached(kind);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to read document.");
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setProgress(null); }
   }
 
   async function review(kind: "general" | "targeted", roleText?: string) {
     if (!cvReady) { setError("Attach a CV first."); return; }
     setBusy(true); setError("");
+    setProgress({ stage: kind === "general" ? "Preparing general review" : "Preparing role-specific review", detail: "Using your attached CV" + (kind === "targeted" ? " and job description." : ".") });
     try {
       const url = kind === "general" ? "/api/occ/general-review" : "/api/occ/advise";
+      setProgress({ stage: "Generating review", detail: "Waiting for an evidence-grounded response. No edits are applied." });
       const response = await fetch(url, {
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(kind === "general" ? { cv } : { cv, description: roleText ?? jd, saveRun: false, useSavedProfile: false }),
       });
       const payload = await response.json();
+      setProgress({ stage: "Preparing results", detail: "Checking the returned review before showing it in the conversation." });
       if (!response.ok || !payload.advice) throw new Error(payload.error || "Review unavailable.");
       append(message("occ", {
         text: kind === "general" ? "Here's your general CV review." : "Here's your CV review against the role you shared.",
@@ -123,7 +129,7 @@ export function Occ3Preview() {
       setMode("ready");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Review unavailable.");
-    } finally { setBusy(false); }
+    } finally { setBusy(false); setProgress(null); }
   }
   async function runCoach(goal: string, roleText = "") {
     if (busy || !cvReady) return;
@@ -131,19 +137,22 @@ export function Occ3Preview() {
     if (cleanGoal.length < 5 || cleanGoal.length > 500) { setError("Describe your goal in 5 to 500 characters."); return; }
     const generation = ++coachGeneration.current;
     setBusy(true); setError(""); setCoachGoal(cleanGoal);
+    setProgress({ stage: "Preparing coaching", detail: "Using your CV, stated goal" + (roleText ? " and optional target role." : ".") });
     try {
+      setProgress({ stage: "Generating coaching guidance", detail: "Waiting for suggestions supported by your experience." });
       const response = await fetch("/api/occ/coach", {
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cv, goal: cleanGoal, ...(roleText ? { description: roleText } : {}) }),
       });
       const payload = await response.json();
+      setProgress({ stage: "Preparing coaching results", detail: "Checking the response before displaying guidance." });
       if (!response.ok || !payload.advice) throw new Error(payload.error || "Coaching unavailable.");
       if (generation !== coachGeneration.current) return;
       append(message("occ", { text: "Here is a practical way forward.", advice: payload.advice as OccAdvice, mode: "coaching" }));
       setMode("ready");
     } catch (cause) {
       if (generation === coachGeneration.current) setError(cause instanceof Error ? cause.message : "Coaching unavailable.");
-    } finally { if (generation === coachGeneration.current) setBusy(false); }
+    } finally { if (generation === coachGeneration.current) { setBusy(false); setProgress(null); } }
   }
   function chooseCoachGoal(goal: string) {
     if (busy || !cvReady) return;
@@ -172,12 +181,15 @@ export function Occ3Preview() {
     if (busy || index >= MAX_INTERVIEW_TURNS) return;
     const generation = ++interviewGeneration.current;
     setBusy(true); setError("");
+    setProgress({ stage: "Preparing interview question", detail: "Using the attached CV and target role." });
     try {
+      setProgress({ stage: "Generating interview question", detail: "Waiting for a relevant question and two optional answer approaches." });
       const response = await fetch("/api/occ/interview", {
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "question", cv, description, turnIndex: index }),
       });
       const data = await response.json();
+      setProgress({ stage: "Preparing interview question", detail: "Checking the returned question for display." });
       if (!response.ok || !data.question) throw new Error(data.error || "Unable to prepare interview question.");
       if (generation !== interviewGeneration.current) return;
       const question = data.question as InterviewQuestion;
@@ -185,7 +197,7 @@ export function Occ3Preview() {
       append(message("occ", { text: "Question " + (index + 1) + " of " + MAX_INTERVIEW_TURNS, interviewQuestion: question, interviewNumber: index + 1 }));
     } catch (cause) {
       if (generation === interviewGeneration.current) setError(cause instanceof Error ? cause.message : "Interview unavailable.");
-    } finally { if (generation === interviewGeneration.current) setBusy(false); }
+    } finally { if (generation === interviewGeneration.current) { setBusy(false); setProgress(null); } }
   }
   async function respondToInterview(answer: string) {
     if (!interviewQuestion || answer.length < 20 || busy) {
@@ -194,12 +206,15 @@ export function Occ3Preview() {
     const generation = ++interviewGeneration.current;
     const question = interviewQuestion;
     append(message("you", { text: answer })); setDraft(""); setBusy(true); setError("");
+    setProgress({ stage: "Evaluating your answer", detail: "Comparing your response to the question and the experience you shared." });
     try {
+      setProgress({ stage: "Generating feedback", detail: "Waiting for constructive feedback and fact-preserving wording guidance." });
       const response = await fetch("/api/occ/interview", {
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "feedback", cv, description: jd, question: question.question, answer, turnIndex: interviewIndex }),
       });
       const data = await response.json();
+      setProgress({ stage: "Preparing feedback", detail: "Checking the response before showing suggestions." });
       if (!response.ok || !data.feedback) throw new Error(data.error || "Unable to evaluate answer.");
       if (generation !== interviewGeneration.current) return;
       setInterviewPhase("feedback");
@@ -208,7 +223,7 @@ export function Occ3Preview() {
       if (generation !== interviewGeneration.current) return;
       setError(cause instanceof Error ? cause.message : "Feedback unavailable.");
       append(message("occ", { text: "I couldn't evaluate that answer. Please try again with your own words." }));
-    } finally { if (generation === interviewGeneration.current) setBusy(false); }
+    } finally { if (generation === interviewGeneration.current) { setBusy(false); setProgress(null); } }
   }
   function selectAgent(next: Agent) {
     if (busy) return;
@@ -356,7 +371,13 @@ export function Occ3Preview() {
             </section>}
           </div>
         </div>)}
-        {busy && <div className="occ3-status" role="status">Orire is working on your request…</div>}
+        {busy && progress && <div className="occ3-processing" data-testid="occ3-processing" role="status" aria-live="polite" aria-atomic="true">
+          <span className="occ3-processing-symbol" aria-hidden="true"><span/><span/><span/></span>
+          <div className="occ3-processing-copy">
+            <strong>{progress.stage}<span className="occ3-processing-ellipsis" aria-hidden="true">…</span></strong>
+            <p>{progress.detail}</p>
+          </div>
+        </div>}
         {error && <p className="occ3-error" role="alert">{error}</p>}
         <div ref={end} />
       </div>
@@ -374,9 +395,13 @@ export function Occ3Preview() {
             </div>
             <textarea aria-label="Message Orire Career Copilot" rows={1} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }} placeholder={agent === "interview" && interviewPhase === "question" ? "Answer in your own words…" : isJDStep ? "Paste a job description or type a message…" : agent === "coach" && cvReady ? "Describe a career goal or ask Coach…" : cvReady ? "Message Orire Career Copilot…" : "Attach your CV to get started…"} />
             <div className="occ3-agent-wrap">
-              <button type="button" aria-haspopup="listbox" aria-expanded={agentMenu} aria-label="Select agent" className="occ3-agent" onClick={() => { setAgentMenu(value => !value); setMenu(false); }}>✧ {AGENTS.find(item => item.id === agent)?.name} <span>⌄</span></button>
-              {agentMenu && <div role="listbox" aria-label="OCC agents" className="occ3-popup occ3-agent-menu">
-                {AGENTS.map(item => <button role="option" aria-selected={agent === item.id} type="button" key={item.id} onClick={() => selectAgent(item.id)}>{item.name}{agent === item.id && <span>✓</span>}</button>)}
+              <button type="button" aria-haspopup="listbox" aria-expanded={agentMenu} aria-label="Select agent" className="occ3-agent" onClick={() => { setAgentMenu(value => !value); setMenu(false); }}><span className="occ3-agent-sparkle" aria-hidden="true">✧</span> {AGENTS.find(item => item.id === agent)?.name} <span className="occ3-agent-chevron" aria-hidden="true">⌄</span></button>
+              {agentMenu && <div role="listbox" aria-label="OCC agents" className="occ3-popup occ3-agent-menu"><div className="occ3-agent-menu-heading">CHOOSE AN AGENT</div>
+                {AGENTS.map(item => <button role="option" aria-selected={agent === item.id} type="button" key={item.id} onClick={() => selectAgent(item.id)}>
+                  <span className="occ3-agent-option-icon" aria-hidden="true">{({review:"✦",coach:"◇",interview:"◈",improve:"✎",memory:"◉"} as const)[item.id]}</span>
+                  <span className="occ3-agent-option-text"><strong>{item.name}</strong><small>{({review:"CV insights",coach:"Career guidance",interview:"Practice questions",improve:"Refine wording",memory:"Your saved context"} as const)[item.id]}</small></span>
+                  {agent === item.id && <span className="occ3-agent-selected" aria-hidden="true">✓</span>}
+                </button>)}
               </div>}
             </div>
             <button type="submit" className="occ3-send" disabled={!canSend} aria-label="Send message">➤</button>
