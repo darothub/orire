@@ -63,7 +63,7 @@ export function Occ3Preview() {
   function reset() {
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
-    setMenu(false); setAgentMenu(false); setSidebarOpen(false);
+    setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false);
     interviewGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
   }
   function chooseSaved(item: SavedCV) {
@@ -181,6 +181,7 @@ export function Occ3Preview() {
     } finally { if (generation === interviewGeneration.current) setBusy(false); }
   }
   function selectAgent(next: Agent) {
+    if (busy) return;
     setAgentMenu(false);
     if (next === agent) return;
     interviewGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
