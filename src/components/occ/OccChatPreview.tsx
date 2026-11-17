@@ -39,7 +39,6 @@ export function OccChatPreview() {
   const sequence = useRef(1);
   const attachedKind = useRef<"cv" | "jd">("cv");
   const latestChoice = messages.findLast(m => m.choice);
-  const latestJdPrompt = messages.findLast(m => m.jdPrompt);
   const push = (...items: Omit<Message,"id">[]) => {
     setMessages(current => current.concat(items.map(item => ({ ...item, id: sequence.current++ }))));
   };
