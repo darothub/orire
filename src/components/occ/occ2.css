@@ -414,7 +414,7 @@
 .occ2-composer-cv-menu {position:relative;}
 .occ2-composer-cv-menu summary {cursor:pointer;border:1px solid #a99bba;border-radius:11px;padding:9px 12px;font-size:12px;font-weight:750;list-style:none;}
 .occ2-composer-cv-menu summary::-webkit-details-marker {display:none;}
-.occ2-composer-cv-options {position:absolute;bottom:calc(100% + 8px);left:0;z-index:15;min-width:min(290px,75vw);max-width:90vw;display:grid;gap:10px;padding:14px;border:1px solid #aa96ce;border-radius:14px;background:var(--background,#fff);box-shadow:0 12px 35px rgba(30,20,50,.16);}
+.occ2-composer-cv-options {position:relative;z-index:1;min-width:min(290px,75vw);max-width:90vw;display:grid;gap:10px;padding:14px;border:1px solid #aa96ce;border-radius:14px;background:var(--background,#fff);box-shadow:0 12px 35px rgba(30,20,50,.16);}
 .occ2-composer-cv-options label {display:grid;gap:6px;font-size:12px;}
 .occ2-composer-cv-options select {width:100%;padding:10px;border:1px solid #a99bba;border-radius:9px;background:transparent;color:inherit;}
 .occ2-composer-attachments {display:flex;flex-wrap:wrap;gap:7px;}
