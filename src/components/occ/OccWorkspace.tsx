@@ -686,10 +686,10 @@ export function OccWorkspace() {
 
               <button type="button" className="occ2-quiet-action" aria-expanded={pasteRoleOpen} onClick={() => setPasteRoleOpen(value => !value)}>Paste JD</button>
             </div>
-            <div className="occ2-composer-cta">
+          </div>
+          <div className="occ2-composer-cta">
               {selectedAgent === "review" && cvReady && roleReady && <button type="button" className="occ2-review-action" disabled={running} onClick={() => void requestAdvice()}>✦ {running ? "Reviewing…" : "Review attached CV"}</button>}
               <button type="submit" disabled={!composer.trim() || interviewBusy || (selectedAgent === "interview" && interviewPhase === "question" && composer.trim().length < 20)} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>{selectedAgent === "interview" && interviewPhase === "question" ? "Get feedback" : "Send"}</button>
-            </div>
           </div>
           {(cvReady || roleReady) && <div className="occ2-composer-attachments" aria-label="Composer attachments">
             {cvReady && <span className="occ2-attachment-chip">CV · {uploadedCvName || selectedStructuredCv?.title || "Pasted CV"} <button type="button" aria-label="Remove CV attachment" onClick={() => detachDocument("cv")}>×</button></span>}
