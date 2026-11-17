@@ -88,6 +88,42 @@ test.describe("Career-only OCC feature", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 
+  test("Composer V2 Send respects the selected agent and renders review results in chat at desktop and mobile", async ({ page, db, e2eUser }, testInfo) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    let adviceCalls = 0;
+    await page.route("**/api/occ/advise", async route => {
+      adviceCalls++;
+      const body = route.request().postDataJSON();
+      expect(body.goal).toContain("interview");
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        advice: { summary: "Synthetic V2 review result", recommendations: [], nextSteps: ["Verify evidence"], disclaimer: "Synthetic fixture" },
+        usedSavedProfile: false, runId: null,
+      }) });
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/occ");
+    const composer = page.getByRole("form", { name: "OCC conversation composer" });
+    await composer.getByRole("button", { name: "Paste CV" }).click();
+    await composer.getByLabel("Paste full CV").fill("Experienced backend engineer with Java services, integration testing, payment security and technical ownership.");
+    await composer.getByRole("button", { name: "Paste JD" }).click();
+    await composer.getByLabel("Paste full job description").fill("We are hiring an engineer responsible for reliable Java services and secure payment APIs.");
+    await composer.getByLabel("Agent", { exact: true }).selectOption("review");
+    await composer.getByRole("textbox", { name: "Message your Career Copilot" }).fill("Could this CV support an interview for this role?");
+    expect(adviceCalls).toBe(0);
+    await composer.getByRole("button", { name: "Send" }).click();
+    await expect(page.getByText("Synthetic V2 review result")).toBeVisible();
+    expect(adviceCalls).toBe(1);
+    await expect(composer.getByLabel("Agent", { exact: true })).toHaveValue("review");
+    await testInfo.attach("occ-composer-v2-review-desktop-1440", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ-composer-v2-review-mobile-390", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.setViewportSize({ width: 320, height: 700 });
+    await testInfo.attach("occ-composer-v2-review-mobile-320", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
   test("OCC 2.0 mobile exposes session and context rails on demand", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);

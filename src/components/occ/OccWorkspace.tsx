@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
+import { planOccAgentSend } from "@/lib/occ/composerRouting";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import { DEFAULT_OCC_AGENT, OCC_AGENTS, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
@@ -149,10 +150,10 @@ export function OccWorkspace() {
     if (!response.ok) throw new Error(result.error || "Interview coaching is temporarily unavailable.");
     return result;
   }
-  async function startInterview(index = 0) {
-    if (interviewBusy || interviewPhase === "question" || index >= MAX_INTERVIEW_TURNS || (index === 0 ? description : interviewContext?.description ?? "").trim().length < 30) return;
+  async function startInterview(index = 0, submittedDescription?: string) {
+    if (interviewBusy || interviewPhase === "question" || index >= MAX_INTERVIEW_TURNS || (index === 0 ? submittedDescription ?? description : interviewContext?.description ?? "").trim().length < 30) return;
     const generation = interviewGeneration.current;
-    const context = index === 0 || !interviewContext ? { cv, description } : interviewContext;
+    const context = index === 0 || !interviewContext ? { cv, description: submittedDescription ?? description } : interviewContext;
     setInterviewBusy(true);
     setError("");
     try {
@@ -388,27 +389,55 @@ export function OccWorkspace() {
 
   function ask(value: string) {
     const text = value.trim();
-    if (!text || running || interviewBusy) return;
-    if (selectedAgent === "interview" && interviewPhase === "question") {
+    if (!text || running || interviewBusy || uploading) return;
+    const decision = planOccAgentSend({
+      agent: selectedAgent, message: text,
+      hasCv: cv.trim().length >= 30,
+      hasJobDescription: description.trim().length >= 30,
+      interviewPhase,
+    });
+    if (decision.action === "interview-answer") {
       void submitInterviewAnswer(text);
       return;
     }
-    const plan = planOccTurn(text, {
-      priorTask: currentTask,
-      hasCv: cv.trim().length >= 30,
-      hasJobDescription: description.trim().length >= 30,
-      hasAdvice: advice !== null,
-    });
-    if (plan.task === "interview") {
-      setSelectedAgent("interview");
-      setUsedAgents(current => current.includes("interview") ? current : [...current, "interview"]);
+    // Never let keywords in a JD override an explicitly selected agent.
+    const roleText = decision.jobDescription ?? description;
+    if (decision.jobDescription) {
+      setDescription(decision.jobDescription);
+      setUploadedJobName("");
+      setPasteRoleOpen(false);
     }
-    if (plan.captureJobDescription) setDescription(text.slice(0, 15000));
-    setCurrentTask(plan.task);
-    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: plan.reply, cvAction: plan.task === "versions", memoryAction: plan.task === "memory" }]);
-    setSection(plan.panel === "none" ? "overview" : plan.panel);
-    setComposer("");
+    setUsedAgents(current => current.includes(selectedAgent) ? current : [...current, selectedAgent]);
+    setCurrentTask(getOccAgent(selectedAgent).task);
+    setTurns(current => [...current, { role: "you", text }]);
     setError("");
+    if (decision.action === "missing") {
+      setTurns(current => [...current, { role: "OCC", text: decision.reply! }]);
+      setComposer("");
+      return;
+    }
+    if (decision.action === "interview-question") {
+      // Use the submitted JD directly: React state updates have not committed yet.
+      void startInterview(0, roleText);
+      setComposer("");
+      return;
+    }
+    if (decision.action === "review") {
+      void requestAdvice(text, roleText);
+      setComposer("");
+      return;
+    }
+    const agent = getOccAgent(selectedAgent);
+    setSection(agent.task);
+    setTurns(current => [...current, {
+      role: "OCC",
+      text: decision.action === "memory"
+        ? "Your career memory is private and editable. Review and change it below; nothing is saved automatically."
+        : "Choose a CV passage to improve. Review each proposed change before creating a private version.",
+      memoryAction: decision.action === "memory",
+      cvAction: decision.action === "improve",
+    }]);
+    setComposer("");
   }
   const [cv, setCv] = useState("");
   const [savedCvs, setSavedCvs] = useState<{ id: string; title: string; template: string; data: CVData }[]>([]);
@@ -552,14 +581,14 @@ export function OccWorkspace() {
     } catch (e) { setError(e instanceof Error ? e.message : "Analysis failed."); }
     finally { setRunning(false); }
   }
-  async function requestAdvice() {
+  async function requestAdvice(submittedGoal?: string, submittedDescription?: string) {
     setRunning(true);
     setError("");
     setAdvice(null);
     try {
       const response = await fetch("/api/occ/advise", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv, description, goal: turns.filter(turn => turn.role === "you").at(-1)?.text.slice(0, 300) ?? "", saveRun, useSavedProfile }), cache: "no-store",
+        body: JSON.stringify({ cv, description: submittedDescription ?? description, goal: (submittedGoal ?? turns.filter(turn => turn.role === "you").at(-1)?.text ?? "").slice(0, 300), saveRun, useSavedProfile }), cache: "no-store",
       });
       const data = await response.json();
       if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : data.error?.message ?? "OCC could not analyze your CV.");
@@ -802,7 +831,7 @@ export function OccWorkspace() {
           </div>
           <div className="occ2-composer-cta">
               {selectedAgent === "review" && cvReady && roleReady && <button type="button" className="occ2-review-action" disabled={running} onClick={() => void requestAdvice()}>✦ {running ? "Reviewing…" : "Review attached CV"}</button>}
-              <button type="submit" disabled={!composer.trim() || interviewBusy || (selectedAgent === "interview" && interviewPhase === "question" && composer.trim().length < 20)} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>{selectedAgent === "interview" && interviewPhase === "question" ? "Get feedback" : "Send"}</button>
+              <button type="submit" disabled={!composer.trim() || interviewBusy || running || Boolean(uploading) || (selectedAgent === "interview" && interviewPhase === "question" && composer.trim().length < 20)} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
           </div>
           {(cvReady || roleReady) && <div className="occ2-composer-attachments" aria-label="Composer attachments">
             {cvReady && <span className="occ2-attachment-chip">CV · {uploadedCvName || selectedStructuredCv?.title || "Pasted CV"} <button type="button" aria-label="Remove CV attachment" onClick={() => detachDocument("cv")}>×</button></span>}
