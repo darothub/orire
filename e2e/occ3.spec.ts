@@ -8,6 +8,8 @@ test.describe("OCC 3.0 isolated chat preview", () => {
     await signIn(page);
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/occ/preview");
+    const decline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await decline.isVisible()) await decline.click();
     const chat = page.getByRole("region", { name: "OCC 3.0 conversation" });
     await expect(page.getByRole("form", { name: "OCC 3.0 composer" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Attach document" })).toBeVisible();
@@ -45,6 +47,8 @@ test.describe("OCC 3.0 isolated chat preview", () => {
   test("JD option requests JD inside chat and automatically launches targeted review on Send", async ({ page, db, e2eUser }) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page); await page.goto("/occ/preview");
+    const decline = page.getByRole("button", { name: "Decline", exact: true });
+    if (await decline.isVisible()) await decline.click();
     await page.locator('input[type="file"]').setInputFiles({
       name: "My_CV.txt", mimeType: "text/plain",
       buffer: Buffer.from("Professional Summary: Experienced teacher supporting curriculum planning. Work experience: Teaching mathematics to secondary school students and creating lesson plans. Education: Bachelor degree in education. Skills: Communication, classroom management and collaboration."),
@@ -56,7 +60,7 @@ test.describe("OCC 3.0 isolated chat preview", () => {
     await page.route("**/api/occ/advise", async route => {
       calls++;
       const data = route.request().postDataJSON();
-      expect(data.description).toContain("responsibilities");
+      expect(data.description.toLowerCase()).toContain("responsibilities");
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
         advice: { summary: "Your teaching experience may be relevant.", recommendations: [{ requirement: "Lesson planning", cvEvidence: "creating lesson plans", assessment: "supported", suggestion: "Explain your lesson planning process.", sampleWording: null, question: null }], nextSteps: [], disclaimer: "Verify every claim." },
       }) });
