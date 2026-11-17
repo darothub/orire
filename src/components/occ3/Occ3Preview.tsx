@@ -278,7 +278,7 @@ export function Occ3Preview() {
     append(message("you", { text }),
       message("occ", { text: agent === "review"
         ? "To run a new role-specific review, share a job description. You can also choose General review for CV-only feedback."
-        : agent === "interview" || agent === "coach"
+        : agent === "interview"
           ? "Interview coaching uses a target role. Share the job description and I'll help you prepare one question at a time."
           : agent === "improve"
             ? "I can help improve wording from your CV. We'll only suggest evidence-based changes; you choose what to accept."
