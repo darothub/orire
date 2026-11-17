@@ -443,3 +443,17 @@
 .occ2-composer-v1 .occ2-composer-input-label { color: #d8c5f1; opacity: 1; }
 .occ2-composer-v1 .occ2-quiet-action { color:#f7f2ff; }
 .occ2-composer-v1 select option { color: #f7f2ff; background: #1c162c; }
+
+/* Keep Send visible even if 320px screens require scrolling attachment tools. */
+.occ2-composer-v1 .occ2-composer-cta {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  width: 100%;
+  background: #1c162c;
+  padding: 7px 2px;
+  border-top: 1px solid #65547b;
+}
+@media(max-width:540px){
+  .occ2-composer-v1 .occ2-composer-cta button[type=submit] { min-height: 44px; }
+}
