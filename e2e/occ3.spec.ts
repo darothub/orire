@@ -47,7 +47,7 @@ test.describe("OCC 3.0 isolated chat preview", () => {
     await signIn(page); await page.goto("/occ/preview");
     await page.locator('input[type="file"]').setInputFiles({
       name: "My_CV.txt", mimeType: "text/plain",
-      buffer: Buffer.from("Professional Summary: Experienced teacher supporting curriculum planning. Work experience: Teaching mathematics to secondary school students and creating lesson plans. Education: Bachelor degree in education. Skills: Classroom management and collaboration."),
+      buffer: Buffer.from("Professional Summary: Experienced teacher supporting curriculum planning. Work experience: Teaching mathematics to secondary school students and creating lesson plans. Education: Bachelor degree in education. Skills: Communication, classroom management and collaboration."),
     });
     await page.getByRole("button", { name: "Send message" }).click();
     await page.getByRole("button", { name: "I have a job description" }).click();
