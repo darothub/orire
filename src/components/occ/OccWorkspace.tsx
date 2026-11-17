@@ -659,7 +659,7 @@ export function OccWorkspace() {
             <div className="occ2-composer-tools">
               <label className="occ2-composer-agent" htmlFor="occ2-agent-picker">
                 <span>Agent</span>
-                <select id="occ2-agent-picker" value={selectedAgent} onChange={event => chooseAgent(event.target.value as OccAgentId)}>
+                <select id="occ2-agent-picker" aria-label="Agent" value={selectedAgent} onChange={event => chooseAgent(event.target.value as OccAgentId)}>
                   {OCC_AGENTS.map(agent => <option key={agent.id} value={agent.id}>{agent.label}</option>)}
                 </select>
               </label>
