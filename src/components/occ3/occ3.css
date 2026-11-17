@@ -1,0 +1,101 @@
+/* OCC 3.0 standalone preview — Royal Iris dark palette, not loaded by OCC 2.0 */
+.occ3-shell { --occ3-ink:#fff6ff; --occ3-muted:#d7bce7; --occ3-peach:#ffbe91; box-sizing:border-box; min-height:100dvh; width:100%; display:grid; grid-template-columns: minmax(218px,264px) minmax(0,1fr); color:var(--occ3-ink); background:radial-gradient(ellipse at 50% -20%,#5b0c84 0%,transparent 45%),linear-gradient(135deg,#200a40 4%,#230942 50%,#3b0756 100%); font-family:inherit; }
+.occ3-shell *, .occ3-shell *::before, .occ3-shell *::after { box-sizing:border-box; }
+.occ3-shell button,.occ3-shell textarea { font:inherit; }
+.occ3-shell button { cursor:pointer; }
+.occ3-shell button:disabled { opacity:.48; cursor:not-allowed; }
+.occ3-shell button:focus-visible,.occ3-shell textarea:focus-visible,.occ3-shell a:focus-visible { outline:2px solid var(--occ3-peach); outline-offset:3px; }
+.occ3-sidebar { background:linear-gradient(165deg,rgba(15,3,42,.94),rgba(24,4,47,.93)); border-right:1px solid rgba(240,186,255,.17); padding:28px 19px; display:flex; flex-direction:column; min-width:0; gap:22px; }
+.occ3-brand { display:flex; align-items:center; gap:11px; font-size:24px; }
+.occ3-brand strong { letter-spacing:-.05em; font-size:27px; }
+.occ3-brand-mark { color:#db8efa; font-size:35px; line-height:1; }
+.occ3-brand small { display:block; font-size:12px; letter-spacing:0; color:var(--occ3-muted); font-weight:500; }
+.occ3-brand b { font-size:10px; font-weight:700; padding:3px 8px; background:rgba(212,138,250,.15); border-radius:99px; margin-left:5px; }
+.occ3-new { background:var(--occ3-peach); color:#230b3a; padding:13px; border:0; border-radius:13px; font-weight:750!important; }
+.occ3-history-title { margin:2px 0 -12px; color:#ddc2ed; font-size:11px; letter-spacing:.08em; font-weight:750; }
+.occ3-history { background:rgba(195,137,237,.15); border-radius:10px; padding:12px; font-size:13px; }
+.occ3-history span { margin-right:8px; }
+.occ3-preview-note { font-size:12px; line-height:1.65; color:var(--occ3-muted); }
+.occ3-sidebar-bottom { margin-top:auto; display:flex; align-items:center; gap:10px; border-top:1px solid rgba(255,255,255,.14); padding-top:16px; font-size:12px; }
+.occ3-avatar,.occ3-message-icon { flex-shrink:0; width:33px; height:33px; border-radius:50%; display:grid; place-items:center; font-size:12px; background:#8150ac; color:white; }
+.occ3-main { min-width:0; height:100dvh; display:flex; flex-direction:column; position:relative; background:radial-gradient(ellipse at 97% 4%,rgba(109,34,157,.18),transparent 44%); }
+.occ3-top { min-height:58px; display:flex; align-items:center; justify-content:space-between; padding:14px clamp(16px,4vw,40px); color:#e8d6f4; font-size:13px; }
+.occ3-top b { font-size:9px; border:1px solid #a46ebe; border-radius:5px; padding:2px 5px; letter-spacing:.08em; }
+.occ3-top a { color:#e8d6f4; text-decoration:none; border:1px solid rgba(255,255,255,.22); border-radius:8px; padding:7px 10px; }
+.occ3-mobile-menu { display:none; color:inherit; border:0; background:transparent; }
+.occ3-thread { width:min(100%,890px); margin:0 auto; flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; padding:18px 24px 22px; display:flex; flex-direction:column; gap:24px; }
+.occ3-hero { text-align:center; margin:auto 0; display:grid; justify-items:center; gap:16px; }
+.occ3-flower { color:#d891ff; font-size:54px; line-height:1; }
+.occ3-hero h1 { font-size:clamp(26px,3.5vw,40px); line-height:1.15; letter-spacing:-.045em; margin:0; }
+.occ3-hero h1 span { color:var(--occ3-peach); }
+.occ3-hero p { color:#f6e7fb; line-height:1.65; font-size:clamp(13px,1.5vw,16px); margin:0; }
+.occ3-hint { font-size:13px; color:#d9c2e7; background:rgba(255,255,255,.075); border-radius:100px; padding:9px 17px; margin-top:12px; }
+.occ3-message { display:flex; align-items:flex-start; gap:12px; max-width:100%; }
+.occ3-message-content { max-width:min(100%,690px); background:rgba(218,159,255,.12); border:1px solid rgba(209,154,244,.09); border-radius:20px; padding:17px 20px; min-width:0; overflow-wrap:anywhere; }
+.occ3-message-content p { margin:0; line-height:1.65; font-size:14px; }
+.occ3-you { justify-content:flex-end; flex-direction:row-reverse; }
+.occ3-you .occ3-message-content { background:rgba(176,111,219,.22); }
+.occ3-message-icon { color:#e2b3ff; background:#4b1d6c; font-size:21px; }
+.occ3-you .occ3-message-icon { font-size:11px; color:#fff; }
+.occ3-file { display:flex; gap:12px; align-items:center; min-width:175px; max-width:100%; }
+.occ3-file>span:first-child { font-size:27px; color:#e3baff; }
+.occ3-file strong { display:block; font-size:13px; overflow-wrap:anywhere; }
+.occ3-file small { display:block; color:#d0b1de; font-size:11px; }
+.occ3-file>span:last-child { margin-left:auto; color:#e6beff; }
+.occ3-choices { display:flex; flex-wrap:wrap; gap:9px; margin-top:14px; }
+.occ3-choices button { border:1px solid #b889ce; background:transparent; border-radius:999px; color:white; padding:10px 16px; font-size:12px; font-weight:650; }
+.occ3-choices button:first-child { background:var(--occ3-peach); border-color:var(--occ3-peach); color:#28133d; }
+.occ3-jd-tip { background:rgba(226,174,244,.13); color:#f3e1fb; border:1px solid rgba(224,175,243,.25); border-radius:12px; padding:12px; font-size:12px; margin-top:12px; }
+.occ3-review { display:grid; gap:11px; margin-top:14px; border:1px solid rgba(235,192,255,.25); border-radius:16px; padding:15px; min-width:0; }
+.occ3-review-title { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.occ3-review-title strong { font-size:16px; }
+.occ3-review-title span { color:#fff; background:rgba(149,63,198,.55); border-radius:30px; padding:5px 10px; font-size:11px; }
+.occ3-review p { font-size:13px; }
+.occ3-review details { border-top:1px solid rgba(225,192,246,.19); padding-top:10px; min-width:0; }
+.occ3-review summary { display:flex; justify-content:space-between; gap:8px; cursor:pointer; font-size:13px; font-weight:700; }
+.occ3-review summary span { color:#fbc5a6; font-size:10px; font-weight:500; }
+.occ3-review details p,.occ3-review blockquote,.occ3-review li { margin:9px 0 0; font-size:12px; line-height:1.6; }
+.occ3-review blockquote { border-left:2px solid var(--occ3-peach); padding-left:10px; color:#e2c7eb; }
+.occ3-review small { color:#ddc2e5; line-height:1.5; font-size:11px; }
+.occ3-status { text-align:center; font-size:12px; color:var(--occ3-muted); }
+.occ3-error { color:#ffe0d8; border:1px solid rgba(255,196,171,.5); border-radius:10px; padding:9px 12px; font-size:12px; }
+.occ3-composer-area { width:min(100%,920px); margin:0 auto; padding:8px 24px max(14px,env(safe-area-inset-bottom)); }
+.occ3-composer { border:1px solid rgba(237,204,255,.86); border-radius:23px; background:rgba(100,50,129,.32); box-shadow:0 12px 28px rgba(9,0,23,.18); padding:10px 12px; position:relative; }
+.occ3-composer-main { display:flex; align-items:flex-end; gap:10px; }
+.occ3-composer textarea { min-height:44px; max-height:130px; resize:vertical; min-width:0; flex:1; background:transparent; border:0; color:white; padding:12px 5px; outline:none; font-size:14px; line-height:1.5; }
+.occ3-composer textarea::placeholder { color:#d4bbdf; opacity:1; }
+.occ3-attach-wrap,.occ3-agent-wrap { position:relative; }
+.occ3-attach,.occ3-agent { color:white; background:transparent; border:0; height:43px; border-radius:12px; }
+.occ3-attach { font-size:25px; width:39px; transform:rotate(-28deg); }
+.occ3-agent { border:1px solid rgba(255,255,255,.6); padding:0 12px; font-size:12px; white-space:nowrap; }
+.occ3-agent span { padding-left:6px; }
+.occ3-send { background:var(--occ3-peach); color:#23103b; border:0; border-radius:50%; height:40px; width:40px; font-size:20px; }
+.occ3-popup { position:absolute; bottom:calc(100% + 12px); border:1px solid #be8fd2; border-radius:15px; background:#35124f; box-shadow:0 12px 25px rgba(0,0,0,.3); padding:7px; min-width:210px; z-index:10; }
+.occ3-agent-menu { right:0; }
+.occ3-attach-menu { left:0; }
+.occ3-popup button { display:flex; justify-content:space-between; width:100%; background:transparent; border:0; color:white; text-align:left; border-radius:8px; padding:10px 11px; font-size:12px; }
+.occ3-popup button:hover,.occ3-popup button[aria-selected="true"] { background:#603080; }
+.occ3-saved { max-height:190px; overflow:auto; border-top:1px solid #754b8b; }
+.occ3-saved span { display:block; color:var(--occ3-muted); padding:9px; font-size:11px; }
+.occ3-attached { margin:0 0 9px 42px; display:flex; justify-content:space-between; align-items:center; gap:15px; width:fit-content; max-width:calc(100% - 42px); padding:7px 10px; border-radius:9px; background:rgba(205,160,239,.18); font-size:11px; }
+.occ3-attached span { overflow-wrap:anywhere; }
+.occ3-attached button { border:0; background:transparent; color:white; font-size:17px; }
+.occ3-footnote { margin:8px 0 0; text-align:center; font-size:10px; color:#d6bfde; }
+@media(max-width:740px) {
+  .occ3-shell { display:block; }
+  .occ3-sidebar { display:none; position:absolute; z-index:12; width:min(85vw,280px); height:100dvh; box-shadow:10px 0 22px rgba(0,0,0,.25); }
+  .occ3-sidebar-open { display:flex; }
+  .occ3-mobile-menu { display:inline-block; }
+  .occ3-main { height:100dvh; }
+  .occ3-thread { padding:14px 15px; gap:16px; }
+  .occ3-composer-area { padding:8px 11px max(12px,env(safe-area-inset-bottom)); }
+  .occ3-hero { gap:11px; }
+  .occ3-flower { font-size:40px; }
+  .occ3-message-content { padding:13px; border-radius:15px; }
+  .occ3-agent { padding:0 8px; }
+  .occ3-composer-main { gap:4px; }
+  .occ3-composer textarea { font-size:16px; padding:10px 3px; }
+  .occ3-desktop-only { display:none; }
+}
+@media(max-width:360px) { .occ3-agent { font-size:11px; padding:0 5px; } .occ3-attach { width:30px; } .occ3-send { width:36px; height:36px; } }
+@media(prefers-reduced-motion:reduce) { .occ3-shell * { scroll-behavior:auto!important; transition:none!important; } }
