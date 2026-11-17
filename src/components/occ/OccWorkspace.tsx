@@ -550,13 +550,7 @@ export function OccWorkspace() {
         </div>
       </header>
       <section aria-label="Career Copilot conversation" className="occ2-conversation" style={{ ...surface, display: "grid", gap: 16 }}>
-        <div className="occ2-agent-toolbar">
-          <label htmlFor="occ2-agent-picker">Agent</label>
-          <select id="occ2-agent-picker" value={selectedAgent} onChange={event => chooseAgent(event.target.value as OccAgentId)}>
-            {OCC_AGENTS.map(agent => <option key={agent.id} value={agent.id}>{agent.label}</option>)}
-          </select>
-          <span>Switch agents without losing your CV or target role</span>
-        </div>
+
         {turns.length === 0 && <>
           <h2 style={{ fontWeight: 750, fontSize: "clamp(21px, 3vw, 27px)" }}>What would you like to work on?</h2>
           <p style={{ opacity: .8 }}>Ask a question, choose a starting point or attach a CV.</p>
@@ -658,13 +652,37 @@ export function OccWorkspace() {
 
       <div ref={bottomRef} className="occ2-bottom-anchor" aria-hidden="true" />
       {(running || interviewBusy) && <p role="status" aria-live="polite" className="occ2-working-status">{interviewBusy ? "OCC is preparing your interview coaching…" : "OCC is reviewing the supplied information…"}</p>}
-        <form className="occ2-sticky-composer" onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #b8afd0", borderRadius: 16, background: "rgba(114,81,174,.04)" }}>
-          <textarea aria-label="Message your Career Copilot" style={{ width: "100%", background: "transparent", color: "inherit", font: "inherit", border: 0, resize: "vertical", padding: 8, minHeight: 78, outlineOffset: 2 }} maxLength={selectedAgent === "interview" && interviewPhase === "question" ? 4000 : 1200} value={composer} onChange={event => setComposer(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(composer); } }} placeholder={selectedAgent === "interview" && interviewPhase === "question" ? "Write your interview answer in your own words…" : "Tell OCC what you want to achieve…"} />
+        <form aria-label="OCC conversation composer" className="occ2-sticky-composer occ2-composer-v1" onSubmit={event => { event.preventDefault(); ask(composer); }}>
+          <label className="occ2-composer-input-label" htmlFor="occ2-chat-message">Your message · {getOccAgent(selectedAgent).label}</label>
+          <textarea id="occ2-chat-message" aria-label="Message your Career Copilot" className="occ2-composer-textarea" rows={3} maxLength={selectedAgent === "interview" && interviewPhase === "question" ? 4000 : 15000} value={composer} onChange={event => setComposer(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(composer); } }} placeholder={selectedAgent === "interview" && interviewPhase === "question" ? "Write your interview answer in your own words…" : "Write a message, paste a job description, or explain your goal…"} />
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-              {uploadInput("cv", "Upload CV", true)}
+            <div className="occ2-composer-tools">
+              <label className="occ2-composer-agent" htmlFor="occ2-agent-picker">
+                <span>Agent</span>
+                <select id="occ2-agent-picker" value={selectedAgent} onChange={event => chooseAgent(event.target.value as OccAgentId)}>
+                  {OCC_AGENTS.map(agent => <option key={agent.id} value={agent.id}>{agent.label}</option>)}
+                </select>
+              </label>
+              <div className="occ2-composer-cv-menu">
+                <details>
+                  <summary>＋ CV</summary>
+                  <div className="occ2-composer-cv-options">
+                    {uploadInput("cv", "Upload CV", true)}
+                    {savedCvs.length > 0 && <label>Choose from Orire
+                      <select aria-label="Choose existing CV in composer" value={selectedCvId} onChange={event => {
+                        if (event.target.value) selectSavedCv(event.target.value); else detachDocument("cv");
+                      }}>
+                        <option value="">Select saved CV</option>
+                        {savedCvs.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
+                      </select>
+                    </label>}
+                    <button type="button" className="occ2-quiet-action" onClick={() => setPasteCvOpen(value => !value)}>Paste CV text</button>
+                  </div>
+                </details>
+              </div>
+
               {uploadInput("jobDescription", "Upload job description", true)}
-              <button type="button" className="occ2-quiet-action" aria-expanded={pasteCvOpen} onClick={() => setPasteCvOpen(value => !value)}>Paste CV</button>
+
               <button type="button" className="occ2-quiet-action" aria-expanded={pasteRoleOpen} onClick={() => setPasteRoleOpen(value => !value)}>Paste JD</button>
             </div>
             <div className="occ2-composer-cta">
@@ -672,6 +690,10 @@ export function OccWorkspace() {
               <button type="submit" disabled={!composer.trim() || interviewBusy || (selectedAgent === "interview" && interviewPhase === "question" && composer.trim().length < 20)} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>{selectedAgent === "interview" && interviewPhase === "question" ? "Get feedback" : "Send"}</button>
             </div>
           </div>
+          {(cvReady || roleReady) && <div className="occ2-composer-attachments" aria-label="Composer attachments">
+            {cvReady && <span className="occ2-attachment-chip">CV · {uploadedCvName || selectedStructuredCv?.title || "Pasted CV"} <button type="button" aria-label="Remove CV attachment" onClick={() => detachDocument("cv")}>×</button></span>}
+            {roleReady && <span className="occ2-attachment-chip">Job description · {uploadedJobName || "Pasted text"} <button type="button" aria-label="Remove job description" onClick={() => detachDocument("jobDescription")}>×</button></span>}
+          </div>}
           {pasteCvOpen && <label id="occ2-cv-text-panel" className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
             <textarea aria-label="Paste full CV" maxLength={30000} rows={6} value={cv} onChange={event => { setCv(event.target.value); setSelectedCvId(""); setUploadedCvName(""); }} placeholder="Paste your complete CV here" />
           </label>}
