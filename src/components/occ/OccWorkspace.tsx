@@ -111,7 +111,7 @@ export function OccWorkspace() {
     setUsedAgents(current => current.includes(id) ? current : [...current, id]);
     setCurrentTask(agent.task);
     setSection(agent.task === "analysis" ? "analysis" : agent.task);
-    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available.", cvAction: id === "improve", memoryAction: id === "memory" }]);
+    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. Press Send to work with this specialist; your attached documents remain available." }]);
   }
 
   const [composer, setComposer] = useState("");
