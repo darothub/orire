@@ -872,8 +872,11 @@ test.describe("Career-only OCC feature", () => {
       await cookieBanner.getByRole("button", { name: "Decline" }).click();
     }
     await page.getByRole("button", { name: "Send" }).click();
-    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("Your CV is ready. Please provide the target job description", { exact: false })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Career Copilot conversation" }).getByText("please attach job description", { exact: false })).toBeVisible();
     const jd = "We are looking for a senior engineer with experience with payment platforms, responsible for API architecture, authentication, quality testing and reliable services.";
+    await page.route("**/api/occ/advise", route => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+      advice: { summary: "Synthetic follow-up review", recommendations: [], nextSteps: [], disclaimer: "Synthetic fixture" }, usedSavedProfile: false, runId: null,
+    }) }));
     await page.getByLabel("Message your Career Copilot").fill(jd);
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByRole("status", { name: "Attached career documents" })).toContainText("Role ready");
@@ -960,7 +963,7 @@ test.describe("Career-only OCC feature", () => {
     await conversation.getByRole("button", { name: "Send" }).click();
     await expect(keyword).toBeVisible();
     expect(matchCalls).toBe(1);
-    expect(aiCalls).toBe(0);
+    expect(aiCalls).toBe(1); // Explicit Send now requests Review AI; keyword-only comparison remains a separate, no-AI action.
     await testInfo.attach("occ2-p7d2-keyword-conversation-desktop", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
@@ -1114,17 +1117,17 @@ test.describe("Career-only OCC feature", () => {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),
       contentType: "image/png",
     });
-    await expect(page.getByRole("button", { name: "Get feedback" })).toBeDisabled();
+    await expect(page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send" })).toBeDisabled();
     await page.getByRole("textbox", { name: "Message your Career Copilot" }).fill("I would add idempotency keys and a shared dedupe store, then test retry behavior across service boundaries.");
-    await page.getByRole("button", { name: "Get feedback" }).click();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send" }).click();
     await expect(page.getByText("You explained idempotency clearly.")).toBeVisible();
     await page.getByText("Suggested clearer wording").click();
     await expect(page.getByText("I would add idempotency keys and a shared dedupe store.", { exact: false })).toBeVisible();
     await expect(page.getByText("It explains your plan in an order that is easier to follow.")).toBeVisible();
     await page.getByRole("button", { name: "Edit this wording in composer" }).click();
     await expect(page.getByRole("textbox", { name: "Message your Career Copilot" })).toHaveValue(/I would add idempotency keys/);
-    await expect(page.getByRole("button", { name: "Get feedback" })).toBeEnabled();
-    await page.getByRole("button", { name: "Get feedback" }).click();
+    await expect(page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send" })).toBeEnabled();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByRole("button", { name: "Send" }).click();
     await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
     expect(calls).toBe(3);
     const cookieDecline = page.getByRole("button", { name: "Decline", exact: true });
