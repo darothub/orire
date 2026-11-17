@@ -14,6 +14,9 @@ import { OccCvActionsMessage } from "./OccCvActionsMessage";
 import { OccInterviewQuestionMessage, OccInterviewFeedbackMessage } from "./OccInterviewMessages";
 import { MAX_INTERVIEW_TURNS, type InterviewFeedback, type InterviewQuestion } from "@/lib/occ/interview";
 import { OccTemplatePreview } from "./OccTemplatePreview";
+import { OccSavedCoachingMessage } from "./OccSavedCoachingMessage";
+import type { OccCoachingSnapshot } from "@/lib/occ/coachingSnapshot";
+import { validateOccCoachingHistory } from "@/lib/occ/coachingHistory";
 
 type Advice = OccAdvice;
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
@@ -37,6 +40,8 @@ export function OccWorkspace() {
   const [primaryAgent, setPrimaryAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
   const [usedAgents, setUsedAgents] = useState<OccAgentId[]>([DEFAULT_OCC_AGENT]);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
+  const [historyConsent, setHistoryConsent] = useState(false);
+  const [savedCoachingSnapshots, setSavedCoachingSnapshots] = useState<{ messageSequence: number; payload: OccCoachingSnapshot }[]>([]);
   const [savedFingerprint, setSavedFingerprint] = useState("");
   const [sessions, setSessions] = useState<OccSessionSummary[]>([]);
   const [sessionBusy, setSessionBusy] = useState(false);
@@ -214,6 +219,87 @@ export function OccWorkspace() {
 
   const currentFingerprint = JSON.stringify({ turns, primaryAgent, usedAgents });
   const hasUnsavedTranscript = turns.length > 0 && currentFingerprint !== savedFingerprint;
+
+  function coachingSnapshotsForCurrentTurns() {
+    const pending: { messageSequence: number; payload: OccCoachingSnapshot }[] = [];
+    turns.forEach((turn, messageSequence) => {
+      if (turn.role !== "OCC") return;
+      const review = reviewEvents.find(entry => entry.id === turn.reviewEventId);
+      if (review) pending.push({ messageSequence, payload: {
+        kind: "review", summary: review.advice.summary,
+        recommendations: review.advice.recommendations.map(({ requirement, assessment, cvEvidence, suggestion, sampleWording, question }) =>
+          ({ requirement, assessment, cvEvidence, suggestion, sampleWording, question })),
+        nextSteps: review.advice.nextSteps, disclaimer: review.advice.disclaimer,
+      } });
+      const interview = interviewEvents.find(entry => entry.id === turn.interviewEventId);
+      if (interview?.feedback && turns[messageSequence - 1]?.role === "you")
+        pending.push({ messageSequence, payload: {
+          kind: "interview", question: interview.question.question, focus: interview.question.focus,
+          answer: turns[messageSequence - 1].text,
+          strength: interview.feedback.strength, improvement: interview.feedback.improvement,
+          followUp: interview.feedback.followUp, betterWording: interview.feedback.betterWording ?? null,
+          disclaimer: "Practice feedback only; claims are self-reported and not a hiring prediction.",
+        } });
+    });
+    return pending;
+  }
+  async function saveCoachingHistory() {
+    if (!savedSessionId || hasUnsavedTranscript || !historyConsent || sessionBusy) return;
+    const input = validateOccCoachingHistory({ consent: true, snapshots: coachingSnapshotsForCurrentTurns().map(({ messageSequence, payload }) => ({ messageSequence, payload })) });
+    if (!input) {
+      setSessionNotice("No valid coaching results are available to save. Ensure the transcript is current.");
+      return;
+    }
+    setSessionBusy(true); setSessionNotice("");
+    try {
+      const response = await fetch("/api/occ/conversations/" + encodeURIComponent(savedSessionId) + "/snapshots", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ consent: true, snapshots: input.snapshots.map(({ messageSequence, payload }) => ({ messageSequence, payload })) }), cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Could not save the coaching results. They remain visible here.");
+      setSavedCoachingSnapshots(input.snapshots);
+      setHistoryConsent(false);
+      setSessionNotice("Coaching results saved with explicit consent. You can delete them independently.");
+    } catch (error) {
+      setSessionNotice(error instanceof Error ? error.message : "Could not save coaching results.");
+    } finally { setSessionBusy(false); }
+  }
+  function exportCoachingHistory() {
+    if (!savedCoachingSnapshots.length || !savedSessionId) return;
+    // Export only records already approved for retention; never include CV/JD
+    // attachments, authentication material or raw provider requests.
+    const exportData = {
+      schemaVersion: 1,
+      conversationId: savedSessionId,
+      disclaimer: "Contains self-reported CV excerpts and interview answers. Treat as private.",
+      coachingSnapshots: savedCoachingSnapshots,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "orire-private-coaching-history.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  async function eraseCoachingHistory() {
+    if (!savedSessionId || sessionBusy ||
+        !window.confirm("Permanently delete saved CV evidence excerpts and interview feedback from this conversation? Your text transcript will remain.")) return;
+    setSessionBusy(true);
+    try {
+      const response = await fetch("/api/occ/conversations/" + encodeURIComponent(savedSessionId) + "/snapshots", {
+        method: "DELETE", cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Could not delete saved coaching results.");
+      setSavedCoachingSnapshots([]);
+      setHistoryConsent(false);
+      setSessionNotice("Saved coaching result cards deleted; your transcript remains.");
+    } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Could not delete coaching history."); }
+    finally { setSessionBusy(false); }
+  }
+
   async function refreshSessions() {
     try {
       const response = await fetch("/api/occ/conversations", { cache: "no-store" });
@@ -250,7 +336,9 @@ export function OccWorkspace() {
       const result = await response.json();
       setSavedSessionId(result.id);
       setSavedFingerprint(currentFingerprint);
-      setSessionNotice("Transcript saved privately. CV and job-description attachments were not saved.");
+      setSavedCoachingSnapshots([]);
+      setHistoryConsent(false);
+      setSessionNotice("Transcript saved privately. CV/JD attachments and structured coaching results were not saved. Existing structured results are cleared on transcript replacement.");
       await refreshSessions();
     } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Could not save conversation."); }
     finally { setSessionBusy(false); }
@@ -264,6 +352,10 @@ export function OccWorkspace() {
       if (!response.ok) throw new Error("Could not open the saved conversation.");
       const { conversation } = await response.json();
       const loaded: Turn[] = conversation.messages.map((message: { sender: "you" | "OCC"; text: string }) => ({ role: message.sender, text: message.text }));
+      const restored: { messageSequence: number; payload: OccCoachingSnapshot }[] =
+        Array.isArray(conversation.coachingSnapshots) ? conversation.coachingSnapshots : [];
+      setSavedCoachingSnapshots(restored);
+      setHistoryConsent(false);
       const firstAgent = getOccAgent(conversation.primaryAgent).id;
       const agents = [...new Set([firstAgent, ...conversation.usedAgents.filter((id: string) => OCC_AGENTS.some(a => a.id === id))])] as OccAgentId[];
       setTurns(loaded);
@@ -276,7 +368,7 @@ export function OccWorkspace() {
       setAdvice(null); setReviewEvents([]); setKeywordEvents([]); setComposer("");
       setCurrentTask("unknown"); setSection("overview"); resetInterviewState();
       setPasteCvOpen(false); setPasteRoleOpen(false);
-      setSessionNotice("Conversation restored. Reattach your CV and job description to continue. Historical coaching result cards were not included in this transcript-only save.");
+      setSessionNotice(restored.length > 0 ? "Conversation restored with read-only, consented coaching results. CV/JD documents were not saved; reattach to continue." : "Transcript restored without structured coaching results. Reattach CV/JD to continue.");
       setSessionRailOpen(false);
     } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Unable to load conversation."); }
     finally { setSessionBusy(false); }
@@ -288,7 +380,7 @@ export function OccWorkspace() {
       const response = await fetch("/api/occ/conversations/" + encodeURIComponent(id), { method: "DELETE", cache: "no-store" });
       if (!response.ok) throw new Error("Could not delete conversation.");
       setSessions(current => current.filter(item => item.id !== id));
-      if (savedSessionId === id) { setSavedSessionId(null); setSavedFingerprint(""); }
+      if (savedSessionId === id) { setSavedSessionId(null); setSavedFingerprint(""); setSavedCoachingSnapshots([]); setHistoryConsent(false); }
       setSessionNotice("Saved conversation deleted.");
     } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Unable to delete conversation."); }
     finally { setSessionBusy(false); }
@@ -350,6 +442,8 @@ export function OccWorkspace() {
     setTurns([]);
     setReviewEvents([]);
     setKeywordEvents([]);
+    setSavedCoachingSnapshots([]);
+    setHistoryConsent(false);
     setComposer("");
     setCv("");
     setDescription("");
@@ -516,6 +610,24 @@ export function OccWorkspace() {
         <p className="occ2-unsaved-chat">✧ Current conversation <small>{savedSessionId ? hasUnsavedTranscript ? "Unsaved changes" : "Saved privately" : "Not saved"}</small></p>
         <button type="button" className="occ2-new-chat" disabled={sessionBusy || !turns.length || !hasUnsavedTranscript} onClick={() => void saveConversation()}>Save transcript privately</button>
         <p className="occ2-rail-note">Saving is optional and stores chat messages only, not CV/JD attachments. You can delete saved conversations.</p>
+        {(coachingSnapshotsForCurrentTurns().length > 0 || savedCoachingSnapshots.length > 0) &&
+          <section className="occ2-coaching-history-controls" aria-label="Private coaching history consent">
+            <h3>Coaching results · opt in</h3>
+            <p>Separate from saving chat messages. Coaching history contains excerpts quoted from your CV and your interview answers, even though full CV/JD files are not saved.</p>
+            {coachingSnapshotsForCurrentTurns().length > 0 && <>
+              <label><input type="checkbox" checked={historyConsent} onChange={event => setHistoryConsent(event.target.checked)} />
+                I agree to save these sensitive CV excerpts and interview answers as private coaching history.</label>
+              <button type="button" disabled={!savedSessionId || hasUnsavedTranscript || !historyConsent || sessionBusy}
+                onClick={() => void saveCoachingHistory()}>Save coaching results ({coachingSnapshotsForCurrentTurns().length})</button>
+              {(!savedSessionId || hasUnsavedTranscript) && <p>Save the current text transcript first, then separately approve saving its structured results.</p>}
+            </>}
+            {savedCoachingSnapshots.length > 0 && <>
+              <button type="button" disabled={!savedSessionId || sessionBusy} onClick={exportCoachingHistory}>Export saved coaching results</button>
+              <button type="button" disabled={!savedSessionId || sessionBusy}
+                onClick={() => void eraseCoachingHistory()}>Delete saved coaching results ({savedCoachingSnapshots.length})</button>
+            </>}
+          </section>}
+
         {sessionNotice && <p role="status" className="occ2-rail-note">{sessionNotice}</p>}
         <h2 className="occ2-side-label">SAVED CONVERSATIONS</h2>
         <input aria-label="Search saved conversations" value={sessionFilter} onChange={event => setSessionFilter(event.target.value)} placeholder="Search conversations" className="occ2-history-search" />
@@ -550,7 +662,6 @@ export function OccWorkspace() {
         </div>
       </header>
       <section aria-label="Career Copilot conversation" className="occ2-conversation" style={{ ...surface, display: "grid", gap: 16 }}>
-
         {turns.length === 0 && <>
           <h2 style={{ fontWeight: 750, fontSize: "clamp(21px, 3vw, 27px)" }}>What would you like to work on?</h2>
           <p style={{ opacity: .8 }}>Ask a question, choose a starting point or attach a CV.</p>
@@ -567,6 +678,8 @@ export function OccWorkspace() {
             <div className="occ2-message-bubble">
               <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
             </div>
+            {savedCoachingSnapshots.find(record => record.messageSequence === index) && !review && !interviewEvent &&
+              <OccSavedCoachingMessage snapshot={savedCoachingSnapshots.find(record => record.messageSequence === index)!.payload} />}
             {keywordEvent && <section aria-label="Keyword comparison results" className="occ2-keyword-message">
               <h3>Keyword-only evidence check</h3>
               <p>{keywordEvent.data.checked} role terms checked. This is not a hiring score, match percentage or AI advice.</p>

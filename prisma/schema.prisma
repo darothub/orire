@@ -313,6 +313,7 @@ model OccConversation {
 
   user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages OccMessage[]
+  coachingSnapshots OccCoachingSnapshot[]
 
   @@index([userId, updatedAt])
 }
@@ -329,5 +330,26 @@ model OccMessage {
   conversation OccConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, sequence])
+  @@index([conversationId, createdAt])
+}
+
+
+// Consent-gated structured history. Payload is allowlisted/validated at the
+// API boundary. It can contain CV *excerpts* and candidate interview answers,
+// but never a complete CV/JD attachment or provider response by design.
+// Message sequence anchors the snapshot to one historical assistant turn.
+model OccCoachingSnapshot {
+  id             String   @id @default(cuid())
+  conversationId String
+  messageSequence Int
+  schemaVersion  Int      @default(1)
+  kind           String
+  payload        Json
+  consentedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  conversation OccConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, messageSequence])
   @@index([conversationId, createdAt])
 }

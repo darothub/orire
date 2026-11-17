@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { validateOccCoachingSnapshot } from "@/lib/occ/coachingSnapshot";
 
 export const runtime = "nodejs";
 const send = (body: unknown, status = 200) => NextResponse.json(body, {
@@ -17,10 +18,18 @@ export async function GET(_request: Request, { params }: Params) {
     where: { id, userId: access.userId },
     select: { id: true, title: true, primaryAgent: true, usedAgents: true,
       messages: { orderBy: { sequence: "asc" }, select: { id: true, sender: true, text: true, sequence: true } },
+      coachingSnapshots: { orderBy: { messageSequence: "asc" }, take: 40, select: { messageSequence: true, schemaVersion: true, kind: true, payload: true, consentedAt: true } },
     },
   });
   if (!conversation) return send({ error: "Not found" }, 404);
-  return send({ conversation });
+  const snapshots = conversation.coachingSnapshots.flatMap(record => {
+    if (record.schemaVersion !== 1) return [];
+    const parsed = validateOccCoachingSnapshot(record.payload, true);
+    return parsed && parsed.kind === record.kind
+      ? [{ messageSequence: record.messageSequence, payload: parsed, consentedAt: record.consentedAt }]
+      : [];
+  });
+  return send({ conversation: { ...conversation, coachingSnapshots: snapshots } });
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
