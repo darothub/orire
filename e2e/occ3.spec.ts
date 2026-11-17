@@ -9,6 +9,8 @@ test.describe("OCC 3.0 isolated chat preview", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/occ/preview");
     const decline = page.getByRole("button", { name: "Decline", exact: true });
+    // Consent may mount after hydration and otherwise block composer clicks.
+    await decline.waitFor({ state: "visible", timeout: 4000 }).catch(() => {});
     if (await decline.isVisible()) await decline.click();
     const chat = page.getByRole("region", { name: "OCC 3.0 conversation" });
     await expect(page.getByRole("form", { name: "OCC 3.0 composer" })).toBeVisible();
@@ -48,6 +50,8 @@ test.describe("OCC 3.0 isolated chat preview", () => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page); await page.goto("/occ/preview");
     const decline = page.getByRole("button", { name: "Decline", exact: true });
+    // Consent may mount after hydration and otherwise block composer clicks.
+    await decline.waitFor({ state: "visible", timeout: 4000 }).catch(() => {});
     if (await decline.isVisible()) await decline.click();
     await page.locator('input[type="file"]').setInputFiles({
       name: "My_CV.txt", mimeType: "text/plain",
