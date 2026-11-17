@@ -516,7 +516,7 @@ test.describe("Career-only OCC feature", () => {
     await conversation.getByRole("button", { name: "Paste JD" }).click();
     await conversation.getByLabel("Paste full job description").fill("Hiring an engineer to design reliable secure Java APIs and financial payment services.");
     await conversation.getByRole("button", { name: "Review attached CV" }).click();
-    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" }).last()).toBeVisible();
     await expect(conversation.getByText("Synthetic grounded role review.")).toBeVisible();
     await expect(conversation.getByRole("button", { name: "Review my fit", exact: true })).toHaveCount(0);
     await expect(conversation.getByText("Review findings")).toBeVisible();
@@ -531,7 +531,7 @@ test.describe("Career-only OCC feature", () => {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" }).last()).toBeVisible();
     await testInfo.attach("occ2-unified-review-mobile", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
@@ -597,13 +597,13 @@ test.describe("Career-only OCC feature", () => {
     expect(aiCalls).toBe(0);
     await expect(conversation.getByRole("button", { name: "Review attached CV" })).toBeVisible();
     await conversation.getByRole("button", { name: "Review attached CV" }).click();
-    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" }).last()).toBeVisible();
     await expect(conversation.getByText("Synthetic, evidence-based role review.")).toBeVisible();
     expect(aiCalls).toBe(1);
     await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).fill("Could you clarify what I should verify?");
     await conversation.getByRole("textbox", { name: "Message your Career Copilot" }).press("Enter");
     await expect(conversation.getByText("Could you clarify what I should verify?", { exact: false })).toBeVisible();
-    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" })).toBeVisible();
+    await expect(conversation.getByRole("region", { name: "OCC recommendations workspace" }).last()).toBeVisible();
     await testInfo.attach("occ2-p7a-chat-review-desktop", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
     await page.setViewportSize({ width: 390, height: 844 });
     await testInfo.attach("occ2-p7a-chat-review-mobile", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });

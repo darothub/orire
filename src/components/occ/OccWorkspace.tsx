@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } fro
 import Link from "next/link";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
-import type { OccTask } from "@/lib/occ/orchestrator";
+import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
 import { planOccAgentSend } from "@/lib/occ/composerRouting";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
@@ -387,6 +387,26 @@ export function OccWorkspace() {
     finally { setSessionBusy(false); }
   }
 
+  function chooseSuggestedPrompt(text: string) {
+    // Suggestions configure the conversation, not an AI request.
+    const plan = planOccTurn(text, {
+      priorTask: currentTask,
+      hasCv: cv.trim().length >= 30,
+      hasJobDescription: description.trim().length >= 30,
+      hasAdvice: advice !== null,
+    });
+    const agentId: OccAgentId = plan.task === "interview" ? "interview"
+      : plan.task === "versions" ? "improve"
+      : plan.task === "memory" ? "memory" : "review";
+    setSelectedAgent(agentId);
+    setUsedAgents(current => current.includes(agentId) ? current : [...current, agentId]);
+    setCurrentTask(plan.task);
+    setSection(plan.panel === "none" ? "overview" : plan.panel);
+    setTurns(current => [...current, { role: "you", text }, {
+      role: "OCC", text: plan.reply, cvAction: plan.task === "versions", memoryAction: plan.task === "memory",
+    }]);
+  }
+
   function ask(value: string) {
     const text = value.trim();
     if (!text || running || interviewBusy || uploading) return;
@@ -696,7 +716,7 @@ export function OccWorkspace() {
           <p style={{ opacity: .8 }}>Ask a question, choose a starting point or attach a CV.</p>
           <div aria-label="Suggested career questions" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {["Review my CV for a role", "Improve my CV", "Prepare for an interview", "Manage my career memory"].map(text =>
-              <button type="button" key={text} onClick={() => ask(text)} style={{ padding: "7px 11px", textAlign: "left", background: "rgba(125, 93, 180, .045)", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 12, lineHeight: 1.4, cursor: "pointer" }}>{text}</button>)}
+              <button type="button" key={text} onClick={() => chooseSuggestedPrompt(text)} style={{ padding: "7px 11px", textAlign: "left", background: "rgba(125, 93, 180, .045)", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 12, lineHeight: 1.4, cursor: "pointer" }}>{text}</button>)}
           </div>
         </>}
         {turns.map((turn, index) => {
