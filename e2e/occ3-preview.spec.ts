@@ -14,6 +14,8 @@ test.describe("OCC 3.0 preview integration safeguards", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/occ/preview");
     const cookie = page.getByRole("dialog", { name: "Cookie consent" });
+    // The banner can mount after initial hydration; do not race its visibility.
+    await cookie.waitFor({ state: "visible", timeout: 4000 }).catch(() => {});
     if (await cookie.isVisible()) await cookie.getByRole("button", { name: "Decline" }).click();
 
     const composer = page.getByRole("form", { name: "OCC 3.0 composer" });
