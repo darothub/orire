@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties } fro
 import Link from "next/link";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
-import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
+import type { OccTask } from "@/lib/occ/orchestrator";
 import { planOccAgentSend } from "@/lib/occ/composerRouting";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
