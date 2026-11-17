@@ -41,6 +41,53 @@ test.describe("Career-only OCC feature", () => {
     });
   });
 
+  test("Composer V1 displays typed text, selected agent, saved CV, and anchored composer on desktop/mobile", async ({ page, db, e2eUser }, testInfo) => {
+    const saved = await db.document.create({ data: {
+      userId: e2eUser.id, title: "Composer UI fixture CV", template: "aurora",
+      data: JSON.parse(JSON.stringify(sampleCV)),
+    } });
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/occ");
+    const cookie = page.getByRole("dialog", { name: "Cookie consent" });
+    if (await cookie.isVisible()) await cookie.getByRole("button", { name: "Decline" }).click();
+    const composer = page.getByRole("form", { name: "OCC conversation composer" });
+    const message = composer.getByRole("textbox", { name: "Message your Career Copilot" });
+    await expect(composer).toBeVisible();
+    await expect(message).toBeVisible();
+    await message.fill("Review this job description for a senior engineering role.");
+    await expect(message).toHaveValue("Review this job description for a senior engineering role.");
+    await composer.getByLabel("Agent", { exact: true }).selectOption("review");
+    await composer.getByText("Saved CV", { exact: true }).click();
+    await composer.getByLabel("Choose existing CV in composer").selectOption(saved.id);
+    await composer.getByText("Saved CV", { exact: true }).click();
+    await expect(composer.getByLabel("Composer attachments")).toContainText("Composer UI fixture CV");
+    const colors = await composer.evaluate(element => ({
+      background: getComputedStyle(element).backgroundColor,
+      input: getComputedStyle(element.querySelector("textarea")!).color,
+    }));
+    expect(colors.background).toBe("rgb(28, 22, 44)");
+    expect(colors.input).toBe("rgb(247, 242, 255)");
+    await testInfo.attach("occ-composer-v1-desktop-1440", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    const position = await composer.evaluate(element => getComputedStyle(element).position);
+    expect(position).toBe("sticky");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await testInfo.attach("occ-composer-v1-mobile-390", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    await expect(message).toHaveValue("Review this job description for a senior engineering role.");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.setViewportSize({ width: 320, height: 700 });
+    await expect(composer.getByRole("button", { name: "Send" })).toBeInViewport({ ratio: 0.75 });
+    await testInfo.attach("occ-composer-v1-mobile-320", {
+      body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
+    });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  });
+
   test("OCC 2.0 mobile exposes session and context rails on demand", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
