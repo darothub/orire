@@ -81,6 +81,7 @@ test.describe("Career-only OCC feature", () => {
     await expect(message).toHaveValue("Review this job description for a senior engineering role.");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     await page.setViewportSize({ width: 320, height: 700 });
+    await expect(composer.getByRole("button", { name: "Send" })).toBeInViewport({ ratio: 0.75 });
     await testInfo.attach("occ-composer-v1-mobile-320", {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png",
     });
