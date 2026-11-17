@@ -10,7 +10,7 @@ import "./occ3.css";
 
 type Agent = "review" | "coach" | "interview" | "improve" | "memory";
 type Mode = "start" | "choice" | "awaiting-jd" | "ready";
-type Message = { id: number; role: "you" | "occ"; text?: string; file?: string; advice?: OccAdvice; mode?: "general" | "targeted"; choice?: boolean; jdPrompt?: boolean; interviewQuestion?: InterviewQuestion; interviewFeedback?: InterviewFeedback; interviewNumber?: number };
+type Message = { id: number; role: "you" | "occ"; text?: string; file?: string; advice?: OccAdvice; mode?: "general" | "targeted" | "coaching"; choice?: boolean; coachChoice?: boolean; jdPrompt?: boolean; interviewQuestion?: InterviewQuestion; interviewFeedback?: InterviewFeedback; interviewNumber?: number };
 type SavedCV = { id: string; title: string; data: CVData };
 const AGENTS: { id: Agent; name: string }[] = [
   { id: "review", name: "Review" }, { id: "coach", name: "Coach" },
@@ -38,6 +38,8 @@ export function Occ3Preview() {
   const [savedCvs, setSavedCvs] = useState<SavedCV[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [coachGoal, setCoachGoal] = useState("");
+  const coachGeneration = useRef(0);
   const [interviewPhase, setInterviewPhase] = useState<"idle" | "question" | "feedback">("idle");
   const [interviewQuestion, setInterviewQuestion] = useState<InterviewQuestion | null>(null);
   const [interviewIndex, setInterviewIndex] = useState(0);
@@ -64,7 +66,7 @@ export function Occ3Preview() {
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
     setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false);
-    interviewGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
+    interviewGeneration.current++; coachGeneration.current++; setCoachGoal(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
   }
   function chooseSaved(item: SavedCV) {
     setCv(cvToPlainText(item.data)); setCvName(item.title); setAttached("cv");
@@ -123,12 +125,40 @@ export function Occ3Preview() {
       setError(cause instanceof Error ? cause.message : "Review unavailable.");
     } finally { setBusy(false); }
   }
+  async function runCoach(goal: string, roleText = "") {
+    if (busy || !cvReady) return;
+    const cleanGoal = goal.trim();
+    if (cleanGoal.length < 5 || cleanGoal.length > 500) { setError("Describe your goal in 5 to 500 characters."); return; }
+    const generation = ++coachGeneration.current;
+    setBusy(true); setError(""); setCoachGoal(cleanGoal);
+    try {
+      const response = await fetch("/api/occ/coach", {
+        method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cv, goal: cleanGoal, ...(roleText ? { description: roleText } : {}) }),
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.advice) throw new Error(payload.error || "Coaching unavailable.");
+      if (generation !== coachGeneration.current) return;
+      append(message("occ", { text: "Here is a practical way forward.", advice: payload.advice as OccAdvice, mode: "coaching" }));
+      setMode("ready");
+    } catch (cause) {
+      if (generation === coachGeneration.current) setError(cause instanceof Error ? cause.message : "Coaching unavailable.");
+    } finally { if (generation === coachGeneration.current) setBusy(false); }
+  }
+  function chooseCoachGoal(goal: string) {
+    if (busy || !cvReady) return;
+    append(message("you", { text: goal }));
+    void runCoach(goal);
+  }
   function afterCV(file?: string) {
     const isInterview = agent === "interview";
+    const isCoach = agent === "coach";
     append(message("you", { text: draft.trim() || undefined, file: file || cvName || "CV" }),
       message("occ", isInterview
         ? { text: "I've received your CV. Paste or attach a job description for the mock interview.", jdPrompt: true }
-        : { text: "I've received your CV. Would you like a general review, or should I review it against a specific job description?", choice: true }));
+        : isCoach
+          ? { text: "I've received your CV. What career goal would you like help with? Choose an option or describe it below.", coachChoice: true }
+          : { text: "I've received your CV. Would you like a general review, or should I review it against a specific job description?", choice: true }));
     setMode(isInterview ? "awaiting-jd" : "choice"); setDraft(""); setAttached(null);
   }
   function chooseJD() {
@@ -184,9 +214,12 @@ export function Occ3Preview() {
     if (busy) return;
     setAgentMenu(false);
     if (next === agent) return;
-    interviewGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
+    interviewGeneration.current++; coachGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
     setAgent(next);
-    if (next === "interview" && cvReady && mode !== "start") {
+    if (next === "coach" && cvReady && mode !== "start") {
+      append(message("occ", { text: "Coach selected. What would you like help with? Choose a goal or describe it in your own words.", coachChoice: true }));
+      setMode("choice");
+    } else if (next === "interview" && cvReady && mode !== "start") {
       if (looksLikeJobDescription(jd)) {
         append(message("occ", { text: "Interview selected. I have the CV and job description. Type Start interview and press Send." }));
         setMode("ready");
@@ -194,7 +227,7 @@ export function Occ3Preview() {
         append(message("occ", { text: "Interview selected. Paste or attach the target job description to begin.", jdPrompt: true }));
         setMode("awaiting-jd");
       }
-    } else if (agent === "interview" && next === "review" && cvReady && mode === "awaiting-jd") {
+    } else if ((agent === "interview" || agent === "coach") && next === "review" && cvReady && mode === "awaiting-jd") {
       append(message("occ", { text: "Review selected. Would you prefer a general or job-specific review?", choice: true }));
       setMode("choice");
     }
@@ -203,6 +236,12 @@ export function Occ3Preview() {
     if (!canSend) return;
     if (!cvReady) { setError("Attach your CV using the paperclip before sending."); return; }
     if (mode === "start" || (mode === "choice" && attached === "cv")) { afterCV(cvName); return; }
+    if (agent === "coach" && mode === "choice" && draft.trim() && attached !== "jd") {
+      const goal = draft.trim();
+      if (goal.length < 5 || goal.length > 500) { setError("Describe your goal in 5 to 500 characters."); return; }
+      append(message("you", { text: goal })); setDraft("");
+      await runCoach(goal); return;
+    }
     if (agent === "interview" && interviewPhase === "question") {
       await respondToInterview(draft.trim()); return;
     }
@@ -223,21 +262,28 @@ export function Occ3Preview() {
       append(message("you", { text: attached === "jd" ? undefined : draft.trim(), file: attached === "jd" ? jdName : undefined }));
       setDraft(""); setAttached(null);
       if (agent === "interview") await askInterviewQuestion(0, roleText);
+      else if (agent === "coach") await runCoach(coachGoal || "Help me prepare for this target role", roleText);
       else await review("targeted", roleText);
       return;
     }
     const text = draft.trim();
     if (!text) return;
+    if (agent === "coach") {
+      if (text.length < 5 || text.length > 500) { setError("Describe your goal in 5 to 500 characters."); return; }
+      append(message("you", { text })); setDraft("");
+      await runCoach(text, looksLikeJobDescription(jd) ? jd : "");
+      return;
+    }
     setDraft("");
     append(message("you", { text }),
       message("occ", { text: agent === "review"
         ? "To run a new role-specific review, share a job description. You can also choose General review for CV-only feedback."
-        : agent === "interview" || agent === "coach"
+        : agent === "interview"
           ? "Interview coaching uses a target role. Share the job description and I'll help you prepare one question at a time."
           : agent === "improve"
             ? "I can help improve wording from your CV. We'll only suggest evidence-based changes; you choose what to accept."
             : "Career Memory remains private and opt-in. We won't save your CV or this chat automatically." }));
-    if (agent === "interview" || agent === "coach") setMode("awaiting-jd");
+    if (agent === "interview") setMode("awaiting-jd");
   }
   return <div className="occ3-shell">
     <aside className={"occ3-sidebar " + (sidebarOpen ? "occ3-sidebar-open" : "")} aria-label="OCC preview conversations">
@@ -267,6 +313,15 @@ export function Occ3Preview() {
               <button type="button" onClick={chooseJD} disabled={busy}>I have a job description</button>
             </div>}
             {entry.jdPrompt && mode === "awaiting-jd" && <div className="occ3-jd-tip">Paste a job description below, or use the paperclip to attach one.</div>}
+            {entry.coachChoice && agent === "coach" && mode === "choice" && <div className="occ3-choices" aria-label="Coaching goals">
+              <button type="button" disabled={busy} onClick={() => chooseCoachGoal("Help me plan my next career step")}>Career direction</button>
+              <button type="button" disabled={busy} onClick={() => chooseCoachGoal("Help me identify skills I should develop")}>Skills to develop</button>
+              <button type="button" disabled={busy} onClick={() => chooseCoachGoal("Help me communicate my work experience more confidently")}>Explain my experience</button>
+              <button type="button" disabled={busy} onClick={() => {
+                setCoachGoal("Help me prepare for this target role"); setMode("awaiting-jd");
+                append(message("occ", { text: "Share the job description in the composer, or attach it with the paperclip. I'll tailor the coaching to it.", jdPrompt: true }));
+              }}>I have a target role</button>
+            </div>}
 
             {entry.interviewQuestion && <section role="region" aria-label={"Interview question " + entry.interviewNumber} className="occ3-interview-card">
               <p className="occ3-interview-question">{entry.interviewQuestion.question}</p>
@@ -287,8 +342,8 @@ export function Occ3Preview() {
                   ? <button type="button" className="occ3-next-question" disabled={busy} onClick={() => void askInterviewQuestion(interviewIndex + 1, jd)}>Next question</button>
                   : <small>Practice complete. Start a new chat for another session.</small>)}
             </section>}
-            {entry.advice && <section className="occ3-review" aria-label={entry.mode === "general" ? "General CV review" : "Targeted CV review"}>
-              <div className="occ3-review-title"><strong>CV Review</strong><span>{entry.mode === "general" ? "General" : "Job-specific"}</span></div>
+            {entry.advice && <section className="occ3-review" aria-label={entry.mode === "coaching" ? "Career coaching guidance" : entry.mode === "general" ? "General CV review" : "Targeted CV review"}>
+              <div className="occ3-review-title"><strong>{entry.mode === "coaching" ? "Career coaching" : "CV Review"}</strong><span>{entry.mode === "coaching" ? "Coach" : entry.mode === "general" ? "General" : "Job-specific"}</span></div>
               <p>{entry.advice.summary}</p>
               {entry.advice.recommendations.map((item, i) => <details key={i}>
                 <summary>{item.requirement}<span>{item.assessment === "supported" ? "In CV" : "Check"}</span></summary>
@@ -317,7 +372,7 @@ export function Occ3Preview() {
               </div>}
               <input ref={fileInput} type="file" aria-label={isJDStep ? "Upload job description" : "Upload CV"} accept=".pdf,.docx,.txt" hidden onChange={event => void parseFile(event)} />
             </div>
-            <textarea aria-label="Message Orire Career Copilot" rows={1} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }} placeholder={agent === "interview" && interviewPhase === "question" ? "Answer in your own words…" : isJDStep ? "Paste a job description or type a message…" : cvReady ? "Message Orire Career Copilot…" : "Attach your CV to get started…"} />
+            <textarea aria-label="Message Orire Career Copilot" rows={1} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); void send(); } }} placeholder={agent === "interview" && interviewPhase === "question" ? "Answer in your own words…" : isJDStep ? "Paste a job description or type a message…" : agent === "coach" && cvReady ? "Describe a career goal or ask Coach…" : cvReady ? "Message Orire Career Copilot…" : "Attach your CV to get started…"} />
             <div className="occ3-agent-wrap">
               <button type="button" aria-haspopup="listbox" aria-expanded={agentMenu} aria-label="Select agent" className="occ3-agent" onClick={() => { setAgentMenu(value => !value); setMenu(false); }}>✧ {AGENTS.find(item => item.id === agent)?.name} <span>⌄</span></button>
               {agentMenu && <div role="listbox" aria-label="OCC agents" className="occ3-popup occ3-agent-menu">
