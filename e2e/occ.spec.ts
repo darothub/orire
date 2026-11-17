@@ -818,12 +818,14 @@ test.describe("Career-only OCC feature", () => {
     await page.getByLabel("Paste full CV").fill("Experienced engineer creating secure distributed payment systems.");
     await page.getByRole("button", { name: "Paste JD" }).click();
     await page.getByLabel("Paste full job description").fill("Seeking engineer to design secure payment systems and services.");
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByLabel("Agent", { exact: true }).selectOption("memory");
     await page.getByLabel("Message your Career Copilot").fill("Manage my career memory");
     await page.getByRole("button", { name: "Send" }).click();
     const memoryCard = page.getByRole("region", { name: "Career memory conversation card" });
     await expect(memoryCard).toBeVisible();
     await memoryCard.getByText("Review, edit, or delete saved career memory").click();
     await expect(memoryCard.getByRole("heading", { name: "Your career memory" })).toBeVisible();
+    await page.getByRole("form", { name: "OCC conversation composer" }).getByLabel("Agent", { exact: true }).selectOption("review");
     await page.getByLabel("Message your Career Copilot").fill("Review my CV for a role");
     await page.getByRole("button", { name: "Send" }).click();
     await expect(page.getByLabel("Paste full CV")).toHaveValue("Experienced engineer creating secure distributed payment systems.");
