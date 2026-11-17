@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CVData } from "@/lib/cv/schema";
 import { cvToPlainText } from "@/lib/export/plaintext";
 import { planOccTurn, type OccTask } from "@/lib/occ/orchestrator";
+import { planOccAgentSend } from "@/lib/occ/composerRouting";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import { DEFAULT_OCC_AGENT, OCC_AGENTS, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
@@ -14,6 +15,9 @@ import { OccCvActionsMessage } from "./OccCvActionsMessage";
 import { OccInterviewQuestionMessage, OccInterviewFeedbackMessage } from "./OccInterviewMessages";
 import { MAX_INTERVIEW_TURNS, type InterviewFeedback, type InterviewQuestion } from "@/lib/occ/interview";
 import { OccTemplatePreview } from "./OccTemplatePreview";
+import { OccSavedCoachingMessage } from "./OccSavedCoachingMessage";
+import type { OccCoachingSnapshot } from "@/lib/occ/coachingSnapshot";
+import { validateOccCoachingHistory } from "@/lib/occ/coachingHistory";
 
 type Advice = OccAdvice;
 type Result = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
@@ -37,6 +41,8 @@ export function OccWorkspace() {
   const [primaryAgent, setPrimaryAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
   const [usedAgents, setUsedAgents] = useState<OccAgentId[]>([DEFAULT_OCC_AGENT]);
   const [savedSessionId, setSavedSessionId] = useState<string | null>(null);
+  const [historyConsent, setHistoryConsent] = useState(false);
+  const [savedCoachingSnapshots, setSavedCoachingSnapshots] = useState<{ messageSequence: number; payload: OccCoachingSnapshot }[]>([]);
   const [savedFingerprint, setSavedFingerprint] = useState("");
   const [sessions, setSessions] = useState<OccSessionSummary[]>([]);
   const [sessionBusy, setSessionBusy] = useState(false);
@@ -105,7 +111,7 @@ export function OccWorkspace() {
     setUsedAgents(current => current.includes(id) ? current : [...current, id]);
     setCurrentTask(agent.task);
     setSection(agent.task === "analysis" ? "analysis" : agent.task);
-    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. " + agent.description + ". Your attached documents are still available.", cvAction: id === "improve", memoryAction: id === "memory" }]);
+    setTurns(current => [...current, { role: "OCC", text: agent.label + " selected. Press Send to work with this specialist; your attached documents remain available." }]);
   }
 
   const [composer, setComposer] = useState("");
@@ -144,10 +150,10 @@ export function OccWorkspace() {
     if (!response.ok) throw new Error(result.error || "Interview coaching is temporarily unavailable.");
     return result;
   }
-  async function startInterview(index = 0) {
-    if (interviewBusy || interviewPhase === "question" || index >= MAX_INTERVIEW_TURNS || (index === 0 ? description : interviewContext?.description ?? "").trim().length < 30) return;
+  async function startInterview(index = 0, submittedDescription?: string) {
+    if (interviewBusy || interviewPhase === "question" || index >= MAX_INTERVIEW_TURNS || (index === 0 ? submittedDescription ?? description : interviewContext?.description ?? "").trim().length < 30) return;
     const generation = interviewGeneration.current;
-    const context = index === 0 || !interviewContext ? { cv, description } : interviewContext;
+    const context = index === 0 || !interviewContext ? { cv, description: submittedDescription ?? description } : interviewContext;
     setInterviewBusy(true);
     setError("");
     try {
@@ -214,6 +220,87 @@ export function OccWorkspace() {
 
   const currentFingerprint = JSON.stringify({ turns, primaryAgent, usedAgents });
   const hasUnsavedTranscript = turns.length > 0 && currentFingerprint !== savedFingerprint;
+
+  function coachingSnapshotsForCurrentTurns() {
+    const pending: { messageSequence: number; payload: OccCoachingSnapshot }[] = [];
+    turns.forEach((turn, messageSequence) => {
+      if (turn.role !== "OCC") return;
+      const review = reviewEvents.find(entry => entry.id === turn.reviewEventId);
+      if (review) pending.push({ messageSequence, payload: {
+        kind: "review", summary: review.advice.summary,
+        recommendations: review.advice.recommendations.map(({ requirement, assessment, cvEvidence, suggestion, sampleWording, question }) =>
+          ({ requirement, assessment, cvEvidence, suggestion, sampleWording, question })),
+        nextSteps: review.advice.nextSteps, disclaimer: review.advice.disclaimer,
+      } });
+      const interview = interviewEvents.find(entry => entry.id === turn.interviewEventId);
+      if (interview?.feedback && turns[messageSequence - 1]?.role === "you")
+        pending.push({ messageSequence, payload: {
+          kind: "interview", question: interview.question.question, focus: interview.question.focus,
+          answer: turns[messageSequence - 1].text,
+          strength: interview.feedback.strength, improvement: interview.feedback.improvement,
+          followUp: interview.feedback.followUp, betterWording: interview.feedback.betterWording ?? null,
+          disclaimer: "Practice feedback only; claims are self-reported and not a hiring prediction.",
+        } });
+    });
+    return pending;
+  }
+  async function saveCoachingHistory() {
+    if (!savedSessionId || hasUnsavedTranscript || !historyConsent || sessionBusy) return;
+    const input = validateOccCoachingHistory({ consent: true, snapshots: coachingSnapshotsForCurrentTurns().map(({ messageSequence, payload }) => ({ messageSequence, payload })) });
+    if (!input) {
+      setSessionNotice("No valid coaching results are available to save. Ensure the transcript is current.");
+      return;
+    }
+    setSessionBusy(true); setSessionNotice("");
+    try {
+      const response = await fetch("/api/occ/conversations/" + encodeURIComponent(savedSessionId) + "/snapshots", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ consent: true, snapshots: input.snapshots.map(({ messageSequence, payload }) => ({ messageSequence, payload })) }), cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Could not save the coaching results. They remain visible here.");
+      setSavedCoachingSnapshots(input.snapshots);
+      setHistoryConsent(false);
+      setSessionNotice("Coaching results saved with explicit consent. You can delete them independently.");
+    } catch (error) {
+      setSessionNotice(error instanceof Error ? error.message : "Could not save coaching results.");
+    } finally { setSessionBusy(false); }
+  }
+  function exportCoachingHistory() {
+    if (!savedCoachingSnapshots.length || !savedSessionId) return;
+    // Export only records already approved for retention; never include CV/JD
+    // attachments, authentication material or raw provider requests.
+    const exportData = {
+      schemaVersion: 1,
+      conversationId: savedSessionId,
+      disclaimer: "Contains self-reported CV excerpts and interview answers. Treat as private.",
+      coachingSnapshots: savedCoachingSnapshots,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "orire-private-coaching-history.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  async function eraseCoachingHistory() {
+    if (!savedSessionId || sessionBusy ||
+        !window.confirm("Permanently delete saved CV evidence excerpts and interview feedback from this conversation? Your text transcript will remain.")) return;
+    setSessionBusy(true);
+    try {
+      const response = await fetch("/api/occ/conversations/" + encodeURIComponent(savedSessionId) + "/snapshots", {
+        method: "DELETE", cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Could not delete saved coaching results.");
+      setSavedCoachingSnapshots([]);
+      setHistoryConsent(false);
+      setSessionNotice("Saved coaching result cards deleted; your transcript remains.");
+    } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Could not delete coaching history."); }
+    finally { setSessionBusy(false); }
+  }
+
   async function refreshSessions() {
     try {
       const response = await fetch("/api/occ/conversations", { cache: "no-store" });
@@ -250,7 +337,9 @@ export function OccWorkspace() {
       const result = await response.json();
       setSavedSessionId(result.id);
       setSavedFingerprint(currentFingerprint);
-      setSessionNotice("Transcript saved privately. CV and job-description attachments were not saved.");
+      setSavedCoachingSnapshots([]);
+      setHistoryConsent(false);
+      setSessionNotice("Transcript saved privately. CV/JD attachments and structured coaching results were not saved. Existing structured results are cleared on transcript replacement.");
       await refreshSessions();
     } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Could not save conversation."); }
     finally { setSessionBusy(false); }
@@ -264,6 +353,10 @@ export function OccWorkspace() {
       if (!response.ok) throw new Error("Could not open the saved conversation.");
       const { conversation } = await response.json();
       const loaded: Turn[] = conversation.messages.map((message: { sender: "you" | "OCC"; text: string }) => ({ role: message.sender, text: message.text }));
+      const restored: { messageSequence: number; payload: OccCoachingSnapshot }[] =
+        Array.isArray(conversation.coachingSnapshots) ? conversation.coachingSnapshots : [];
+      setSavedCoachingSnapshots(restored);
+      setHistoryConsent(false);
       const firstAgent = getOccAgent(conversation.primaryAgent).id;
       const agents = [...new Set([firstAgent, ...conversation.usedAgents.filter((id: string) => OCC_AGENTS.some(a => a.id === id))])] as OccAgentId[];
       setTurns(loaded);
@@ -276,7 +369,7 @@ export function OccWorkspace() {
       setAdvice(null); setReviewEvents([]); setKeywordEvents([]); setComposer("");
       setCurrentTask("unknown"); setSection("overview"); resetInterviewState();
       setPasteCvOpen(false); setPasteRoleOpen(false);
-      setSessionNotice("Conversation restored. Reattach your CV and job description to continue. Historical coaching result cards were not included in this transcript-only save.");
+      setSessionNotice(restored.length > 0 ? "Conversation restored with read-only, consented coaching results. CV/JD documents were not saved; reattach to continue." : "Transcript restored without structured coaching results. Reattach CV/JD to continue.");
       setSessionRailOpen(false);
     } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Unable to load conversation."); }
     finally { setSessionBusy(false); }
@@ -288,35 +381,83 @@ export function OccWorkspace() {
       const response = await fetch("/api/occ/conversations/" + encodeURIComponent(id), { method: "DELETE", cache: "no-store" });
       if (!response.ok) throw new Error("Could not delete conversation.");
       setSessions(current => current.filter(item => item.id !== id));
-      if (savedSessionId === id) { setSavedSessionId(null); setSavedFingerprint(""); }
+      if (savedSessionId === id) { setSavedSessionId(null); setSavedFingerprint(""); setSavedCoachingSnapshots([]); setHistoryConsent(false); }
       setSessionNotice("Saved conversation deleted.");
     } catch (error) { setSessionNotice(error instanceof Error ? error.message : "Unable to delete conversation."); }
     finally { setSessionBusy(false); }
   }
 
-  function ask(value: string) {
-    const text = value.trim();
-    if (!text || running || interviewBusy) return;
-    if (selectedAgent === "interview" && interviewPhase === "question") {
-      void submitInterviewAnswer(text);
-      return;
-    }
+  function chooseSuggestedPrompt(text: string) {
+    // Suggestions configure the conversation, not an AI request.
     const plan = planOccTurn(text, {
       priorTask: currentTask,
       hasCv: cv.trim().length >= 30,
       hasJobDescription: description.trim().length >= 30,
       hasAdvice: advice !== null,
     });
-    if (plan.task === "interview") {
-      setSelectedAgent("interview");
-      setUsedAgents(current => current.includes("interview") ? current : [...current, "interview"]);
-    }
-    if (plan.captureJobDescription) setDescription(text.slice(0, 15000));
+    const agentId: OccAgentId = plan.task === "interview" ? "interview"
+      : plan.task === "versions" ? "improve"
+      : plan.task === "memory" ? "memory" : "review";
+    setSelectedAgent(agentId);
+    setUsedAgents(current => current.includes(agentId) ? current : [...current, agentId]);
     setCurrentTask(plan.task);
-    setTurns(current => [...current, { role: "you", text }, { role: "OCC", text: plan.reply, cvAction: plan.task === "versions", memoryAction: plan.task === "memory" }]);
     setSection(plan.panel === "none" ? "overview" : plan.panel);
-    setComposer("");
+    setTurns(current => [...current, { role: "you", text }, {
+      role: "OCC", text: plan.reply, cvAction: plan.task === "versions", memoryAction: plan.task === "memory",
+    }]);
+  }
+
+  function ask(value: string) {
+    const text = value.trim();
+    if (!text || running || interviewBusy || uploading) return;
+    const decision = planOccAgentSend({
+      agent: selectedAgent, message: text,
+      hasCv: cv.trim().length >= 30,
+      hasJobDescription: description.trim().length >= 30,
+      interviewPhase,
+    });
+    if (decision.action === "interview-answer") {
+      void submitInterviewAnswer(text);
+      return;
+    }
+    // Never let keywords in a JD override an explicitly selected agent.
+    const roleText = decision.jobDescription ?? description;
+    if (decision.jobDescription) {
+      setDescription(decision.jobDescription);
+      setUploadedJobName("");
+      setPasteRoleOpen(false);
+    }
+    setUsedAgents(current => current.includes(selectedAgent) ? current : [...current, selectedAgent]);
+    setCurrentTask(getOccAgent(selectedAgent).task);
+    setTurns(current => [...current, { role: "you", text }]);
     setError("");
+    if (decision.action === "missing") {
+      setTurns(current => [...current, { role: "OCC", text: decision.reply! }]);
+      setComposer("");
+      return;
+    }
+    if (decision.action === "interview-question") {
+      // Use the submitted JD directly: React state updates have not committed yet.
+      void startInterview(0, roleText);
+      setComposer("");
+      return;
+    }
+    if (decision.action === "review") {
+      void requestAdvice(text, roleText);
+      setComposer("");
+      return;
+    }
+    const agent = getOccAgent(selectedAgent);
+    setSection(agent.task);
+    setTurns(current => [...current, {
+      role: "OCC",
+      text: decision.action === "memory"
+        ? "Your career memory is private and editable. Review and change it below; nothing is saved automatically."
+        : "Choose a CV passage to improve. Review each proposed change before creating a private version.",
+      memoryAction: decision.action === "memory",
+      cvAction: decision.action === "improve",
+    }]);
+    setComposer("");
   }
   const [cv, setCv] = useState("");
   const [savedCvs, setSavedCvs] = useState<{ id: string; title: string; template: string; data: CVData }[]>([]);
@@ -350,6 +491,8 @@ export function OccWorkspace() {
     setTurns([]);
     setReviewEvents([]);
     setKeywordEvents([]);
+    setSavedCoachingSnapshots([]);
+    setHistoryConsent(false);
     setComposer("");
     setCv("");
     setDescription("");
@@ -458,14 +601,14 @@ export function OccWorkspace() {
     } catch (e) { setError(e instanceof Error ? e.message : "Analysis failed."); }
     finally { setRunning(false); }
   }
-  async function requestAdvice() {
+  async function requestAdvice(submittedGoal?: string, submittedDescription?: string) {
     setRunning(true);
     setError("");
     setAdvice(null);
     try {
       const response = await fetch("/api/occ/advise", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv, description, goal: turns.filter(turn => turn.role === "you").at(-1)?.text.slice(0, 300) ?? "", saveRun, useSavedProfile }), cache: "no-store",
+        body: JSON.stringify({ cv, description: submittedDescription ?? description, goal: (submittedGoal ?? turns.filter(turn => turn.role === "you").at(-1)?.text ?? "").slice(0, 300), saveRun, useSavedProfile }), cache: "no-store",
       });
       const data = await response.json();
       if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : data.error?.message ?? "OCC could not analyze your CV.");
@@ -516,6 +659,24 @@ export function OccWorkspace() {
         <p className="occ2-unsaved-chat">✧ Current conversation <small>{savedSessionId ? hasUnsavedTranscript ? "Unsaved changes" : "Saved privately" : "Not saved"}</small></p>
         <button type="button" className="occ2-new-chat" disabled={sessionBusy || !turns.length || !hasUnsavedTranscript} onClick={() => void saveConversation()}>Save transcript privately</button>
         <p className="occ2-rail-note">Saving is optional and stores chat messages only, not CV/JD attachments. You can delete saved conversations.</p>
+        {(coachingSnapshotsForCurrentTurns().length > 0 || savedCoachingSnapshots.length > 0) &&
+          <section className="occ2-coaching-history-controls" aria-label="Private coaching history consent">
+            <h3>Coaching results · opt in</h3>
+            <p>Separate from saving chat messages. Coaching history contains excerpts quoted from your CV and your interview answers, even though full CV/JD files are not saved.</p>
+            {coachingSnapshotsForCurrentTurns().length > 0 && <>
+              <label><input type="checkbox" checked={historyConsent} onChange={event => setHistoryConsent(event.target.checked)} />
+                I agree to save these sensitive CV excerpts and interview answers as private coaching history.</label>
+              <button type="button" disabled={!savedSessionId || hasUnsavedTranscript || !historyConsent || sessionBusy}
+                onClick={() => void saveCoachingHistory()}>Save coaching results ({coachingSnapshotsForCurrentTurns().length})</button>
+              {(!savedSessionId || hasUnsavedTranscript) && <p>Save the current text transcript first, then separately approve saving its structured results.</p>}
+            </>}
+            {savedCoachingSnapshots.length > 0 && <>
+              <button type="button" disabled={!savedSessionId || sessionBusy} onClick={exportCoachingHistory}>Export saved coaching results</button>
+              <button type="button" disabled={!savedSessionId || sessionBusy}
+                onClick={() => void eraseCoachingHistory()}>Delete saved coaching results ({savedCoachingSnapshots.length})</button>
+            </>}
+          </section>}
+
         {sessionNotice && <p role="status" className="occ2-rail-note">{sessionNotice}</p>}
         <h2 className="occ2-side-label">SAVED CONVERSATIONS</h2>
         <input aria-label="Search saved conversations" value={sessionFilter} onChange={event => setSessionFilter(event.target.value)} placeholder="Search conversations" className="occ2-history-search" />
@@ -550,19 +711,12 @@ export function OccWorkspace() {
         </div>
       </header>
       <section aria-label="Career Copilot conversation" className="occ2-conversation" style={{ ...surface, display: "grid", gap: 16 }}>
-        <div className="occ2-agent-toolbar">
-          <label htmlFor="occ2-agent-picker">Agent</label>
-          <select id="occ2-agent-picker" value={selectedAgent} onChange={event => chooseAgent(event.target.value as OccAgentId)}>
-            {OCC_AGENTS.map(agent => <option key={agent.id} value={agent.id}>{agent.label}</option>)}
-          </select>
-          <span>Switch agents without losing your CV or target role</span>
-        </div>
         {turns.length === 0 && <>
           <h2 style={{ fontWeight: 750, fontSize: "clamp(21px, 3vw, 27px)" }}>What would you like to work on?</h2>
           <p style={{ opacity: .8 }}>Ask a question, choose a starting point or attach a CV.</p>
           <div aria-label="Suggested career questions" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {["Review my CV for a role", "Improve my CV", "Prepare for an interview", "Manage my career memory"].map(text =>
-              <button type="button" key={text} onClick={() => ask(text)} style={{ padding: "7px 11px", textAlign: "left", background: "rgba(125, 93, 180, .045)", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 12, lineHeight: 1.4, cursor: "pointer" }}>{text}</button>)}
+              <button type="button" key={text} onClick={() => chooseSuggestedPrompt(text)} style={{ padding: "7px 11px", textAlign: "left", background: "rgba(125, 93, 180, .045)", color: "inherit", border: "1px solid #c8c1d9", borderRadius: 999, fontSize: 12, lineHeight: 1.4, cursor: "pointer" }}>{text}</button>)}
           </div>
         </>}
         {turns.map((turn, index) => {
@@ -573,6 +727,8 @@ export function OccWorkspace() {
             <div className="occ2-message-bubble">
               <strong>{turn.role === "you" ? "You" : "OCC"}:</strong> {turn.text}
             </div>
+            {savedCoachingSnapshots.find(record => record.messageSequence === index) && !review && !interviewEvent &&
+              <OccSavedCoachingMessage snapshot={savedCoachingSnapshots.find(record => record.messageSequence === index)!.payload} />}
             {keywordEvent && <section aria-label="Keyword comparison results" className="occ2-keyword-message">
               <h3>Keyword-only evidence check</h3>
               <p>{keywordEvent.data.checked} role terms checked. This is not a hiring score, match percentage or AI advice.</p>
@@ -606,15 +762,8 @@ export function OccWorkspace() {
                   onUseWording={text => { setComposer(text); setInterviewPhase("question"); setSelectedAgent("interview"); }} />
               : <OccInterviewQuestionMessage question={interviewEvent.question} index={interviewEvent.index}
                   awaitingAnswer={interviewPhase === "question" && interviewEvent.id === interviewEvents[interviewEvents.length - 1]?.id} />)}
-          </div>;
-        })}
-        {turns.length > 2 && showJumpToLatest && <button type="button" className="occ2-jump" onClick={() => scrollToTurn(bottomRef.current, "end")}>↓ Jump to latest</button>}
-        {(cvReady || roleReady) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
-          {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
-        </div>}
-        {error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
-        <p className="occ2-input-note">PDF and DOCX files are parsed when uploaded. CV and role text is used for AI review only when you choose Review · Saving conversations is optional</p>
+            {index === turns.findLastIndex(message => message.role === "OCC") && (
+              <div className="occ2-inline-agent-tools" aria-label="Current agent tools in conversation">
       {section === "analysis" && <section aria-label="CV review controls" className="occ2-analysis-inline">
         <p className="occ2-review-kicker">CV Review · Conversation tools</p>
         <h2>Review the documents in this conversation</h2>
@@ -654,24 +803,62 @@ export function OccWorkspace() {
         {interviewPhase === "question" && <p role="status">Write your own answer in the chat composer below. Use at least 20 characters to receive feedback.</p>}
         {interviewPhase === "feedback" && <p>Review the feedback above, then choose the next question or try clearer wording.</p>}
       </section>}
-      
-
+              </div>
+            )}
+          </div>;
+        })}
+        {turns.length > 2 && showJumpToLatest && <button type="button" className="occ2-jump" onClick={() => scrollToTurn(bottomRef.current, "end")}>↓ Jump to latest</button>}
+        {(cvReady || roleReady) && <div role="status" aria-label="Attached career documents" style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {cvReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ CV ready · {uploadedCvName || savedCvs.find(item => item.id === selectedCvId)?.title || "Pasted text"}</span>}
+          {roleReady && <span style={{ border: "1px solid #c8c1d9", borderRadius: 999, padding: "6px 11px", fontSize: 12 }}>✓ Role ready · {uploadedJobName || "Pasted text"}</span>}
+        </div>}
+        {error && <p role="alert" style={{ color: "#b44444" }}>{error}</p>}
+        <p className="occ2-input-note">PDF and DOCX files are parsed on upload. Sending a message runs the selected agent; saving conversation history is optional.</p>
       <div ref={bottomRef} className="occ2-bottom-anchor" aria-hidden="true" />
       {(running || interviewBusy) && <p role="status" aria-live="polite" className="occ2-working-status">{interviewBusy ? "OCC is preparing your interview coaching…" : "OCC is reviewing the supplied information…"}</p>}
-        <form className="occ2-sticky-composer" onSubmit={event => { event.preventDefault(); ask(composer); }} style={{ display: "grid", gap: 8, padding: 12, border: "1px solid #b8afd0", borderRadius: 16, background: "rgba(114,81,174,.04)" }}>
-          <textarea aria-label="Message your Career Copilot" style={{ width: "100%", background: "transparent", color: "inherit", font: "inherit", border: 0, resize: "vertical", padding: 8, minHeight: 78, outlineOffset: 2 }} maxLength={selectedAgent === "interview" && interviewPhase === "question" ? 4000 : 1200} value={composer} onChange={event => setComposer(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(composer); } }} placeholder={selectedAgent === "interview" && interviewPhase === "question" ? "Write your interview answer in your own words…" : "Tell OCC what you want to achieve…"} />
+        <form aria-label="OCC conversation composer" className="occ2-sticky-composer occ2-composer-v1" onSubmit={event => { event.preventDefault(); ask(composer); }}>
+          <label className="occ2-composer-input-label" htmlFor="occ2-chat-message">Your message · {getOccAgent(selectedAgent).label}</label>
+          <textarea id="occ2-chat-message" aria-label="Message your Career Copilot" className="occ2-composer-textarea" rows={3} maxLength={selectedAgent === "interview" && interviewPhase === "question" ? 4000 : 15000} value={composer} onChange={event => setComposer(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); ask(composer); } }} placeholder={selectedAgent === "interview" && interviewPhase === "question" ? "Write your interview answer in your own words…" : "Write a message, paste a job description, or explain your goal…"} />
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", justifyContent: "space-between", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <div className="occ2-composer-tools">
+              <label className="occ2-composer-agent" htmlFor="occ2-agent-picker">
+                <span>Agent</span>
+                <select id="occ2-agent-picker" aria-label="Agent" value={selectedAgent} onChange={event => chooseAgent(event.target.value as OccAgentId)}>
+                  {OCC_AGENTS.map(agent => <option key={agent.id} value={agent.id}>{agent.label}</option>)}
+                </select>
+              </label>
               {uploadInput("cv", "Upload CV", true)}
-              {uploadInput("jobDescription", "Upload job description", true)}
               <button type="button" className="occ2-quiet-action" aria-expanded={pasteCvOpen} onClick={() => setPasteCvOpen(value => !value)}>Paste CV</button>
+              <div className="occ2-composer-cv-menu">
+                <details>
+                  <summary>Saved CV</summary>
+                  <div className="occ2-composer-cv-options">
+                    {savedCvs.length > 0 && <label>Choose from Orire
+                      <select aria-label="Choose existing CV in composer" value={selectedCvId} onChange={event => {
+                        if (event.target.value) selectSavedCv(event.target.value); else detachDocument("cv");
+                      }}>
+                        <option value="">Select saved CV</option>
+                        {savedCvs.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}
+                      </select>
+                    </label>}
+                    {savedCvs.length === 0 && <p>No saved CVs yet. Upload or paste a CV instead.</p>}
+                  </div>
+                </details>
+              </div>
+
+              {uploadInput("jobDescription", "Upload job description", true)}
+
               <button type="button" className="occ2-quiet-action" aria-expanded={pasteRoleOpen} onClick={() => setPasteRoleOpen(value => !value)}>Paste JD</button>
             </div>
-            <div className="occ2-composer-cta">
-              {selectedAgent === "review" && cvReady && roleReady && <button type="button" className="occ2-review-action" disabled={running} onClick={() => void requestAdvice()}>✦ {running ? "Reviewing…" : "Review attached CV"}</button>}
-              <button type="submit" disabled={!composer.trim() || interviewBusy || (selectedAgent === "interview" && interviewPhase === "question" && composer.trim().length < 20)} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>{selectedAgent === "interview" && interviewPhase === "question" ? "Get feedback" : "Send"}</button>
-            </div>
           </div>
+          <div className="occ2-composer-cta">
+              {selectedAgent === "review" && cvReady && roleReady && <button type="button" className="occ2-review-action" disabled={running} onClick={() => void requestAdvice()}>✦ {running ? "Reviewing…" : "Review attached CV"}</button>}
+              <button type="submit" disabled={!composer.trim() || interviewBusy || running || Boolean(uploading) || (selectedAgent === "interview" && interviewPhase === "question" && composer.trim().length < 20)} style={{ padding: "10px 18px", border: 0, borderRadius: 12, color: "#fff", background: "#7251ae", fontWeight: 700 }}>Send</button>
+          </div>
+          {(cvReady || roleReady) && <div className="occ2-composer-attachments" aria-label="Composer attachments">
+            {cvReady && <span className="occ2-attachment-chip">CV · {uploadedCvName || selectedStructuredCv?.title || "Pasted CV"} <button type="button" aria-label="Remove CV attachment" onClick={() => detachDocument("cv")}>×</button></span>}
+            {roleReady && <span className="occ2-attachment-chip">Job description · {uploadedJobName || "Pasted text"} <button type="button" aria-label="Remove job description" onClick={() => detachDocument("jobDescription")}>×</button></span>}
+          </div>}
           {pasteCvOpen && <label id="occ2-cv-text-panel" className="occ2-paste-editor">CV text <small>Up to 30,000 characters; not sent as a chat message</small>
             <textarea aria-label="Paste full CV" maxLength={30000} rows={6} value={cv} onChange={event => { setCv(event.target.value); setSelectedCvId(""); setUploadedCvName(""); }} placeholder="Paste your complete CV here" />
           </label>}

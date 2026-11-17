@@ -45,6 +45,10 @@ export async function POST(request: Request) {
           where: { id: existing.id },
           data: { title: data.title, primaryAgent: data.primaryAgent, usedAgents: data.usedAgents },
         });
+        // Old structured results can no longer be trusted after a transcript rewrite.
+        // Delete independently consented snapshots rather than reconnecting them to
+        // different messages by stale sequence numbers.
+        await tx.occCoachingSnapshot.deleteMany({ where: { conversationId: existing.id } });
         await tx.occMessage.deleteMany({ where: { conversationId: existing.id } });
         await tx.occMessage.createMany({ data: data.turns.map((t, i) => ({
           conversationId: existing.id, sender: t.role, text: t.text,
