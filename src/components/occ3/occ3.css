@@ -215,3 +215,6 @@
 .occ3-review details[open]::details-content,.occ3-interview-card details[open]::details-content,.occ3-improve details[open]::details-content {block-size:auto;opacity:1;}
 @media(max-width:740px){.occ3-attach-menu {max-width:calc(100vw - 24px)}.occ3-composer-top {right:7px;}.occ3-composer-main {padding-top:21px;}}
 @media(prefers-reduced-motion:reduce){.occ3-outgoing-ghost {display:none}.occ3-you,.occ3-attach-menu {animation:none!important}.occ3-composer textarea,.occ3-composer,.occ3-review details::details-content,.occ3-interview-card details::details-content,.occ3-improve details::details-content{transition:none!important}}
+
+/* Contextual expansion and form-width attachment picker. */
+.occ3-composer > .occ3-attach-menu { left:0; right:0; width:100%; max-width:none; min-width:0; bottom:calc(100% + 10px); }
