@@ -73,7 +73,7 @@ export function Occ3Preview() {
     field.style.height = "0px";
     const contentHeight = field.scrollHeight;
     const cap = composerExpanded ? expandedCap : compactCap;
-    field.style.height = Math.min(Math.max(contentHeight, 44), cap) + "px";
+    field.style.height = Math.min(Math.max(contentHeight, composerExpanded ? 220 : 44), cap) + "px";
     field.style.overflowY = contentHeight > cap ? "auto" : "hidden";
   }, [draft, composerExpanded]);
   useEffect(() => {
