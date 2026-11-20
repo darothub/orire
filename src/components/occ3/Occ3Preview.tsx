@@ -84,7 +84,8 @@ export function Occ3Preview() {
     }
     if (!hasGrown && composerExpanded) setComposerExpanded(false);
     const cap = composerExpanded ? expandedCap : compactCap;
-    field.style.height = Math.min(Math.max(contentHeight, composerExpanded ? 220 : 44), cap) + "px";
+    const minimumHeight = composerExpanded ? compactCap : 44;
+    field.style.height = Math.min(Math.max(contentHeight, minimumHeight), cap) + "px";
     field.style.overflowY = contentHeight > cap ? "auto" : "hidden";
   }, [draft, composerExpanded]);
   useEffect(() => {
