@@ -54,6 +54,38 @@ test.describe("OCC 3.0 preview integration safeguards", () => {
     expect(saved.id).toBeTruthy();
   });
 
+
+  test("Review agent sends typed review focus to the analysis endpoint", async ({ page, db, e2eUser }) => {
+    await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
+    await signIn(page);
+    await page.goto("/occ/preview");
+    const cookie = page.getByRole("dialog", { name: "Cookie consent" });
+    await cookie.waitFor({ state: "visible", timeout: 4000 }).catch(() => {});
+    if (await cookie.isVisible()) await cookie.getByRole("button", { name: "Decline" }).click();
+
+    const cv = "Professional Summary: Experienced teacher supporting curriculum planning. Work experience: Teaching mathematics to secondary school students and creating lesson plans. Education: Bachelor degree in education. Skills: Communication, classroom management and collaboration.";
+    await page.locator('input[type="file"]').setInputFiles({ name: "teacher-cv.txt", mimeType: "text/plain", buffer: Buffer.from(cv) });
+    const composer = page.getByRole("form", { name: "OCC 3.0 composer" });
+    await composer.getByRole("button", { name: "Send message" }).click();
+    await expect(page.getByRole("button", { name: "General review" })).toBeVisible();
+
+    let requestBody: Record<string, unknown> | null = null;
+    await page.route("**/api/occ/general-review", async route => {
+      requestBody = route.request().postDataJSON() as Record<string, unknown>;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ advice: { summary: "Focused review", recommendations: [], nextSteps: [] } }),
+      });
+    });
+    const focus = "Focus on whether my achievements and impact are communicated clearly.";
+    const input = composer.getByRole("textbox", { name: "Message Orire Career Copilot" });
+    await input.fill(focus);
+    await composer.getByRole("button", { name: "Send message" }).click();
+    await expect(page.getByText("Here's your general CV review.")).toBeVisible();
+    expect(requestBody?.focus).toBe(focus);
+  });
+
   test("general CV review rejects a job advert masquerading as a CV", async ({ page, db, e2eUser }) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await signIn(page);
