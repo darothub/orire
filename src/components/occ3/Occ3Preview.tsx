@@ -428,7 +428,7 @@ export function Occ3Preview() {
             {entry.interviewFeedback && <section role="region" aria-label={"Interview feedback " + entry.interviewNumber} className="occ3-interview-card">
               <strong>What worked</strong><p>{entry.interviewFeedback.strength}</p>
               <strong>What to improve</strong><p>{entry.interviewFeedback.improvement}</p>
-              {entry.interviewFeedback.betterWording && <details><summary>Clearer wording suggestion</summary><p>{entry.interviewFeedback.betterWording}</p><small>{entry.interviewFeedback.whyBetter}</small></details>}
+              {entry.interviewFeedback.betterWording && <details><summary>Clearer wording suggestion</summary><div className="occ3-trust-note">{entry.interviewFeedback.wordingStatus === "grounded" ? "Grounded in your answer" : "Safe copyedit of your answer"} — verify that the wording reflects your experience.</div><p>{entry.interviewFeedback.betterWording}</p><small>{entry.interviewFeedback.whyBetter}</small></details>}
               {entry.interviewFeedback.followUp && <small>Consider: {entry.interviewFeedback.followUp}</small>}
               {agent === "interview" && interviewPhase === "feedback" && entry.interviewNumber === interviewIndex + 1 &&
                 (interviewIndex + 1 < MAX_INTERVIEW_TURNS
@@ -439,11 +439,15 @@ export function Occ3Preview() {
             {entry.advice && entry.mode !== "improve" && <section className="occ3-review" aria-label={entry.mode === "coaching" ? "Career coaching guidance" : entry.mode === "general" ? "General CV review" : "Targeted CV review"}>
               <div className="occ3-review-title"><strong>{entry.mode === "coaching" ? "Career coaching" : "CV Review"}</strong><span>{entry.mode === "coaching" ? "Coach" : entry.mode === "general" ? "General" : "Job-specific"}</span></div>
               <p>{entry.advice.summary}</p>
+              <div className="occ3-trust-note">{entry.mode === "coaching" ? "Career suggestions, not verified career outcomes." : entry.mode === "targeted" ? "Compared with your job description; evidence comes from your CV." : "Reviewed against your CV, without a job description."}</div>
               {entry.advice.recommendations.map((item, i) => <details key={i}>
-                <summary>{item.requirement}<span>{item.assessment === "supported" ? "In CV" : "Check"}</span></summary>
-                <p>{item.suggestion}</p>
-                {item.cvEvidence && <blockquote>CV evidence: “{item.cvEvidence}”</blockquote>}
-                {item.question && <p>Question: {item.question}</p>}
+                <summary>{item.requirement}<span>{item.assessment === "supported" && item.cvEvidence ? "From your CV" : "Needs clarification"}</span></summary>
+                <p><strong className="occ3-evidence-label">Suggestion:</strong> {item.suggestion}</p>
+                {item.assessment === "supported" && item.cvEvidence
+                  ? <blockquote><strong>From your CV:</strong> “{item.cvEvidence}”</blockquote>
+                  : <p className="occ3-trust-note">No supporting CV quote was verified for this point. This is a question or suggestion, not a confirmed fact about you.</p>}
+                {entry.mode === "targeted" && <small>Role criterion from job description — compare with your actual experience.</small>}
+                {item.question && <p><strong className="occ3-evidence-label">Needs clarification:</strong> {item.question}</p>}
               </details>)}
               {entry.advice.nextSteps.length > 0 && <details><summary>Suggested next steps</summary><ul>{entry.advice.nextSteps.map((step, i) => <li key={i}>{step}</li>)}</ul></details>}
               <small>{entry.advice.disclaimer}</small>
