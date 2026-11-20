@@ -31,9 +31,10 @@ export async function POST(req: Request) {
   let data: unknown;
   try { data = await req.json(); } catch { return send({ error: "Invalid JSON" }, 400); }
   if (!data || Array.isArray(data) || typeof data !== "object") return send({ error: "Invalid request" }, 400);
-  const { cv } = data as Record<string, unknown>;
-  if (typeof cv !== "string" || cv.length > 30000 || !looksLikeCV(cv))
-    return send({ error: "Provide a valid CV to review." }, 400);
+  const { cv, focus } = data as Record<string, unknown>;
+  if (typeof cv !== "string" || cv.length > 30000 || !looksLikeCV(cv) ||
+      (focus !== undefined && (typeof focus !== "string" || focus.length > 500)))
+    return send({ error: "Provide a valid CV and optional review focus." }, 400);
   const { provider } = routeTask("agent-analyze");
   const limited = await aiRateLimit(req, provider, access.userId);
   if (limited) return limited;
@@ -44,7 +45,11 @@ export async function POST(req: Request) {
   try {
     const served = await runRoutedWithFailover("agent-analyze", {
       system: SYSTEM,
-      user: JSON.stringify({ task: "General CV review only. No job description has been provided.", cv }),
+      user: JSON.stringify({
+        task: "General CV review only. No job description has been provided.",
+        reviewFocus: typeof focus === "string" && focus.trim() ? focus.trim() : undefined,
+        cv,
+      }),
       opts: { ...DETERMINISTIC, maxTokens: 1800 },
     });
     if (!served.call.ok) {
