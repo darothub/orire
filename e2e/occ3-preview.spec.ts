@@ -69,9 +69,10 @@ test.describe("OCC 3.0 preview integration safeguards", () => {
     await composer.getByRole("button", { name: "Send message" }).click();
     await expect(page.getByRole("button", { name: "General review" })).toBeVisible();
 
-    let requestBody: Record<string, unknown> | null = null;
+    let capturedFocus: unknown;
     await page.route("**/api/occ/general-review", async route => {
-      requestBody = route.request().postDataJSON() as Record<string, unknown>;
+      const requestBody = route.request().postDataJSON() as Record<string, unknown>;
+      capturedFocus = requestBody.focus;
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -83,7 +84,7 @@ test.describe("OCC 3.0 preview integration safeguards", () => {
     await input.fill(focus);
     await composer.getByRole("button", { name: "Send message" }).click();
     await expect(page.getByText("Here's your general CV review.")).toBeVisible();
-    expect(requestBody?.focus).toBe(focus);
+    expect(capturedFocus).toBe(focus);
   });
 
   test("general CV review rejects a job advert masquerading as a CV", async ({ page, db, e2eUser }) => {
