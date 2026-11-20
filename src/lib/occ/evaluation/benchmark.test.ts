@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { evaluateInterviewBenchmark, summarizeHumanReviews, type HumanReview } from "./benchmark";
 import { INTERVIEW_BENCHMARK_V1 } from "./fixtures";
 import humanReviewRecords from "./human-reviews.json";
+import { buildHumanQualityReport } from "./humanQuality";
 import { getInterviewCoverage, OCCUPATIONAL_FAMILIES, NOT_YET_SAMPLED_FAMILIES } from "./coverage";
 
 describe("OCC profession-diverse interview benchmark v1 (synthetic)", () => {
@@ -40,6 +41,7 @@ describe("OCC profession-diverse interview benchmark v1 (synthetic)", () => {
       falseAcceptances: machine.falseAcceptances,
       falseRejections: machine.falseRejections,
       humanReview: human,
+      humanQuality: buildHumanQualityReport(humanReviewRecords as HumanReview[]),
       coverage: {
         families: coverage.sampled.length,
         syntheticOnly: coverage.sampled.filter(x => x.status === "synthetic-only").map(x => x.id),
@@ -49,6 +51,7 @@ describe("OCC profession-diverse interview benchmark v1 (synthetic)", () => {
       },
     }));
     expect(human.casesPending + human.casesReviewedTwice).toBe(machine.fixtureCount);
+    expect(buildHumanQualityReport(humanReviewRecords as HumanReview[]).fixtureCount).toBe(machine.fixtureCount);
     // Human-review completion is measured and reported separately, not mocked.
   });
 
