@@ -92,3 +92,17 @@ Expand the corpus before declaring the quality thresholds representative. Collec
 6. Check factuality, meaning, readability and recognizability release gates *separately*. If review is pending, clearly report it as pending.
 
 **Current human assessment: pending. No human scores have been supplied.**
+
+## OCC 3.2 — Blinded reviewer preparation
+
+The helper at `src/lib/occ/evaluation/reviewQueue.ts` prepares an independently reviewable first batch from the existing synthetic benchmark:
+
+- `getHumanReviewQueue()` lists cases requiring human reviews, sorted with elevated-priority professions first, then the least reviewed.
+- `createPriorityReviewPacket(12)` produces a first batch of 12 cases containing only the case ID, profession, interview question, original answer and proposed rewrite.
+- `createBlindReviewPacket(caseIds)` creates an explicit case selection. It deliberately omits the engineering oracle (`expected`) and synthetic failure-category label (`risk`) to reduce confirmation bias.
+
+**Reviewer procedure:** Give the same blinded packet separately to two real reviewers. Ask each to assess fabricated claims, meaning preservation, clarity (1–5), recognizability (1–5) and short explanatory notes without consulting the other reviewer. Where feasible, include a qualified practitioner for elevated-risk fields. Store only genuine de-identified `HumanReview` entries in `human-reviews.json`. Use distinct reviewer IDs and record the review date. Do not copy fixture `expected` values into human records.
+
+After each verified submission run `npm run eval:occ:interview`. A case leaves the outstanding queue only after **two distinct** reviews. Any disagreement, fabricated claim or meaning change requires an independent adjudication record and must not be silently classified as safe. Keep adjudication notes and practitioner credentials in an access-controlled review log, without personal data.
+
+**Limitations:** A blinded packet is preparation, not a completed human review. The current empty records file means the result remains **0 independently double-reviewed cases**. Human judgments, practitioner recruiting, privacy review, adjudication and representative domain expansion are still outstanding. No user CV or private chat content is part of these synthetic packets.
