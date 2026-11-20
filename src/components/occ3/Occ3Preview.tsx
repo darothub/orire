@@ -74,7 +74,7 @@ export function Occ3Preview() {
     field.style.height = "0px";
     const contentHeight = field.scrollHeight;
     // Show the expand affordance only when content needs more than one line.
-    const hasGrown = contentHeight > 52;
+    const hasGrown = draft.length > 0 && contentHeight > 52;
     setComposerHasGrown(previous => previous === hasGrown ? previous : hasGrown);
     if (!hasGrown && composerExpanded) setComposerExpanded(false);
     const cap = composerExpanded ? expandedCap : compactCap;
