@@ -183,3 +183,35 @@
 .occ3-improve-note {margin:0;}
 .occ3-improve-feedback {font-size:12px;color:#fbd6b9;min-height:15px;margin:0;}
 @media(max-width:580px) {.occ3-improve-diff{grid-template-columns:1fr}.occ3-improve-item{padding:12px;}}
+
+/* OCC 3.0 screenshot-inspired attachments and fluid composer. */
+.occ3-composer {transition:background-color .22s ease,box-shadow .22s ease,transform .24s cubic-bezier(.22,1,.36,1);}
+.occ3-composer-top {position:absolute;top:7px;right:10px;z-index:2;}
+.occ3-expand-toggle {width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:#e2c8ef;opacity:.85;}
+.occ3-expand-toggle:hover {background:rgba(236,196,255,.15);opacity:1;}
+.occ3-composer-main {padding-top:21px;transition:padding .24s ease;}
+.occ3-composer-expanded .occ3-composer-main {align-items:flex-end;}
+.occ3-composer textarea {height:44px;min-height:44px;max-height:52vh;resize:none;transition:height .2s cubic-bezier(.2,.8,.2,1);overscroll-behavior:contain;overflow-wrap:anywhere;}
+.occ3-composer-expanded {background:rgba(100,56,140,.48);}
+.occ3-composer-expanded textarea {max-height:52vh;}
+.occ3-attach-wrap {z-index:5;}
+.occ3-attach-menu {width:min(365px,calc(100vw - 28px));min-width:0;max-height:min(65vh,460px);overflow-y:auto;padding:10px;border-radius:19px;background:#2b183d;border:1px solid rgba(227,199,242,.18);box-shadow:0 20px 55px rgba(4,0,18,.52);animation:occ3-menu-open .2s ease-out both;}
+.occ3-attach-heading,.occ3-attach-subheading {font-size:10px;font-weight:750;letter-spacing:.11em;color:#cbb8d7;padding:9px 11px 8px;}
+.occ3-attach-separator {height:1px;background:rgba(247,218,255,.1);margin:7px 6px;}
+.occ3-attach-menu .occ3-attach-option {display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:12px 11px;min-height:57px;border-radius:13px;}
+.occ3-attach-menu .occ3-attach-option:hover {background:#493154;}
+.occ3-attach-option-icon {width:31px;height:31px;flex:0 0 31px;display:grid;place-items:center;background:rgba(255,255,255,.09);border-radius:9px;color:#ffd0b3;font-size:19px;}
+.occ3-attach-option-text {display:flex;flex:1;min-width:0;flex-direction:column;align-items:flex-start;gap:3px;}
+.occ3-attach-option-text strong {font-size:13px;line-height:1.4;color:#fff7ff;font-weight:650;overflow-wrap:anywhere;}
+.occ3-attach-option-text small {font-size:11px;line-height:1.4;color:#c9b5d0;}
+.occ3-attach-menu .occ3-saved {border:0;max-height:210px;overflow-y:auto;}
+.occ3-attach-footnote {font-size:11px;color:#d2bfdc;padding:6px 11px 3px;line-height:1.5;}
+.occ3-outgoing-ghost {position:absolute;bottom:55px;left:12%;right:48px;pointer-events:none;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;padding:10px 14px;color:#fff9ff;background:rgba(232,183,255,.16);border-radius:16px;z-index:1;animation:occ3-outgoing .28s ease-out both;}
+@keyframes occ3-outgoing {from{opacity:.9;transform:translateY(4px) scale(.98)}to{opacity:0;transform:translateY(-42px) scale(.91)}}
+.occ3-you {animation:occ3-user-arrive .28s cubic-bezier(.22,1,.36,1) both;}
+@keyframes occ3-user-arrive {from{opacity:.3;transform:translate(14px,18px) scale(.96)}to{opacity:1;transform:translate(0,0) scale(1)}}
+.occ3-review details,.occ3-interview-card details,.occ3-improve details {interpolate-size:allow-keywords;}
+.occ3-review details::details-content,.occ3-interview-card details::details-content,.occ3-improve details::details-content {block-size:0;opacity:0;overflow:clip;transition:block-size .28s ease,opacity .18s ease,content-visibility .28s allow-discrete;}
+.occ3-review details[open]::details-content,.occ3-interview-card details[open]::details-content,.occ3-improve details[open]::details-content {block-size:auto;opacity:1;}
+@media(max-width:740px){.occ3-attach-menu {max-width:calc(100vw - 24px)}.occ3-composer-top {right:7px;}.occ3-composer-main {padding-top:21px;}}
+@media(prefers-reduced-motion:reduce){.occ3-outgoing-ghost {display:none}.occ3-you,.occ3-attach-menu {animation:none!important}.occ3-composer textarea,.occ3-composer,.occ3-review details::details-content,.occ3-interview-card details::details-content,.occ3-improve details::details-content{transition:none!important}}
