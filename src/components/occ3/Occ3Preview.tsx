@@ -35,6 +35,7 @@ export function Occ3Preview() {
   const [attached, setAttached] = useState<"cv" | "jd" | null>(null);
   const [menu, setMenu] = useState(false);
   const [composerExpanded, setComposerExpanded] = useState(false);
+  const [composerHasGrown, setComposerHasGrown] = useState(false);
   const [outgoing, setOutgoing] = useState<{ text: string; id: number } | null>(null);
   const [agentMenu, setAgentMenu] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -72,6 +73,10 @@ export function Occ3Preview() {
     const expandedCap = Math.max(220, Math.floor(window.innerHeight * .52));
     field.style.height = "0px";
     const contentHeight = field.scrollHeight;
+    // Show the expand affordance only when content needs more than one line.
+    const hasGrown = contentHeight > 52;
+    setComposerHasGrown(previous => previous === hasGrown ? previous : hasGrown);
+    if (!hasGrown && composerExpanded) setComposerExpanded(false);
     const cap = composerExpanded ? expandedCap : compactCap;
     field.style.height = Math.min(Math.max(contentHeight, composerExpanded ? 220 : 44), cap) + "px";
     field.style.overflowY = contentHeight > cap ? "auto" : "hidden";
@@ -91,7 +96,7 @@ export function Occ3Preview() {
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
     setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false); setProgress(null);
-    setComposerExpanded(false); setOutgoing(null);
+    setComposerExpanded(false); setComposerHasGrown(false); setOutgoing(null);
     interviewGeneration.current++; coachGeneration.current++; setCoachGoal(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
   }
   function chooseSaved(item: SavedCV) {
@@ -446,34 +451,35 @@ export function Occ3Preview() {
       </div>
       <div className="occ3-composer-area">
         <form className={"occ3-composer " + (composerExpanded ? "occ3-composer-expanded" : "")} aria-label="OCC 3.0 composer" onSubmit={event => { event.preventDefault(); sendWithMotion(); }}>
-          <div className="occ3-composer-top">
+          {menu && <div className="occ3-popup occ3-attach-menu" role="group" aria-label="Attach to conversation">
+          <div className="occ3-attach-heading">ADD TO CONVERSATION</div>
+          <button type="button" aria-label={isJDStep ? "Attach job description" : "Upload CV"} className="occ3-attach-option" onClick={() => { setMenu(false); fileInput.current?.click(); }}>
+          <span className="occ3-attach-option-icon" aria-hidden="true">⇧</span>
+          <span className="occ3-attach-option-text"><strong>{isJDStep ? "Attach job description" : "Upload CV"}</strong><small>PDF, DOCX or TXT from computer</small></span>
+          </button>
+          {!isJDStep && <>
+          <div className="occ3-attach-separator"/>
+          <div className="occ3-attach-subheading">YOUR ORIRE LIBRARY</div>
+          <div className="occ3-saved">{savedCvs.length > 0 ? savedCvs.map(item => <button className="occ3-attach-option" type="button" key={item.id} onClick={() => chooseSaved(item)}>
+          <span className="occ3-attach-option-icon" aria-hidden="true">▤</span>
+          <span className="occ3-attach-option-text"><strong>Choose: {item.title}</strong><small>Use existing Orire CV</small></span>
+          </button>) : <span>No saved CVs yet</span>}</div>
+          </>}
+          {isJDStep && <p className="occ3-attach-footnote">Or paste the job description directly into the composer.</p>}
+          </div>}
+          {composerHasGrown && <div className="occ3-composer-top">
             <button type="button" className="occ3-expand-toggle" aria-label={composerExpanded ? "Collapse message composer" : "Expand message composer"} aria-expanded={composerExpanded} title={composerExpanded ? "Collapse composer" : "Expand composer"} onClick={() => setComposerExpanded(value => !value)}>
               {composerExpanded
                 ? <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h6V4M20 14h-6v6M10 10 4 4M14 14l6 6"/></svg>
                 : <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10V4h6M14 20h6v-6M4 4l7 7M20 20l-7-7"/></svg>}
             </button>
-          </div>
+          </div>}
           {outgoing && <div className="occ3-outgoing-ghost" aria-hidden="true" key={outgoing.id}>{outgoing.text}</div>}
           {attached && <div className="occ3-attached"><span>▤ {attached === "cv" ? cvName : jdName}</span><button type="button" aria-label="Remove attachment" onClick={() => setAttached(null)}>×</button></div>}
           <div className="occ3-composer-main">
             <div className="occ3-attach-wrap">
               <button type="button" aria-label="Attach document" title="Attach CV or job description" className="occ3-attach" aria-haspopup="menu" aria-expanded={menu} onClick={() => { setMenu(value => !value); setAgentMenu(false); }}><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5L14.7 1.3a4 4 0 0 1 5.7 5.7L10.1 17.3a2 2 0 0 1-2.8-2.8l9.2-9.2"/></svg></button>
-              {menu && <div className="occ3-popup occ3-attach-menu" role="group" aria-label="Attach to conversation">
-                <div className="occ3-attach-heading">ADD TO CONVERSATION</div>
-                <button type="button" aria-label={isJDStep ? "Attach job description" : "Upload CV"} className="occ3-attach-option" onClick={() => { setMenu(false); fileInput.current?.click(); }}>
-                  <span className="occ3-attach-option-icon" aria-hidden="true">⇧</span>
-                  <span className="occ3-attach-option-text"><strong>{isJDStep ? "Attach job description" : "Upload CV"}</strong><small>PDF, DOCX or TXT from computer</small></span>
-                </button>
-                {!isJDStep && <>
-                  <div className="occ3-attach-separator"/>
-                  <div className="occ3-attach-subheading">YOUR ORIRE LIBRARY</div>
-                  <div className="occ3-saved">{savedCvs.length > 0 ? savedCvs.map(item => <button className="occ3-attach-option" type="button" key={item.id} onClick={() => chooseSaved(item)}>
-                    <span className="occ3-attach-option-icon" aria-hidden="true">▤</span>
-                    <span className="occ3-attach-option-text"><strong>Choose: {item.title}</strong><small>Use existing Orire CV</small></span>
-                  </button>) : <span>No saved CVs yet</span>}</div>
-                </>}
-                {isJDStep && <p className="occ3-attach-footnote">Or paste the job description directly into the composer.</p>}
-              </div>}
+
               <input ref={fileInput} type="file" aria-label={isJDStep ? "Upload job description" : "Upload CV"} accept=".pdf,.docx,.txt" hidden onChange={event => void parseFile(event)} />
             </div>
             <textarea ref={composerInput} aria-label="Message Orire Career Copilot" rows={1} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); sendWithMotion(); } }} placeholder={agent === "interview" && interviewPhase === "question" ? "Answer in your own words…" : isJDStep ? "Paste a job description or type a message…" : agent === "coach" && cvReady ? "Describe a career goal or ask Coach…" : cvReady ? "Message Orire Career Copilot…" : "Attach your CV to get started…"} />
