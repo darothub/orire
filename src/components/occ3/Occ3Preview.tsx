@@ -69,13 +69,19 @@ export function Occ3Preview() {
   useEffect(() => {
     const field = composerInput.current;
     if (!field) return;
-    const compactCap = 176;
-    const expandedCap = Math.max(220, Math.floor(window.innerHeight * .52));
+    const compactCap = Math.max(220, Math.floor(window.innerHeight * .52));
+    const expandedCap = Math.max(320, Math.floor(window.innerHeight * .72));
     field.style.height = "0px";
     const contentHeight = field.scrollHeight;
     // Show the expand affordance only when content needs more than one line.
-    const hasGrown = draft.length > 0 && contentHeight > 52;
+    const hasGrown = draft.trim().length > 0 && contentHeight > 52;
     setComposerHasGrown(previous => previous === hasGrown ? previous : hasGrown);
+    if (!draft.trim()) {
+      if (composerExpanded) setComposerExpanded(false);
+      field.style.height = "44px";
+      field.style.overflowY = "hidden";
+      return;
+    }
     if (!hasGrown && composerExpanded) setComposerExpanded(false);
     const cap = composerExpanded ? expandedCap : compactCap;
     field.style.height = Math.min(Math.max(contentHeight, composerExpanded ? 220 : 44), cap) + "px";
@@ -138,7 +144,7 @@ export function Occ3Preview() {
     } finally { setBusy(false); setProgress(null); }
   }
 
-  async function review(kind: "general" | "targeted", roleText?: string) {
+  async function review(kind: "general" | "targeted", roleText?: string, focus?: string) {
     if (!cvReady) { setError("Attach a CV first."); return; }
     setBusy(true); setError("");
     setProgress({ stage: kind === "general" ? "Preparing general review" : "Preparing role-specific review", detail: "Using your attached CV" + (kind === "targeted" ? " and job description." : ".") });
@@ -147,7 +153,9 @@ export function Occ3Preview() {
       setProgress({ stage: "Generating review", detail: "Waiting for an evidence-grounded response. No edits are applied." });
       const response = await fetch(url, {
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(kind === "general" ? { cv } : { cv, description: roleText ?? jd, saveRun: false, useSavedProfile: false }),
+        body: JSON.stringify(kind === "general"
+          ? { cv, ...(focus ? { focus: focus.slice(0, 500) } : {}) }
+          : { cv, description: roleText ?? jd, ...(focus ? { goal: focus.slice(0, 300) } : {}), saveRun: false, useSavedProfile: false }),
       });
       const payload = await response.json();
       setProgress({ stage: "Preparing results", detail: "Checking the returned review before showing it in the conversation." });
@@ -359,12 +367,14 @@ export function Occ3Preview() {
       return;
     }
     setDraft("");
-    append(message("you", { text }),
-      message("occ", { text: agent === "review"
-        ? "To run a new role-specific review, share a job description. You can also choose General review for CV-only feedback."
-        : agent === "interview"
-          ? "Interview coaching uses a target role. Share the job description and I'll help you prepare one question at a time."
-          : "Career Memory remains private and opt-in. We won't save your CV or this chat automatically." }));
+    append(message("you", { text }));
+    if (agent === "review") {
+      await review(looksLikeJobDescription(jd) ? "targeted" : "general", looksLikeJobDescription(jd) ? jd : undefined, text);
+      return;
+    }
+    append(message("occ", { text: agent === "interview"
+      ? "Interview coaching uses a target role. Share the job description and I'll help you prepare one question at a time."
+      : "Career Memory remains private and opt-in. We won't save your CV or this chat automatically." }));
     if (agent === "interview") setMode("awaiting-jd");
   }
   return <div className="occ3-shell">
