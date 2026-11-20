@@ -254,3 +254,11 @@
   .occ3-attach {width:30px;height:32px;}
   .occ3-send {width:32px;height:32px;}
 }
+
+/* In-conversation source labels stay readable in both Royal Iris themes. */
+.occ3-review .occ3-trust-note,.occ3-interview-card .occ3-trust-note {
+  margin:8px 0 10px;padding:8px 10px;border-left:2px solid currentColor;
+  color:inherit;opacity:.88;font-size:12px;line-height:1.5;
+}
+.occ3-review .occ3-evidence-label {font-weight:700;}
+.occ3-review details summary span {max-width:45%;text-align:right;white-space:normal;}
