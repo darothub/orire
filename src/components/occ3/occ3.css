@@ -215,3 +215,19 @@
 .occ3-review details[open]::details-content,.occ3-interview-card details[open]::details-content,.occ3-improve details[open]::details-content {block-size:auto;opacity:1;}
 @media(max-width:740px){.occ3-attach-menu {max-width:calc(100vw - 24px)}.occ3-composer-top {right:7px;}.occ3-composer-main {padding-top:21px;}}
 @media(prefers-reduced-motion:reduce){.occ3-outgoing-ghost {display:none}.occ3-you,.occ3-attach-menu {animation:none!important}.occ3-composer textarea,.occ3-composer,.occ3-review details::details-content,.occ3-interview-card details::details-content,.occ3-improve details::details-content{transition:none!important}}
+
+/* Attachment chooser spans the complete composer and floats directly above it. */
+.occ3-composer > .occ3-attach-menu {
+  position:absolute;left:-1px;right:-1px;bottom:calc(100% + 10px);
+  width:calc(100% + 2px);box-sizing:border-box;max-width:none;min-width:0;margin:0;z-index:20;
+  max-height:min(65dvh,460px);overflow-y:auto;
+  animation:occ3-attach-fullwidth-in .2s ease-out both;
+}
+.occ3-composer:not(.occ3-composer-expanded) .occ3-composer-main {padding-top:0;}
+.occ3-composer:has(.occ3-composer-top) .occ3-composer-main {padding-top:21px;}
+@media(max-width:740px) {
+ .occ3-composer > .occ3-attach-menu {width:calc(100% + 2px);max-width:none;left:-1px;right:-1px;}
+}
+
+@keyframes occ3-attach-fullwidth-in {from {opacity:0;transform:translateY(7px)}to {opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.occ3-composer > .occ3-attach-menu{animation:none!important}}
