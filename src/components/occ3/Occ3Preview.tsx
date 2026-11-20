@@ -460,7 +460,7 @@ export function Occ3Preview() {
               <button type="button" aria-label="Attach document" title="Attach CV or job description" className="occ3-attach" aria-haspopup="menu" aria-expanded={menu} onClick={() => { setMenu(value => !value); setAgentMenu(false); }}><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5L14.7 1.3a4 4 0 0 1 5.7 5.7L10.1 17.3a2 2 0 0 1-2.8-2.8l9.2-9.2"/></svg></button>
               {menu && <div className="occ3-popup occ3-attach-menu" role="group" aria-label="Attach to conversation">
                 <div className="occ3-attach-heading">ADD TO CONVERSATION</div>
-                <button type="button" className="occ3-attach-option" onClick={() => { setMenu(false); fileInput.current?.click(); }}>
+                <button type="button" aria-label={isJDStep ? "Attach job description" : "Upload CV"} className="occ3-attach-option" onClick={() => { setMenu(false); fileInput.current?.click(); }}>
                   <span className="occ3-attach-option-icon" aria-hidden="true">⇧</span>
                   <span className="occ3-attach-option-text"><strong>{isJDStep ? "Attach job description" : "Upload CV"}</strong><small>PDF, DOCX or TXT from computer</small></span>
                 </button>
