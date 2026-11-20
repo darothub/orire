@@ -153,3 +153,33 @@
 @media(prefers-reduced-motion:reduce){
   .occ3-message,.occ3-agent-menu,.occ3-processing-symbol span {animation:none!important;}
 }
+
+/* OCC 3 Improve CV: inline editable before/after cards, no extra workspace. */
+.occ3-improve {display:grid;gap:14px;margin-top:14px;min-width:0;}
+.occ3-improve-heading,.occ3-improve-item-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.occ3-improve-heading strong {font-size:16px;}
+.occ3-improve-heading span,.occ3-improve-item-heading span {font-size:11px;color:#fbd6b9;background:rgba(232,187,249,.1);padding:5px 9px;border-radius:999px;white-space:nowrap;}
+.occ3-improve-help,.occ3-improve-item>p,.occ3-improve-note {font-size:12px;line-height:1.6;color:#ebdaf6;}
+.occ3-improve-item {background:rgba(219,162,255,.065);border-radius:16px;padding:15px;display:grid;gap:12px;}
+.occ3-improve-item-heading strong {font-size:14px;}
+.occ3-improve-diff {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;}
+.occ3-improve-diff>div {background:rgba(255,255,255,.06);border-radius:12px;padding:11px;min-width:0;}
+.occ3-improve-diff>div:nth-child(2) {background:rgba(255,201,167,.12);}
+.occ3-improve-diff small {display:block;font-size:10px;letter-spacing:.04em;color:#ffd5ba;font-weight:700;}
+.occ3-improve-diff p {font-size:12px;line-height:1.65;margin:7px 0 0;overflow-wrap:anywhere;}
+.occ3-improve-edit,.occ3-improve-actions button {justify-self:start;border-radius:10px;border:1px solid rgba(247,206,255,.4);padding:9px 12px;background:rgba(210,159,242,.12);color:#fff6ff;font-size:12px;font-weight:650;}
+.occ3-improve-actions {display:flex;gap:8px;flex-wrap:wrap;}
+.occ3-improve-actions button:first-child:not(:disabled) {background:#ffc9a7;color:#2c123d;border-color:#ffc9a7;}
+.occ3-improve-editor {display:grid;gap:9px;}
+.occ3-improve-editor>label {font-size:12px;font-weight:700;}
+.occ3-improve-editor textarea,.occ3-improve-draft textarea {width:100%;min-width:0;padding:11px;background:rgba(20,5,39,.3);border:1px solid rgba(240,201,255,.35);border-radius:11px;color:#fff6ff;font-size:13px;line-height:1.5;}
+.occ3-improve-editor textarea:focus-visible {outline:2px solid #ffc9a7;outline-offset:1px;}
+.occ3-improve-editor>small {font-size:11px;color:#e8cbef;line-height:1.5;}
+.occ3-improve-check {display:flex;align-items:flex-start;gap:9px;font-size:12px!important;font-weight:500!important;line-height:1.5;}
+.occ3-improve-check input {accent-color:#ffc9a7;flex-shrink:0;margin-top:3px;}
+.occ3-improve-unverified,.occ3-improve-draft {font-size:12px;line-height:1.6;}
+.occ3-improve-unverified summary,.occ3-improve-draft summary {cursor:pointer;color:#ffd5ba;font-weight:650;}
+.occ3-improve-draft textarea {margin-top:9px;resize:vertical;}
+.occ3-improve-note {margin:0;}
+.occ3-improve-feedback {font-size:12px;color:#fbd6b9;min-height:15px;margin:0;}
+@media(max-width:580px) {.occ3-improve-diff{grid-template-columns:1fr}.occ3-improve-item{padding:12px;}}

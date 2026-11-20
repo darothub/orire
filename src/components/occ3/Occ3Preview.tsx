@@ -6,11 +6,12 @@ import type { CVData } from "@/lib/cv/schema";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { MAX_INTERVIEW_TURNS, type InterviewQuestion, type InterviewFeedback } from "@/lib/occ/interview";
+import { Occ3ImproveReview } from "./Occ3ImproveReview";
 import "./occ3.css";
 
 type Agent = "review" | "coach" | "interview" | "improve" | "memory";
 type Mode = "start" | "choice" | "awaiting-jd" | "ready";
-type Message = { id: number; role: "you" | "occ"; text?: string; file?: string; advice?: OccAdvice; mode?: "general" | "targeted" | "coaching"; choice?: boolean; coachChoice?: boolean; jdPrompt?: boolean; interviewQuestion?: InterviewQuestion; interviewFeedback?: InterviewFeedback; interviewNumber?: number };
+type Message = { id: number; role: "you" | "occ"; text?: string; file?: string; advice?: OccAdvice; mode?: "general" | "targeted" | "coaching" | "improve"; choice?: boolean; coachChoice?: boolean; jdPrompt?: boolean; interviewQuestion?: InterviewQuestion; interviewFeedback?: InterviewFeedback; interviewNumber?: number };
 type SavedCV = { id: string; title: string; data: CVData };
 const AGENTS: { id: Agent; name: string }[] = [
   { id: "review", name: "Review" }, { id: "coach", name: "Coach" },
@@ -159,16 +160,40 @@ export function Occ3Preview() {
     append(message("you", { text: goal }));
     void runCoach(goal);
   }
+  async function improve() {
+    if (!cvReady || busy) return;
+    setBusy(true); setError("");
+    setProgress({ stage: "Preparing CV improvements", detail: "Finding wording improvements using only evidence from your CV." });
+    try {
+      const hasRole = looksLikeJobDescription(jd);
+      setProgress({ stage: "Generating safe suggestions", detail: "Waiting for source-grounded rewrites. Your saved CV stays untouched." });
+      const response = await fetch(hasRole ? "/api/occ/advise" : "/api/occ/general-review", {
+        method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(hasRole ? { cv, description: jd, saveRun: false, useSavedProfile: false } : { cv }),
+      });
+      const payload = await response.json();
+      setProgress({ stage: "Preparing before-and-after edits", detail: "Checking which passages can be safely reviewed in chat." });
+      if (!response.ok || !payload.advice) throw new Error(payload.error || "CV improvement suggestions are unavailable.");
+      append(message("occ", { text: "Let's improve the wording together. Review each suggestion before approving it.", advice: payload.advice as OccAdvice, mode: "improve" }));
+      setMode("ready");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "CV improvement suggestions are unavailable.");
+    } finally { setBusy(false); setProgress(null); }
+  }
   function afterCV(file?: string) {
     const isInterview = agent === "interview";
     const isCoach = agent === "coach";
+    const isImprove = agent === "improve";
     append(message("you", { text: draft.trim() || undefined, file: file || cvName || "CV" }),
       message("occ", isInterview
         ? { text: "I've received your CV. Paste or attach a job description for the mock interview.", jdPrompt: true }
         : isCoach
           ? { text: "I've received your CV. What career goal would you like help with? Choose an option or describe it below.", coachChoice: true }
-          : { text: "I've received your CV. Would you like a general review, or should I review it against a specific job description?", choice: true }));
-    setMode(isInterview ? "awaiting-jd" : "choice"); setDraft(""); setAttached(null);
+          : isImprove
+            ? { text: "I've received your CV. I'll suggest factual wording changes you can review and approve in this chat." }
+            : { text: "I've received your CV. Would you like a general review, or should I review it against a specific job description?", choice: true }));
+    setMode(isInterview ? "awaiting-jd" : isImprove ? "ready" : "choice"); setDraft(""); setAttached(null);
+    if (isImprove) void improve();
   }
   function chooseJD() {
     append(message("you", { text: "I have a job description" }),
@@ -231,7 +256,11 @@ export function Occ3Preview() {
     if (next === agent) return;
     interviewGeneration.current++; coachGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
     setAgent(next);
-    if (next === "coach" && cvReady && mode !== "start") {
+    if (next === "improve" && cvReady && mode !== "start") {
+      append(message("occ", { text: "Improve CV selected. I'll suggest edits you can accept or reject without changing your saved CV." }));
+      setMode("ready");
+      void improve();
+    } else if (next === "coach" && cvReady && mode !== "start") {
       append(message("occ", { text: "Coach selected. What would you like help with? Choose a goal or describe it in your own words.", coachChoice: true }));
       setMode("choice");
     } else if (next === "interview" && cvReady && mode !== "start") {
@@ -251,6 +280,10 @@ export function Occ3Preview() {
     if (!canSend) return;
     if (!cvReady) { setError("Attach your CV using the paperclip before sending."); return; }
     if (mode === "start" || (mode === "choice" && attached === "cv")) { afterCV(cvName); return; }
+    if (agent === "improve") {
+      setError("Use the in-chat improvement cards to edit, reject or approve wording. No saved CV changes will be made.");
+      return;
+    }
     if (agent === "coach" && mode === "choice" && draft.trim() && attached !== "jd") {
       const goal = draft.trim();
       if (goal.length < 5 || goal.length > 500) { setError("Describe your goal in 5 to 500 characters."); return; }
@@ -357,7 +390,8 @@ export function Occ3Preview() {
                   ? <button type="button" className="occ3-next-question" disabled={busy} onClick={() => void askInterviewQuestion(interviewIndex + 1, jd)}>Next question</button>
                   : <small>Practice complete. Start a new chat for another session.</small>)}
             </section>}
-            {entry.advice && <section className="occ3-review" aria-label={entry.mode === "coaching" ? "Career coaching guidance" : entry.mode === "general" ? "General CV review" : "Targeted CV review"}>
+            {entry.mode === "improve" && entry.advice && <Occ3ImproveReview original={cv} recommendations={entry.advice.recommendations}/>}
+            {entry.advice && entry.mode !== "improve" && <section className="occ3-review" aria-label={entry.mode === "coaching" ? "Career coaching guidance" : entry.mode === "general" ? "General CV review" : "Targeted CV review"}>
               <div className="occ3-review-title"><strong>{entry.mode === "coaching" ? "Career coaching" : "CV Review"}</strong><span>{entry.mode === "coaching" ? "Coach" : entry.mode === "general" ? "General" : "Job-specific"}</span></div>
               <p>{entry.advice.summary}</p>
               {entry.advice.recommendations.map((item, i) => <details key={i}>
