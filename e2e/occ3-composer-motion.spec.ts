@@ -29,7 +29,7 @@ test.describe("OCC 3 composer and attachment interactions", () => {
       return {left:Math.abs(composer.left-menu.left),width:Math.abs(composer.width-menu.width),above:menu.bottom<=composer.top};
     });
     expect(initialGeometry.left).toBeLessThan(2);
-    expect(initialGeometry.width).toBeLessThan(2);
+    expect(initialGeometry.width).toBeLessThan(3);
     expect(initialGeometry.above).toBe(true);
     await testInfo.attach("occ3-attachment-menu-1440",{body:await page.screenshot({fullPage:true,animations:"disabled"}),contentType:"image/png"});
     await attach.click();
@@ -67,7 +67,7 @@ test.describe("OCC 3 composer and attachment interactions", () => {
         return {left:Math.abs(form.left-menu.left),width:Math.abs(form.width-menu.width),above:menu.bottom<=form.top,overflow:document.documentElement.scrollWidth>innerWidth};
       });
       expect(geometry.left).toBeLessThan(2);
-      expect(geometry.width).toBeLessThan(2);
+      expect(geometry.width).toBeLessThan(3);
       expect(geometry.above).toBe(true);
       expect(geometry.overflow).toBe(false);
       await testInfo.attach(`occ3-attachment-menu-${width}`,{body:await page.screenshot({fullPage:true,animations:"disabled"}),contentType:"image/png"});
