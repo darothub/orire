@@ -106,3 +106,36 @@ The helper at `src/lib/occ/evaluation/reviewQueue.ts` prepares an independently 
 After each verified submission run `npm run eval:occ:interview`. A case leaves the outstanding queue only after **two distinct** reviews. Any disagreement, fabricated claim or meaning change requires an independent adjudication record and must not be silently classified as safe. Keep adjudication notes and practitioner credentials in an access-controlled review log, without personal data.
 
 **Limitations:** A blinded packet is preparation, not a completed human review. The current empty records file means the result remains **0 independently double-reviewed cases**. Human judgments, practitioner recruiting, privacy review, adjudication and representative domain expansion are still outstanding. No user CV or private chat content is part of these synthetic packets.
+
+## OCC 3.2.2 — Reviewer intake and quality reporting
+
+`src/lib/occ/evaluation/humanQuality.ts` supplies two backend-only, pure functions:
+
+- `validateReviewSubmission(submission, existingReviews)` validates a benchmark case ID, reviewer pseudonym, review date, score range (1–5), binary factuality/meaning assessments, notes, and uniqueness of the reviewer ID for that case. This is **format and duplicate validation only**; a reviewer ID does not prove a person is real or independent.
+- `buildHumanQualityReport(reviews)` reports double-review completion, pending cases, average clarity, average recognizability, meaning preservation, flagged fabricated claims, disagreements, and per-profession coverage. Only fully double-reviewed cases contribute quality scores. Empty or single-reviewed data produces `null` scores, not zero or invented quality ratings.
+
+The report status distinguishes `pending-human-review`, `needs-adjudication`, `blocked-by-safety-finding`, and `ready-for-release-review`. A flagged fabricated claim or change in meaning blocks acceptance; conflicting reviews require adjudication. `ready-for-release-review` is **not permission to ship**: it still requires representative samples, documented identity/independence verification, practitioner review and architect sign-off. No scores imply production-level reliability.
+
+### Completing a genuine review
+
+1. The coordinator authenticates each independent reviewer outside the benchmark script, checks relevant expertise, and issues a blinded packet from `createPriorityReviewPacket` or `createBlindReviewPacket`. Keep the other reviewer's response hidden.
+2. A reviewer independently examines the original answer and proposed wording and submits a record in the following shape. **This example is a schema illustration only, NOT a review to insert into the dataset**:
+
+```json
+{
+  "caseId": "CASE_ID_FROM_PACKET",
+  "reviewerId": "REVIEWER_PSEUDONYM",
+  "reviewedAt": "YYYY-MM-DD",
+  "clarity": 4,
+  "recognizability": 4,
+  "meaningPreserved": true,
+  "fabricatedClaim": false,
+  "notes": "Evidence-based reason for the rating."
+}
+```
+
+3. The coordinator validates each actual submission using `validateReviewSubmission`, independently verifies reviewer identities, and appends only verified genuine entries to `src/lib/occ/evaluation/human-reviews.json`. Do **not** paste this template or synthetic test fixtures into that file.
+4. Run `npm run eval:occ:interview`. The test output includes the `humanQuality` report, including pending, blocked and contested cases, with profession-specific breakdowns.
+5. Record adjudication externally in an access-controlled log when reviewers disagree. Never silently overwrite a judgment or treat a disputed claim as verified. Resolve substantiated safety findings and expand the relevant regression cases before any release decision.
+
+**Current status:** the checked-in `human-reviews.json` remains empty. The human evaluation is not completed. A non-production local test suite uses fabricated **test-only** records to verify reporting logic; those must never be represented as actual reviewers or merged into review evidence.
