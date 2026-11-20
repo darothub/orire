@@ -328,9 +328,7 @@ export function Occ3Preview() {
         ? "To run a new role-specific review, share a job description. You can also choose General review for CV-only feedback."
         : agent === "interview"
           ? "Interview coaching uses a target role. Share the job description and I'll help you prepare one question at a time."
-          : agent === "improve"
-            ? "I can help improve wording from your CV. We'll only suggest evidence-based changes; you choose what to accept."
-            : "Career Memory remains private and opt-in. We won't save your CV or this chat automatically." }));
+          : "Career Memory remains private and opt-in. We won't save your CV or this chat automatically." }));
     if (agent === "interview") setMode("awaiting-jd");
   }
   return <div className="occ3-shell">
