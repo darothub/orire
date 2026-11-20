@@ -18,7 +18,13 @@ test.describe("OCC 3 composer and attachment interactions", () => {
     const attach=form.getByRole("button",{name:"Attach document"});
     await attach.click();
     const popup=page.getByRole("group",{name:"Attach to conversation"});
+    const formBounds = await form.boundingBox();
     await expect(popup).toBeVisible();
+    const popupBounds = await popup.boundingBox();
+    expect(formBounds && popupBounds).toBeTruthy();
+    expect(Math.abs(popupBounds!.x - formBounds!.x)).toBeLessThan(2);
+    expect(Math.abs(popupBounds!.width - formBounds!.width)).toBeLessThan(2);
+    expect(popupBounds!.y + popupBounds!.height).toBeLessThan(formBounds!.y);
     await expect(popup.getByRole("button",{name:/Upload CV/})).toBeVisible();
     await expect(popup).toContainText("YOUR ORIRE LIBRARY");
     await testInfo.attach("occ3-attachment-menu-1440",{body:await page.screenshot({fullPage:true,animations:"disabled"}),contentType:"image/png"});
@@ -26,12 +32,14 @@ test.describe("OCC 3 composer and attachment interactions", () => {
     await page.locator('input[type="file"]').setInputFiles({name:"teacher-cv.txt",mimeType:"text/plain",buffer:Buffer.from(cv)});
 
     const input=form.getByRole("textbox",{name:"Message Orire Career Copilot"});
+    const expand=form.getByRole("button",{name:"Expand message composer"});
+    await expect(expand).toHaveCount(0);
     const shortHeight=await input.evaluate(e=>e.getBoundingClientRect().height);
     await input.fill(("I would like some career advice about a teaching position with curriculum design and assessment responsibilities. ").repeat(13));
     await expect.poll(()=>input.evaluate(e=>e.getBoundingClientRect().height)).toBeGreaterThan(shortHeight+40);
     const compactHeight=await input.evaluate(e=>e.getBoundingClientRect().height);
     expect(compactHeight).toBeLessThanOrEqual(178);
-    const expand=form.getByRole("button",{name:"Expand message composer"});
+    await expect(expand).toBeVisible();
     await expand.click();
     await expect(form.getByRole("button",{name:"Collapse message composer"})).toBeVisible();
     await expect.poll(()=>input.evaluate(e=>e.getBoundingClientRect().height)).toBeGreaterThan(compactHeight+25);
@@ -48,6 +56,10 @@ test.describe("OCC 3 composer and attachment interactions", () => {
       expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
       await attach.click();
       await expect(popup).toBeVisible();
+      const menuRect = await popup.boundingBox();
+      const composerRect = await form.boundingBox();
+      expect(Math.abs(menuRect!.x - composerRect!.x)).toBeLessThan(2);
+      expect(Math.abs(menuRect!.width - composerRect!.width)).toBeLessThan(2);
       await testInfo.attach(`occ3-attachment-menu-${width}`,{body:await page.screenshot({fullPage:true,animations:"disabled"}),contentType:"image/png"});
       await attach.click();
     }
