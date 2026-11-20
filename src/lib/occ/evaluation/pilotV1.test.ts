@@ -57,7 +57,7 @@ describe("OCC 3.2.3 fixed small pilot", () => {
     expect(getPilotV1Status(flagged)).toMatchObject({
       readyForFindings: false, fabricatedClaimCases: [PILOT_V1_CASE_IDS[0]],
     });
-    const conflict = baseline.map((record, index) => index === 0 ? { ...record, recognizability: 1 } : record);
+    const conflict: HumanReview[] = baseline.map((record, index) => index === 0 ? { ...record, recognizability: 1 } : record);
     expect(getPilotV1Status(conflict).disagreementCases).toContain(PILOT_V1_CASE_IDS[0]);
     expect(getPilotV1Status(conflict).readyForFindings).toBe(false);
   });
