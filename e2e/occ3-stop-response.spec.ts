@@ -18,11 +18,15 @@ test.describe("OCC 3.3.3 interrupted response isolation", () => {
     await page.locator('input[type="file"]').setInputFiles({ name: "teacher-cv.txt", mimeType: "text/plain", buffer: Buffer.from(cv) });
     await composer.getByRole("button", { name: "Send message" }).click();
     const requests: string[] = [];
+    let releaseFirst: (() => void) | undefined;
     await page.route("**/api/occ/general-review", async route => {
       requests.push(route.request().postData() ?? "");
       if (requests.length === 1) {
-        // Keep request pending until the UI cancels it. Do not rely on fixed sleeps.
-        await new Promise<void>(resolve => route.request().on("requestfailed", () => resolve()));
+        // Hold the first response until explicitly released after Stop.
+        await new Promise<void>(resolve => { releaseFirst = resolve; });
+        try {
+          await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ advice }) });
+        } catch { /* The browser already aborted this request. */ }
       } else {
         await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ advice }) });
       }
@@ -35,6 +39,7 @@ test.describe("OCC 3.3.3 interrupted response isolation", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await testInfo.attach("occ3-stop-review-mobile-390", { body: await page.screenshot({ fullPage: true, animations: "disabled" }), contentType: "image/png" });
     await stop.click();
+    releaseFirst?.();
     await expect(page.getByRole("alert")).toContainText("Response stopped");
     await expect(page.getByRole("region", { name: "General CV review" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Retry review request" })).toBeVisible();
