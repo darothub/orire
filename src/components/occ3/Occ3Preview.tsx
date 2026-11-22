@@ -58,6 +58,26 @@ export function Occ3Preview() {
   const fileInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
   const outgoingId = useRef(0);
+  const activeRequest = useRef<AbortController | null>(null);
+  function cancelActiveRequest() {
+    activeRequest.current?.abort();
+    activeRequest.current = null;
+  }
+  function beginRequest(): AbortController {
+    cancelActiveRequest();
+    const controller = new AbortController();
+    activeRequest.current = controller;
+    return controller;
+  }
+  const isCurrentRequest = (controller: AbortController) =>
+    activeRequest.current === controller && !controller.signal.aborted;
+  function finishRequest(controller: AbortController) {
+    if (!isCurrentRequest(controller)) return;
+    activeRequest.current = null;
+    setBusy(false);
+    setProgress(null);
+  }
+
 
   useEffect(() => {
     let current = true;
@@ -105,6 +125,7 @@ export function Occ3Preview() {
   const isJDStep = mode === "awaiting-jd";
 
   function reset() {
+    cancelActiveRequest();
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
     setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false); setProgress(null);
@@ -152,6 +173,7 @@ export function Occ3Preview() {
 
   async function review(kind: "general" | "targeted", roleText?: string, focus?: string) {
     if (busy || !cvReady) { if (!cvReady) setError("Attach a CV first."); return; }
+    const controller = beginRequest();
     setFailedGuidance(null);
     setBusy(true); setError("");
     setProgress({ stage: kind === "general" ? "Preparing general review" : "Preparing role-specific review", detail: "Using your attached CV" + (kind === "targeted" ? " and job description." : ".") });
@@ -159,12 +181,14 @@ export function Occ3Preview() {
       const url = kind === "general" ? "/api/occ/general-review" : "/api/occ/advise";
       setProgress({ stage: "Generating review", detail: "Waiting for an evidence-grounded response. No edits are applied." });
       const response = await fetch(url, {
+        signal: controller.signal,
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(kind === "general"
           ? { cv, ...(focus ? { focus: focus.slice(0, 500) } : {}) }
           : { cv, description: roleText ?? jd, ...(focus ? { goal: focus.slice(0, 300) } : {}), saveRun: false, useSavedProfile: false }),
       });
       const payload = await response.json();
+      if (!isCurrentRequest(controller)) return;
       setProgress({ stage: "Preparing results", detail: "Checking the returned review before showing it in the conversation." });
       if (!response.ok || !payload.advice) throw new Error(payload.error || "Review unavailable.");
       append(message("occ", {
@@ -173,36 +197,40 @@ export function Occ3Preview() {
       }));
       setMode("ready");
     } catch (cause) {
+      if (!isCurrentRequest(controller)) return;
       setFailedGuidance({ agent: "review", kind, roleText, focus });
       setError(cause instanceof Error ? cause.message : "Review unavailable.");
-    } finally { setBusy(false); setProgress(null); }
+    } finally { finishRequest(controller); }
   }
   async function runCoach(goal: string, roleText = "") {
     if (busy || !cvReady) return;
     const cleanGoal = goal.trim();
     if (cleanGoal.length < 5 || cleanGoal.length > 500) { setError("Describe your goal in 5 to 500 characters."); return; }
     const generation = ++coachGeneration.current;
+    const controller = beginRequest();
     setFailedGuidance(null);
     setBusy(true); setError(""); setCoachGoal(cleanGoal);
     setProgress({ stage: "Preparing coaching", detail: "Using your CV, stated goal" + (roleText ? " and optional target role." : ".") });
     try {
       setProgress({ stage: "Generating coaching guidance", detail: "Waiting for suggestions supported by your experience." });
       const response = await fetch("/api/occ/coach", {
+        signal: controller.signal,
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cv, goal: cleanGoal, ...(roleText ? { description: roleText } : {}) }),
       });
       const payload = await response.json();
+      if (!isCurrentRequest(controller)) return;
       setProgress({ stage: "Preparing coaching results", detail: "Checking the response before displaying guidance." });
       if (!response.ok || !payload.advice) throw new Error(payload.error || "Coaching unavailable.");
-      if (generation !== coachGeneration.current) return;
+      if (generation !== coachGeneration.current || !isCurrentRequest(controller)) return;
       append(message("occ", { text: "Here is a practical way forward.", advice: payload.advice as OccAdvice, mode: "coaching" }));
       setMode("ready");
     } catch (cause) {
-      if (generation === coachGeneration.current) {
+      if (generation === coachGeneration.current && isCurrentRequest(controller)) {
         setFailedGuidance({ agent: "coach", goal: cleanGoal, roleText });
         setError(cause instanceof Error ? cause.message : "Coaching unavailable.");
       }
-    } finally { if (generation === coachGeneration.current) { setBusy(false); setProgress(null); } }
+    } finally { finishRequest(controller); }
   }
   function retryGuidance() {
     if (!failedGuidance || busy || agent !== failedGuidance.agent) return;
@@ -217,25 +245,28 @@ export function Occ3Preview() {
     append(message("you", { text: goal }));
     void runCoach(goal);
   }
-  async function improve() {
-    if (!cvReady || busy) return;
+  async function improve(forceAfterSwitch = false) {
+    if (!cvReady || (busy && !forceAfterSwitch)) return;
+    const controller = beginRequest();
     setBusy(true); setError("");
     setProgress({ stage: "Preparing CV improvements", detail: "Finding wording improvements using only evidence from your CV." });
     try {
       const hasRole = looksLikeJobDescription(jd);
       setProgress({ stage: "Generating safe suggestions", detail: "Waiting for source-grounded rewrites. Your saved CV stays untouched." });
       const response = await fetch(hasRole ? "/api/occ/advise" : "/api/occ/general-review", {
+        signal: controller.signal,
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(hasRole ? { cv, description: jd, saveRun: false, useSavedProfile: false } : { cv }),
       });
       const payload = await response.json();
+      if (!isCurrentRequest(controller)) return;
       setProgress({ stage: "Preparing before-and-after edits", detail: "Checking which passages can be safely reviewed in chat." });
       if (!response.ok || !payload.advice) throw new Error(payload.error || "CV improvement suggestions are unavailable.");
       append(message("occ", { text: "Let's improve the wording together. Review each suggestion before approving it.", advice: payload.advice as OccAdvice, mode: "improve" }));
       setMode("ready");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "CV improvement suggestions are unavailable.");
-    } finally { setBusy(false); setProgress(null); }
+      if (isCurrentRequest(controller)) setError(cause instanceof Error ? cause.message : "CV improvement suggestions are unavailable.");
+    } finally { finishRequest(controller); }
   }
   function afterCV(file?: string) {
     const isInterview = agent === "interview";
@@ -262,31 +293,35 @@ export function Occ3Preview() {
   async function askInterviewQuestion(index: number, description: string) {
     if (busy || index >= MAX_INTERVIEW_TURNS) return;
     const generation = ++interviewGeneration.current;
+    const controller = beginRequest();
     setFailedInterviewAnswer(null);
     setBusy(true); setError("");
     setProgress({ stage: "Preparing interview question", detail: "Using the attached CV and target role." });
     try {
       setProgress({ stage: "Generating interview question", detail: "Waiting for a relevant question and two optional answer approaches." });
       const response = await fetch("/api/occ/interview", {
+        signal: controller.signal,
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "question", cv, description, turnIndex: index }),
       });
       const data = await response.json();
+      if (!isCurrentRequest(controller)) return;
       setProgress({ stage: "Preparing interview question", detail: "Checking the returned question for display." });
       if (!response.ok || !data.question) throw new Error(data.error || "Unable to prepare interview question.");
-      if (generation !== interviewGeneration.current) return;
+      if (generation !== interviewGeneration.current || !isCurrentRequest(controller)) return;
       const question = data.question as InterviewQuestion;
       setInterviewQuestion(question); setInterviewIndex(index); setInterviewPhase("question"); setMode("ready");
       append(message("occ", { text: "Question " + (index + 1) + " of " + MAX_INTERVIEW_TURNS, interviewQuestion: question, interviewNumber: index + 1 }));
     } catch (cause) {
-      if (generation === interviewGeneration.current) setError(cause instanceof Error ? cause.message : "Interview unavailable.");
-    } finally { if (generation === interviewGeneration.current) { setBusy(false); setProgress(null); } }
+      if (generation === interviewGeneration.current && isCurrentRequest(controller)) setError(cause instanceof Error ? cause.message : "Interview unavailable.");
+    } finally { finishRequest(controller); }
   }
   async function respondToInterview(answer: string, retry = false) {
     if (!interviewQuestion || answer.length < 20 || busy) {
       setError("Use at least 20 characters to answer the question in your own words."); return;
     }
     const generation = ++interviewGeneration.current;
+    const controller = beginRequest();
     const question = interviewQuestion;
     if (!retry) append(message("you", { text: answer }));
     setFailedInterviewAnswer(null); setDraft(""); setBusy(true); setError("");
@@ -294,31 +329,36 @@ export function Occ3Preview() {
     try {
       setProgress({ stage: "Generating feedback", detail: "Waiting for constructive feedback and fact-preserving wording guidance." });
       const response = await fetch("/api/occ/interview", {
+        signal: controller.signal,
         method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mode: "feedback", cv, description: jd, question: question.question, answer, turnIndex: interviewIndex }),
       });
       const data = await response.json();
+      if (!isCurrentRequest(controller)) return;
       setProgress({ stage: "Preparing feedback", detail: "Checking the response before showing suggestions." });
       if (!response.ok || !data.feedback) throw new Error(data.error || "Unable to evaluate answer.");
-      if (generation !== interviewGeneration.current) return;
+      if (generation !== interviewGeneration.current || !isCurrentRequest(controller)) return;
       setInterviewPhase("feedback");
       append(message("occ", { text: "Here's your interview feedback.", interviewFeedback: data.feedback as InterviewFeedback, interviewNumber: interviewIndex + 1 }));
     } catch (cause) {
-      if (generation !== interviewGeneration.current) return;
+      if (generation !== interviewGeneration.current || !isCurrentRequest(controller)) return;
       setError(cause instanceof Error ? cause.message : "Feedback unavailable.");
       setFailedInterviewAnswer(answer);
-    } finally { if (generation === interviewGeneration.current) { setBusy(false); setProgress(null); } }
+    } finally { finishRequest(controller); }
   }
   function selectAgent(next: Agent) {
-    if (busy) return;
+    if (busy && !activeRequest.current) return;
     setAgentMenu(false);
     if (next === agent) return;
+    const switchingDuringRequest = Boolean(activeRequest.current);
+    cancelActiveRequest();
+    setBusy(false); setProgress(null);
     interviewGeneration.current++; coachGeneration.current++; setFailedInterviewAnswer(null); setFailedGuidance(null); setError(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
     setAgent(next);
     if (next === "improve" && cvReady && mode !== "start") {
       append(message("occ", { text: "Improve CV selected. I'll suggest edits you can accept or reject without changing your saved CV." }));
       setMode("ready");
-      void improve();
+      void improve(switchingDuringRequest);
     } else if (next === "coach" && cvReady && mode !== "start") {
       append(message("occ", { text: "Coach selected. What would you like help with? Choose a goal or describe it in your own words.", coachChoice: true }));
       setMode("choice");
