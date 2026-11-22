@@ -262,3 +262,8 @@
 }
 .occ3-review .occ3-evidence-label {font-weight:700;}
 .occ3-review details summary span {max-width:45%;text-align:right;white-space:normal;}
+
+/* OCC 3.3: keep failed-feedback recovery action visible in the conversation. */
+.occ3-error { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.occ3-retry-feedback { color:#28133d; background:#ffcca8; border:0; border-radius:999px; padding:9px 13px; font-size:12px; font-weight:700; }
+.occ3-retry-feedback:hover:not(:disabled) { background:#ffe0c7; }
