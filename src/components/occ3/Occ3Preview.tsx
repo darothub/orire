@@ -43,6 +43,7 @@ export function Occ3Preview() {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<{ stage: string; detail: string } | null>(null);
   const [error, setError] = useState("");
+  const [failedInterviewAnswer, setFailedInterviewAnswer] = useState<string | null>(null);
   const [coachGoal, setCoachGoal] = useState("");
   const coachGeneration = useRef(0);
   const [interviewPhase, setInterviewPhase] = useState<"idle" | "question" | "feedback">("idle");
@@ -103,7 +104,7 @@ export function Occ3Preview() {
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
     setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false); setProgress(null);
-    setComposerExpanded(false); setComposerHasGrown(false); setOutgoing(null);
+    setComposerExpanded(false); setComposerHasGrown(false); setOutgoing(null); setFailedInterviewAnswer(null);
     interviewGeneration.current++; coachGeneration.current++; setCoachGoal(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
   }
   function chooseSaved(item: SavedCV) {
@@ -243,6 +244,7 @@ export function Occ3Preview() {
   async function askInterviewQuestion(index: number, description: string) {
     if (busy || index >= MAX_INTERVIEW_TURNS) return;
     const generation = ++interviewGeneration.current;
+    setFailedInterviewAnswer(null);
     setBusy(true); setError("");
     setProgress({ stage: "Preparing interview question", detail: "Using the attached CV and target role." });
     try {
@@ -262,13 +264,14 @@ export function Occ3Preview() {
       if (generation === interviewGeneration.current) setError(cause instanceof Error ? cause.message : "Interview unavailable.");
     } finally { if (generation === interviewGeneration.current) { setBusy(false); setProgress(null); } }
   }
-  async function respondToInterview(answer: string) {
+  async function respondToInterview(answer: string, retry = false) {
     if (!interviewQuestion || answer.length < 20 || busy) {
       setError("Use at least 20 characters to answer the question in your own words."); return;
     }
     const generation = ++interviewGeneration.current;
     const question = interviewQuestion;
-    append(message("you", { text: answer })); setDraft(""); setBusy(true); setError("");
+    if (!retry) append(message("you", { text: answer }));
+    setFailedInterviewAnswer(null); setDraft(""); setBusy(true); setError("");
     setProgress({ stage: "Evaluating your answer", detail: "Comparing your response to the question and the experience you shared." });
     try {
       setProgress({ stage: "Generating feedback", detail: "Waiting for constructive feedback and fact-preserving wording guidance." });
@@ -285,14 +288,14 @@ export function Occ3Preview() {
     } catch (cause) {
       if (generation !== interviewGeneration.current) return;
       setError(cause instanceof Error ? cause.message : "Feedback unavailable.");
-      append(message("occ", { text: "I couldn't evaluate that answer. Please try again with your own words." }));
+      setFailedInterviewAnswer(answer);
     } finally { if (generation === interviewGeneration.current) { setBusy(false); setProgress(null); } }
   }
   function selectAgent(next: Agent) {
     if (busy) return;
     setAgentMenu(false);
     if (next === agent) return;
-    interviewGeneration.current++; coachGeneration.current++; setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
+    interviewGeneration.current++; coachGeneration.current++; setFailedInterviewAnswer(null); setError(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
     setAgent(next);
     if (next === "improve" && cvReady && mode !== "start") {
       append(message("occ", { text: "Improve CV selected. I'll suggest edits you can accept or reject without changing your saved CV." }));
@@ -461,7 +464,7 @@ export function Occ3Preview() {
             <p>{progress.detail}</p>
           </div>
         </div>}
-        {error && <p className="occ3-error" role="alert">{error}</p>}
+        {error && <div className="occ3-error" role="alert"><span>{error}</span>{failedInterviewAnswer && !busy && agent === "interview" && interviewPhase === "question" && <button className="occ3-retry-feedback" type="button" onClick={() => void respondToInterview(failedInterviewAnswer, true)}>Retry feedback for this answer</button>}</div>}
         <div ref={end} />
       </div>
       <div className="occ3-composer-area">
