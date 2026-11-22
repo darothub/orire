@@ -18,12 +18,11 @@ test.describe("OCC 3.3.3 interrupted requests and agent isolation", () => {
   test("agent switch interrupts an in-flight review without leaking its response", async ({ page, db, e2eUser }, testInfo) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await prepare(page);
-    let release: (() => void) | undefined;
-    const waiting = new Promise<void>(resolve => { release = resolve; });
-    let requestStarted: (() => void) | undefined;
-    const started = new Promise<void>(resolve => { requestStarted = resolve; });
+    const gate = { release: () => {}, started: () => {} };
+    const waiting = new Promise<void>(resolve => { gate.release = resolve; });
+    const started = new Promise<void>(resolve => { gate.started = resolve; });
     await page.route("**/api/occ/general-review", async route => {
-      requestStarted?.();
+      gate.started();
       await waiting;
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ advice }) }).catch(() => {});
     });
@@ -32,7 +31,7 @@ test.describe("OCC 3.3.3 interrupted requests and agent isolation", () => {
     await page.getByRole("button", { name: "Select agent" }).click();
     await page.getByRole("option", { name: /Coach/ }).click();
     await expect(page.getByText("Coach selected.", { exact: false })).toBeVisible();
-    release?.();
+    gate.release();
     await expect(page.getByRole("region", { name: "General CV review" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Retry review request" })).toHaveCount(0);
     await expect(page.getByTestId("occ3-processing")).toHaveCount(0);
@@ -51,19 +50,18 @@ test.describe("OCC 3.3.3 interrupted requests and agent isolation", () => {
     await prepare(page);
     await page.getByRole("button", { name: "Select agent" }).click();
     await page.getByRole("option", { name: /Coach/ }).click();
-    let release: (() => void) | undefined;
-    const waiting = new Promise<void>(resolve => { release = resolve; });
-    let requestStarted: (() => void) | undefined;
-    const started = new Promise<void>(resolve => { requestStarted = resolve; });
+    const gate = { release: () => {}, started: () => {} };
+    const waiting = new Promise<void>(resolve => { gate.release = resolve; });
+    const started = new Promise<void>(resolve => { gate.started = resolve; });
     await page.route("**/api/occ/coach", async route => {
-      requestStarted?.();
+      gate.started();
       await waiting;
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ advice }) }).catch(() => {});
     });
     await page.getByRole("button", { name: "Career direction" }).click();
     await started;
     await page.getByRole("button", { name: /New chat/ }).click();
-    release?.();
+    gate.release();
     await expect(page.getByText("Start by attaching your CV using the paperclip below.")).toBeVisible();
     await expect(page.getByRole("region", { name: "Career coaching guidance" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Retry coaching request" })).toHaveCount(0);
