@@ -13,6 +13,9 @@ type Agent = "review" | "coach" | "interview" | "improve" | "memory";
 type Mode = "start" | "choice" | "awaiting-jd" | "ready";
 type Message = { id: number; role: "you" | "occ"; text?: string; file?: string; advice?: OccAdvice; mode?: "general" | "targeted" | "coaching" | "improve"; choice?: boolean; coachChoice?: boolean; jdPrompt?: boolean; interviewQuestion?: InterviewQuestion; interviewFeedback?: InterviewFeedback; interviewNumber?: number };
 type SavedCV = { id: string; title: string; data: CVData };
+type FailedGuidance =
+  | { agent: "review"; kind: "general" | "targeted"; roleText?: string; focus?: string }
+  | { agent: "coach"; goal: string; roleText: string };
 const AGENTS: { id: Agent; name: string }[] = [
   { id: "review", name: "Review" }, { id: "coach", name: "Coach" },
   { id: "interview", name: "Interview" }, { id: "improve", name: "Improve CV" },
@@ -44,6 +47,7 @@ export function Occ3Preview() {
   const [progress, setProgress] = useState<{ stage: string; detail: string } | null>(null);
   const [error, setError] = useState("");
   const [failedInterviewAnswer, setFailedInterviewAnswer] = useState<string | null>(null);
+  const [failedGuidance, setFailedGuidance] = useState<FailedGuidance | null>(null);
   const [coachGoal, setCoachGoal] = useState("");
   const coachGeneration = useRef(0);
   const [interviewPhase, setInterviewPhase] = useState<"idle" | "question" | "feedback">("idle");
@@ -104,12 +108,12 @@ export function Occ3Preview() {
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
     setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false); setProgress(null);
-    setComposerExpanded(false); setComposerHasGrown(false); setOutgoing(null); setFailedInterviewAnswer(null);
+    setComposerExpanded(false); setComposerHasGrown(false); setOutgoing(null); setFailedInterviewAnswer(null); setFailedGuidance(null);
     interviewGeneration.current++; coachGeneration.current++; setCoachGoal(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
   }
   function chooseSaved(item: SavedCV) {
     setCv(cvToPlainText(item.data)); setCvName(item.title); setAttached("cv");
-    setMenu(false); setError("");
+    setMenu(false); setError(""); setFailedGuidance(null);
   }
   async function parseFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
@@ -140,14 +144,15 @@ export function Occ3Preview() {
       if (kind === "jd" && !looksLikeJobDescription(text)) throw new Error("This file does not appear to contain a job description.");
       if (kind === "cv") { setCv(text); setCvName(file.name); }
       else { setJd(text); setJdName(file.name); }
-      setAttached(kind);
+      setAttached(kind); setFailedGuidance(null);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Unable to read document.");
     } finally { setBusy(false); setProgress(null); }
   }
 
   async function review(kind: "general" | "targeted", roleText?: string, focus?: string) {
-    if (!cvReady) { setError("Attach a CV first."); return; }
+    if (busy || !cvReady) { if (!cvReady) setError("Attach a CV first."); return; }
+    setFailedGuidance(null);
     setBusy(true); setError("");
     setProgress({ stage: kind === "general" ? "Preparing general review" : "Preparing role-specific review", detail: "Using your attached CV" + (kind === "targeted" ? " and job description." : ".") });
     try {
@@ -168,6 +173,7 @@ export function Occ3Preview() {
       }));
       setMode("ready");
     } catch (cause) {
+      setFailedGuidance({ agent: "review", kind, roleText, focus });
       setError(cause instanceof Error ? cause.message : "Review unavailable.");
     } finally { setBusy(false); setProgress(null); }
   }
@@ -176,6 +182,7 @@ export function Occ3Preview() {
     const cleanGoal = goal.trim();
     if (cleanGoal.length < 5 || cleanGoal.length > 500) { setError("Describe your goal in 5 to 500 characters."); return; }
     const generation = ++coachGeneration.current;
+    setFailedGuidance(null);
     setBusy(true); setError(""); setCoachGoal(cleanGoal);
     setProgress({ stage: "Preparing coaching", detail: "Using your CV, stated goal" + (roleText ? " and optional target role." : ".") });
     try {
@@ -191,8 +198,19 @@ export function Occ3Preview() {
       append(message("occ", { text: "Here is a practical way forward.", advice: payload.advice as OccAdvice, mode: "coaching" }));
       setMode("ready");
     } catch (cause) {
-      if (generation === coachGeneration.current) setError(cause instanceof Error ? cause.message : "Coaching unavailable.");
+      if (generation === coachGeneration.current) {
+        setFailedGuidance({ agent: "coach", goal: cleanGoal, roleText });
+        setError(cause instanceof Error ? cause.message : "Coaching unavailable.");
+      }
     } finally { if (generation === coachGeneration.current) { setBusy(false); setProgress(null); } }
+  }
+  function retryGuidance() {
+    if (!failedGuidance || busy || agent !== failedGuidance.agent) return;
+    if (failedGuidance.agent === "review") {
+      void review(failedGuidance.kind, failedGuidance.roleText, failedGuidance.focus);
+    } else {
+      void runCoach(failedGuidance.goal, failedGuidance.roleText);
+    }
   }
   function chooseCoachGoal(goal: string) {
     if (busy || !cvReady) return;
@@ -295,7 +313,7 @@ export function Occ3Preview() {
     if (busy) return;
     setAgentMenu(false);
     if (next === agent) return;
-    interviewGeneration.current++; coachGeneration.current++; setFailedInterviewAnswer(null); setError(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
+    interviewGeneration.current++; coachGeneration.current++; setFailedInterviewAnswer(null); setFailedGuidance(null); setError(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
     setAgent(next);
     if (next === "improve" && cvReady && mode !== "start") {
       append(message("occ", { text: "Improve CV selected. I'll suggest edits you can accept or reject without changing your saved CV." }));
@@ -464,7 +482,7 @@ export function Occ3Preview() {
             <p>{progress.detail}</p>
           </div>
         </div>}
-        {error && <div className="occ3-error" role="alert"><span>{error}</span>{failedInterviewAnswer && !busy && agent === "interview" && interviewPhase === "question" && <button className="occ3-retry-feedback" type="button" onClick={() => void respondToInterview(failedInterviewAnswer, true)}>Retry feedback for this answer</button>}</div>}
+        {error && <div className="occ3-error" role="alert"><span>{error}</span>{failedInterviewAnswer && !busy && agent === "interview" && interviewPhase === "question" && <button className="occ3-retry-feedback" type="button" onClick={() => void respondToInterview(failedInterviewAnswer, true)}>Retry feedback for this answer</button>}{failedGuidance && !busy && failedGuidance.agent === agent && <button className="occ3-retry-feedback" type="button" onClick={retryGuidance}>Retry {agent === "review" ? "review" : "coaching"} request</button>}</div>}
         <div ref={end} />
       </div>
       <div className="occ3-composer-area">
