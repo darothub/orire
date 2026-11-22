@@ -59,6 +59,11 @@ export function Occ3Preview() {
   const composerInput = useRef<HTMLTextAreaElement>(null);
   const outgoingId = useRef(0);
   const activeRequest = useRef<AbortController | null>(null);
+  const parseRequest = useRef<AbortController | null>(null);
+  function cancelDocumentParse() {
+    parseRequest.current?.abort();
+    parseRequest.current = null;
+  }
   function cancelActiveRequest() {
     activeRequest.current?.abort();
     activeRequest.current = null;
@@ -126,6 +131,7 @@ export function Occ3Preview() {
 
   function reset() {
     cancelActiveRequest();
+    cancelDocumentParse();
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
     setMenu(false); setAgentMenu(false); setSidebarOpen(false); setBusy(false); setProgress(null);
@@ -133,6 +139,7 @@ export function Occ3Preview() {
     interviewGeneration.current++; coachGeneration.current++; setCoachGoal(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
   }
   function chooseSaved(item: SavedCV) {
+    cancelDocumentParse();
     setCv(cvToPlainText(item.data)); setCvName(item.title); setAttached("cv");
     setMenu(false); setError(""); setFailedGuidance(null);
   }
@@ -144,6 +151,9 @@ export function Occ3Preview() {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !["pdf", "docx", "txt"].includes(ext)) { setError("Choose a PDF, DOCX or TXT file."); return; }
     if (file.size === 0 || file.size > (ext === "txt" ? 1024 * 1024 : 15 * 1024 * 1024)) { setError("File is empty or too large."); return; }
+    cancelDocumentParse();
+    const controller = new AbortController();
+    parseRequest.current = controller;
     setBusy(true); setError(""); setMenu(false);
     setProgress({ stage: "Reading document", detail: ext === "txt" ? "Reading your text file on this device." : "Extracting text from your attachment." });
     try {
@@ -151,12 +161,13 @@ export function Occ3Preview() {
       if (ext === "txt") content = await file.text();
       else {
         const form = new FormData(); form.append("files", file);
-        const response = await fetch("/api/parse", { method: "POST", body: form, cache: "no-store" });
+        const response = await fetch("/api/parse", { method: "POST", body: form, cache: "no-store", signal: controller.signal });
         const payload = await response.json();
         if (!response.ok || typeof payload.files?.[0]?.text !== "string")
           throw new Error(payload.files?.[0]?.error || "Could not read the file.");
         content = payload.files[0].text;
       }
+      if (controller.signal.aborted || parseRequest.current !== controller) return;
       setProgress({ stage: "Checking document", detail: "Checking document type and extracted text before attaching." });
       const text = content.trim();
       const limit = kind === "cv" ? 30000 : 15000;
@@ -167,8 +178,15 @@ export function Occ3Preview() {
       else { setJd(text); setJdName(file.name); }
       setAttached(kind); setFailedGuidance(null);
     } catch (cause) {
+      if (controller.signal.aborted || parseRequest.current !== controller) return;
       setError(cause instanceof Error ? cause.message : "Unable to read document.");
-    } finally { setBusy(false); setProgress(null); }
+    } finally {
+      if (parseRequest.current === controller) {
+        parseRequest.current = null;
+        setBusy(false);
+        setProgress(null);
+      }
+    }
   }
 
   async function review(kind: "general" | "targeted", roleText?: string, focus?: string) {
