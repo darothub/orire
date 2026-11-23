@@ -57,7 +57,7 @@ test.describe("OCC 3.3.2 Review and Coach recovery", () => {
     await expect(page.locator(".occ3-you .occ3-message-content").getByText("General review", { exact: true })).toHaveCount(1);
   });
 
-  test("Coach retries the same career goal and clears recovery after successful guidance", async ({ page, db, e2eUser }, testInfo) => {
+  test("Coach retries the same career goal and clears recovery after successful guidance", async ({ page, db, e2eUser }) => {
     await db.entitlement.create({ data: { userId: e2eUser.id, plan: "career" } });
     await ready(page);
     await page.getByRole("button", { name: "Select agent" }).click();
