@@ -21,12 +21,16 @@ test.describe("OCC 3.4.4 elapsed timer isolation", () => {
     const startedOnce = new Promise<void>(resolve => { started = resolve; });
     let releaseFirst = () => {};
     const heldFirst = new Promise<void>(resolve => { releaseFirst = resolve; });
+    let releaseSecond = () => {};
+    const heldSecond = new Promise<void>(resolve => { releaseSecond = resolve; });
     let calls = 0;
     await page.route("**/api/occ/general-review", async route => {
       calls++;
       if (calls === 1) {
         started();
         await heldFirst;
+      } else {
+        await heldSecond;
       }
       await route.fulfill({
         status: 503, contentType: "application/json",
@@ -49,6 +53,7 @@ test.describe("OCC 3.4.4 elapsed timer isolation", () => {
     await retry.click();
     await expect(elapsed).toHaveText("0s elapsed");
     releaseFirst();
+    releaseSecond();
     await expect(page.getByRole("alert")).toContainText("Unavailable");
     expect(calls).toBe(2);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
