@@ -44,6 +44,7 @@ export function Occ3Preview() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savedCvs, setSavedCvs] = useState<SavedCV[]>([]);
   const [busy, setBusy] = useState(false);
+  const [requestActive, setRequestActive] = useState(false);
   const [progress, setProgress] = useState<{ stage: string; detail: string } | null>(null);
   const [error, setError] = useState("");
   const [failedInterviewAnswer, setFailedInterviewAnswer] = useState<string | null>(null);
@@ -69,11 +70,13 @@ export function Occ3Preview() {
   function cancelActiveRequest() {
     activeRequest.current?.abort();
     activeRequest.current = null;
+    setRequestActive(false);
   }
   function beginRequest(): AbortController {
     cancelActiveRequest();
     const controller = new AbortController();
     activeRequest.current = controller;
+    setRequestActive(true);
     return controller;
   }
   const isCurrentRequest = (controller: AbortController) =>
@@ -81,6 +84,7 @@ export function Occ3Preview() {
   function finishRequest(controller: AbortController) {
     if (!isCurrentRequest(controller)) return;
     activeRequest.current = null;
+    setRequestActive(false);
     activeGuidance.current = null;
     activeFeedbackAnswer.current = null;
     setBusy(false);
@@ -562,7 +566,7 @@ export function Occ3Preview() {
             <strong>{progress.stage}<span className="occ3-processing-ellipsis" aria-hidden="true">…</span></strong>
             <p>{progress.detail}</p>
           </div>
-          {activeRequest.current && <button type="button" className="occ3-stop-response" onClick={stopResponse}>Stop response</button>}
+          {requestActive && <button type="button" className="occ3-stop-response" onClick={stopResponse}>Stop response</button>}
         </div>}
         {error && <div className="occ3-error" role="alert"><span>{error}</span>{failedInterviewAnswer && !busy && agent === "interview" && interviewPhase === "question" && <button className="occ3-retry-feedback" type="button" onClick={() => void respondToInterview(failedInterviewAnswer, true)}>Retry feedback for this answer</button>}{failedGuidance && !busy && failedGuidance.agent === agent && <button className="occ3-retry-feedback" type="button" onClick={retryGuidance}>Retry {agent === "review" ? "review" : "coaching"} request</button>}</div>}
         <div ref={end} />
