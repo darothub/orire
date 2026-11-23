@@ -278,3 +278,35 @@
 .occ3-processing-meta { display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin-top:7px; color:#e9d5f1; font-size:11px; font-variant-numeric:tabular-nums; }
 .occ3-processing-slow { color:#ffdfc7; line-height:1.5; }
 @media (max-width:480px) { .occ3-processing { flex-wrap:wrap; } .occ3-processing-copy { flex-basis:calc(100% - 48px); } .occ3-processing .occ3-stop-response { margin-left:48px; } }
+
+/* OCC 3.4.2: coordinated, restrained conversation transitions.
+   Animate only opacity and transforms where possible; never delay content access. */
+.occ3-occ { animation:occ3-assistant-arrive .32s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes occ3-assistant-arrive {
+  from { opacity:0;transform:translate3d(-9px,12px,0) scale(.985); }
+  to { opacity:1;transform:translate3d(0,0,0) scale(1); }
+}
+.occ3-progress-stage { animation:occ3-progress-stage-in .22s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes occ3-progress-stage-in {
+  from { opacity:.3;transform:translateY(5px); }
+  to { opacity:1;transform:translateY(0); }
+}
+.occ3-processing-meta { transition:opacity .18s ease; }
+.occ3-choices,.occ3-improve,.occ3-interview-card,.occ3-review {
+  animation:occ3-card-reveal .3s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes occ3-card-reveal {
+  from { opacity:0;transform:translateY(6px); }
+  to { opacity:1;transform:translateY(0); }
+}
+.occ3-review details::details-content,
+.occ3-interview-card details::details-content,
+.occ3-improve details::details-content {
+  transition-timing-function:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-reduced-motion:reduce) {
+  .occ3-occ,.occ3-progress-stage,.occ3-choices,.occ3-improve,.occ3-interview-card,.occ3-review {
+    animation:none!important;
+  }
+  .occ3-processing-meta { transition:none!important; }
+}

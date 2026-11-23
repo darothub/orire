@@ -575,8 +575,10 @@ export function Occ3Preview() {
         {busy && progress && <div className="occ3-processing" data-testid="occ3-processing" role="status" aria-live="polite" aria-atomic="true">
           <span className="occ3-processing-symbol" aria-hidden="true"><span/><span/><span/></span>
           <div className="occ3-processing-copy">
-            <strong>{progress.stage}<span className="occ3-processing-ellipsis" aria-hidden="true">…</span></strong>
-            <p>{progress.detail}</p>
+            <div key={progress.stage + "|" + progress.detail} className="occ3-progress-stage" data-testid="occ3-progress-stage">
+              <strong>{progress.stage}<span className="occ3-processing-ellipsis" aria-hidden="true">…</span></strong>
+              <p>{progress.detail}</p>
+            </div>
             {requestActive && <div className="occ3-processing-meta"><span data-testid="occ3-elapsed" aria-hidden="true">{requestSeconds}s elapsed</span>{requestSeconds >= 10 && <span className="occ3-processing-slow">Still working. You can stop this response without losing your chat.</span>}</div>}
           </div>
           {requestActive && <button type="button" className="occ3-stop-response" onClick={stopResponse}>Stop response</button>}
