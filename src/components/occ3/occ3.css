@@ -272,3 +272,9 @@
 .occ3-stop-response { margin-left:auto; flex-shrink:0; align-self:center; border:1px solid currentColor; background:transparent; color:inherit; border-radius:999px; padding:8px 12px; font-size:12px; font-weight:700; }
 .occ3-stop-response:hover { background:rgba(255,255,255,.12); }
 @media(max-width:520px) { .occ3-processing { flex-wrap:wrap; } .occ3-stop-response { margin-left:0; } }
+
+/* OCC 3.4: elapsed time reflects actual browser request duration, not invented model steps. */
+.occ3-processing-copy { min-width:0; flex:1; }
+.occ3-processing-meta { display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center; margin-top:7px; color:#e9d5f1; font-size:11px; font-variant-numeric:tabular-nums; }
+.occ3-processing-slow { color:#ffdfc7; line-height:1.5; }
+@media (max-width:480px) { .occ3-processing { flex-wrap:wrap; } .occ3-processing-copy { flex-basis:calc(100% - 48px); } .occ3-processing .occ3-stop-response { margin-left:48px; } }
