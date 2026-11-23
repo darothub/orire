@@ -45,6 +45,7 @@ export function Occ3Preview() {
   const [savedCvs, setSavedCvs] = useState<SavedCV[]>([]);
   const [busy, setBusy] = useState(false);
   const [requestActive, setRequestActive] = useState(false);
+  const [requestSeconds, setRequestSeconds] = useState(0);
   const [progress, setProgress] = useState<{ stage: string; detail: string } | null>(null);
   const [error, setError] = useState("");
   const [failedInterviewAnswer, setFailedInterviewAnswer] = useState<string | null>(null);
@@ -71,12 +72,14 @@ export function Occ3Preview() {
     activeRequest.current?.abort();
     activeRequest.current = null;
     setRequestActive(false);
+    setRequestSeconds(0);
   }
   function beginRequest(): AbortController {
     cancelActiveRequest();
     const controller = new AbortController();
     activeRequest.current = controller;
     setRequestActive(true);
+    setRequestSeconds(0);
     return controller;
   }
   const isCurrentRequest = (controller: AbortController) =>
@@ -85,6 +88,7 @@ export function Occ3Preview() {
     if (!isCurrentRequest(controller)) return;
     activeRequest.current = null;
     setRequestActive(false);
+    setRequestSeconds(0);
     activeGuidance.current = null;
     activeFeedbackAnswer.current = null;
     setBusy(false);
@@ -100,6 +104,14 @@ export function Occ3Preview() {
       .catch(() => {});
     return () => { current = false; };
   }, []);
+  useEffect(() => {
+    if (!requestActive) return;
+    const started = Date.now();
+    const tick = () => setRequestSeconds(Math.floor((Date.now() - started) / 1000));
+    tick();
+    const interval = window.setInterval(tick, 1000);
+    return () => window.clearInterval(interval);
+  }, [requestActive]);
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     end.current?.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
@@ -565,6 +577,7 @@ export function Occ3Preview() {
           <div className="occ3-processing-copy">
             <strong>{progress.stage}<span className="occ3-processing-ellipsis" aria-hidden="true">…</span></strong>
             <p>{progress.detail}</p>
+            {requestActive && <div className="occ3-processing-meta"><span data-testid="occ3-elapsed" aria-hidden="true">{requestSeconds}s elapsed</span>{requestSeconds >= 10 && <span className="occ3-processing-slow">Still working. You can stop this response without losing your chat.</span>}</div>}
           </div>
           {requestActive && <button type="button" className="occ3-stop-response" onClick={stopResponse}>Stop response</button>}
         </div>}
