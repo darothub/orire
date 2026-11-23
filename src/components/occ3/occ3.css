@@ -267,3 +267,8 @@
 .occ3-error { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
 .occ3-retry-feedback { color:#28133d; background:#ffcca8; border:0; border-radius:999px; padding:9px 13px; font-size:12px; font-weight:700; }
 .occ3-retry-feedback:hover:not(:disabled) { background:#ffe0c7; }
+
+/* OCC 3.3.3: explicit in-chat cancellation of active requests. */
+.occ3-stop-response { margin-left:auto; flex-shrink:0; align-self:center; border:1px solid currentColor; background:transparent; color:inherit; border-radius:999px; padding:8px 12px; font-size:12px; font-weight:700; }
+.occ3-stop-response:hover { background:rgba(255,255,255,.12); }
+@media(max-width:520px) { .occ3-processing { flex-wrap:wrap; } .occ3-stop-response { margin-left:0; } }

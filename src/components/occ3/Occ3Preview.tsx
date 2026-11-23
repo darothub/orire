@@ -44,6 +44,7 @@ export function Occ3Preview() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [savedCvs, setSavedCvs] = useState<SavedCV[]>([]);
   const [busy, setBusy] = useState(false);
+  const [requestActive, setRequestActive] = useState(false);
   const [progress, setProgress] = useState<{ stage: string; detail: string } | null>(null);
   const [error, setError] = useState("");
   const [failedInterviewAnswer, setFailedInterviewAnswer] = useState<string | null>(null);
@@ -59,6 +60,8 @@ export function Occ3Preview() {
   const composerInput = useRef<HTMLTextAreaElement>(null);
   const outgoingId = useRef(0);
   const activeRequest = useRef<AbortController | null>(null);
+  const activeGuidance = useRef<FailedGuidance | null>(null);
+  const activeFeedbackAnswer = useRef<string | null>(null);
   const parseRequest = useRef<AbortController | null>(null);
   function cancelDocumentParse() {
     parseRequest.current?.abort();
@@ -67,11 +70,13 @@ export function Occ3Preview() {
   function cancelActiveRequest() {
     activeRequest.current?.abort();
     activeRequest.current = null;
+    setRequestActive(false);
   }
   function beginRequest(): AbortController {
     cancelActiveRequest();
     const controller = new AbortController();
     activeRequest.current = controller;
+    setRequestActive(true);
     return controller;
   }
   const isCurrentRequest = (controller: AbortController) =>
@@ -79,6 +84,9 @@ export function Occ3Preview() {
   function finishRequest(controller: AbortController) {
     if (!isCurrentRequest(controller)) return;
     activeRequest.current = null;
+    setRequestActive(false);
+    activeGuidance.current = null;
+    activeFeedbackAnswer.current = null;
     setBusy(false);
     setProgress(null);
   }
@@ -129,8 +137,23 @@ export function Occ3Preview() {
   const cvReady = cv.trim().length >= 30;
   const isJDStep = mode === "awaiting-jd";
 
+  function stopResponse() {
+    if (!activeRequest.current) return;
+    const guidance = activeGuidance.current;
+    const answer = activeFeedbackAnswer.current;
+    cancelActiveRequest();
+    activeGuidance.current = null;
+    activeFeedbackAnswer.current = null;
+    setBusy(false);
+    setProgress(null);
+    setFailedGuidance(guidance);
+    setFailedInterviewAnswer(answer);
+    setError("Response stopped. Your conversation is preserved.");
+  }
   function reset() {
     cancelActiveRequest();
+    activeGuidance.current = null;
+    activeFeedbackAnswer.current = null;
     cancelDocumentParse();
     setMessages([]); setMode("start"); setDraft(""); setCv(""); setCvName("");
     setJd(""); setJdName(""); setAgent("review"); setAttached(null); setError("");
@@ -192,6 +215,7 @@ export function Occ3Preview() {
   async function review(kind: "general" | "targeted", roleText?: string, focus?: string) {
     if (busy || !cvReady) { if (!cvReady) setError("Attach a CV first."); return; }
     const controller = beginRequest();
+    activeGuidance.current = { agent: "review", kind, roleText, focus };
     setFailedGuidance(null);
     setBusy(true); setError("");
     setProgress({ stage: kind === "general" ? "Preparing general review" : "Preparing role-specific review", detail: "Using your attached CV" + (kind === "targeted" ? " and job description." : ".") });
@@ -226,6 +250,7 @@ export function Occ3Preview() {
     if (cleanGoal.length < 5 || cleanGoal.length > 500) { setError("Describe your goal in 5 to 500 characters."); return; }
     const generation = ++coachGeneration.current;
     const controller = beginRequest();
+    activeGuidance.current = { agent: "coach", goal: cleanGoal, roleText };
     setFailedGuidance(null);
     setBusy(true); setError(""); setCoachGoal(cleanGoal);
     setProgress({ stage: "Preparing coaching", detail: "Using your CV, stated goal" + (roleText ? " and optional target role." : ".") });
@@ -340,6 +365,7 @@ export function Occ3Preview() {
     }
     const generation = ++interviewGeneration.current;
     const controller = beginRequest();
+    activeFeedbackAnswer.current = answer;
     const question = interviewQuestion;
     if (!retry) append(message("you", { text: answer }));
     setFailedInterviewAnswer(null); setDraft(""); setBusy(true); setError("");
@@ -370,6 +396,7 @@ export function Occ3Preview() {
     if (next === agent) return;
     const switchingDuringRequest = Boolean(activeRequest.current);
     cancelActiveRequest();
+    activeGuidance.current = null; activeFeedbackAnswer.current = null;
     setBusy(false); setProgress(null);
     interviewGeneration.current++; coachGeneration.current++; setFailedInterviewAnswer(null); setFailedGuidance(null); setError(""); setInterviewPhase("idle"); setInterviewQuestion(null); setInterviewIndex(0);
     setAgent(next);
@@ -539,6 +566,7 @@ export function Occ3Preview() {
             <strong>{progress.stage}<span className="occ3-processing-ellipsis" aria-hidden="true">…</span></strong>
             <p>{progress.detail}</p>
           </div>
+          {requestActive && <button type="button" className="occ3-stop-response" onClick={stopResponse}>Stop response</button>}
         </div>}
         {error && <div className="occ3-error" role="alert"><span>{error}</span>{failedInterviewAnswer && !busy && agent === "interview" && interviewPhase === "question" && <button className="occ3-retry-feedback" type="button" onClick={() => void respondToInterview(failedInterviewAnswer, true)}>Retry feedback for this answer</button>}{failedGuidance && !busy && failedGuidance.agent === agent && <button className="occ3-retry-feedback" type="button" onClick={retryGuidance}>Retry {agent === "review" ? "review" : "coaching"} request</button>}</div>}
         <div ref={end} />
