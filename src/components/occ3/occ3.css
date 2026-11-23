@@ -310,3 +310,19 @@
   }
   .occ3-processing-meta { transition:none!important; }
 }
+
+/* OCC 3.4.3: usable touch targets and visible keyboard focus on compact devices. */
+.occ3-attach:focus-visible,.occ3-agent:focus-visible,.occ3-send:focus-visible,
+.occ3-expand-toggle:focus-visible,.occ3-popup button:focus-visible {
+  outline:2px solid #ffcca8;outline-offset:2px;
+}
+@media (pointer:coarse) {
+  .occ3-attach,.occ3-agent,.occ3-send,.occ3-expand-toggle { min-height:44px;height:44px; }
+  .occ3-attach,.occ3-send,.occ3-expand-toggle { min-width:44px;width:44px; }
+  .occ3-agent-menu button,.occ3-attach-menu .occ3-attach-option { min-height:44px; }
+}
+@media (max-width:360px) and (pointer:coarse) {
+  .occ3-composer-main { gap:3px; }
+  .occ3-agent { padding-inline:5px;font-size:10px; }
+  .occ3-composer { padding-inline:7px; }
+}
