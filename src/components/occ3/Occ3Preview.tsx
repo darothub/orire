@@ -59,6 +59,8 @@ export function Occ3Preview() {
   const end = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
+  const attachTrigger = useRef<HTMLButtonElement>(null);
+  const agentTrigger = useRef<HTMLButtonElement>(null);
   const outgoingId = useRef(0);
   const activeRequest = useRef<AbortController | null>(null);
   const activeGuidance = useRef<FailedGuidance | null>(null);
@@ -138,6 +140,22 @@ export function Occ3Preview() {
     field.style.height = Math.min(Math.max(contentHeight, minimumHeight), cap) + "px";
     field.style.overflowY = contentHeight > cap ? "auto" : "hidden";
   }, [draft, composerExpanded]);
+  useEffect(() => {
+    if (!menu && !agentMenu) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      if (menu) {
+        setMenu(false);
+        attachTrigger.current?.focus();
+      } else if (agentMenu) {
+        setAgentMenu(false);
+        agentTrigger.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onEscape);
+    return () => window.removeEventListener("keydown", onEscape);
+  }, [menu, agentMenu]);
   useEffect(() => {
     if (!outgoing) return;
     const cleanup = window.setTimeout(() => setOutgoing(current => current?.id === outgoing.id ? null : current), 280);
@@ -615,13 +633,13 @@ export function Occ3Preview() {
           {attached && <div className="occ3-attached"><span>▤ {attached === "cv" ? cvName : jdName}</span><button type="button" aria-label="Remove attachment" onClick={() => setAttached(null)}>×</button></div>}
           <div className="occ3-composer-main">
             <div className="occ3-attach-wrap">
-              <button type="button" aria-label="Attach document" title="Attach CV or job description" className="occ3-attach" aria-haspopup="menu" aria-expanded={menu} onClick={() => { setMenu(value => !value); setAgentMenu(false); }}><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5L14.7 1.3a4 4 0 0 1 5.7 5.7L10.1 17.3a2 2 0 0 1-2.8-2.8l9.2-9.2"/></svg></button>
+              <button ref={attachTrigger} type="button" aria-label="Attach document" title="Attach CV or job description" className="occ3-attach" aria-haspopup="menu" aria-expanded={menu} onClick={() => { setMenu(value => !value); setAgentMenu(false); }}><svg aria-hidden="true" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5L14.7 1.3a4 4 0 0 1 5.7 5.7L10.1 17.3a2 2 0 0 1-2.8-2.8l9.2-9.2"/></svg></button>
 
               <input ref={fileInput} type="file" aria-label={isJDStep ? "Upload job description" : "Upload CV"} accept=".pdf,.docx,.txt" hidden onChange={event => void parseFile(event)} />
             </div>
             <textarea ref={composerInput} aria-label="Message Orire Career Copilot" rows={1} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); sendWithMotion(); } }} placeholder={agent === "interview" && interviewPhase === "question" ? "Answer in your own words…" : isJDStep ? "Paste a job description or type a message…" : agent === "coach" && cvReady ? "Describe a career goal or ask Coach…" : cvReady ? "Message Orire Career Copilot…" : "Attach your CV to get started…"} />
             <div className="occ3-agent-wrap">
-              <button type="button" aria-haspopup="listbox" aria-expanded={agentMenu} aria-label="Select agent" className="occ3-agent" onClick={() => { setAgentMenu(value => !value); setMenu(false); }}><span className="occ3-agent-sparkle" aria-hidden="true">✧</span> {AGENTS.find(item => item.id === agent)?.name} </button>
+              <button ref={agentTrigger} type="button" aria-haspopup="listbox" aria-expanded={agentMenu} aria-label="Select agent" className="occ3-agent" onClick={() => { setAgentMenu(value => !value); setMenu(false); }}><span className="occ3-agent-sparkle" aria-hidden="true">✧</span> {AGENTS.find(item => item.id === agent)?.name} </button>
               {agentMenu && <div role="listbox" aria-label="OCC agents" className="occ3-popup occ3-agent-menu"><div className="occ3-agent-menu-heading">CHOOSE AN AGENT</div>
                 {AGENTS.map(item => <button role="option" aria-selected={agent === item.id} type="button" key={item.id} onClick={() => selectAgent(item.id)}>
                   <span className="occ3-agent-option-icon" aria-hidden="true">{({review:"✦",coach:"◇",interview:"◈",improve:"✎",memory:"◉"} as const)[item.id]}</span>
