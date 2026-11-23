@@ -19,14 +19,19 @@ test.describe("OCC 3.4.4 elapsed timer isolation", () => {
 
     let started = () => {};
     const startedOnce = new Promise<void>(resolve => { started = resolve; });
+    let releaseFirst = () => {};
+    const heldFirst = new Promise<void>(resolve => { releaseFirst = resolve; });
+    let calls = 0;
     await page.route("**/api/occ/general-review", async route => {
-      started();
-      // This request is intentionally held pending until Stop response aborts it.
-      await new Promise<void>(resolve => {
-        const timeout = setTimeout(resolve, 15000);
-        route.request().response().then(() => { clearTimeout(timeout); resolve(); }).catch(() => { clearTimeout(timeout); resolve(); });
-      });
-      await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: "Unavailable" }) }).catch(() => {});
+      calls++;
+      if (calls === 1) {
+        started();
+        await heldFirst;
+      }
+      await route.fulfill({
+        status: 503, contentType: "application/json",
+        body: JSON.stringify({ error: "Unavailable" }),
+      }).catch(() => {});
     });
     await page.getByRole("button", { name: "General review" }).click();
     await startedOnce;
@@ -39,7 +44,13 @@ test.describe("OCC 3.4.4 elapsed timer isolation", () => {
     });
     await page.getByRole("button", { name: "Stop response" }).click();
     await expect(elapsed).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Retry review request" })).toBeVisible();
+    const retry = page.getByRole("button", { name: "Retry review request" });
+    await expect(retry).toBeVisible();
+    await retry.click();
+    await expect(elapsed).toHaveText("0s elapsed");
+    releaseFirst();
+    await expect(page.getByRole("alert")).toContainText("Unavailable");
+    expect(calls).toBe(2);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
 });
