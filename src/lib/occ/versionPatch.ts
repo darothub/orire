@@ -34,6 +34,27 @@ export function patchCvField(cv: CVData, field: CvField, expected: string, repla
   ) };
 }
 
+export type CvFieldChoice = { label: string; field: CvField; text: string };
+
+/** The revisable fields of a CV — its summary and every non-empty experience
+ * and project bullet — as a flat, selectable list. Shared by every OCC surface
+ * so the field taxonomy is declared once. */
+export function cvFieldChoices(cv: CVData): CvFieldChoice[] {
+  const options: CvFieldChoice[] = [];
+  if (cv.basics.summary.trim()) options.push({ label: "Professional summary", field: { kind: "summary" }, text: cv.basics.summary });
+  for (const entry of cv.experience) {
+    entry.highlights.forEach((text, index) => {
+      if (text.trim()) options.push({ label: `${entry.company || "Experience"} · bullet ${index + 1}`, field: { kind: "experience", itemId: entry.id, index }, text });
+    });
+  }
+  for (const entry of cv.projects) {
+    entry.highlights.forEach((text, index) => {
+      if (text.trim()) options.push({ label: `${entry.name || "Project"} · bullet ${index + 1}`, field: { kind: "project", itemId: entry.id, index }, text });
+    });
+  }
+  return options;
+}
+
 export function parseCvField(value: unknown): CvField | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const o = value as Record<string, unknown>;
