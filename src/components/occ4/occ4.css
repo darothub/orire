@@ -199,6 +199,7 @@
 .occ4-disclaimer { font-size: 11px; color: var(--or-muted); line-height: 1.45; margin: 14px 0 0; }
 
 /* ---- keyword comparison ---- */
+.occ4-cov { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
 .occ4-terms { display: flex; flex-direction: column; gap: 12px; }
 .occ4-terms > div > b { font-size: 12.5px; font-weight: 600; }
 .occ4-chiprow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
