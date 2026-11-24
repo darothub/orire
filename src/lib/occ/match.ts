@@ -14,10 +14,16 @@ export function analyzeEvidence(cv: string, description: string) {
   const requirements = [...new Set(terms(description))].slice(0, 80);
   const found = requirements.filter(t => mentioned.has(t));
   const notFound = requirements.filter(t => !mentioned.has(t));
+  // Deterministic keyword-coverage signal: the share of distinct role terms
+  // present in the CV. Explainable and reproducible — NOT a hiring probability
+  // or ATS score. The disclaimer keeps that framing in every consumer.
+  const coverage = requirements.length ? Math.round((found.length / requirements.length) * 100) : 0;
   return {
+    coverage,
+    matched: found.length,
     matchedTerms: found.slice(0, 30),
     unverifiedTerms: notFound.slice(0, 30),
     checked: requirements.length,
-    disclaimer: "Keyword presence is not proof of experience. Missing terms do not prove a skills gap. This is an initial text comparison, not an ATS or hiring prediction.",
+    disclaimer: "Keyword coverage measures which role terms appear in your CV. Missing terms do not prove a skills gap, and keyword presence is not proof of experience, an ATS score or a hiring prediction.",
   };
 }
