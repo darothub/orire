@@ -4,6 +4,7 @@ import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { OCC_AGENTS, DEFAULT_OCC_AGENT, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
+import { MAX_INTERVIEW_TURNS, type InterviewQuestion, type InterviewFeedback } from "@/lib/occ/interview";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/Button";
@@ -55,6 +56,9 @@ export function Occ4Workspace() {
   const [uploadError, setUploadError] = useState("");
   const [cvFileName, setCvFileName] = useState("");
   const [roleFileName, setRoleFileName] = useState("");
+  const [intPhase, setIntPhase] = useState<"idle" | "question" | "feedback">("idle");
+  const [intIndex, setIntIndex] = useState(0);
+  const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -121,16 +125,131 @@ export function Occ4Workspace() {
     }
   }
 
+  async function askQuestion(index: number) {
+    if (!roleReady) {
+      needContext();
+      return;
+    }
+    setRunning(true);
+    sayBot(index === 0 ? "Let's practise — here's your first question." : "Next question coming up.");
+    try {
+      const response = await fetch("/api/occ/interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "question", description, ...(cvReady ? { cv } : {}), turnIndex: index }),
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not start the interview.");
+      const q = data.question as InterviewQuestion;
+      setIntQuestion(q);
+      setIntIndex(index);
+      setIntPhase("question");
+      push(<CardRow>{questionCard(q, index)}</CardRow>);
+    } catch (e) {
+      sayBot(e instanceof Error ? e.message : "Interview coaching failed. Please try again.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  async function submitAnswer(answer: string) {
+    const q = intQuestion;
+    if (!q) return;
+    setRunning(true);
+    try {
+      const response = await fetch("/api/occ/interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "feedback", description, ...(cvReady ? { cv } : {}), question: q.question, answer, turnIndex: intIndex }),
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not review your answer.");
+      setIntPhase("feedback");
+      push(<CardRow>{feedbackCard(data.feedback as InterviewFeedback, intIndex, answer)}</CardRow>);
+    } catch (e) {
+      sayBot(e instanceof Error ? e.message : "Interview coaching failed. Please try again.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  function nextQuestion() {
+    if (intIndex + 1 >= MAX_INTERVIEW_TURNS) {
+      setIntPhase("idle");
+      sayBot("That's all five topics — nice work. Switch to CV Review when you're ready to tailor your CV.");
+      return;
+    }
+    void askQuestion(intIndex + 1);
+  }
+
+  function questionCard(q: InterviewQuestion, index: number): ReactNode {
+    return (
+      <CopilotCard title={`Interview question ${index + 1} of ${MAX_INTERVIEW_TURNS}`} icon={<Spark />}>
+        <p className="occ4-advice-summary">{q.question}</p>
+        <p className="occ4-int-focus">Focus · {q.focus}</p>
+        {q.answerStarters && (
+          <div className="occ4-starters">
+            <b>Ways in</b>
+            <ul>
+              <li>{q.answerStarters[0]}</li>
+              <li>{q.answerStarters[1]}</li>
+            </ul>
+          </div>
+        )}
+        <p className="occ4-disclaimer">Type your answer below and press send. Starters are examples — use your own real experience.</p>
+      </CopilotCard>
+    );
+  }
+
+  function feedbackCard(fb: InterviewFeedback, index: number, answer: string): ReactNode {
+    const last = index + 1 >= MAX_INTERVIEW_TURNS;
+    return (
+      <CopilotCard
+        title="Feedback"
+        icon={<Spark />}
+        footer={
+          <Button variant="primary" size="sm" onClick={nextQuestion}>
+            {last ? "Finish" : "Next question"}
+          </Button>
+        }
+      >
+        <div className="occ4-fb">
+          <p>
+            <b className="occ4-fb-ok">Strength</b> {fb.strength}
+          </p>
+          <p>
+            <b className="occ4-fb-warn">Improve</b> {fb.improvement}
+          </p>
+          {fb.example && (
+            <p>
+              <b className="occ4-fb-mute">Example</b> {fb.example}
+            </p>
+          )}
+        </div>
+        {fb.betterWording && (
+          <Diff
+            heading="Clearer wording"
+            grounded={fb.wordingStatus === "grounded"}
+            oldText={answer}
+            newText={fb.betterWording}
+            why={fb.whyBetter ?? undefined}
+          />
+        )}
+        <p className="occ4-rec-q">Follow-up · {fb.followUp}</p>
+      </CopilotCard>
+    );
+  }
+
   function handle(intent: Intent, text: string) {
     if (intent === "review") return void runReview(text);
     if (intent === "match") return void runMatch();
-    if (intent === "interview") {
-      return sayBot("Interview practice is live in the current Career Copilot (/occ) and arrives in occ4 in a later slice.");
-    }
+    if (intent === "interview") return void askQuestion(0);
     if (intent === "cover") {
       return sayBot("Cover-letter drafting is coming to occ4 in a later slice.");
     }
-    sayBot("I can review your CV against a role or run a keyword comparison — add your CV and the job description, then ask.");
+    sayBot("I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.");
   }
 
   function send(text: string, intent?: Intent) {
@@ -141,7 +260,11 @@ export function Occ4Workspace() {
     // selected specialist/mode routes the message — except CV Review, which is
     // Auto: it classifies the message by what you actually asked for.
     if (intent) return handle(intent, value);
-    if (agent === "interview") return handle("interview", value);
+    if (agent === "interview") {
+      if (intPhase === "question") return void submitAnswer(value);
+      if (intPhase === "feedback") return sayBot("Tap “Next question” to continue, or switch to CV Review.");
+      return void askQuestion(0);
+    }
     if (agent === "improve") {
       return sayBot("CV Improvement — approving wording into a saved CV version — is coming to occ4 in a later slice.");
     }
@@ -263,7 +386,7 @@ export function Occ4Workspace() {
                         <b>{a.label}</b>
                         {a.id === DEFAULT_OCC_AGENT ? (
                           <span className="occ4-mode-auto">Auto</span>
-                        ) : (
+                        ) : a.id === "interview" ? null : (
                           <span className="occ4-mode-soon">soon</span>
                         )}
                       </span>
@@ -400,7 +523,13 @@ export function Occ4Workspace() {
                   setInput("");
                 }
               }}
-              placeholder={running ? "Working…" : "Ask Orire to do something…"}
+              placeholder={
+                running
+                  ? "Working…"
+                  : agent === "interview" && intPhase === "question"
+                    ? "Type your answer…"
+                    : "Ask Orire to do something…"
+              }
               aria-label="Message the Career Copilot"
               disabled={running}
             />
