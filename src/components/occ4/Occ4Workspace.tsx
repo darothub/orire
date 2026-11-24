@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { OCC_AGENTS, DEFAULT_OCC_AGENT, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
@@ -10,13 +10,16 @@ import type { CVData } from "@/lib/cv/schema";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { cvDataToText } from "@/lib/cv/cvDataToText";
+import { type CvField, readCvField, patchCvField } from "@/lib/occ/versionPatch";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/Button";
 import { ChatMessage } from "@/components/ui/ChatMessage";
 import { CopilotCard } from "@/components/ui/CopilotCard";
 import { Diff } from "@/components/ui/Diff";
 import { MatchRing } from "@/components/ui/MatchRing";
-import { Occ4Improve } from "./Occ4Improve";
+import { getTemplate } from "@/components/templates/registry";
+import { Occ4Review } from "./Occ4Review";
+import { Occ4Templates } from "./Occ4Templates";
 import "./occ4.css";
 
 /**
@@ -29,14 +32,12 @@ import "./occ4.css";
  * responses on the design-system primitives. The product deliberately does NOT
  * produce a hiring score, so the match result is a keyword comparison, not a %.
  *
- * Specialists work like a model picker: CV Review (Auto) classifies the message,
- * Interview Coach runs a grounded mock interview, and CV Improvement approves a
- * wording change into a new private CV version via POST /api/occ/versions. The
- * cover-letter flow and Career Memory come to occ4 in a later slice.
+ * Interview and cover-letter flows stay in the current Career Copilot (/occ) and
+ * come to occ4 in a later slice.
  */
 
 type Msg = { id: number; node: ReactNode };
-type Intent = "review" | "match" | "interview" | "cover" | "default";
+type Intent = "review" | "match" | "template" | "interview" | "cover" | "default";
 type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 
 const Spark = () => (
@@ -48,6 +49,7 @@ const Spark = () => (
 const CHIPS: { label: string; intent: Intent }[] = [
   { label: "Review my CV against the role", intent: "review" },
   { label: "Keyword coverage", intent: "match" },
+  { label: "Preview a template", intent: "template" },
   { label: "Practise an interview", intent: "interview" },
   { label: "Draft a cover letter", intent: "cover" },
 ];
@@ -70,13 +72,37 @@ export function Occ4Workspace() {
   const [intPhase, setIntPhase] = useState<"idle" | "question" | "feedback">("idle");
   const [intIndex, setIntIndex] = useState(0);
   const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
-  const [improveOpen, setImproveOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [coverage, setCoverage] = useState<number | null>(null);
+  const [templateId, setTemplateId] = useState("aurora");
+  const descriptionRef = useRef("");
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
 
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
+
+  useEffect(() => { descriptionRef.current = description; }, [description]);
+  // Keep the preview's coverage ring in step with the working draft — recomputes
+  // whenever the draft changes (e.g. after an applied rewrite) or a JD arrives.
+  useEffect(() => {
+    if (!draft || !roleReady) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/occ/match", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cv: cvDataToText(draft), description: descriptionRef.current }), cache: "no-store",
+        });
+        const data = await response.json();
+        if (!cancelled && response.ok && typeof data.coverage === "number") setCoverage(data.coverage);
+      } catch {
+        // Keep the last coverage; the draft edit still stands.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [draft, roleReady]);
 
   function push(node: ReactNode) {
     const id = idRef.current++;
@@ -91,22 +117,6 @@ export function Occ4Workspace() {
   function needContext() {
     sayBot("First, add your CV and the job description so I can work against the real role.");
     setContextOpen(true);
-  }
-
-  // CV Improvement surfaces a workbench card once per conversation: pick a saved
-  // CV and one field, approve the wording, and it saves a new private version.
-  function openImprove() {
-    if (improveOpen) {
-      sayBot("Use the CV Improvement panel above — pick a saved CV and a field, edit the wording, then approve it.");
-      return;
-    }
-    setImproveOpen(true);
-    sayBot("CV Improvement — approve a wording change into a new, private version of one of your saved CVs. Your original is never overwritten.");
-    push(
-      <CardRow>
-        <Occ4Improve />
-      </CardRow>,
-    );
   }
 
   async function runReview(goal: string) {
@@ -125,7 +135,7 @@ export function Occ4Workspace() {
       if (!response.ok) {
         throw new Error(typeof data.error === "string" ? data.error : data.error?.message ?? "OCC could not analyse your CV.");
       }
-      push(<CardRow>{renderAdvice(data.advice as OccAdvice)}</CardRow>);
+      push(<CardRow><Occ4Review advice={data.advice as OccAdvice} draft={draft} onApply={handleApply} /></CardRow>);
     } catch (e) {
       sayBot(e instanceof Error ? e.message : "The review failed. Please try again.");
     } finally {
@@ -153,6 +163,35 @@ export function Occ4Workspace() {
     } finally {
       setRunning(false);
     }
+  }
+
+  // Apply an approved review rewrite straight into the working draft, then open
+  // the preview. Client-side only — saving a version is a later step. Uses a
+  // functional update so "Apply all" chains patches instead of clobbering them;
+  // the coverage ring refreshes from the effect above.
+  function handleApply(field: CvField, replacement: string) {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const existing = readCvField(prev, field);
+      if (existing === null) return prev;
+      return patchCvField(prev, field, existing, replacement) ?? prev;
+    });
+    setPreviewOpen(true);
+  }
+
+  // Templates are an action on the draft, not a specialist: the picker restyles
+  // the working draft live in the preview. Needs a structured draft to render.
+  function runTemplates() {
+    if (!draft) {
+      sayBot("Import a CV (PDF or DOCX) first and I'll preview it in any template.");
+      return;
+    }
+    setPreviewOpen(true);
+    push(<CardRow><Occ4Templates current={templateId} onPick={handlePickTemplate} /></CardRow>);
+  }
+  function handlePickTemplate(id: string) {
+    setTemplateId(id);
+    setPreviewOpen(true);
   }
 
   async function askQuestion(index: number) {
@@ -275,6 +314,7 @@ export function Occ4Workspace() {
   function handle(intent: Intent, text: string) {
     if (intent === "review") return void runReview(text);
     if (intent === "match") return void runMatch();
+    if (intent === "template") return runTemplates();
     if (intent === "interview") return void askQuestion(0);
     if (intent === "cover") {
       return sayBot("Cover-letter drafting is coming to occ4 in a later slice.");
@@ -296,7 +336,7 @@ export function Occ4Workspace() {
       return void askQuestion(0);
     }
     if (agent === "improve") {
-      return openImprove();
+      return sayBot("CV Improvement — approving wording into a saved CV version — is coming to occ4 in a later slice.");
     }
     if (agent === "memory") {
       return sayBot("Career Memory — reviewing what the copilot remembers about you — is coming to occ4 in a later slice.");
@@ -365,8 +405,10 @@ export function Occ4Workspace() {
     }
   }
 
+  const DraftTemplate = draft ? getTemplate(templateId).Component : null;
+
   return (
-    <div className="occ4-layout">
+    <div className={`occ4-layout${previewOpen ? " with-preview" : ""}`}>
       <aside className="occ4-side">
         <div className="occ4-brand">
           <BrandMark size={28} />
@@ -375,15 +417,7 @@ export function Occ4Workspace() {
             <small>CAREER COPILOT</small>
           </div>
         </div>
-        <button
-          type="button"
-          className="occ4-newchat"
-          onClick={() => {
-            setMessages([]);
-            setImproveOpen(false);
-            setIntPhase("idle");
-          }}
-        >
+        <button type="button" className="occ4-newchat" onClick={() => setMessages([])}>
           ＋ New conversation
         </button>
         <p className="occ4-side-hint">
@@ -427,14 +461,13 @@ export function Occ4Workspace() {
                       onClick={() => {
                         setAgent(a.id);
                         setModeOpen(false);
-                        if (a.id === "improve") openImprove();
                       }}
                     >
                       <span className="occ4-mode-item-top">
                         <b>{a.label}</b>
                         {a.id === DEFAULT_OCC_AGENT ? (
                           <span className="occ4-mode-auto">Auto</span>
-                        ) : a.id === "interview" || a.id === "improve" ? null : (
+                        ) : a.id === "interview" ? null : (
                           <span className="occ4-mode-soon">soon</span>
                         )}
                       </span>
@@ -447,8 +480,16 @@ export function Occ4Workspace() {
           </div>
           <span className="occ4-preview-note">occ4 · preview</span>
           <span className="occ4-ctx">
-            {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "Role ✓" : "Role —"}
+            {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "JD ✓" : "JD —"}
           </span>
+          <button
+            type="button"
+            className={`occ4-pv-toggle${previewOpen ? " on" : ""}`}
+            aria-pressed={previewOpen}
+            onClick={() => setPreviewOpen((o) => !o)}
+          >
+            ▦ CV
+          </button>
         </header>
 
         <div className="occ4-thread" ref={threadRef}>
@@ -598,9 +639,31 @@ export function Occ4Workspace() {
           </div>
         </div>
       </main>
+
+      {previewOpen && (
+        <aside className="occ4-preview" aria-label="Working CV preview">
+          <div className="occ4-pv-head">
+            <span className="occ4-pv-ctx">
+              {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "JD ✓" : "JD —"}
+            </span>
+            {coverage !== null && <MatchRing value={coverage} tone="gold" size={52} label="coverage" />}
+            <button type="button" className="occ4-pv-close" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>
+              ✕
+            </button>
+          </div>
+          <div className="occ4-pv-scroll">
+            {draft && DraftTemplate ? (
+              <div className="occ4-pv-page paper"><DraftTemplate cv={draft} /></div>
+            ) : (
+              <p className="occ4-pv-empty">Bring a CV (PDF or DOCX) to see your working draft here.</p>
+            )}
+          </div>
+        </aside>
+      )}
     </div>
   );
 }
+
 
 /** Bot avatar + a result card, aligned left (no bubble around the card). */
 function CardRow({ children }: { children: ReactNode }) {
@@ -611,50 +674,6 @@ function CardRow({ children }: { children: ReactNode }) {
       </div>
       <div style={{ maxWidth: 460, width: "100%" }}>{children}</div>
     </div>
-  );
-}
-
-const ASSESSMENT: Record<OccAdvice["recommendations"][number]["assessment"], { label: string; cls: string }> = {
-  supported: { label: "Supported", cls: "occ4-badge--supported" },
-  "needs-clarification": { label: "Needs clarification", cls: "occ4-badge--needs" },
-  "not-found": { label: "Not found", cls: "occ4-badge--missing" },
-};
-
-function renderAdvice(advice: OccAdvice): ReactNode {
-  return (
-    <CopilotCard title="CV review" icon={<Spark />}>
-      <p className="occ4-advice-summary">{advice.summary}</p>
-      <div className="occ4-recs">
-        {advice.recommendations.map((r, i) => (
-          <div className="occ4-rec" key={i}>
-            <div className="occ4-rec-head">
-              <b>{r.requirement}</b>
-              <span className={`occ4-badge ${ASSESSMENT[r.assessment].cls}`}>{ASSESSMENT[r.assessment].label}</span>
-            </div>
-            <p className="occ4-rec-sug">{r.suggestion}</p>
-            {r.cvEvidence && r.sampleWording && (
-              <Diff
-                oldText={r.cvEvidence}
-                newText={r.sampleWording}
-                why="Evidence-only rewrite — verify before applying it to your CV."
-              />
-            )}
-            {r.question && <p className="occ4-rec-q">Q · {r.question}</p>}
-          </div>
-        ))}
-      </div>
-      {advice.nextSteps.length > 0 && (
-        <div className="occ4-next">
-          <b>Next steps</b>
-          <ul>
-            {advice.nextSteps.map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <p className="occ4-disclaimer">{advice.disclaimer}</p>
-    </CopilotCard>
   );
 }
 
@@ -729,6 +748,7 @@ function classify(text: string): Intent {
   const t = text.toLowerCase();
   if (/review|tailor|improve|rewrite|better|advi[cs]e|recommend/.test(t)) return "review";
   if (/match|keyword|compare|overlap|coverage/.test(t)) return "match";
+  if (/template|layout|design|theme|style|look/.test(t)) return "template";
   if (/cover|letter/.test(t)) return "cover";
   if (/interview|practi[cs]e|question/.test(t)) return "interview";
   return "default";
