@@ -6,6 +6,10 @@ import { OCC_AGENTS, DEFAULT_OCC_AGENT, getOccAgent, type OccAgentId } from "@/l
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import { MAX_INTERVIEW_TURNS, type InterviewQuestion, type InterviewFeedback } from "@/lib/occ/interview";
 import type { OccAdvice } from "@/lib/occ/recommendations";
+import type { CVData } from "@/lib/cv/schema";
+import type { ParsedCV } from "@/lib/ingest/parse";
+import { cvDataFromParsed } from "@/lib/cv/fromParsed";
+import { cvDataToText } from "@/lib/cv/cvDataToText";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/Button";
 import { ChatMessage } from "@/components/ui/ChatMessage";
@@ -49,6 +53,9 @@ export function Occ4Workspace() {
   const [agent, setAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
   const [input, setInput] = useState("");
   const [cv, setCv] = useState("");
+  // The working draft — the structured spine every tool reads and writes. When
+  // present, review/match run on it (serialized) rather than the raw paste.
+  const [draft, setDraft] = useState<CVData | null>(null);
   const [description, setDescription] = useState("");
   const [contextOpen, setContextOpen] = useState(false);
   const [running, setRunning] = useState(false);
@@ -87,10 +94,11 @@ export function Occ4Workspace() {
     setRunning(true);
     sayBot("Reviewing your CV against the role…");
     try {
+      const cvText = draft ? cvDataToText(draft) : cv;
       const response = await fetch("/api/occ/advise", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv, description, goal: goal.slice(0, 300), saveRun: false, useSavedProfile: false }),
+        body: JSON.stringify({ cv: cvText, description, goal: goal.slice(0, 300), saveRun: false, useSavedProfile: false }),
         cache: "no-store",
       });
       const data = await response.json();
@@ -110,10 +118,11 @@ export function Occ4Workspace() {
     setRunning(true);
     sayBot("Comparing the role's keywords against your CV…");
     try {
+      const cvText = draft ? cvDataToText(draft) : cv;
       const response = await fetch("/api/occ/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cv, description }),
+        body: JSON.stringify({ cv: cvText, description }),
         cache: "no-store",
       });
       const data = await response.json();
@@ -295,6 +304,9 @@ export function Occ4Workspace() {
     setUploadError("");
     try {
       let extracted: string;
+      // When the parser can structure the document, keep its ParsedCV so a CV
+      // upload becomes an editable working draft, not just a text blob.
+      let structured: ParsedCV | null = null;
       if (ext === "txt") {
         extracted = await file.text();
       } else {
@@ -306,6 +318,7 @@ export function Occ4Workspace() {
         const parsed = payload.files?.[0];
         if (parsed?.error || typeof parsed?.text !== "string") throw new Error(parsed?.error || "Could not extract document text.");
         extracted = parsed.text;
+        structured = (parsed.parsed ?? null) as ParsedCV | null;
       }
       const limit = kind === "cv" ? 30000 : 15000;
       const text = extracted.trim();
@@ -316,6 +329,11 @@ export function Occ4Workspace() {
       if (kind === "cv") {
         setCv(text);
         setCvFileName(file.name);
+        if (structured) {
+          const built = cvDataFromParsed(structured);
+          setDraft(built);
+          push(<CardRow>{renderDraftCard(built, file.name)}</CardRow>);
+        }
       } else {
         setDescription(text);
         setRoleFileName(file.name);
@@ -652,6 +670,28 @@ function renderMatch(result: MatchResult): ReactNode {
         </div>
       </div>
       <p className="occ4-disclaimer">{result.disclaimer}</p>
+    </CopilotCard>
+  );
+}
+
+function renderDraftCard(cv: CVData, source: string): ReactNode {
+  const roles = cv.experience.filter((e) => e.company.trim() || e.role.trim()).length;
+  const bullets = cv.experience.reduce((n, e) => n + e.highlights.filter((h) => h.trim()).length, 0);
+  const skills = cv.skills.reduce((n, g) => n + g.items.filter((s) => s.trim()).length, 0);
+  const name = cv.basics.fullName.trim() || "your CV";
+  const title = cv.basics.title.trim();
+  return (
+    <CopilotCard title="Imported your CV" icon={<Spark />} tag="draft ready">
+      <p className="occ4-advice-summary">
+        I read <b>{source}</b> into an editable working draft — {name}
+        {title ? `, ${title}` : ""}. {roles} role{roles === 1 ? "" : "s"}, {bullets} bullet
+        {bullets === 1 ? "" : "s"}, {skills} skill{skills === 1 ? "" : "s"}. Add a job description and I&rsquo;ll
+        tailor everything to it.
+      </p>
+      <p className="occ4-disclaimer">
+        Structured with the same importer the editor uses — nothing invented. This is your working draft:
+        every tool reads and writes it.
+      </p>
     </CopilotCard>
   );
 }
