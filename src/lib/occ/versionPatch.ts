@@ -34,6 +34,46 @@ export function patchCvField(cv: CVData, field: CvField, expected: string, repla
   ) };
 }
 
+export type CvFieldChoice = { label: string; field: CvField; text: string };
+
+/** The revisable fields of a CV — its summary and every non-empty experience
+ * and project bullet — as a flat, selectable list. Shared across OCC surfaces
+ * so the field taxonomy is declared once. */
+export function cvFieldChoices(cv: CVData): CvFieldChoice[] {
+  const options: CvFieldChoice[] = [];
+  if (cv.basics.summary.trim()) options.push({ label: "Professional summary", field: { kind: "summary" }, text: cv.basics.summary });
+  for (const entry of cv.experience) {
+    entry.highlights.forEach((text, index) => {
+      if (text.trim()) options.push({ label: `${entry.company || "Experience"} · bullet ${index + 1}`, field: { kind: "experience", itemId: entry.id, index }, text });
+    });
+  }
+  for (const entry of cv.projects) {
+    entry.highlights.forEach((text, index) => {
+      if (text.trim()) options.push({ label: `${entry.name || "Project"} · bullet ${index + 1}`, field: { kind: "project", itemId: entry.id, index }, text });
+    });
+  }
+  return options;
+}
+
+/** Map a grounded review evidence quote back to the draft field it came from,
+ * so an approved rewrite can be applied in place. Matches on normalized text
+ * (either contains the other) and picks the strongest overlap. Returns null
+ * when nothing matches well enough to edit safely. */
+export function cvFieldForEvidence(cv: CVData, evidence: string): CvField | null {
+  const norm = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
+  const target = norm(evidence);
+  if (target.length < 8) return null;
+  let best: { field: CvField; score: number } | null = null;
+  for (const choice of cvFieldChoices(cv)) {
+    const t = norm(choice.text);
+    if (t.includes(target) || target.includes(t)) {
+      const score = Math.min(t.length, target.length);
+      if (!best || score > best.score) best = { field: choice.field, score };
+    }
+  }
+  return best?.field ?? null;
+}
+
 export function parseCvField(value: unknown): CvField | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const o = value as Record<string, unknown>;
