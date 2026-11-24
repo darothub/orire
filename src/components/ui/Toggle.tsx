@@ -38,7 +38,7 @@ export function Toggle({
       type="button"
       className={cls}
       role="switch"
-      aria-pressed={checked}
+      aria-checked={checked}
       aria-label={ariaLabel ?? label}
       disabled={disabled}
       onClick={() => onChange(!checked)}

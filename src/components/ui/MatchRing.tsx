@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import "./surfaces.css";
 
 interface MatchRingProps {
@@ -24,13 +24,14 @@ const C = 2 * Math.PI * R;
 export function MatchRing({ value, tone = "match", size = 150, label = "match" }: MatchRingProps) {
   const target = Math.max(0, Math.min(100, value));
   const [shown, setShown] = useState(0);
-  const raf = useRef<number | null>(null);
 
   useEffect(() => {
+    let id = 0;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
-      setShown(target);
-      return;
+      // Jump to the final value on the next frame (not synchronously in the effect).
+      id = requestAnimationFrame(() => setShown(target));
+      return () => cancelAnimationFrame(id);
     }
     const dur = 1300;
     let t0: number | null = null;
@@ -39,12 +40,10 @@ export function MatchRing({ value, tone = "match", size = 150, label = "match" }
       const p = Math.min((ts - t0) / dur, 1);
       const eased = 1 - Math.pow(1 - p, 3);
       setShown(target * eased);
-      if (p < 1) raf.current = requestAnimationFrame(step);
+      if (p < 1) id = requestAnimationFrame(step);
     };
-    raf.current = requestAnimationFrame(step);
-    return () => {
-      if (raf.current !== null) cancelAnimationFrame(raf.current);
-    };
+    id = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(id);
   }, [target]);
 
   const stroke = tone === "gold" ? "var(--or-gold)" : "var(--or-match)";
