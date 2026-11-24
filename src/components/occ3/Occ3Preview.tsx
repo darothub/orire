@@ -578,6 +578,19 @@ export function Occ3Preview() {
               </details>)}
               {entry.advice.nextSteps.length > 0 && <details><summary>Suggested next steps</summary><ul>{entry.advice.nextSteps.map((step, i) => <li key={i}>{step}</li>)}</ul></details>}
               <small>{entry.advice.disclaimer}</small>
+              {entry.id === messages[messages.length - 1]?.id && !busy && (
+                (entry.mode === "general" || entry.mode === "targeted") && agent === "review"
+                  ? <div className="occ3-next-action" aria-label="Continue after CV review">
+                      <span>Want to turn these insights into a plan?</span>
+                      <button type="button" onClick={() => selectAgent("coach")}>Continue with Coach</button>
+                    </div>
+                  : entry.mode === "coaching" && agent === "coach"
+                    ? <div className="occ3-next-action" aria-label="Continue after coaching">
+                        <span>Ready to practise for a role?</span>
+                        <button type="button" onClick={() => selectAgent("interview")}>Practise with Interview</button>
+                      </div>
+                    : null
+              )}
             </section>}
           </div>
         </div>)}
