@@ -221,7 +221,46 @@
 .occ4-fb-warn { color: var(--or-gold); }
 .occ4-fb-mute { color: var(--or-muted); }
 
+/* ---- apply-into-draft ---- */
+.occ4-rec-apply { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+.occ4-applied { font-size: 12px; font-weight: 600; color: var(--or-match); }
+
+/* ---- working-draft preview (toggle) ---- */
+.occ4-pv-toggle {
+  font-family: var(--or-font-sans); font-size: 12px; color: var(--or-ink-soft);
+  background: var(--or-surface-2); border: 1px solid var(--or-line);
+  border-radius: var(--or-radius-md); padding: 6px 11px; cursor: pointer;
+}
+.occ4-pv-toggle.on { color: var(--or-ink); border-color: var(--or-violet); background: var(--or-violet-ghost); }
+.occ4-layout.with-preview { grid-template-columns: 264px 1fr minmax(320px, 380px); }
+.occ4-preview {
+  border-left: 1px solid var(--or-line); display: flex; flex-direction: column;
+  min-height: 0; background: color-mix(in srgb, var(--or-canvas) 60%, transparent);
+}
+.occ4-pv-head { display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-bottom: 1px solid var(--or-line); }
+.occ4-pv-ctx { font-size: 11.5px; color: var(--or-muted); margin-right: auto; }
+.occ4-pv-close { background: var(--or-surface-2); border: 1px solid var(--or-line); color: var(--or-ink-soft); width: 28px; height: 28px; border-radius: var(--or-radius-sm); cursor: pointer; }
+.occ4-pv-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 20px; }
+.occ4-pv-empty { font-size: 12.5px; color: var(--or-muted); line-height: 1.5; }
+.occ4-paper { background: var(--or-surface); border: 1px solid var(--or-line); border-radius: var(--or-radius-md); padding: 24px 26px; }
+.occ4-paper-name { font-family: var(--or-font-display); font-size: 21px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+.occ4-paper-title { color: var(--or-violet); font-weight: 600; font-size: 12.5px; margin: 3px 0 0; }
+.occ4-paper-sec { margin-top: 16px; }
+.occ4-paper-sec h4 { font-family: var(--or-font-display); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--or-violet); margin: 0 0 6px; font-weight: 700; }
+.occ4-paper-sec p { font-size: 12px; line-height: 1.55; margin: 0; color: var(--or-ink-soft); }
+.occ4-paper-job { margin-bottom: 10px; }
+.occ4-paper-job b { font-size: 12.5px; }
+.occ4-paper-job ul { margin: 5px 0 0; padding-left: 16px; }
+.occ4-paper-job li { font-size: 11.5px; line-height: 1.5; color: var(--or-ink-soft); margin-bottom: 3px; }
+.occ4-paper-skills { display: flex; flex-wrap: wrap; gap: 5px; }
+.occ4-paper-skills span { font-size: 10.5px; border: 1px solid var(--or-violet-ghost); color: var(--or-violet); padding: 2px 8px; border-radius: var(--or-radius-pill); }
+
+@media (max-width: 1100px) {
+  .occ4-layout.with-preview { grid-template-columns: 264px 1fr; }
+  .occ4-layout.with-preview .occ4-preview { position: fixed; top: 0; right: 0; bottom: 0; width: 360px; z-index: 50; box-shadow: -14px 0 40px rgba(0,0,0,.3); }
+}
 @media (max-width: 860px) {
-  .occ4-layout { grid-template-columns: 1fr; }
+  .occ4-layout, .occ4-layout.with-preview { grid-template-columns: 1fr; }
   .occ4-side { display: none; }
+  .occ4-layout.with-preview .occ4-preview { width: 100%; }
 }

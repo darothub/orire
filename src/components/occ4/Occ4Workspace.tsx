@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { OCC_AGENTS, DEFAULT_OCC_AGENT, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
@@ -10,12 +10,14 @@ import type { CVData } from "@/lib/cv/schema";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { cvDataToText } from "@/lib/cv/cvDataToText";
+import { type CvField, readCvField, patchCvField } from "@/lib/occ/versionPatch";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/Button";
 import { ChatMessage } from "@/components/ui/ChatMessage";
 import { CopilotCard } from "@/components/ui/CopilotCard";
 import { Diff } from "@/components/ui/Diff";
 import { MatchRing } from "@/components/ui/MatchRing";
+import { Occ4Review } from "./Occ4Review";
 import "./occ4.css";
 
 /**
@@ -67,12 +69,36 @@ export function Occ4Workspace() {
   const [intPhase, setIntPhase] = useState<"idle" | "question" | "feedback">("idle");
   const [intIndex, setIntIndex] = useState(0);
   const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [coverage, setCoverage] = useState<number | null>(null);
+  const descriptionRef = useRef("");
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
 
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
+
+  useEffect(() => { descriptionRef.current = description; }, [description]);
+  // Keep the preview's coverage ring in step with the working draft — recomputes
+  // whenever the draft changes (e.g. after an applied rewrite) or a JD arrives.
+  useEffect(() => {
+    if (!draft || !roleReady) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch("/api/occ/match", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cv: cvDataToText(draft), description: descriptionRef.current }), cache: "no-store",
+        });
+        const data = await response.json();
+        if (!cancelled && response.ok && typeof data.coverage === "number") setCoverage(data.coverage);
+      } catch {
+        // Keep the last coverage; the draft edit still stands.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [draft, roleReady]);
 
   function push(node: ReactNode) {
     const id = idRef.current++;
@@ -105,7 +131,7 @@ export function Occ4Workspace() {
       if (!response.ok) {
         throw new Error(typeof data.error === "string" ? data.error : data.error?.message ?? "OCC could not analyse your CV.");
       }
-      push(<CardRow>{renderAdvice(data.advice as OccAdvice)}</CardRow>);
+      push(<CardRow><Occ4Review advice={data.advice as OccAdvice} draft={draft} onApply={handleApply} /></CardRow>);
     } catch (e) {
       sayBot(e instanceof Error ? e.message : "The review failed. Please try again.");
     } finally {
@@ -133,6 +159,20 @@ export function Occ4Workspace() {
     } finally {
       setRunning(false);
     }
+  }
+
+  // Apply an approved review rewrite straight into the working draft, then open
+  // the preview. Client-side only — saving a version is a later step. Uses a
+  // functional update so "Apply all" chains patches instead of clobbering them;
+  // the coverage ring refreshes from the effect above.
+  function handleApply(field: CvField, replacement: string) {
+    setDraft((prev) => {
+      if (!prev) return prev;
+      const existing = readCvField(prev, field);
+      if (existing === null) return prev;
+      return patchCvField(prev, field, existing, replacement) ?? prev;
+    });
+    setPreviewOpen(true);
   }
 
   async function askQuestion(index: number) {
@@ -346,7 +386,7 @@ export function Occ4Workspace() {
   }
 
   return (
-    <div className="occ4-layout">
+    <div className={`occ4-layout${previewOpen ? " with-preview" : ""}`}>
       <aside className="occ4-side">
         <div className="occ4-brand">
           <BrandMark size={28} />
@@ -418,8 +458,16 @@ export function Occ4Workspace() {
           </div>
           <span className="occ4-preview-note">occ4 · preview</span>
           <span className="occ4-ctx">
-            {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "Role ✓" : "Role —"}
+            {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "JD ✓" : "JD —"}
           </span>
+          <button
+            type="button"
+            className={`occ4-pv-toggle${previewOpen ? " on" : ""}`}
+            aria-pressed={previewOpen}
+            onClick={() => setPreviewOpen((o) => !o)}
+          >
+            ▦ CV
+          </button>
         </header>
 
         <div className="occ4-thread" ref={threadRef}>
@@ -569,6 +617,56 @@ export function Occ4Workspace() {
           </div>
         </div>
       </main>
+
+      {previewOpen && (
+        <aside className="occ4-preview" aria-label="Working CV preview">
+          <div className="occ4-pv-head">
+            <span className="occ4-pv-ctx">
+              {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "JD ✓" : "JD —"}
+            </span>
+            {coverage !== null && <MatchRing value={coverage} tone="gold" size={52} label="coverage" />}
+            <button type="button" className="occ4-pv-close" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>
+              ✕
+            </button>
+          </div>
+          <div className="occ4-pv-scroll">
+            {draft ? <DraftPaper cv={draft} /> : <p className="occ4-pv-empty">Bring a CV (PDF or DOCX) to see your working draft here.</p>}
+          </div>
+        </aside>
+      )}
+    </div>
+  );
+}
+
+/** Read-only render of the working draft. Reflects every applied change. */
+function DraftPaper({ cv }: { cv: CVData }) {
+  const { basics } = cv;
+  return (
+    <div className="occ4-paper">
+      <h3 className="occ4-paper-name">{basics.fullName || "Your CV"}</h3>
+      {basics.title && <p className="occ4-paper-title">{basics.title}</p>}
+      {basics.summary.trim() && (
+        <section className="occ4-paper-sec"><h4>Summary</h4><p>{basics.summary}</p></section>
+      )}
+      {cv.experience.some((e) => e.company || e.role || e.highlights.some((h) => h.trim())) && (
+        <section className="occ4-paper-sec">
+          <h4>Experience</h4>
+          {cv.experience.map((e) => (
+            <div className="occ4-paper-job" key={e.id}>
+              <b>{[e.role, e.company].filter(Boolean).join(" · ") || "Role"}</b>
+              <ul>{e.highlights.filter((h) => h.trim()).map((h, i) => <li key={i}>{h}</li>)}</ul>
+            </div>
+          ))}
+        </section>
+      )}
+      {cv.skills.some((g) => g.items.some((s) => s.trim())) && (
+        <section className="occ4-paper-sec">
+          <h4>Skills</h4>
+          <div className="occ4-paper-skills">
+            {cv.skills.flatMap((g) => g.items.filter((s) => s.trim())).map((s, i) => <span key={i}>{s}</span>)}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
@@ -582,50 +680,6 @@ function CardRow({ children }: { children: ReactNode }) {
       </div>
       <div style={{ maxWidth: 460, width: "100%" }}>{children}</div>
     </div>
-  );
-}
-
-const ASSESSMENT: Record<OccAdvice["recommendations"][number]["assessment"], { label: string; cls: string }> = {
-  supported: { label: "Supported", cls: "occ4-badge--supported" },
-  "needs-clarification": { label: "Needs clarification", cls: "occ4-badge--needs" },
-  "not-found": { label: "Not found", cls: "occ4-badge--missing" },
-};
-
-function renderAdvice(advice: OccAdvice): ReactNode {
-  return (
-    <CopilotCard title="CV review" icon={<Spark />}>
-      <p className="occ4-advice-summary">{advice.summary}</p>
-      <div className="occ4-recs">
-        {advice.recommendations.map((r, i) => (
-          <div className="occ4-rec" key={i}>
-            <div className="occ4-rec-head">
-              <b>{r.requirement}</b>
-              <span className={`occ4-badge ${ASSESSMENT[r.assessment].cls}`}>{ASSESSMENT[r.assessment].label}</span>
-            </div>
-            <p className="occ4-rec-sug">{r.suggestion}</p>
-            {r.cvEvidence && r.sampleWording && (
-              <Diff
-                oldText={r.cvEvidence}
-                newText={r.sampleWording}
-                why="Evidence-only rewrite — verify before applying it to your CV."
-              />
-            )}
-            {r.question && <p className="occ4-rec-q">Q · {r.question}</p>}
-          </div>
-        ))}
-      </div>
-      {advice.nextSteps.length > 0 && (
-        <div className="occ4-next">
-          <b>Next steps</b>
-          <ul>
-            {advice.nextSteps.map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <p className="occ4-disclaimer">{advice.disclaimer}</p>
-    </CopilotCard>
   );
 }
 
