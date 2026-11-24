@@ -1,10 +1,13 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { OCC_AGENTS, DEFAULT_OCC_AGENT, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
+import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
+import { MAX_INTERVIEW_TURNS, type InterviewQuestion, type InterviewFeedback } from "@/lib/occ/interview";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { BrandMark } from "@/components/BrandMark";
+import { Button } from "@/components/ui/Button";
 import { ChatMessage } from "@/components/ui/ChatMessage";
 import { CopilotCard } from "@/components/ui/CopilotCard";
 import { Diff } from "@/components/ui/Diff";
@@ -48,6 +51,14 @@ export function Occ4Workspace() {
   const [description, setDescription] = useState("");
   const [contextOpen, setContextOpen] = useState(false);
   const [running, setRunning] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
+  const [uploading, setUploading] = useState<null | "cv" | "jobDescription">(null);
+  const [uploadError, setUploadError] = useState("");
+  const [cvFileName, setCvFileName] = useState("");
+  const [roleFileName, setRoleFileName] = useState("");
+  const [intPhase, setIntPhase] = useState<"idle" | "question" | "feedback">("idle");
+  const [intIndex, setIntIndex] = useState(0);
+  const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -114,23 +125,205 @@ export function Occ4Workspace() {
     }
   }
 
+  async function askQuestion(index: number) {
+    if (!roleReady) {
+      needContext();
+      return;
+    }
+    setRunning(true);
+    sayBot(index === 0 ? "Let's practise — here's your first question." : "Next question coming up.");
+    try {
+      const response = await fetch("/api/occ/interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "question", description, ...(cvReady ? { cv } : {}), turnIndex: index }),
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not start the interview.");
+      const q = data.question as InterviewQuestion;
+      setIntQuestion(q);
+      setIntIndex(index);
+      setIntPhase("question");
+      push(<CardRow>{questionCard(q, index)}</CardRow>);
+    } catch (e) {
+      sayBot(e instanceof Error ? e.message : "Interview coaching failed. Please try again.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  async function submitAnswer(answer: string) {
+    const q = intQuestion;
+    if (!q) return;
+    setRunning(true);
+    try {
+      const response = await fetch("/api/occ/interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "feedback", description, ...(cvReady ? { cv } : {}), question: q.question, answer, turnIndex: intIndex }),
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not review your answer.");
+      setIntPhase("feedback");
+      push(<CardRow>{feedbackCard(data.feedback as InterviewFeedback, intIndex, answer)}</CardRow>);
+    } catch (e) {
+      sayBot(e instanceof Error ? e.message : "Interview coaching failed. Please try again.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  function nextQuestion() {
+    if (intIndex + 1 >= MAX_INTERVIEW_TURNS) {
+      setIntPhase("idle");
+      sayBot("That's all five topics — nice work. Switch to CV Review when you're ready to tailor your CV.");
+      return;
+    }
+    void askQuestion(intIndex + 1);
+  }
+
+  function questionCard(q: InterviewQuestion, index: number): ReactNode {
+    return (
+      <CopilotCard title={`Interview question ${index + 1} of ${MAX_INTERVIEW_TURNS}`} icon={<Spark />}>
+        <p className="occ4-advice-summary">{q.question}</p>
+        <p className="occ4-int-focus">Focus · {q.focus}</p>
+        {q.answerStarters && (
+          <div className="occ4-starters">
+            <b>Ways in</b>
+            <ul>
+              <li>{q.answerStarters[0]}</li>
+              <li>{q.answerStarters[1]}</li>
+            </ul>
+          </div>
+        )}
+        <p className="occ4-disclaimer">Type your answer below and press send. Starters are examples — use your own real experience.</p>
+      </CopilotCard>
+    );
+  }
+
+  function feedbackCard(fb: InterviewFeedback, index: number, answer: string): ReactNode {
+    const last = index + 1 >= MAX_INTERVIEW_TURNS;
+    return (
+      <CopilotCard
+        title="Feedback"
+        icon={<Spark />}
+        footer={
+          <Button variant="primary" size="sm" onClick={nextQuestion}>
+            {last ? "Finish" : "Next question"}
+          </Button>
+        }
+      >
+        <div className="occ4-fb">
+          <p>
+            <b className="occ4-fb-ok">Strength</b> {fb.strength}
+          </p>
+          <p>
+            <b className="occ4-fb-warn">Improve</b> {fb.improvement}
+          </p>
+          {fb.example && (
+            <p>
+              <b className="occ4-fb-mute">Example</b> {fb.example}
+            </p>
+          )}
+        </div>
+        {fb.betterWording && (
+          <Diff
+            heading="Clearer wording"
+            grounded={fb.wordingStatus === "grounded"}
+            oldText={answer}
+            newText={fb.betterWording}
+            why={fb.whyBetter ?? undefined}
+          />
+        )}
+        <p className="occ4-rec-q">Follow-up · {fb.followUp}</p>
+      </CopilotCard>
+    );
+  }
+
   function handle(intent: Intent, text: string) {
     if (intent === "review") return void runReview(text);
     if (intent === "match") return void runMatch();
-    if (intent === "interview") {
-      return sayBot("Interview practice is live in the current Career Copilot (/occ) and arrives in occ4 in a later slice.");
-    }
+    if (intent === "interview") return void askQuestion(0);
     if (intent === "cover") {
       return sayBot("Cover-letter drafting is coming to occ4 in a later slice.");
     }
-    sayBot("I can review your CV against a role or run a keyword comparison — add your CV and the job description, then ask.");
+    sayBot("I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.");
   }
 
   function send(text: string, intent?: Intent) {
     const value = text.trim();
     if (!value || running) return;
     sayUser(value);
-    handle(intent ?? classify(value), value);
+    // An explicit action (a chip or a panel button) always wins. Otherwise the
+    // selected specialist/mode routes the message — except CV Review, which is
+    // Auto: it classifies the message by what you actually asked for.
+    if (intent) return handle(intent, value);
+    if (agent === "interview") {
+      if (intPhase === "question") return void submitAnswer(value);
+      if (intPhase === "feedback") return sayBot("Tap “Next question” to continue, or switch to CV Review.");
+      return void askQuestion(0);
+    }
+    if (agent === "improve") {
+      return sayBot("CV Improvement — approving wording into a saved CV version — is coming to occ4 in a later slice.");
+    }
+    if (agent === "memory") {
+      return sayBot("Career Memory — reviewing what the copilot remembers about you — is coming to occ4 in a later slice.");
+    }
+    handle(classify(value), value);
+  }
+
+  // Upload an existing CV / JD (PDF, DOCX, TXT) and extract its text via the same
+  // /api/parse route occ2 uses — for users who don't have their CV as plain text.
+  async function uploadDocument(kind: "cv" | "jobDescription", event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file || uploading || running) return;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!ext || !["pdf", "docx", "txt"].includes(ext)) {
+      setUploadError("Upload a PDF, DOCX or TXT document.");
+      return;
+    }
+    const maxBytes = ext === "txt" ? 1024 * 1024 : 15 * 1024 * 1024;
+    if (file.size === 0 || file.size > maxBytes) {
+      setUploadError(ext === "txt" ? "TXT files must be under 1 MB." : "PDF and DOCX files must be under 15 MB.");
+      return;
+    }
+    setUploading(kind);
+    setUploadError("");
+    try {
+      let extracted: string;
+      if (ext === "txt") {
+        extracted = await file.text();
+      } else {
+        const form = new FormData();
+        form.append("files", file);
+        const response = await fetch("/api/parse", { method: "POST", body: form, cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : "Could not read this document.");
+        const parsed = payload.files?.[0];
+        if (parsed?.error || typeof parsed?.text !== "string") throw new Error(parsed?.error || "Could not extract document text.");
+        extracted = parsed.text;
+      }
+      const limit = kind === "cv" ? 30000 : 15000;
+      const text = extracted.trim();
+      if (text.length < 30) throw new Error("Not enough readable text found. Try a text-based PDF, DOCX or TXT file.");
+      if (text.length > limit) throw new Error(`Document text exceeds the ${limit.toLocaleString()} character limit. Please shorten it.`);
+      if (kind === "cv" && !looksLikeCV(text)) throw new Error("This document does not look like a CV. Upload a résumé showing work experience, skills or education.");
+      if (kind === "jobDescription" && !looksLikeJobDescription(text)) throw new Error("This does not look like a job description. Upload a role with responsibilities or requirements.");
+      if (kind === "cv") {
+        setCv(text);
+        setCvFileName(file.name);
+      } else {
+        setDescription(text);
+        setRoleFileName(file.name);
+      }
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Could not read that document.");
+    } finally {
+      setUploading(null);
+    }
   }
 
   return (
@@ -146,18 +339,9 @@ export function Occ4Workspace() {
         <button type="button" className="occ4-newchat" onClick={() => setMessages([])}>
           ＋ New conversation
         </button>
-        <h2 className="occ4-side-label">Specialists</h2>
-        {OCC_AGENTS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            className={`occ4-spec${a.id === agent ? " on" : ""}`}
-            onClick={() => setAgent(a.id)}
-          >
-            <b>{a.label}</b>
-            <span>{a.description}</span>
-          </button>
-        ))}
+        <p className="occ4-side-hint">
+          Pick a specialist from the mode selector at the top — <b>CV Review</b> is Auto.
+        </p>
         <div className="occ4-side-foot">
           <Link href="/occ" className="occ4-back">
             ← Current Career Copilot
@@ -167,9 +351,51 @@ export function Occ4Workspace() {
 
       <main className="occ4-main">
         <header className="occ4-head">
-          <div className="occ4-id">
-            <b>{getOccAgent(agent).label}</b>
-            <small>Every Orire feature, by conversation</small>
+          <div className="occ4-modepick">
+            <button
+              type="button"
+              className="occ4-mode-btn"
+              aria-haspopup="menu"
+              aria-expanded={modeOpen}
+              onClick={() => setModeOpen((o) => !o)}
+            >
+              <span className="occ4-mode-dot" aria-hidden />
+              <span className="occ4-mode-label">{getOccAgent(agent).label}</span>
+              {agent === DEFAULT_OCC_AGENT && <span className="occ4-mode-auto">Auto</span>}
+              <svg className="occ4-mode-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {modeOpen && (
+              <>
+                <button type="button" className="occ4-mode-backdrop" aria-label="Close specialist menu" onClick={() => setModeOpen(false)} />
+                <div className="occ4-mode-menu" role="menu">
+                  {OCC_AGENTS.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={a.id === agent}
+                      className={`occ4-mode-item${a.id === agent ? " on" : ""}`}
+                      onClick={() => {
+                        setAgent(a.id);
+                        setModeOpen(false);
+                      }}
+                    >
+                      <span className="occ4-mode-item-top">
+                        <b>{a.label}</b>
+                        {a.id === DEFAULT_OCC_AGENT ? (
+                          <span className="occ4-mode-auto">Auto</span>
+                        ) : a.id === "interview" ? null : (
+                          <span className="occ4-mode-soon">soon</span>
+                        )}
+                      </span>
+                      <span className="occ4-mode-desc">{a.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <span className="occ4-preview-note">occ4 · preview</span>
           <span className="occ4-ctx">
@@ -191,27 +417,89 @@ export function Occ4Workspace() {
         <div className="occ4-composer">
           {contextOpen && (
             <div className="occ4-context">
-              <label>
-                Your CV (plain text)
+              <div className="occ4-field">
+                <div className="occ4-field-head">
+                  <span>Your CV</span>
+                  <label className={`occ4-upload${uploading || running ? " disabled" : ""}`}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
+                    </svg>
+                    {uploading === "cv" ? "Reading…" : "Upload PDF / DOCX / TXT"}
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      disabled={!!uploading || running}
+                      onChange={(e) => void uploadDocument("cv", e)}
+                    />
+                  </label>
+                </div>
                 <textarea
                   value={cv}
                   onChange={(e) => setCv(e.target.value)}
-                  placeholder="Paste your CV text…"
+                  placeholder="…or paste your CV text"
                   rows={4}
                 />
-              </label>
-              <label>
-                Job description
+                {cvFileName && <p className="occ4-file">✓ {cvFileName}</p>}
+              </div>
+              <div className="occ4-field">
+                <div className="occ4-field-head">
+                  <span>Job description</span>
+                  <label className={`occ4-upload${uploading || running ? " disabled" : ""}`}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
+                    </svg>
+                    {uploading === "jobDescription" ? "Reading…" : "Upload PDF / DOCX / TXT"}
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      disabled={!!uploading || running}
+                      onChange={(e) => void uploadDocument("jobDescription", e)}
+                    />
+                  </label>
+                </div>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Paste the role's job description…"
+                  placeholder="…or paste the role's job description"
                   rows={4}
                 />
-              </label>
+                {roleFileName && <p className="occ4-file">✓ {roleFileName}</p>}
+              </div>
+              {uploadError && (
+                <p className="occ4-upload-error" role="alert">
+                  {uploadError}
+                </p>
+              )}
+              <div className="occ4-context-actions">
+                <Button
+                  variant="gold"
+                  size="sm"
+                  disabled={!cvReady || !roleReady || !!uploading || running}
+                  onClick={() => {
+                    setContextOpen(false);
+                    send("Review my CV against the role", "review");
+                  }}
+                >
+                  Review my CV
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={!cvReady || !roleReady || !!uploading || running}
+                  onClick={() => {
+                    setContextOpen(false);
+                    send("Keyword comparison", "match");
+                  }}
+                >
+                  Keyword comparison
+                </Button>
+                {(!cvReady || !roleReady) && (
+                  <span className="occ4-context-hint">Add both your CV and the role to continue.</span>
+                )}
+              </div>
               <p className="occ4-context-note">
-                Used only to run your request. Nothing is sent anywhere until you ask for a review or
-                comparison.
+                Upload a PDF, DOCX or TXT, or paste text. Used only to run your request — nothing is
+                sent anywhere until you ask for a review or comparison.
               </p>
             </div>
           )}
@@ -235,7 +523,13 @@ export function Occ4Workspace() {
                   setInput("");
                 }
               }}
-              placeholder={running ? "Working…" : "Ask Orire to do something…"}
+              placeholder={
+                running
+                  ? "Working…"
+                  : agent === "interview" && intPhase === "question"
+                    ? "Type your answer…"
+                    : "Ask Orire to do something…"
+              }
               aria-label="Message the Career Copilot"
               disabled={running}
             />
