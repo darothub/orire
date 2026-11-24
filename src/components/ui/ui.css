@@ -1,0 +1,102 @@
+/* Orire design-system primitives. Styled from the --or-* tokens
+   (src/styles/orire-tokens.css). Imported by the components that use them. */
+
+.or-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--or-space-2);
+  font-family: var(--or-font-sans);
+  font-weight: 600;
+  font-size: 13.5px;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: var(--or-radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: filter 0.18s, transform 0.18s, background 0.18s, border-color 0.18s;
+  white-space: nowrap;
+}
+.or-btn:focus-visible { outline: 2px solid var(--or-violet); outline-offset: 2px; }
+.or-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.or-btn svg { width: 17px; height: 17px; }
+
+.or-btn--primary { background: var(--or-violet); color: #fff; box-shadow: 0 8px 20px -8px var(--or-violet); }
+.or-btn--gold { background: var(--or-gold); color: #241a06; }
+.or-btn--ghost { background: var(--or-surface-2); color: var(--or-ink); border-color: var(--or-line); }
+.or-btn--primary:not([disabled]):hover,
+.or-btn--gold:not([disabled]):hover { filter: brightness(1.07); transform: translateY(-1px); }
+.or-btn--ghost:not([disabled]):hover { border-color: var(--or-line-strong); }
+
+.or-btn--sm { height: 34px; padding: 0 14px; font-size: 12.5px; border-radius: 10px; }
+.or-btn--block { width: 100%; }
+
+.or-card {
+  background: var(--or-surface);
+  border: 1px solid var(--or-line);
+  border-radius: var(--or-radius-lg);
+  box-shadow: var(--or-shadow-soft);
+}
+.or-card--flat { box-shadow: none; }
+.or-card--pad { padding: var(--or-space-5); }
+
+.or-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--or-space-2);
+  font-family: var(--or-font-sans);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 11px;
+  border-radius: var(--or-radius-pill);
+}
+.or-pill__dot { width: 6px; height: 6px; border-radius: 50%; }
+.or-pill--saved { background: var(--or-surface-2); color: var(--or-muted); }
+.or-pill--saved .or-pill__dot { background: var(--or-muted); }
+.or-pill--applied { background: var(--or-violet-ghost); color: var(--or-violet-soft); }
+.or-pill--applied .or-pill__dot { background: var(--or-violet); }
+.or-pill--interview { background: var(--or-gold-ghost); color: var(--or-gold); }
+.or-pill--interview .or-pill__dot { background: var(--or-gold); }
+.or-pill--offer { background: var(--or-match-ghost); color: var(--or-match); }
+.or-pill--offer .or-pill__dot { background: var(--or-match); }
+.or-pill--neutral { background: var(--or-surface-2); color: var(--or-ink-soft); }
+.or-pill--neutral .or-pill__dot { background: var(--or-ink-soft); }
+
+.or-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  font-family: var(--or-font-sans);
+  font-size: 13px;
+  color: var(--or-ink-soft);
+  background: none;
+  border: none;
+  padding: 0;
+}
+.or-toggle__track {
+  width: 34px;
+  height: 20px;
+  border-radius: var(--or-radius-pill);
+  background: var(--or-surface-2);
+  border: 1px solid var(--or-line);
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+  flex: none;
+}
+.or-toggle__track::after {
+  content: "";
+  position: absolute;
+  top: 1.5px;
+  left: 1.5px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--or-muted);
+  transition: left 0.2s, background 0.2s;
+}
+.or-toggle[aria-pressed="true"] { color: var(--or-ink); }
+.or-toggle[aria-pressed="true"] .or-toggle__track { background: var(--or-violet); border-color: var(--or-violet); }
+.or-toggle[aria-pressed="true"] .or-toggle__track::after { left: 16px; background: #fff; }
+.or-toggle:focus-visible { outline: 2px solid var(--or-violet); outline-offset: 3px; border-radius: 6px; }
+.or-toggle--match[aria-pressed="true"] .or-toggle__track { background: var(--or-match); border-color: var(--or-match); }

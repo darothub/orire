@@ -1,12 +1,10 @@
-"use client";
-
-import { useId } from "react";
-
 /**
- * orire brand mark — a four-leaf clover, the universal emblem of good luck
- * (fitting, since "orire" means good fortune). Four heart-shaped leaves meet at
- * the centre, filled with orire's signature gradient. Distinct from the generic
- * sparkle/star patterns common to AI apps.
+ * Orire brand mark — the "Burst": four long gold points on the axes (fortune,
+ * ìre) and four short violet points on the diagonals (the copilot). Built from
+ * two clean intersecting blades so the points stay sharp at any size.
+ *
+ * API is unchanged from the previous mark (size / badge / className) so every
+ * call site keeps working.
  */
 export function BrandMark({
   size = 24,
@@ -14,59 +12,32 @@ export function BrandMark({
   className,
 }: {
   size?: number;
-  /** Draw the rounded-square badge behind the glyph. */
+  /** Draw the rounded-square ink tile behind the glyph (app-icon style). */
   badge?: boolean;
   className?: string;
 }) {
-  const id = useId().replace(/:/g, "");
-  const leaf =
-    "M32 32 C 31 27 26.5 26 24 23 C 21 19.5 22.5 14.5 27 15 C 29.5 15.3 31 17.3 32 19.5 C 33 17.3 34.5 15.3 37 15 C 41.5 14.5 43 19.5 40 23 C 37.5 26 33 27 32 32 Z";
+  const GOLD = "#F5C56B";
+  const VIOLET = "#8273F6";
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 64 64"
+      viewBox="0 0 120 120"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden
     >
-      <defs>
-        <linearGradient id={`${id}-g`} x1="10" y1="56" x2="54" y2="8" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#8b6cff" />
-          <stop offset="0.55" stopColor="#5fb4ff" />
-          <stop offset="1" stopColor="#2fe0ff" />
-        </linearGradient>
-      </defs>
-      {badge && (
-        <>
-          <rect width="64" height="64" rx="16" fill="#0b0d12" />
-          <rect
-            x="1.25"
-            y="1.25"
-            width="61.5"
-            height="61.5"
-            rx="14.75"
-            fill="none"
-            stroke={`url(#${id}-g)`}
-            strokeOpacity="0.35"
-            strokeWidth="1.5"
-          />
-        </>
-      )}
-      <g fill={`url(#${id}-g)`}>
-        <path d={leaf} />
-        <path d={leaf} transform="rotate(90 32 32)" />
-        <path d={leaf} transform="rotate(180 32 32)" />
-        <path d={leaf} transform="rotate(270 32 32)" />
+      {badge && <rect width="120" height="120" rx="30" fill="#171320" />}
+      <g transform="rotate(45 60 60)">
+        <path
+          fill={VIOLET}
+          d="M60 32 C57.5 46 57.5 74 60 88 C62.5 74 62.5 46 60 32 Z M32 60 C46 57.5 74 57.5 88 60 C74 62.5 46 62.5 32 60 Z"
+        />
       </g>
-      {/* Stem — a slim sprig trailing from the clover. */}
       <path
-        d="M32 32 C 34 40 37 45 41 49"
-        fill="none"
-        stroke={`url(#${id}-g)`}
-        strokeWidth="3"
-        strokeLinecap="round"
+        fill={GOLD}
+        d="M60 10 C56 42 56 78 60 110 C64 78 64 42 60 10 Z M10 60 C42 56 78 56 110 60 C78 64 42 64 10 60 Z"
       />
     </svg>
   );
