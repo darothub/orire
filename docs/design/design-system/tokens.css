@@ -1,0 +1,79 @@
+/* Orire — generated from tokens.json. Do not edit by hand. */
+
+:root {
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  /* radius */
+  --radius-sm: 9px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* shadow */
+  --shadow-soft: 0 10px 30px -18px rgba(0,0,0,0.55);
+  --shadow: 0 24px 60px -24px rgba(0,0,0,0.70);
+
+}
+
+/* color — dark (default) */
+:root,
+[data-theme="dark"] {
+  --canvas: #14121C;
+  --surface: #1C1926;
+  --surface-2: #242030;
+  --raised: #2B2639;
+  --line: rgba(255,255,255,0.08);
+  --line-strong: rgba(255,255,255,0.14);
+  --ink: #F4F2F8;
+  --ink-soft: #C9C4DC;
+  --muted: #938DA8;
+  --violet: #8273F6;
+  --violet-soft: #A99EF9;
+  --violet-ghost: rgba(130,115,246,0.14);
+  --gold: #F5C56B;
+  --gold-soft: #FBD98F;
+  --gold-ghost: rgba(245,197,107,0.13);
+  --match: #5FD4A6;
+  --match-ghost: rgba(95,212,166,0.14);
+  --gap: #F2795E;
+  --gap-ghost: rgba(242,121,94,0.14);
+  --page: #211D2E;
+  --page-ink: #EDEAF6;
+}
+
+/* color — light */
+[data-theme="light"] {
+  --canvas: #F6F5FB;
+  --surface: #FFFFFF;
+  --surface-2: #FBFAFE;
+  --raised: #FFFFFF;
+  --line: rgba(31,24,54,0.10);
+  --line-strong: rgba(31,24,54,0.16);
+  --ink: #1B1726;
+  --ink-soft: #413A54;
+  --muted: #6B6480;
+  --violet: #5B45E0;
+  --violet-soft: #6E58F0;
+  --violet-ghost: rgba(91,69,224,0.09);
+  --gold: #C78A1E;
+  --gold-soft: #B97E12;
+  --gold-ghost: rgba(199,138,30,0.12);
+  --match: #1E9E72;
+  --match-ghost: rgba(30,158,114,0.12);
+  --gap: #D65A3C;
+  --gap-ghost: rgba(214,90,60,0.11);
+  --page: #FFFFFF;
+  --page-ink: #211D2E;
+}

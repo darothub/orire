@@ -5,8 +5,10 @@ The visual and UX source of truth for the Orire app and the Orire Career Copilot
 ## Contents
 
 - **[`ui-ux-spec.md`](./ui-ux-spec.md)** — the build-ready UI/UX specification. Product model (Orire + OCC), layout system, every screen in **web and mobile** layouts, the OCC intent→card mapping, feature specs (Simulate, Refine, Live edit, Templates), interaction/motion, and the accessibility floor.
+- **[`implementation-plan.md`](./implementation-plan.md)** — the phased plan to take this design live in the app (foundation → components → routes → emails → QA), with a route-by-route checklist and the suggested first PR.
 - **[`design-system/`](./design-system/)** — the design system source:
-  - `tokens.json` — the authoritative tokens: colors (dark + light themes), type scale, spacing, radius, shadow. Each with a usage note. **Consume this for CSS variables.**
+  - `tokens.json` — the authoritative tokens: colors (dark + light themes), type scale, spacing, radius, shadow. Each with a usage note. **The single source of truth.**
+  - `tokens.css` — generated CSS variables (dark + light) ready to import into the app. Regenerate from `tokens.json` with `generate-tokens-css.py`.
   - `README.md` — the brand book (voice, color usage rules, component overview).
   - `components/<Name>/` — per-component guidelines (`README.md`) + live preview (`preview.html`): Button, StatusPill, MatchRing, Diff, CopilotCard, Logo, Cover.
   - `bundle.css` — component styles consumed by the previews.
@@ -27,6 +29,8 @@ These are the visual + motion source of truth (hosted Claude artifacts; treat as
 - **App / OCC prototype** — https://claude.ai/artifact/2DLw7n8qsN5yutZcJuvyxD
 - **Design system** — https://claude.ai/artifact/7NYzcPJ1qu5q2UVeRRWRD9
 - **Landing page** — https://claude.ai/artifact/NE2x9GB3n4sLe658PtDoax
+- **Pages & states** (pricing, templates, shared CV, auth/checkout, 404/empty/loading) — https://claude.ai/artifact/C4DpjX5LjujWYBFzFCus3F
+- **Content & emails** (guides, article, legal/doc, transactional emails) — https://claude.ai/artifact/LCnhq6aLDA7EhP2C44CVRo
 
 ## How to consume
 
