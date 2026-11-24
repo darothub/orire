@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="32" height="32" role="img" aria-label="Orire">
+  <g transform="rotate(45 60 60)">
+    <path fill="#F5C56B" d="M60 34 C58 46 58 74 60 86 C62 74 62 46 60 34 Z M34 60 C46 58 74 58 86 60 C74 62 46 62 34 60 Z"/>
+  </g>
+  <path fill="#F5C56B" d="M60 10 C56 42 56 78 60 110 C64 78 64 42 60 10 Z M10 60 C42 56 78 56 110 60 C78 64 42 64 10 60 Z"/>
+</svg>

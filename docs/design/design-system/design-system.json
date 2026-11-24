@@ -1,0 +1,14 @@
+{
+  "v": 3,
+  "layout": "files",
+  "createdOnFiles": { "v": 1, "at": "2026-11-24T07:15:00Z" },
+  "title": "Orire",
+  "namespace": "Orire",
+  "libraries": [],
+  "sections": {},
+  "groups": [],
+  "assetGroups": {},
+  "blobs": {},
+  "docs": { "readme": "project/README.md", "sections": [] },
+  "lastChange": { "by": "Darot", "at": "2026-11-24T07:50:00Z", "via": "chat", "note": "Added the Burst brand mark (gold+violet) as the Logo component; cover updated to use it" }
+}

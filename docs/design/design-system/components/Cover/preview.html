@@ -1,0 +1,44 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Orire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%}
+  body{background:var(--surface);color:var(--ink);font-family:var(--font-sans,"Inter",sans-serif);overflow:hidden}
+  .cover{position:relative;height:288px;overflow:hidden}
+  .art{position:absolute;top:0;left:560px;width:400px;height:288px}
+  .art svg{display:block;width:400px;height:288px}
+  .words{position:absolute;left:var(--space-7);bottom:var(--space-7);max-width:470px}
+  .kicker{font-size:12px;letter-spacing:.14em;color:var(--muted);margin:0 0 10px 3px}
+  .name{margin:0;font-family:var(--font-display,sans-serif);font-size:104px;line-height:.86;font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+  .tag{margin:16px 0 0 4px;font-size:15px;line-height:21px;color:var(--ink-soft);max-width:36ch}
+</style>
+</head><body>
+<div class="cover">
+  <div class="art" aria-hidden="true">
+    <svg viewBox="0 0 400 288">
+      <rect x="44" y="40" width="208" height="208" rx="28" fill="var(--violet-ghost)"/>
+      <rect x="272" y="96" width="88" height="152" rx="20" fill="var(--surface-2)"/>
+      <!-- match ring, gold, open at the top -->
+      <circle cx="232" cy="140" r="82" fill="none" stroke="var(--line-strong)" stroke-width="12"/>
+      <circle cx="232" cy="140" r="82" fill="none" stroke="var(--gold)" stroke-width="12" stroke-linecap="round"
+        stroke-dasharray="404 112" stroke-dashoffset="56" transform="rotate(-90 232 140)"/>
+      <!-- Orire burst mark, centred in the ring -->
+      <g transform="translate(232 140) scale(0.95) translate(-60 -60)">
+        <g transform="rotate(45 60 60)">
+          <path fill="var(--violet)" d="M60 32 C57.5 46 57.5 74 60 88 C62.5 74 62.5 46 60 32 Z M32 60 C46 57.5 74 57.5 88 60 C74 62.5 46 62.5 32 60 Z"/>
+        </g>
+        <path fill="var(--gold)" d="M60 10 C56 42 56 78 60 110 C64 78 64 42 60 10 Z M10 60 C42 56 78 56 110 60 C78 64 42 64 10 60 Z"/>
+      </g>
+      <rect x="300" y="196" width="40" height="9" rx="4.5" fill="var(--gold)"/>
+      <rect x="300" y="214" width="24" height="9" rx="4.5" fill="var(--violet)"/>
+    </svg>
+  </div>
+  <div class="words">
+    <p class="kicker">DESIGN SYSTEM</p>
+    <h1 class="name">Orire</h1>
+    <p class="tag">An AI CV studio and its career copilot. Ink and fortune — violet for the work, gold for the win.</p>
+  </div>
+</div>
+</body></html>

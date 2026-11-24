@@ -1,0 +1,46 @@
+<!-- @dsCard group="Brand" height=340 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Logo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;font-family:var(--font-sans,"Inter",sans-serif);color:var(--ink);background:var(--canvas)}
+  .sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:18px;padding:22px;align-items:center}
+  .cell{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:150px;justify-content:center}
+  .cap{font-size:11px;color:var(--muted)}
+  .mk{display:inline-block;line-height:0}
+  .mk svg{display:block;width:100%;height:100%;overflow:visible}
+  .word{font-family:var(--font-display,sans-serif);font-weight:800;letter-spacing:-.03em;color:var(--ink)}
+  .lock-h{display:flex;align-items:center;gap:13px}
+  .lock-v{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .appicon{width:84px;height:84px;border-radius:20px;background:#171320;display:grid;place-items:center;border:1px solid var(--line-strong)}
+  .favrow{display:flex;align-items:center;gap:10px}
+  .chip{display:grid;place-items:center;border-radius:8px;border:1px solid var(--line)}
+  .chip.d{background:#14121C}.chip.l{background:#F6F5FB}
+</style>
+</head><body>
+<div class="sheet">
+  <div class="cell"><span class="mk" id="m-big" style="width:84px;height:84px"></span><span class="cap">Mark · full colour</span></div>
+  <div class="cell"><div class="lock-h"><span class="mk" id="m-h" style="width:48px;height:48px"></span><span class="word" style="font-size:38px">Orire</span></div><span class="cap">Horizontal lockup</span></div>
+  <div class="cell"><div class="lock-v"><span class="mk" id="m-v" style="width:44px;height:44px"></span><span class="word" style="font-size:30px">Orire</span></div><span class="cap">Stacked lockup</span></div>
+  <div class="cell"><span class="mk mono" id="m-mono" style="width:70px;height:70px;color:var(--ink)"></span><span class="cap">One ink</span></div>
+  <div class="cell"><div class="appicon"><span class="mk" id="m-app" style="width:48px;height:48px"></span></div><span class="cap">App icon</span></div>
+  <div class="cell">
+    <div class="favrow">
+      <span class="chip d" style="width:34px;height:34px"><span class="mk" id="f1" style="width:22px;height:22px"></span></span>
+      <span class="chip d" style="width:22px;height:22px"><span class="mk" id="f2" style="width:14px;height:14px"></span></span>
+      <span class="chip l" style="width:34px;height:34px"><span class="mk" id="f3" style="width:22px;height:22px"></span></span>
+      <span class="chip l" style="width:22px;height:22px"><span class="mk" id="f4" style="width:14px;height:14px"></span></span>
+    </div><span class="cap">Favicon (gold-only ≤20px)</span>
+  </div>
+</div>
+<script>
+  var full='<svg viewBox="0 0 120 120"><g transform="rotate(45 60 60)"><path fill="var(--violet)" d="M60 32 C57.5 46 57.5 74 60 88 C62.5 74 62.5 46 60 32 Z M32 60 C46 57.5 74 57.5 88 60 C74 62.5 46 62.5 32 60 Z"/></g><path fill="var(--gold)" d="M60 10 C56 42 56 78 60 110 C64 78 64 42 60 10 Z M10 60 C42 56 78 56 110 60 C78 64 42 64 10 60 Z"/></svg>';
+  var gold='<svg viewBox="0 0 120 120"><g transform="rotate(45 60 60)"><path fill="var(--gold)" d="M60 34 C58 46 58 74 60 86 C62 74 62 46 60 34 Z M34 60 C46 58 74 58 86 60 C74 62 46 62 34 60 Z"/></g><path fill="var(--gold)" d="M60 10 C56 42 56 78 60 110 C64 78 64 42 60 10 Z M10 60 C42 56 78 56 110 60 C78 64 42 64 10 60 Z"/></svg>';
+  var mono='<svg viewBox="0 0 120 120"><g transform="rotate(45 60 60)"><path fill="currentColor" d="M60 34 C58 46 58 74 60 86 C62 74 62 46 60 34 Z M34 60 C46 58 74 58 86 60 C74 62 46 62 34 60 Z"/></g><path fill="currentColor" d="M60 10 C56 42 56 78 60 110 C64 78 64 42 60 10 Z M10 60 C42 56 78 56 110 60 C78 64 42 64 10 60 Z"/></svg>';
+  ['m-big','m-h','m-v','m-app','f1','f3'].forEach(function(id){document.getElementById(id).innerHTML=full;});
+  document.getElementById('m-mono').innerHTML=mono;
+  document.getElementById('f2').innerHTML=gold;
+  document.getElementById('f4').innerHTML=gold;
+</script>
+</body></html>
