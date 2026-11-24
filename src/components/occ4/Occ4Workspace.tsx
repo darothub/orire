@@ -17,7 +17,9 @@ import { ChatMessage } from "@/components/ui/ChatMessage";
 import { CopilotCard } from "@/components/ui/CopilotCard";
 import { Diff } from "@/components/ui/Diff";
 import { MatchRing } from "@/components/ui/MatchRing";
+import { getTemplate } from "@/components/templates/registry";
 import { Occ4Review } from "./Occ4Review";
+import { Occ4Templates } from "./Occ4Templates";
 import "./occ4.css";
 
 /**
@@ -35,7 +37,7 @@ import "./occ4.css";
  */
 
 type Msg = { id: number; node: ReactNode };
-type Intent = "review" | "match" | "interview" | "cover" | "default";
+type Intent = "review" | "match" | "template" | "interview" | "cover" | "default";
 type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 
 const Spark = () => (
@@ -47,6 +49,7 @@ const Spark = () => (
 const CHIPS: { label: string; intent: Intent }[] = [
   { label: "Review my CV against the role", intent: "review" },
   { label: "Keyword coverage", intent: "match" },
+  { label: "Preview a template", intent: "template" },
   { label: "Practise an interview", intent: "interview" },
   { label: "Draft a cover letter", intent: "cover" },
 ];
@@ -71,6 +74,7 @@ export function Occ4Workspace() {
   const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [coverage, setCoverage] = useState<number | null>(null);
+  const [templateId, setTemplateId] = useState("aurora");
   const descriptionRef = useRef("");
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -172,6 +176,21 @@ export function Occ4Workspace() {
       if (existing === null) return prev;
       return patchCvField(prev, field, existing, replacement) ?? prev;
     });
+    setPreviewOpen(true);
+  }
+
+  // Templates are an action on the draft, not a specialist: the picker restyles
+  // the working draft live in the preview. Needs a structured draft to render.
+  function runTemplates() {
+    if (!draft) {
+      sayBot("Import a CV (PDF or DOCX) first and I'll preview it in any template.");
+      return;
+    }
+    setPreviewOpen(true);
+    push(<CardRow><Occ4Templates current={templateId} onPick={handlePickTemplate} /></CardRow>);
+  }
+  function handlePickTemplate(id: string) {
+    setTemplateId(id);
     setPreviewOpen(true);
   }
 
@@ -295,6 +314,7 @@ export function Occ4Workspace() {
   function handle(intent: Intent, text: string) {
     if (intent === "review") return void runReview(text);
     if (intent === "match") return void runMatch();
+    if (intent === "template") return runTemplates();
     if (intent === "interview") return void askQuestion(0);
     if (intent === "cover") {
       return sayBot("Cover-letter drafting is coming to occ4 in a later slice.");
@@ -384,6 +404,8 @@ export function Occ4Workspace() {
       setUploading(null);
     }
   }
+
+  const DraftTemplate = draft ? getTemplate(templateId).Component : null;
 
   return (
     <div className={`occ4-layout${previewOpen ? " with-preview" : ""}`}>
@@ -630,7 +652,11 @@ export function Occ4Workspace() {
             </button>
           </div>
           <div className="occ4-pv-scroll">
-            {draft ? <DraftPaper cv={draft} /> : <p className="occ4-pv-empty">Bring a CV (PDF or DOCX) to see your working draft here.</p>}
+            {draft && DraftTemplate ? (
+              <div className="occ4-pv-page paper"><DraftTemplate cv={draft} /></div>
+            ) : (
+              <p className="occ4-pv-empty">Bring a CV (PDF or DOCX) to see your working draft here.</p>
+            )}
           </div>
         </aside>
       )}
@@ -638,38 +664,6 @@ export function Occ4Workspace() {
   );
 }
 
-/** Read-only render of the working draft. Reflects every applied change. */
-function DraftPaper({ cv }: { cv: CVData }) {
-  const { basics } = cv;
-  return (
-    <div className="occ4-paper">
-      <h3 className="occ4-paper-name">{basics.fullName || "Your CV"}</h3>
-      {basics.title && <p className="occ4-paper-title">{basics.title}</p>}
-      {basics.summary.trim() && (
-        <section className="occ4-paper-sec"><h4>Summary</h4><p>{basics.summary}</p></section>
-      )}
-      {cv.experience.some((e) => e.company || e.role || e.highlights.some((h) => h.trim())) && (
-        <section className="occ4-paper-sec">
-          <h4>Experience</h4>
-          {cv.experience.map((e) => (
-            <div className="occ4-paper-job" key={e.id}>
-              <b>{[e.role, e.company].filter(Boolean).join(" · ") || "Role"}</b>
-              <ul>{e.highlights.filter((h) => h.trim()).map((h, i) => <li key={i}>{h}</li>)}</ul>
-            </div>
-          ))}
-        </section>
-      )}
-      {cv.skills.some((g) => g.items.some((s) => s.trim())) && (
-        <section className="occ4-paper-sec">
-          <h4>Skills</h4>
-          <div className="occ4-paper-skills">
-            {cv.skills.flatMap((g) => g.items.filter((s) => s.trim())).map((s, i) => <span key={i}>{s}</span>)}
-          </div>
-        </section>
-      )}
-    </div>
-  );
-}
 
 /** Bot avatar + a result card, aligned left (no bubble around the card). */
 function CardRow({ children }: { children: ReactNode }) {
@@ -754,6 +748,7 @@ function classify(text: string): Intent {
   const t = text.toLowerCase();
   if (/review|tailor|improve|rewrite|better|advi[cs]e|recommend/.test(t)) return "review";
   if (/match|keyword|compare|overlap|coverage/.test(t)) return "match";
+  if (/template|layout|design|theme|style|look/.test(t)) return "template";
   if (/cover|letter/.test(t)) return "cover";
   if (/interview|practi[cs]e|question/.test(t)) return "interview";
   return "default";
