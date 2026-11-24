@@ -95,8 +95,8 @@
   background: var(--or-muted);
   transition: left 0.2s, background 0.2s;
 }
-.or-toggle[aria-pressed="true"] { color: var(--or-ink); }
-.or-toggle[aria-pressed="true"] .or-toggle__track { background: var(--or-violet); border-color: var(--or-violet); }
-.or-toggle[aria-pressed="true"] .or-toggle__track::after { left: 16px; background: #fff; }
+.or-toggle[aria-checked="true"] { color: var(--or-ink); }
+.or-toggle[aria-checked="true"] .or-toggle__track { background: var(--or-violet); border-color: var(--or-violet); }
+.or-toggle[aria-checked="true"] .or-toggle__track::after { left: 16px; background: #fff; }
 .or-toggle:focus-visible { outline: 2px solid var(--or-violet); outline-offset: 3px; border-radius: 6px; }
-.or-toggle--match[aria-pressed="true"] .or-toggle__track { background: var(--or-match); border-color: var(--or-match); }
+.or-toggle--match[aria-checked="true"] .or-toggle__track { background: var(--or-match); border-color: var(--or-match); }

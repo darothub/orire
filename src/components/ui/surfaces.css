@@ -1,0 +1,175 @@
+/* Orire design-system surfaces: the richer composite primitives
+   (match ring, diff, copilot card, chat message, CV paper).
+   Styled from the --or-* tokens. Imported by the components that use them. */
+
+/* ---- Match ring ---- */
+.or-ring { position: relative; display: inline-block; }
+.or-ring svg { display: block; transform: rotate(-90deg); width: 100%; height: 100%; }
+.or-ring__c {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.or-ring__v {
+  font-family: var(--or-font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--or-ink);
+}
+.or-ring__l { font-family: var(--or-font-sans); font-size: 11px; color: var(--or-muted); margin-top: 3px; }
+
+/* ---- Diff (trust primitive) ---- */
+.or-diff {
+  border: 1px solid var(--or-line);
+  border-radius: var(--or-radius-md);
+  overflow: hidden;
+  background: var(--or-surface);
+  font-family: var(--or-font-sans);
+}
+.or-diff__head {
+  padding: 10px 13px;
+  background: var(--or-surface-2);
+  border-bottom: 1px solid var(--or-line);
+  font-size: 11.5px;
+  font-weight: 600;
+  display: flex;
+  gap: 8px;
+  color: var(--or-ink-soft);
+}
+.or-diff__grounded { margin-left: auto; color: var(--or-muted); font-weight: 400; }
+.or-diff__body { padding: 13px; }
+.or-diff__old {
+  font-size: 11.5px;
+  color: var(--or-muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--or-gap);
+  opacity: 0.75;
+  margin-bottom: 8px;
+  line-height: 1.5;
+}
+.or-diff__new {
+  font-size: 12px;
+  color: var(--or-ink);
+  background: var(--or-match-ghost);
+  border-radius: 6px;
+  padding: 7px 9px;
+  line-height: 1.5;
+}
+.or-diff__why { font-size: 11px; color: var(--or-match); margin-top: 9px; display: flex; align-items: center; gap: 5px; }
+.or-diff__why svg { width: 12px; height: 12px; }
+.or-diff__actions { display: flex; gap: 8px; padding: 11px 13px; border-top: 1px solid var(--or-line); }
+.or-diff__actions button {
+  flex: 1;
+  height: 32px;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 12px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.or-diff__acc { background: var(--or-match); color: #06281c; }
+.or-diff__rej { background: var(--or-surface-2); color: var(--or-ink-soft); border: 1px solid var(--or-line); }
+
+/* ---- Copilot result card ---- */
+.or-rcard {
+  background: var(--or-surface);
+  border: 1px solid var(--or-line);
+  border-radius: 16px;
+  overflow: hidden;
+  font-family: var(--or-font-sans);
+}
+.or-rcard__head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--or-line);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--or-ink);
+}
+.or-rcard__head svg { width: 16px; height: 16px; }
+.or-rcard__tag {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--or-match);
+  background: var(--or-match-ghost);
+  padding: 3px 9px;
+  border-radius: var(--or-radius-pill);
+}
+.or-rcard__body { padding: 14px 15px; }
+.or-rcard__foot { display: flex; gap: 8px; padding: 12px 15px; border-top: 1px solid var(--or-line); flex-wrap: wrap; }
+
+/* ---- Chat message ---- */
+.or-msg { display: flex; gap: 11px; max-width: min(720px, 100%); font-family: var(--or-font-sans); }
+.or-msg--user { align-self: flex-end; flex-direction: row-reverse; }
+.or-msg__av {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-family: var(--or-font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+.or-msg--bot .or-msg__av { background: linear-gradient(140deg, var(--or-violet), var(--or-gold)); color: #fff; }
+.or-msg--user .or-msg__av { background: var(--or-surface-2); border: 1px solid var(--or-line); color: var(--or-ink-soft); }
+.or-msg__bubble {
+  background: var(--or-surface);
+  border: 1px solid var(--or-line);
+  border-radius: 4px 16px 16px 16px;
+  padding: 13px 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--or-ink);
+}
+.or-msg--user .or-msg__bubble { background: var(--or-violet); color: #fff; border: none; border-radius: 16px 4px 16px 16px; }
+
+/* ---- CV paper ---- */
+.or-paper {
+  --cv-accent: var(--or-violet);
+  background: var(--or-page);
+  color: var(--or-page-ink);
+  border: 1px solid var(--or-line);
+  border-radius: var(--or-radius-md);
+  box-shadow: var(--or-shadow);
+  padding: 38px 42px;
+  font-family: var(--or-font-sans);
+  font-size: 12.5px;
+  max-width: 560px;
+}
+.or-paper--classic { --cv-accent: #6b7280; }
+.or-paper--editorial { --cv-accent: var(--or-gold); }
+.or-paper__name {
+  font-family: var(--or-font-display);
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.or-paper--classic .or-paper__name { font-family: Georgia, "Times New Roman", serif; letter-spacing: 0; }
+.or-paper--editorial .or-paper__name { font-size: 30px; }
+.or-paper__role { color: var(--cv-accent); font-weight: 600; font-size: 13px; margin-top: 2px; }
+.or-paper__section { margin-top: 18px; }
+.or-paper__section > h4 {
+  font-family: var(--or-font-display);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  border-bottom: 1.5px solid color-mix(in srgb, var(--or-page-ink) 18%, transparent);
+  padding-bottom: 5px;
+  margin-bottom: 9px;
+}
+.or-paper--editorial .or-paper__section > h4 {
+  color: var(--cv-accent);
+  border-bottom-color: color-mix(in srgb, var(--or-gold) 40%, transparent);
+}

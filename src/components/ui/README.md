@@ -7,6 +7,13 @@ Token-driven primitives from the Orire design system (`docs/design/design-system
 - `Card` — surface card; `flat` (no shadow), `pad` (standard padding).
 - `Pill` — status pill; `tone` (`saved` | `applied` | `interview` | `offer` | `neutral`), `dot`.
 - `Toggle` — controlled `role="switch"`; `tone` (`violet` | `match`).
+- `MatchRing` — the signature ring; fills + counts up on mount (`prefers-reduced-motion` aware). `value`, `tone` (`gold` | `match`), `size`, `label`.
+- `Diff` — the trust primitive (before → after + reason + accept/reject). `oldText`, `newText`, `why`, `onAccept`, `onReject`.
+- `CopilotCard` — the OCC result-card shell: `title`, `icon`, `tag`, `children`, `footer`.
+- `ChatMessage` — one OCC thread turn: `role` (`bot` | `user`), `avatar`, `children`.
+- `CvPaper` — the CV paper surface; `template` (`modern` | `classic` | `editorial`) with `or-paper__name` / `__role` / `__section` helpers.
+
+Basic primitives are styled in `ui.css`; the composite surfaces (ring, diff, cards, paper) in `surfaces.css`.
 
 `BrandMark` (in `src/components/`) renders the Burst brand mark and keeps its original `size` / `badge` / `className` API.
 
