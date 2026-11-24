@@ -3,6 +3,7 @@ import "./globals.css";
 import "./templates.css";
 import "./resume.css";
 import "./ingest.css";
+import "@/styles/orire-tokens.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { VerifyBanner } from "@/components/auth/VerifyBanner";
 import { StorageScope } from "@/components/auth/StorageScope";
@@ -39,6 +40,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className="h-full antialiased" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* Brand fonts for the design system (Bricolage Grotesque display + Inter UI).
+            TODO: self-host these for production per docs/design/implementation-plan.md. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;450;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(buildStructuredData(SITE_URL)) }}

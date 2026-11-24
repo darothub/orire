@@ -1,0 +1,80 @@
+/* Orire design-system tokens — generated from the design system (tokens.json).
+   Namespaced `--or-*` so they coexist with the legacy --bg/--accent tokens during migration.
+   Dark is the default; light overrides under html[data-theme="light"], matching globals.css. */
+
+:root {
+  --or-font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --or-font-sans: "Inter", system-ui, sans-serif;
+
+  /* spacing */
+  --or-space-1: 4px;
+  --or-space-2: 8px;
+  --or-space-3: 12px;
+  --or-space-4: 16px;
+  --or-space-5: 20px;
+  --or-space-6: 24px;
+  --or-space-7: 32px;
+  --or-space-8: 40px;
+
+  /* radius */
+  --or-radius-sm: 9px;
+  --or-radius-md: 14px;
+  --or-radius-lg: 20px;
+  --or-radius-xl: 28px;
+  --or-radius-pill: 999px;
+
+  /* shadow */
+  --or-shadow-soft: 0 10px 30px -18px rgba(0,0,0,0.55);
+  --or-shadow: 0 24px 60px -24px rgba(0,0,0,0.70);
+
+}
+
+/* color — dark (default) */
+:root {
+  --or-canvas: #14121C;
+  --or-surface: #1C1926;
+  --or-surface-2: #242030;
+  --or-raised: #2B2639;
+  --or-line: rgba(255,255,255,0.08);
+  --or-line-strong: rgba(255,255,255,0.14);
+  --or-ink: #F4F2F8;
+  --or-ink-soft: #C9C4DC;
+  --or-muted: #938DA8;
+  --or-violet: #8273F6;
+  --or-violet-soft: #A99EF9;
+  --or-violet-ghost: rgba(130,115,246,0.14);
+  --or-gold: #F5C56B;
+  --or-gold-soft: #FBD98F;
+  --or-gold-ghost: rgba(245,197,107,0.13);
+  --or-match: #5FD4A6;
+  --or-match-ghost: rgba(95,212,166,0.14);
+  --or-gap: #F2795E;
+  --or-gap-ghost: rgba(242,121,94,0.14);
+  --or-page: #211D2E;
+  --or-page-ink: #EDEAF6;
+}
+
+/* color — light */
+html[data-theme="light"] {
+  --or-canvas: #F6F5FB;
+  --or-surface: #FFFFFF;
+  --or-surface-2: #FBFAFE;
+  --or-raised: #FFFFFF;
+  --or-line: rgba(31,24,54,0.10);
+  --or-line-strong: rgba(31,24,54,0.16);
+  --or-ink: #1B1726;
+  --or-ink-soft: #413A54;
+  --or-muted: #6B6480;
+  --or-violet: #5B45E0;
+  --or-violet-soft: #6E58F0;
+  --or-violet-ghost: rgba(91,69,224,0.09);
+  --or-gold: #C78A1E;
+  --or-gold-soft: #B97E12;
+  --or-gold-ghost: rgba(199,138,30,0.12);
+  --or-match: #1E9E72;
+  --or-match-ghost: rgba(30,158,114,0.12);
+  --or-gap: #D65A3C;
+  --or-gap-ghost: rgba(214,90,60,0.11);
+  --or-page: #FFFFFF;
+  --or-page-ink: #211D2E;
+}
