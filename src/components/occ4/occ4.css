@@ -46,6 +46,37 @@
 .occ4-side-foot { margin-top: auto; padding-top: 12px; }
 .occ4-back { font-size: 12px; color: var(--or-muted); }
 .occ4-back:hover { color: var(--or-ink); }
+.occ4-side-hint { font-size: 12px; color: var(--or-muted); line-height: 1.5; padding: 4px; }
+.occ4-side-hint b { color: var(--or-ink-soft); font-weight: 600; }
+
+/* ---- specialist / mode picker (model-selector style) ---- */
+.occ4-modepick { position: relative; }
+.occ4-mode-btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px;
+  border-radius: var(--or-radius-md); border: 1px solid var(--or-line);
+  background: var(--or-surface); color: var(--or-ink);
+  font-family: var(--or-font-display); font-weight: 700; font-size: 14px; letter-spacing: -0.01em; cursor: pointer;
+}
+.occ4-mode-btn:hover { border-color: var(--or-line-strong); }
+.occ4-mode-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: linear-gradient(140deg, var(--or-violet), var(--or-gold)); }
+.occ4-mode-caret { width: 15px; height: 15px; color: var(--or-muted); }
+.occ4-mode-auto { font-family: var(--or-font-sans); font-size: 10px; font-weight: 700; color: var(--or-violet-soft); background: var(--or-violet-ghost); padding: 1px 6px; border-radius: var(--or-radius-pill); }
+.occ4-mode-soon { font-family: var(--or-font-sans); font-size: 10px; font-weight: 600; color: var(--or-muted); background: var(--or-surface-2); padding: 1px 6px; border-radius: var(--or-radius-pill); }
+.occ4-mode-backdrop { position: fixed; inset: 0; z-index: 20; background: transparent; border: none; cursor: default; }
+.occ4-mode-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 21; min-width: 288px;
+  background: var(--or-raised); border: 1px solid var(--or-line-strong);
+  border-radius: var(--or-radius-lg); box-shadow: var(--or-shadow); padding: 6px;
+}
+.occ4-mode-item {
+  display: flex; flex-direction: column; gap: 3px; width: 100%; text-align: left;
+  padding: 10px 11px; border-radius: var(--or-radius-md); border: none; background: none; cursor: pointer;
+}
+.occ4-mode-item:hover { background: var(--or-surface); }
+.occ4-mode-item.on { background: var(--or-surface-2); }
+.occ4-mode-item-top { display: flex; align-items: center; gap: 8px; }
+.occ4-mode-item-top b { font-family: var(--or-font-sans); font-size: 13.5px; font-weight: 600; color: var(--or-ink); }
+.occ4-mode-desc { font-size: 12px; color: var(--or-muted); }
 
 /* ---- main ---- */
 .occ4-main { display: flex; flex-direction: column; height: 100vh; min-width: 0; }

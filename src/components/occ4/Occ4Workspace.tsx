@@ -50,6 +50,7 @@ export function Occ4Workspace() {
   const [description, setDescription] = useState("");
   const [contextOpen, setContextOpen] = useState(false);
   const [running, setRunning] = useState(false);
+  const [modeOpen, setModeOpen] = useState(false);
   const [uploading, setUploading] = useState<null | "cv" | "jobDescription">(null);
   const [uploadError, setUploadError] = useState("");
   const [cvFileName, setCvFileName] = useState("");
@@ -136,7 +137,18 @@ export function Occ4Workspace() {
     const value = text.trim();
     if (!value || running) return;
     sayUser(value);
-    handle(intent ?? classify(value), value);
+    // An explicit action (a chip or a panel button) always wins. Otherwise the
+    // selected specialist/mode routes the message — except CV Review, which is
+    // Auto: it classifies the message by what you actually asked for.
+    if (intent) return handle(intent, value);
+    if (agent === "interview") return handle("interview", value);
+    if (agent === "improve") {
+      return sayBot("CV Improvement — approving wording into a saved CV version — is coming to occ4 in a later slice.");
+    }
+    if (agent === "memory") {
+      return sayBot("Career Memory — reviewing what the copilot remembers about you — is coming to occ4 in a later slice.");
+    }
+    handle(classify(value), value);
   }
 
   // Upload an existing CV / JD (PDF, DOCX, TXT) and extract its text via the same
@@ -204,18 +216,9 @@ export function Occ4Workspace() {
         <button type="button" className="occ4-newchat" onClick={() => setMessages([])}>
           ＋ New conversation
         </button>
-        <h2 className="occ4-side-label">Specialists</h2>
-        {OCC_AGENTS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            className={`occ4-spec${a.id === agent ? " on" : ""}`}
-            onClick={() => setAgent(a.id)}
-          >
-            <b>{a.label}</b>
-            <span>{a.description}</span>
-          </button>
-        ))}
+        <p className="occ4-side-hint">
+          Pick a specialist from the mode selector at the top — <b>CV Review</b> is Auto.
+        </p>
         <div className="occ4-side-foot">
           <Link href="/occ" className="occ4-back">
             ← Current Career Copilot
@@ -225,9 +228,51 @@ export function Occ4Workspace() {
 
       <main className="occ4-main">
         <header className="occ4-head">
-          <div className="occ4-id">
-            <b>{getOccAgent(agent).label}</b>
-            <small>Every Orire feature, by conversation</small>
+          <div className="occ4-modepick">
+            <button
+              type="button"
+              className="occ4-mode-btn"
+              aria-haspopup="menu"
+              aria-expanded={modeOpen}
+              onClick={() => setModeOpen((o) => !o)}
+            >
+              <span className="occ4-mode-dot" aria-hidden />
+              <span className="occ4-mode-label">{getOccAgent(agent).label}</span>
+              {agent === DEFAULT_OCC_AGENT && <span className="occ4-mode-auto">Auto</span>}
+              <svg className="occ4-mode-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            {modeOpen && (
+              <>
+                <button type="button" className="occ4-mode-backdrop" aria-label="Close specialist menu" onClick={() => setModeOpen(false)} />
+                <div className="occ4-mode-menu" role="menu">
+                  {OCC_AGENTS.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={a.id === agent}
+                      className={`occ4-mode-item${a.id === agent ? " on" : ""}`}
+                      onClick={() => {
+                        setAgent(a.id);
+                        setModeOpen(false);
+                      }}
+                    >
+                      <span className="occ4-mode-item-top">
+                        <b>{a.label}</b>
+                        {a.id === DEFAULT_OCC_AGENT ? (
+                          <span className="occ4-mode-auto">Auto</span>
+                        ) : (
+                          <span className="occ4-mode-soon">soon</span>
+                        )}
+                      </span>
+                      <span className="occ4-mode-desc">{a.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
           <span className="occ4-preview-note">occ4 · preview</span>
           <span className="occ4-ctx">
