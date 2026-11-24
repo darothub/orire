@@ -567,6 +567,11 @@ export function Occ3Preview() {
               <div className="occ3-review-title"><strong>{entry.mode === "coaching" ? "Career coaching" : "CV Review"}</strong><span>{entry.mode === "coaching" ? "Coach" : entry.mode === "general" ? "General" : "Job-specific"}</span></div>
               <p>{entry.advice.summary}</p>
               <div className="occ3-trust-note">{entry.mode === "coaching" ? "Career suggestions, not verified career outcomes." : entry.mode === "targeted" ? "Compared with your job description; evidence comes from your CV." : "Reviewed against your CV, without a job description."}</div>
+              {(entry.advice.recommendations.length > 0 || entry.advice.nextSteps.length > 0) && <div className="occ3-section-controls" role="group" aria-label="Navigate response sections">
+                <span>{entry.advice.recommendations.length} {entry.advice.recommendations.length === 1 ? "recommendation" : "recommendations"}{entry.advice.nextSteps.length > 0 ? " + next steps" : ""}</span>
+                <button type="button" onClick={event => event.currentTarget.closest(".occ3-review")?.querySelectorAll("details").forEach(section => { section.open = true; })}>Expand all</button>
+                <button type="button" onClick={event => event.currentTarget.closest(".occ3-review")?.querySelectorAll("details").forEach(section => { section.open = false; })}>Collapse all</button>
+              </div>}
               {entry.advice.recommendations.map((item, i) => <details key={i}>
                 <summary>{item.requirement}<span>{item.assessment === "supported" && item.cvEvidence ? "From your CV" : "Needs clarification"}</span></summary>
                 <p><strong className="occ3-evidence-label">Suggestion:</strong> {item.suggestion}</p>

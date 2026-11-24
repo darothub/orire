@@ -334,3 +334,11 @@
 .occ3-next-action button:hover { background:#ffdbc2; }
 @media(pointer:coarse){.occ3-next-action button{min-height:44px;}}
 @media(max-width:420px){.occ3-next-action button{width:100%;}}
+
+/* OCC 3.5.2 — navigation controls for longer in-conversation responses. */
+.occ3-section-controls { display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:4px 0 2px; }
+.occ3-section-controls span { flex:1;min-width:120px;color:#ead6f3;font-size:11px;line-height:1.5; }
+.occ3-section-controls button { border:1px solid rgba(255,215,244,.42);background:rgba(240,200,255,.09);color:#fff6ff;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:700; }
+.occ3-section-controls button:hover { background:rgba(240,200,255,.18); }
+@media(pointer:coarse) { .occ3-section-controls button { min-height:44px; } }
+@media(max-width:420px) { .occ3-section-controls span { flex-basis:100%; } }
