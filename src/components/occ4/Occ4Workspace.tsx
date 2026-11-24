@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { ChatMessage } from "@/components/ui/ChatMessage";
 import { CopilotCard } from "@/components/ui/CopilotCard";
 import { Diff } from "@/components/ui/Diff";
+import { MatchRing } from "@/components/ui/MatchRing";
 import "./occ4.css";
 
 /**
@@ -29,7 +30,7 @@ import "./occ4.css";
 
 type Msg = { id: number; node: ReactNode };
 type Intent = "review" | "match" | "interview" | "cover" | "default";
-type MatchResult = { matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
+type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 
 const Spark = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="var(--or-violet)" strokeWidth="2" aria-hidden>
@@ -39,7 +40,7 @@ const Spark = () => (
 
 const CHIPS: { label: string; intent: Intent }[] = [
   { label: "Review my CV against the role", intent: "review" },
-  { label: "Keyword comparison", intent: "match" },
+  { label: "Keyword coverage", intent: "match" },
   { label: "Practise an interview", intent: "interview" },
   { label: "Draft a cover letter", intent: "cover" },
 ];
@@ -488,10 +489,10 @@ export function Occ4Workspace() {
                   disabled={!cvReady || !roleReady || !!uploading || running}
                   onClick={() => {
                     setContextOpen(false);
-                    send("Keyword comparison", "match");
+                    send("Keyword coverage", "match");
                   }}
                 >
-                  Keyword comparison
+                  Keyword coverage
                 </Button>
                 {(!cvReady || !roleReady) && (
                   <span className="occ4-context-hint">Add both your CV and the role to continue.</span>
@@ -612,11 +613,14 @@ function renderAdvice(advice: OccAdvice): ReactNode {
 
 function renderMatch(result: MatchResult): ReactNode {
   return (
-    <CopilotCard title="Keyword comparison" icon={<Spark />}>
-      <p className="occ4-advice-summary">
-        Checked {result.checked} role term{result.checked === 1 ? "" : "s"} against your CV. This is a
-        keyword overlap, not a hiring score.
-      </p>
+    <CopilotCard title="Keyword coverage" icon={<Spark />} tag={`${result.coverage}%`}>
+      <div className="occ4-cov">
+        <MatchRing value={result.coverage} tone="gold" size={82} label="coverage" />
+        <p className="occ4-advice-summary" style={{ margin: 0 }}>
+          {result.matched} of {result.checked} role term{result.checked === 1 ? "" : "s"} appear in your
+          CV. This is keyword coverage, not a hiring score.
+        </p>
+      </div>
       <div className="occ4-terms">
         <div>
           <b>Found in your CV</b>
