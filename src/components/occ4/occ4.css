@@ -105,6 +105,61 @@
 .occ4-gaps .d { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .occ4-ring-row { display: flex; align-items: center; gap: 16px; }
 
+/* ---- context panel (CV + role) ---- */
+.occ4-context {
+  border: 1px solid var(--or-line);
+  border-radius: var(--or-radius-lg);
+  background: var(--or-surface);
+  padding: 14px;
+  margin-bottom: 11px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 620px) { .occ4-context { grid-template-columns: 1fr; } }
+.occ4-context label { font-size: 12px; font-weight: 600; color: var(--or-ink-soft); display: flex; flex-direction: column; gap: 6px; }
+.occ4-context textarea {
+  background: var(--or-surface-2);
+  border: 1px solid var(--or-line);
+  border-radius: var(--or-radius-md);
+  padding: 10px 12px;
+  color: var(--or-ink);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.occ4-context textarea:focus { outline: none; border-color: var(--or-violet); }
+.occ4-context-note { grid-column: 1 / -1; font-size: 11.5px; color: var(--or-muted); margin: 0; }
+
+/* ---- advice / review rendering ---- */
+.occ4-advice-summary { font-size: 13px; line-height: 1.55; color: var(--or-ink-soft); margin: 0 0 12px; }
+.occ4-recs { display: flex; flex-direction: column; gap: 12px; }
+.occ4-rec { border-top: 1px solid var(--or-line); padding-top: 12px; }
+.occ4-rec:first-child { border-top: none; padding-top: 0; }
+.occ4-rec-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.occ4-rec-head b { font-size: 13px; font-weight: 600; flex: 1; }
+.occ4-rec-sug { font-size: 12.5px; color: var(--or-ink-soft); line-height: 1.5; margin: 0 0 8px; }
+.occ4-rec-q { font-size: 12px; color: var(--or-muted); margin: 8px 0 0; }
+.occ4-badge { font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: var(--or-radius-pill); white-space: nowrap; }
+.occ4-badge--supported { background: var(--or-match-ghost); color: var(--or-match); }
+.occ4-badge--needs { background: var(--or-gold-ghost); color: var(--or-gold); }
+.occ4-badge--missing { background: var(--or-gap-ghost); color: var(--or-gap); }
+.occ4-next { margin-top: 14px; border-top: 1px solid var(--or-line); padding-top: 12px; }
+.occ4-next b { font-size: 12.5px; font-weight: 600; }
+.occ4-next ul { margin: 8px 0 0; padding-left: 18px; }
+.occ4-next li { font-size: 12.5px; color: var(--or-ink-soft); line-height: 1.5; margin-bottom: 4px; }
+.occ4-disclaimer { font-size: 11px; color: var(--or-muted); line-height: 1.45; margin: 14px 0 0; }
+
+/* ---- keyword comparison ---- */
+.occ4-terms { display: flex; flex-direction: column; gap: 12px; }
+.occ4-terms > div > b { font-size: 12.5px; font-weight: 600; }
+.occ4-chiprow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.occ4-term { font-size: 11.5px; padding: 3px 9px; border-radius: var(--or-radius-pill); }
+.occ4-term--ok { background: var(--or-match-ghost); color: var(--or-match); }
+.occ4-term--miss { background: var(--or-gap-ghost); color: var(--or-gap); }
+.occ4-term-empty { font-size: 12px; color: var(--or-muted); }
+
 @media (max-width: 860px) {
   .occ4-layout { grid-template-columns: 1fr; }
   .occ4-side { display: none; }
