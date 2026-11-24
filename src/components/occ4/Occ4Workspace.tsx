@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { OCC_AGENTS, DEFAULT_OCC_AGENT, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
+import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { BrandMark } from "@/components/BrandMark";
 import { ChatMessage } from "@/components/ui/ChatMessage";
@@ -48,6 +49,10 @@ export function Occ4Workspace() {
   const [description, setDescription] = useState("");
   const [contextOpen, setContextOpen] = useState(false);
   const [running, setRunning] = useState(false);
+  const [uploading, setUploading] = useState<null | "cv" | "jobDescription">(null);
+  const [uploadError, setUploadError] = useState("");
+  const [cvFileName, setCvFileName] = useState("");
+  const [roleFileName, setRoleFileName] = useState("");
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -133,6 +138,58 @@ export function Occ4Workspace() {
     handle(intent ?? classify(value), value);
   }
 
+  // Upload an existing CV / JD (PDF, DOCX, TXT) and extract its text via the same
+  // /api/parse route occ2 uses — for users who don't have their CV as plain text.
+  async function uploadDocument(kind: "cv" | "jobDescription", event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file || uploading || running) return;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!ext || !["pdf", "docx", "txt"].includes(ext)) {
+      setUploadError("Upload a PDF, DOCX or TXT document.");
+      return;
+    }
+    const maxBytes = ext === "txt" ? 1024 * 1024 : 15 * 1024 * 1024;
+    if (file.size === 0 || file.size > maxBytes) {
+      setUploadError(ext === "txt" ? "TXT files must be under 1 MB." : "PDF and DOCX files must be under 15 MB.");
+      return;
+    }
+    setUploading(kind);
+    setUploadError("");
+    try {
+      let extracted: string;
+      if (ext === "txt") {
+        extracted = await file.text();
+      } else {
+        const form = new FormData();
+        form.append("files", file);
+        const response = await fetch("/api/parse", { method: "POST", body: form, cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(typeof payload.error === "string" ? payload.error : "Could not read this document.");
+        const parsed = payload.files?.[0];
+        if (parsed?.error || typeof parsed?.text !== "string") throw new Error(parsed?.error || "Could not extract document text.");
+        extracted = parsed.text;
+      }
+      const limit = kind === "cv" ? 30000 : 15000;
+      const text = extracted.trim();
+      if (text.length < 30) throw new Error("Not enough readable text found. Try a text-based PDF, DOCX or TXT file.");
+      if (text.length > limit) throw new Error(`Document text exceeds the ${limit.toLocaleString()} character limit. Please shorten it.`);
+      if (kind === "cv" && !looksLikeCV(text)) throw new Error("This document does not look like a CV. Upload a résumé showing work experience, skills or education.");
+      if (kind === "jobDescription" && !looksLikeJobDescription(text)) throw new Error("This does not look like a job description. Upload a role with responsibilities or requirements.");
+      if (kind === "cv") {
+        setCv(text);
+        setCvFileName(file.name);
+      } else {
+        setDescription(text);
+        setRoleFileName(file.name);
+      }
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Could not read that document.");
+    } finally {
+      setUploading(null);
+    }
+  }
+
   return (
     <div className="occ4-layout">
       <aside className="occ4-side">
@@ -191,27 +248,62 @@ export function Occ4Workspace() {
         <div className="occ4-composer">
           {contextOpen && (
             <div className="occ4-context">
-              <label>
-                Your CV (plain text)
+              <div className="occ4-field">
+                <div className="occ4-field-head">
+                  <span>Your CV</span>
+                  <label className={`occ4-upload${uploading || running ? " disabled" : ""}`}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
+                    </svg>
+                    {uploading === "cv" ? "Reading…" : "Upload PDF / DOCX / TXT"}
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      disabled={!!uploading || running}
+                      onChange={(e) => void uploadDocument("cv", e)}
+                    />
+                  </label>
+                </div>
                 <textarea
                   value={cv}
                   onChange={(e) => setCv(e.target.value)}
-                  placeholder="Paste your CV text…"
+                  placeholder="…or paste your CV text"
                   rows={4}
                 />
-              </label>
-              <label>
-                Job description
+                {cvFileName && <p className="occ4-file">✓ {cvFileName}</p>}
+              </div>
+              <div className="occ4-field">
+                <div className="occ4-field-head">
+                  <span>Job description</span>
+                  <label className={`occ4-upload${uploading || running ? " disabled" : ""}`}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                      <path d="M12 16V4M7 9l5-5 5 5M4 20h16" />
+                    </svg>
+                    {uploading === "jobDescription" ? "Reading…" : "Upload PDF / DOCX / TXT"}
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      disabled={!!uploading || running}
+                      onChange={(e) => void uploadDocument("jobDescription", e)}
+                    />
+                  </label>
+                </div>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Paste the role's job description…"
+                  placeholder="…or paste the role's job description"
                   rows={4}
                 />
-              </label>
+                {roleFileName && <p className="occ4-file">✓ {roleFileName}</p>}
+              </div>
+              {uploadError && (
+                <p className="occ4-upload-error" role="alert">
+                  {uploadError}
+                </p>
+              )}
               <p className="occ4-context-note">
-                Used only to run your request. Nothing is sent anywhere until you ask for a review or
-                comparison.
+                Upload a PDF, DOCX or TXT, or paste text. Used only to run your request — nothing is
+                sent anywhere until you ask for a review or comparison.
               </p>
             </div>
           )}
