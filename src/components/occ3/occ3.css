@@ -326,3 +326,11 @@
   .occ3-agent { padding-inline:5px;font-size:10px; }
   .occ3-composer { padding-inline:7px; }
 }
+
+/* OCC 3.5.1: contextual handoff remains inside the conversation. */
+.occ3-next-action { display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;padding:11px 0 0;border-top:1px solid rgba(235,192,255,.2); }
+.occ3-next-action span { font-size:12px;line-height:1.5;color:#ead6f3; }
+.occ3-next-action button { min-height:38px;border:0;border-radius:999px;background:#ffc9a7;color:#2c123d;padding:9px 13px;font-size:12px;font-weight:750; }
+.occ3-next-action button:hover { background:#ffdbc2; }
+@media(pointer:coarse){.occ3-next-action button{min-height:44px;}}
+@media(max-width:420px){.occ3-next-action button{width:100%;}}
