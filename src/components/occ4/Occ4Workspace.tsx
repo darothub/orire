@@ -6,6 +6,7 @@ import { OCC_AGENTS, DEFAULT_OCC_AGENT, getOccAgent, type OccAgentId } from "@/l
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import type { OccAdvice } from "@/lib/occ/recommendations";
 import { BrandMark } from "@/components/BrandMark";
+import { Button } from "@/components/ui/Button";
 import { ChatMessage } from "@/components/ui/ChatMessage";
 import { CopilotCard } from "@/components/ui/CopilotCard";
 import { Diff } from "@/components/ui/Diff";
@@ -301,6 +302,33 @@ export function Occ4Workspace() {
                   {uploadError}
                 </p>
               )}
+              <div className="occ4-context-actions">
+                <Button
+                  variant="gold"
+                  size="sm"
+                  disabled={!cvReady || !roleReady || !!uploading || running}
+                  onClick={() => {
+                    setContextOpen(false);
+                    send("Review my CV against the role", "review");
+                  }}
+                >
+                  Review my CV
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={!cvReady || !roleReady || !!uploading || running}
+                  onClick={() => {
+                    setContextOpen(false);
+                    send("Keyword comparison", "match");
+                  }}
+                >
+                  Keyword comparison
+                </Button>
+                {(!cvReady || !roleReady) && (
+                  <span className="occ4-context-hint">Add both your CV and the role to continue.</span>
+                )}
+              </div>
               <p className="occ4-context-note">
                 Upload a PDF, DOCX or TXT, or paste text. Used only to run your request — nothing is
                 sent anywhere until you ask for a review or comparison.
