@@ -221,6 +221,26 @@
 .occ4-fb-warn { color: var(--or-gold); }
 .occ4-fb-mute { color: var(--or-muted); }
 
+/* ---- cv improvement ---- */
+.occ4-improve { display: flex; flex-direction: column; gap: 12px; }
+.occ4-improve-empty { font-size: 12.5px; color: var(--or-ink-soft); line-height: 1.55; margin: 0; }
+.occ4-improve-label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 600; color: var(--or-ink-soft); }
+.occ4-improve-select,
+.occ4-improve-text {
+  width: 100%; font: inherit; font-size: 12.5px; color: var(--or-ink);
+  background: var(--or-surface); border: 1px solid var(--or-line);
+  border-radius: var(--or-radius-sm); padding: 9px 11px;
+}
+.occ4-improve-text { resize: vertical; line-height: 1.5; }
+.occ4-improve-text[readonly] { background: var(--or-surface-2); color: var(--or-ink-soft); }
+.occ4-improve-select:focus-visible,
+.occ4-improve-text:focus-visible { outline: 2px solid var(--or-violet); outline-offset: 1px; border-color: var(--or-violet); }
+.occ4-improve-edit { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+.occ4-improve-meta { font-size: 11px; color: var(--or-muted); line-height: 1.45; margin: 0; }
+.occ4-improve-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.occ4-improve-id { font-size: 11px; color: var(--or-muted); }
+.occ4-improve-notice { font-size: 12px; color: var(--or-ink-soft); line-height: 1.5; margin: 0; }
+
 @media (max-width: 860px) {
   .occ4-layout { grid-template-columns: 1fr; }
   .occ4-side { display: none; }

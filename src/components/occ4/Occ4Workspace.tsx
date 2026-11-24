@@ -12,6 +12,7 @@ import { ChatMessage } from "@/components/ui/ChatMessage";
 import { CopilotCard } from "@/components/ui/CopilotCard";
 import { Diff } from "@/components/ui/Diff";
 import { MatchRing } from "@/components/ui/MatchRing";
+import { Occ4Improve } from "./Occ4Improve";
 import "./occ4.css";
 
 /**
@@ -24,8 +25,10 @@ import "./occ4.css";
  * responses on the design-system primitives. The product deliberately does NOT
  * produce a hiring score, so the match result is a keyword comparison, not a %.
  *
- * Interview and cover-letter flows stay in the current Career Copilot (/occ) and
- * come to occ4 in a later slice.
+ * Specialists work like a model picker: CV Review (Auto) classifies the message,
+ * Interview Coach runs a grounded mock interview, and CV Improvement approves a
+ * wording change into a new private CV version via POST /api/occ/versions. The
+ * cover-letter flow and Career Memory come to occ4 in a later slice.
  */
 
 type Msg = { id: number; node: ReactNode };
@@ -60,6 +63,7 @@ export function Occ4Workspace() {
   const [intPhase, setIntPhase] = useState<"idle" | "question" | "feedback">("idle");
   const [intIndex, setIntIndex] = useState(0);
   const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
+  const [improveOpen, setImproveOpen] = useState(false);
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -80,6 +84,22 @@ export function Occ4Workspace() {
   function needContext() {
     sayBot("First, add your CV and the job description so I can work against the real role.");
     setContextOpen(true);
+  }
+
+  // CV Improvement surfaces a workbench card once per conversation: pick a saved
+  // CV and one field, approve the wording, and it saves a new private version.
+  function openImprove() {
+    if (improveOpen) {
+      sayBot("Use the CV Improvement panel above — pick a saved CV and a field, edit the wording, then approve it.");
+      return;
+    }
+    setImproveOpen(true);
+    sayBot("CV Improvement — approve a wording change into a new, private version of one of your saved CVs. Your original is never overwritten.");
+    push(
+      <CardRow>
+        <Occ4Improve />
+      </CardRow>,
+    );
   }
 
   async function runReview(goal: string) {
@@ -267,7 +287,7 @@ export function Occ4Workspace() {
       return void askQuestion(0);
     }
     if (agent === "improve") {
-      return sayBot("CV Improvement — approving wording into a saved CV version — is coming to occ4 in a later slice.");
+      return openImprove();
     }
     if (agent === "memory") {
       return sayBot("Career Memory — reviewing what the copilot remembers about you — is coming to occ4 in a later slice.");
@@ -337,7 +357,15 @@ export function Occ4Workspace() {
             <small>CAREER COPILOT</small>
           </div>
         </div>
-        <button type="button" className="occ4-newchat" onClick={() => setMessages([])}>
+        <button
+          type="button"
+          className="occ4-newchat"
+          onClick={() => {
+            setMessages([]);
+            setImproveOpen(false);
+            setIntPhase("idle");
+          }}
+        >
           ＋ New conversation
         </button>
         <p className="occ4-side-hint">
@@ -381,13 +409,14 @@ export function Occ4Workspace() {
                       onClick={() => {
                         setAgent(a.id);
                         setModeOpen(false);
+                        if (a.id === "improve") openImprove();
                       }}
                     >
                       <span className="occ4-mode-item-top">
                         <b>{a.label}</b>
                         {a.id === DEFAULT_OCC_AGENT ? (
                           <span className="occ4-mode-auto">Auto</span>
-                        ) : a.id === "interview" ? null : (
+                        ) : a.id === "interview" || a.id === "improve" ? null : (
                           <span className="occ4-mode-soon">soon</span>
                         )}
                       </span>

@@ -1,26 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { CVData } from "@/lib/cv/schema";
-import { type CvField, readCvField } from "@/lib/occ/versionPatch";
+import { cvFieldChoices, readCvField } from "@/lib/occ/versionPatch";
 
 type Source = { id: string; title: string; company: string | null; template: string; updatedAt: string; data: CVData };
-type Choice = { label: string; field: CvField; text: string };
-
-function choices(cv: CVData): Choice[] {
-  const options: Choice[] = [];
-  if (cv.basics.summary.trim()) options.push({ label: "Professional summary", field: { kind: "summary" }, text: cv.basics.summary });
-  for (const entry of cv.experience) {
-    entry.highlights.forEach((text, index) => {
-      if (text.trim()) options.push({ label: `${entry.company || "Experience"} · bullet ${index + 1}`, field: { kind: "experience", itemId: entry.id, index }, text });
-    });
-  }
-  for (const entry of cv.projects) {
-    entry.highlights.forEach((text, index) => {
-      if (text.trim()) options.push({ label: `${entry.name || "Project"} · bullet ${index + 1}`, field: { kind: "project", itemId: entry.id, index }, text });
-    });
-  }
-  return options;
-}
 
 /** Structured, opt-in CV revision. Never activates the new version automatically. */
 export function OccVersionedCv() {
@@ -32,7 +15,7 @@ export function OccVersionedCv() {
   const [notice, setNotice] = useState("");
   const [save, setSave] = useState<{ id: string; undoId: string } | null>(null);
   const source = documents.find(doc => doc.id === sourceId);
-  const available = source ? choices(source.data) : [];
+  const available = source ? cvFieldChoices(source.data) : [];
   const selected = available[fieldIndex];
   const original = selected && source ? readCvField(source.data, selected.field) : null;
   const canSave = Boolean(original && replacement.trim().length >= 10 &&
