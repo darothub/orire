@@ -1,0 +1,58 @@
+/* Orire component styles — consumed by the previews (tokens.css is preloaded). */
+body{margin:0;font-family:var(--font-sans,"Inter",system-ui,sans-serif);background:var(--canvas);color:var(--ink);-webkit-font-smoothing:antialiased}
+.or-row{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;padding:var(--space-5)}
+.or-wrap{padding:var(--space-5)}
+.or-display{font-family:var(--font-display,"Bricolage Grotesque",sans-serif)}
+.num{font-variant-numeric:tabular-nums}
+
+/* buttons */
+.or-btn{font:inherit;font-weight:600;font-size:13.5px;height:42px;padding:0 20px;border-radius:var(--radius-md);border:1px solid transparent;display:inline-flex;align-items:center;gap:8px;cursor:pointer;transition:filter .18s,transform .18s}
+.or-btn:hover{transform:translateY(-1px)}
+.or-btn-primary{background:var(--violet);color:#fff;box-shadow:0 8px 20px -8px var(--violet)}
+.or-btn-gold{background:var(--gold);color:#241a06}
+.or-btn-ghost{background:var(--surface-2);color:var(--ink);border-color:var(--line)}
+.or-btn-sm{height:34px;padding:0 14px;font-size:12.5px;border-radius:10px}
+
+/* status pills */
+.or-pill{font-size:11.5px;font-weight:600;padding:4px 11px;border-radius:var(--radius-pill);display:inline-flex;align-items:center;gap:6px}
+.or-pill .dot{width:6px;height:6px;border-radius:50%}
+.or-pill-saved{background:var(--surface-2);color:var(--muted)}
+.or-pill-applied{background:var(--violet-ghost);color:var(--violet-soft)}
+.or-pill-interview{background:var(--gold-ghost);color:var(--gold)}
+.or-pill-offer{background:var(--match-ghost);color:var(--match)}
+
+/* suggestion chip */
+.or-chip{font-size:12.5px;font-weight:500;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);padding:8px 13px;border-radius:var(--radius-pill);cursor:pointer}
+
+/* match ring */
+.or-ring{position:relative;width:150px;height:150px}
+.or-ring svg{transform:rotate(-90deg);width:100%;height:100%}
+.or-ring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.or-ring .pct b{font-family:var(--font-display,sans-serif);font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.or-ring .pct span{font-size:11px;color:var(--muted);margin-top:3px}
+
+/* diff (trust primitive) */
+.or-diff{border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;max-width:420px;background:var(--surface)}
+.or-diff-h{padding:10px 13px;background:var(--surface-2);border-bottom:1px solid var(--line);font-size:11.5px;font-weight:600;display:flex;gap:8px}
+.or-diff-h .because{margin-left:auto;color:var(--muted);font-weight:400}
+.or-diff-b{padding:13px}
+.or-diff-old{font-size:11.5px;color:var(--muted);text-decoration:line-through;text-decoration-color:var(--gap);opacity:.75;margin-bottom:8px;line-height:1.5}
+.or-diff-new{font-size:12px;color:var(--ink);background:var(--match-ghost);border-radius:6px;padding:7px 9px;line-height:1.5}
+.or-diff-why{font-size:11px;color:var(--match);margin-top:9px}
+.or-diff-actions{display:flex;gap:8px;padding:11px 13px;border-top:1px solid var(--line)}
+.or-diff-actions button{flex:1;height:32px;border-radius:9px;font-weight:600;font-size:12px;border:none;cursor:pointer;font-family:inherit}
+.or-acc{background:var(--match);color:#06281c}
+.or-rej{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+
+/* copilot result card */
+.or-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;max-width:420px}
+.or-card-h{display:flex;align-items:center;gap:9px;padding:13px 15px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600}
+.or-card-h .tag{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--match);background:var(--match-ghost);padding:3px 9px;border-radius:var(--radius-pill)}
+.or-card-b{padding:14px 15px;display:flex;gap:16px;align-items:center}
+.or-mr{width:78px;height:78px;position:relative;flex:none}
+.or-mr svg{transform:rotate(-90deg);width:100%;height:100%}
+.or-mr b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display,sans-serif);font-size:20px;font-weight:800}
+.or-gaps{font-size:12.5px;display:flex;flex-direction:column;gap:6px}
+.or-gaps div{display:flex;align-items:center;gap:8px}
+.or-gaps .d{width:7px;height:7px;border-radius:50%;flex:none}
+.or-card-f{display:flex;gap:8px;padding:12px 15px;border-top:1px solid var(--line)}
