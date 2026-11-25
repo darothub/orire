@@ -72,6 +72,8 @@ for (const width of [1440, 390, 320]) {
       await page.keyboard.press("Tab");
       await expect(studio.getByRole("button", { name: /^Open Tailor/ })).toBeFocused();
       await page.keyboard.press("Tab");
+      await expect(studio.getByRole("button", { name: "Open library", exact: true })).toBeFocused();
+      await page.keyboard.press("Tab");
       await expect(tools.getByRole("button", { name: "Reset to recommended flow" })).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(tools.getByRole("button", { name: /^Open Re-brand/ })).toBeFocused();
