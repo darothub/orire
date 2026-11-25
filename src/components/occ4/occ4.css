@@ -221,6 +221,10 @@
 .occ4-fb-warn { color: var(--or-gold); }
 .occ4-fb-mute { color: var(--or-muted); }
 
+/* ---- cover letter ---- */
+.occ4-cover { display: flex; flex-direction: column; gap: 9px; border-left: 2px solid var(--or-violet); padding-left: 12px; }
+.occ4-cover p { font-size: 12.5px; line-height: 1.6; color: var(--or-ink-soft); margin: 0; }
+
 /* ---- apply-into-draft ---- */
 .occ4-rec-apply { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
 .occ4-applied { font-size: 12px; font-weight: 600; color: var(--or-match); }
