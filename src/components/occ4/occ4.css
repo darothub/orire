@@ -259,6 +259,14 @@
 /* ---- apply-into-draft ---- */
 .occ4-rec-apply { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
 .occ4-applied { font-size: 12px; font-weight: 600; color: var(--or-match); }
+.occ4-rec--off { opacity: 0.55; }
+.occ4-refine-toggle {
+  font-family: var(--or-font-sans); font-size: 10.5px; font-weight: 600; cursor: pointer;
+  border-radius: var(--or-radius-pill); padding: 2px 9px;
+  background: var(--or-match-ghost); color: var(--or-match); border: 1px solid transparent;
+}
+.occ4-refine-toggle.off { background: var(--or-surface-2); color: var(--or-muted); border-color: var(--or-line); }
+.occ4-refine-toggle:disabled { cursor: default; }
 
 /* ---- working-draft preview (toggle) ---- */
 .occ4-pv-toggle {
