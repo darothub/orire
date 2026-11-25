@@ -42,7 +42,7 @@
 .lp-btn:disabled { opacity: 0.55; cursor: default; }
 .lp-btn--sm { height: 34px; padding: 0 13px; font-size: 13px; }
 .lp-btn--lg { height: 50px; padding: 0 26px; font-size: 15px; }
-.lp-btn--primary { background: var(--or-violet); color: #fff; box-shadow: 0 6px 18px -6px var(--or-violet); }
+.lp-btn--primary { background: #6754e2; color: #fff; box-shadow: 0 6px 18px -6px var(--or-violet); }
 .lp-btn--gold { background: var(--or-gold); color: #241a07; font-weight: 700; }
 .lp-btn--primary:hover:not(:disabled), .lp-btn--gold:hover:not(:disabled) { filter: brightness(1.07); transform: translateY(-1px); }
 .lp-btn--ghost { background: var(--or-surface-2); border-color: var(--or-line); color: var(--or-ink); }
@@ -281,7 +281,7 @@
 .lp-plan ul.lp-usage li::before { content: none; }
 .lp-plan .lp-btn { width: 100%; margin-top: auto; }
 .lp-plans-more { margin-top: 18px; text-align: center; font-size: 13px; color: var(--or-muted); }
-.lp-plans-more a { color: var(--or-violet-soft); }
+.lp-plans-more a { color: var(--or-violet-soft); text-decoration: underline; text-underline-offset: 3px; }
 .lp-plans-more a:hover { text-decoration: underline; }
 
 /* ---- final CTA + footer ---- */
@@ -342,5 +342,5 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .lp *, .lp *::before, .lp *::after { animation: none !important; transition: none !important; }
-  .lp-btn--primary:hover, .lp-btn--gold:hover, .lp-swatch:hover, .lp-demo-expand:hover { transform: none; }
+  .lp .lp-btn:hover, .lp .lp-btn:active, .lp-swatch:hover, .lp-demo-expand:hover { transform: none !important; }
 }
