@@ -36,6 +36,7 @@ import { Occ4Library, type SavedDoc } from "./Occ4Library";
 import { Occ4Refine } from "./Occ4Refine";
 import { Occ4Export } from "./Occ4Export";
 import { Occ4Editor } from "./Occ4Editor";
+import { Occ4Applications } from "./Occ4Applications";
 import "./occ4.css";
 
 /**
@@ -54,7 +55,7 @@ import "./occ4.css";
  */
 
 type Msg = { id: number; node: ReactNode };
-type Intent = "review" | "refine" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "library" | "export" | "default";
+type Intent = "review" | "refine" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "library" | "export" | "applications" | "default";
 type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 
 // occ4's specialists behave like a model picker. Kept local (not the shared
@@ -85,6 +86,7 @@ const CHIPS: { label: string; intent: Intent }[] = [
   { label: "My library", intent: "library" },
   { label: "Save to library", intent: "save" },
   { label: "Export", intent: "export" },
+  { label: "Applications", intent: "applications" },
 ];
 
 // A conversation is scoped to one CV + JD. occ4 keeps several in memory and
@@ -503,6 +505,9 @@ export function Occ4Workspace() {
     if (!c) return false;
     try { await navigator.clipboard.writeText(cvToPlainText(c)); return true; } catch { return false; }
   }
+  function runApplications() {
+    push(<CardRow><Occ4Applications seedRole={draft?.basics.title.trim() || ""} /></CardRow>);
+  }
   function runExport() {
     if (!draft) return sayBot("Nothing to export yet — add or open a CV first.");
     push(<CardRow><Occ4Export onPdf={exportPdf} onDocx={exportDocx} onCopy={copyDraftText} /></CardRow>);
@@ -683,6 +688,7 @@ export function Occ4Workspace() {
     if (intent === "save") return void runSave();
     if (intent === "library") return void runLibrary();
     if (intent === "export") return runExport();
+    if (intent === "applications") return runApplications();
     sayBot("I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.");
   }
 
@@ -1225,6 +1231,7 @@ function classify(text: string): Intent {
   if (/match|keyword|compare|overlap|coverage/.test(t)) return "match";
   if (/template|layout|design|theme|style|look/.test(t)) return "template";
   if (/cover|letter/.test(t)) return "cover";
+  if (/application|applied|track|pipeline|kanban/.test(t)) return "applications";
   if (/export|download|pdf|docx|word file|copy as text/.test(t)) return "export";
   if (/my library|saved cv|open a cv|load a cv|my cvs|my versions|browse/.test(t)) return "library";
   if (/\bsave\b|keep this|store it|new version/.test(t)) return "save";

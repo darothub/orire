@@ -38,6 +38,7 @@ model User {
   occAdviceRuns OccAdviceRun[]
   occCvVersions OccCvVersion[]
   occConversations OccConversation[]
+  occApplications OccApplication[]
   lifecycleEmails LifecycleEmail[]
   passwordResetTokens PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
@@ -302,6 +303,26 @@ model OccCvVersion {
 
 // User-controlled, private OCC transcript history. Full CV/JD text is NOT
 // persisted in conversation messages; attachments remain ephemeral for now.
+model OccApplication {
+  id         String   @id @default(cuid())
+  userId     String
+  company    String
+  role       String   @default("")
+  // saved | applied | interview | offer
+  status     String   @default("saved")
+  link       String?
+  notes      String   @default("")
+  // Optional id of a saved CV version (Document) sent for this application.
+  // Plain reference (no FK) so a deleted version doesn't delete the application.
+  documentId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+}
+
 model OccConversation {
   id           String   @id @default(cuid())
   userId       String
