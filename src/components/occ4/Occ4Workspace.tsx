@@ -118,6 +118,7 @@ export function Occ4Workspace() {
   const [intIndex, setIntIndex] = useState(0);
   const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editOpenSeq, setEditOpenSeq] = useState(0);
   const [coverage, setCoverage] = useState<number | null>(null);
@@ -198,6 +199,7 @@ export function Occ4Workspace() {
     setUploadError(""); setTranscript(s.transcript); setSaveState("idle"); setEditMode(false);
   }
   function newConversation() {
+    setNavOpen(false);
     snapshots.current.set(activeId, captureSnapshot());
     const id = "c" + (++convSeq.current);
     setConversations((cs) => [...cs, { id, title: "New conversation" }]);
@@ -205,6 +207,7 @@ export function Occ4Workspace() {
     resetActiveState();
   }
   function switchConversation(id: string) {
+    setNavOpen(false);
     if (id === activeId) return;
     snapshots.current.set(activeId, captureSnapshot());
     const snap = snapshots.current.get(id);
@@ -768,7 +771,8 @@ export function Occ4Workspace() {
   const DraftTemplate = draft ? getTemplate(templateId).Component : null;
 
   return (
-    <div className={`occ4-layout${previewOpen ? " with-preview" : ""}`}>
+    <div className={`occ4-layout${previewOpen ? " with-preview" : ""}${navOpen ? " nav-open" : ""}`}>
+      <button type="button" className="occ4-nav-backdrop" aria-label="Close conversations" onClick={() => setNavOpen(false)} />
       <aside className="occ4-side">
         <div className="occ4-brand">
           <BrandMark size={28} />
@@ -814,6 +818,7 @@ export function Occ4Workspace() {
 
       <main className="occ4-main">
         <header className="occ4-head">
+          <button type="button" className="occ4-navtoggle" aria-label="Conversations" onClick={() => setNavOpen(true)}>☰</button>
           <div className="occ4-modepick">
             <button
               type="button"
