@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCVStore } from "@/lib/store/cvStore";
+import { useTargetStore } from "@/lib/store/targetStore";
+import { persistView } from "@/lib/store/viewStore";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import { MAX_INTERVIEW_TURNS, type InterviewQuestion, type InterviewFeedback } from "@/lib/occ/interview";
 import type { OccAdvice } from "@/lib/occ/recommendations";
@@ -143,6 +147,7 @@ export function Occ4Workspace() {
   // both are present it runs automatically (resume effect), so a gated action
   // never dead-ends.
   const [pending, setPending] = useState<Intent | null>(null);
+  const router = useRouter();
   const snapshots = useRef<Map<string, ConvSnapshot>>(new Map());
   const convSeq = useRef(1);
 
@@ -501,6 +506,37 @@ export function Occ4Workspace() {
     setPreviewOpen(true);
   }
 
+  // Hand off to the full Studio — load the working draft (and, for Simulate, the
+  // JD) into the shared store, remember which surface to land on, and navigate.
+  // The shared CV store is persisted, so the draft survives the route change; the
+  // view is restored from sessionStorage by WorkspaceApp on mount.
+  function sameCv(a: CVData, b: CVData): boolean {
+    return a.basics.fullName === b.basics.fullName
+      && a.basics.summary === b.basics.summary
+      && a.experience.length === b.experience.length;
+  }
+  function goToStudio(view: "target" | "edit") {
+    if (!draft) return;
+    const store = useCVStore.getState();
+    store.loadCV(draft);
+    store.setTemplate(templateId);
+    if (view === "target" && roleReady) useTargetStore.getState().setJd(description);
+    persistView(view);
+    router.push("/");
+  }
+  // Open in Studio, confirming first only when a *different* CV is already open
+  // there (the user's choice: converge on one shared CV, but never silently
+  // overwrite). A fresh/empty Studio proceeds straight through.
+  function openInStudio(view: "target" | "edit") {
+    if (!draft) return;
+    const studio = useCVStore.getState();
+    if (studio.started && !sameCv(studio.cv, draft)) {
+      push(<CardRow>{renderStudioHandoff(view, () => goToStudio(view))}</CardRow>);
+      return;
+    }
+    goToStudio(view);
+  }
+
   // Structure pasted CV text into the working draft in-browser (same heuristic
   // parser the upload path uses) when the paste box loses focus — so paste users
   // get the connected flow, not just PDF/DOCX uploaders. Skips re-announcing the
@@ -549,7 +585,7 @@ export function Occ4Workspace() {
       if (!response.ok) return sayBot(typeof data?.error === "string" ? data.error : "Couldn't run the simulation — try again in a moment.");
       const result = data as MatchResult;
       setCoverage(result.coverage);
-      push(<CardRow>{renderSimulate(result)}</CardRow>);
+      push(<CardRow>{renderSimulate(result, () => openInStudio("target"))}</CardRow>);
     } catch {
       sayBot("Couldn't reach the simulation service. Try again in a moment.");
     } finally {
@@ -1188,6 +1224,11 @@ export function Occ4Workspace() {
                 {editMode ? "Done" : "Edit"}
               </button>
             )}
+            {draft && (
+              <button type="button" className="occ4-pv-studio" onClick={() => openInStudio("edit")} title="Open this draft in the full Studio editor">
+                Studio →
+              </button>
+            )}
             <button type="button" className="occ4-pv-close" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>
               ✕
             </button>
@@ -1265,10 +1306,33 @@ function renderMatch(result: MatchResult): ReactNode {
   );
 }
 
-function renderSimulate(result: MatchResult): ReactNode {
+// Handoff card shown when a *different* CV is already open in Studio: confirm
+// before converging on the working draft so Studio is never silently overwritten.
+function renderStudioHandoff(view: "target" | "edit", onConfirm: () => void): ReactNode {
+  const where = view === "target" ? "the full simulation" : "the editor";
+  return (
+    <CopilotCard
+      title="Open in Studio?"
+      icon={<Spark />}
+      footer={<Button variant="primary" size="sm" onClick={onConfirm}>Replace & open {where}</Button>}
+    >
+      <p className="occ4-advice-summary" style={{ margin: 0 }}>
+        A different CV is already open in Studio. Opening {where} will replace it with this conversation&rsquo;s
+        working draft. Your saved versions in the library aren&rsquo;t affected.
+      </p>
+    </CopilotCard>
+  );
+}
+
+function renderSimulate(result: MatchResult, onStudio?: () => void): ReactNode {
   const gaps = result.unverifiedTerms;
   return (
-    <CopilotCard title="Simulate the gap" icon={<Spark />} tag={`${result.coverage}% covered`}>
+    <CopilotCard
+      title="Simulate the gap"
+      icon={<Spark />}
+      tag={`${result.coverage}% covered`}
+      footer={onStudio && <Button variant="ghost" size="sm" onClick={onStudio}>See the full simulation in Studio →</Button>}
+    >
       <div className="occ4-cov">
         <MatchRing value={result.coverage} tone="gold" size={96} label="coverage" />
         <p className="occ4-advice-summary" style={{ margin: 0 }}>
