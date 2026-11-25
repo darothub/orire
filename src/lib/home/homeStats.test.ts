@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CvVersion } from "@/lib/store/libraryStore";
-import { homeStats, recentVersions, tileInitial, timeAgo } from "./homeStats";
+import { homeStats, recentScores, recentVersions, tileInitial, timeAgo } from "./homeStats";
 
 const v = (o: Partial<CvVersion>): CvVersion =>
   ({ id: "x", name: "CV", company: "", person: "", template: "aurora", cv: {} as never, baseline: null, createdAt: 0, updatedAt: 0, ...o }) as CvVersion;
@@ -38,5 +38,13 @@ describe("tileInitial", () => {
   it("prefers company then name", () => {
     expect(tileInitial({ company: "acme", name: "Z" })).toBe("A");
     expect(tileInitial({ company: " ", name: "master" })).toBe("M");
+  });
+});
+
+describe("recentScores", () => {
+  it("keeps the newest points, clamped to 0-100", () => {
+    const h = [10, 20, 30, 40, 50, 60, 120].map((score) => ({ score }));
+    expect(recentScores(h)).toEqual([20, 30, 40, 50, 60, 100]);
+    expect(recentScores([])).toEqual([]);
   });
 });

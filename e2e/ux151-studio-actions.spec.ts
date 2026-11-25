@@ -15,7 +15,7 @@ for (const viewport of [
     await signIn(page);
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForShell(page);
-    const home = page.getByRole("heading", { name: "Your CV studio" });
+    const home = page.getByRole("heading", { name: /^(Your CV studio|Welcome back, .+)$/ });
     await expect(home).toBeVisible();
     const next = page.locator(".spot-studio-next");
     await expect(next).toBeVisible();
@@ -65,6 +65,10 @@ for (const width of [1440, 390, 320]) {
       await expect(studio.getByRole("button", { name: /^Build step by step/ })).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(studio.getByRole("button", { name: "Your library", exact: true })).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(studio.getByRole("button", { name: "Change template", exact: true })).toBeFocused();
+      await page.keyboard.press("Tab");
+      await expect(studio.getByRole("button", { name: "Export", exact: true })).toBeFocused();
       await page.keyboard.press("Tab");
       await expect(studio.getByRole("button", { name: /^Open Tailor/ })).toBeFocused();
       await page.keyboard.press("Tab");

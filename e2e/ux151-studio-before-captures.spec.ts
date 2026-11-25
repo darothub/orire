@@ -11,7 +11,7 @@ test("UX151 capture implemented Studio after images on desktop and mobile", asyn
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await waitForShell(page);
     await expect(page.getByRole("navigation", { name: "Workspaces" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Your CV studio" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^(Your CV studio|Welcome back, .+)$/ })).toBeVisible();
     await expect(page.getByRole("heading", { name: /Start your first CV|Continue your CV/ })).toBeVisible();
     await testInfo.attach("AFTER-implemented-Studio-" + viewport.name, {
       body: await page.screenshot({ fullPage: true, animations: "disabled" }),

@@ -38,3 +38,8 @@ export function tileInitial(v: Pick<CvVersion, "company" | "name">): string {
   const src = v.company.trim() || v.name.trim();
   return (src[0] ?? "C").toUpperCase();
 }
+
+/** Last `limit` match scores, oldest first, for the progress bars. */
+export function recentScores(history: readonly { score: number }[], limit = 6): number[] {
+  return history.slice(-limit).map((p) => Math.round(Math.min(100, Math.max(0, p.score))));
+}
