@@ -4435,3 +4435,72 @@ body,
 @media (max-width: 560px) {
   .spot-studio-tools .spot-grid { grid-template-columns: 1fr; }
 }
+/* ===== Ink + Fortune — workspace shell =====
+   Final layer: re-points the workspace tokens at the design-system palette
+   (violet = AI/copilot, gold = payoff) and restyles the rail's selected state.
+   Dark only here; the light theme keeps its own shell tokens below. */
+:root {
+  --bg: #14121c;
+  --bg-2: #181522;
+  --panel: #1c1926;
+  --panel-2: #242030;
+  --line: #2a2538;
+  --line-2: #3a3450;
+  --text: #f4f2f8;
+  --muted: #aaa4bf;
+  --faint: #8f89a4;
+  --accent: #a99ef9;
+  --accent-2: #f5c56b;
+  --accent-3: #f5c56b;
+  --grad: linear-gradient(120deg, #8273f6, #a99ef9);
+  --rail-grad: linear-gradient(180deg, #1c1926, #14121c);
+  --deck-bg: rgba(28, 25, 38, 0.7);
+}
+body,
+.auth-gate-cover {
+  background:
+    radial-gradient(1400px 760px at 8% -25%, rgba(130, 115, 246, 0.16), transparent 70%),
+    radial-gradient(1100px 600px at 112% 8%, rgba(245, 197, 107, 0.06), transparent 65%),
+    var(--bg);
+}
+.app-bar { background: rgba(20, 18, 28, 0.72); border-bottom-color: var(--line); }
+.brand-dot { filter: none; }
+.brand-name { background: none; color: var(--text); font-family: var(--or-font-display, inherit); letter-spacing: -0.02em; font-weight: 700; }
+.btn-primary,
+.app-bar .btn-primary,
+.app-bar .btn-cta {
+  background: #f5c56b;
+  color: #241a07;
+  font-weight: 700;
+  border: 0;
+  box-shadow: 0 8px 22px -12px rgba(245, 197, 107, 0.6);
+}
+.btn-primary:hover,
+.app-bar .btn-primary:hover { background: #f8d286; box-shadow: 0 10px 26px -12px rgba(245, 197, 107, 0.75); filter: none; }
+.btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+.rail-ritem:focus-visible, .btn-primary:focus-visible, .btn-ghost:focus-visible { outline-color: #a99ef9; }
+.rail-active {
+  background: linear-gradient(90deg, rgba(130, 115, 246, 0.26), rgba(130, 115, 246, 0.08));
+  border: 1px solid rgba(169, 158, 249, 0.32);
+  box-shadow: 0 8px 20px -10px rgba(130, 115, 246, 0.7);
+}
+.rail-item.is-active { color: #fff; }
+.rail-item.is-active .rail-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: #6754e2;
+  color: #fff;
+  box-shadow: 0 4px 12px -2px rgba(130, 115, 246, 0.7);
+}
+.rail-item.is-active .rail-icon svg { width: 16px; height: 16px; }
+.rail-home.is-active { border-color: rgba(169, 158, 249, 0.4); background: rgba(130, 115, 246, 0.14); }
+.template-pill { border-color: rgba(169, 158, 249, 0.35); color: #cfc8fc; background: rgba(130, 115, 246, 0.1); }
+.cmdk-row.is-active, .exp-mode.is-on, .exp-chip.is-on, .exp-align.is-on, .plan-card.is-active { background: rgba(130, 115, 246, 0.16); }
+.spot-studio-next {
+  border-color: rgba(169, 158, 249, 0.28);
+  background: radial-gradient(ellipse at 100% 0%, rgba(130, 115, 246, 0.2), transparent 58%), linear-gradient(125deg, var(--panel-2), var(--panel));
+}
+@media (prefers-reduced-motion: reduce) { .rail-item.is-active .rail-icon { box-shadow: none; } }
