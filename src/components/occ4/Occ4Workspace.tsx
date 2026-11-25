@@ -198,8 +198,23 @@ export function Occ4Workspace() {
     setIntPhase(s.intPhase); setIntIndex(s.intIndex); setIntQuestion(s.intQuestion); lastStructuredRef.current = s.lastStructured;
     setUploadError(""); setTranscript(s.transcript); setSaveState("idle"); setEditMode(false);
   }
+  // A conversation counts as empty when it's a local (unsaved) one the user
+  // hasn't interacted with yet — no transcript turns. Saved conversations
+  // never qualify. The active one reads live state; others read their snapshot.
+  function isEmptyConversation(id: string): boolean {
+    const c = conversations.find((x) => x.id === id);
+    if (!c || c.readOnly || c.backendId) return false;
+    if (id === activeId) return transcript.length === 0;
+    const snap = snapshots.current.get(id);
+    return !snap || snap.transcript.length === 0;
+  }
   function newConversation() {
     setNavOpen(false);
+    // Don't stack empty conversations: if the current one is untouched, stay on
+    // it; otherwise reuse any existing empty one before creating a fresh one.
+    if (isEmptyConversation(activeId)) return;
+    const existingEmpty = conversations.find((c) => c.id !== activeId && isEmptyConversation(c.id));
+    if (existingEmpty) return switchConversation(existingEmpty.id);
     snapshots.current.set(activeId, captureSnapshot());
     const id = "c" + (++convSeq.current);
     setConversations((cs) => [...cs, { id, title: "New conversation" }]);
