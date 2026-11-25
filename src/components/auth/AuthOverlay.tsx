@@ -453,7 +453,7 @@ export function AuthOverlay() {
           >
             <aside className="auth-side">
               <div className="auth-side-brand">
-                <span className="auth-brand-mark"><BrandMark size={30} /></span>
+                <span className="auth-brand-mark"><BrandMark size={30} badge={false} /></span>
                 <span className="auth-brand-name">Orire</span>
               </div>
               <h2 className="auth-side-title">
@@ -465,7 +465,7 @@ export function AuthOverlay() {
                 <li><span aria-hidden>✦</span> Tailor it to any job with built-in AI</li>
                 <li><span aria-hidden>❖</span> {TEMPLATE_COUNT} standout templates, live preview as you edit</li>
               </ul>
-              <p className="auth-side-trust">Trusted by job seekers worldwide</p>
+              <p className="auth-side-trust">Free to start · No card required</p>
             </aside>
             <div className="auth-form">
             <button
@@ -487,7 +487,7 @@ export function AuthOverlay() {
             </button>
 
             <div className="auth-brand">
-              <span className="auth-brand-mark"><BrandMark size={30} /></span>
+              <span className="auth-brand-mark"><BrandMark size={30} badge={false} /></span>
               <span className="auth-brand-name">Orire</span>
             </div>
 
