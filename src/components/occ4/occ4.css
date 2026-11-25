@@ -245,6 +245,11 @@
 .occ4-fb-warn { color: var(--or-gold); }
 .occ4-fb-mute { color: var(--or-muted); }
 
+/* ---- export ---- */
+.occ4-export-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Off-screen, unscaled render used only as the PDF rasterisation source. */
+.occ4-export-paper { position: absolute; left: -10000px; top: 0; width: 794px; pointer-events: none; }
+
 /* ---- library ---- */
 .occ4-lib { display: flex; flex-direction: column; gap: 6px; }
 .occ4-lib-row { display: flex; align-items: center; gap: 12px; padding: 9px 11px; border: 1px solid var(--or-line); border-radius: var(--or-radius-md); }
