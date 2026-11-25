@@ -10,6 +10,11 @@ import type { ParsedCV } from "@/lib/ingest/parse";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { cvDataToText } from "@/lib/cv/cvDataToText";
 import { parseCVText } from "@/lib/ingest/parse";
+import { authorizeRefineRun } from "@/app/actions/refine";
+import { applyRefinePatch } from "@/lib/ai/refinePatch";
+import { parseModelJSON, factGround } from "@/lib/ai/guardrails";
+import { diffCv, applyReviewed } from "@/lib/ai/cvDiff";
+import { useSettingsStore } from "@/lib/store/settingsStore";
 import { coerceCoverLetter } from "@/lib/ai/coverLetter";
 import type { CoverLetter } from "@/lib/cv/coverLetter";
 import { createVersion } from "@/app/actions/library";
@@ -25,6 +30,7 @@ import { getTemplate } from "@/components/templates/registry";
 import { Occ4Review } from "./Occ4Review";
 import { Occ4Templates } from "./Occ4Templates";
 import { Occ4Library, type SavedDoc } from "./Occ4Library";
+import { Occ4Refine } from "./Occ4Refine";
 import "./occ4.css";
 
 /**
@@ -43,7 +49,7 @@ import "./occ4.css";
  */
 
 type Msg = { id: number; node: ReactNode };
-type Intent = "review" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "library" | "default";
+type Intent = "review" | "refine" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "library" | "default";
 type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 
 // occ4's specialists behave like a model picker. Kept local (not the shared
@@ -68,6 +74,7 @@ const Spark = () => (
 // the picker, so they're not duplicated here.
 const CHIPS: { label: string; intent: Intent }[] = [
   { label: "Review", intent: "review" },
+  { label: "Refine for the JD", intent: "refine" },
   { label: "Keyword coverage", intent: "match" },
   { label: "Templates", intent: "template" },
   { label: "My library", intent: "library" },
@@ -261,6 +268,52 @@ export function Occ4Workspace() {
   function needContext() {
     sayBot("First, add your CV and the job description so I can work against the real role.");
     setContextOpen(true);
+  }
+
+  // Refine — a full-CV, JD-tailored rewrite. Reuses the studio's metered,
+  // plan-gated flow: authorizeRefineRun consumes one monthly refine and mints a
+  // run token that /api/ai/refine requires. The refined CV is grounded, diffed
+  // against the draft, and the user accepts/rejects each change before applying.
+  async function runRefine() {
+    if (!draft) return sayBot("Import or open a CV first so I can refine it.");
+    if (!roleReady) return sayBot("Add the job description first — Refine tailors the whole CV to it.");
+    setRunning(true);
+    sayBot("Refining your whole CV against the JD… this uses one of your monthly refines.");
+    try {
+      const { provider, models } = useSettingsStore.getState();
+      const model = models[provider] ?? "";
+      const authz = await authorizeRefineRun([{ provider, model }]);
+      if (!authz.ok || !authz.token) {
+        return sayBot(authz.block ? `${authz.block.title}: ${authz.block.body}` : "Refine isn't available on your plan.");
+      }
+      const response = await fetch("/api/ai/refine", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, model, jobDescription: description, cv: draft, runToken: authz.token, facts: [] }),
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!data?.ok || !data.raw) {
+        return sayBot(typeof data?.error?.message === "string" ? data.error.message : "Couldn't refine the CV — try again in a moment.");
+      }
+      const before = draft;
+      const grounded = factGround(before, applyRefinePatch(before, parseModelJSON(data.raw)));
+      const changes = diffCv(before, grounded.cv);
+      if (changes.length === 0) return sayBot("Your CV already reads well for this role — Refine suggested no changes.");
+      push(<CardRow><Occ4Refine changes={changes} onApply={(rejected) => applyRefine(before, grounded.cv, rejected)} /></CardRow>);
+    } catch {
+      sayBot("Couldn't run Refine. Try again in a moment.");
+    } finally {
+      setRunning(false);
+    }
+  }
+  function applyRefine(before: CVData, after: CVData, rejected: Set<string>) {
+    const next = applyReviewed(before, after, rejected);
+    const text = cvDataToText(next);
+    setDraft(next);
+    setCv(text);
+    lastStructuredRef.current = text;
+    setPreviewOpen(true);
+    sayBot("Applied your accepted changes to the working draft. Save it to your library when you're happy with it.");
   }
 
   async function runReview(goal: string) {
@@ -571,6 +624,7 @@ export function Occ4Workspace() {
 
   function handle(intent: Intent, text: string) {
     if (intent === "review") return void runReview(text);
+    if (intent === "refine") return void runRefine();
     if (intent === "match") return void runMatch();
     if (intent === "simulate") return void runSimulate();
     if (intent === "template") return runTemplates();
@@ -1100,6 +1154,7 @@ function renderSaved(title: string): ReactNode {
 function classify(text: string): Intent {
   const t = text.toLowerCase();
   if (/review|tailor|improve|rewrite|better|advi[cs]e|recommend/.test(t)) return "review";
+  if (/\brefine\b|full[- ]?cv|whole cv|tailor everything|rewrite the whole/.test(t)) return "refine";
   if (/simulate|gap|ideal candidate|how do i stack/.test(t)) return "simulate";
   if (/match|keyword|compare|overlap|coverage/.test(t)) return "match";
   if (/template|layout|design|theme|style|look/.test(t)) return "template";
