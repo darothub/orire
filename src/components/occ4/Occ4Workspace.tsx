@@ -10,6 +10,7 @@ import type { CVData } from "@/lib/cv/schema";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { cvDataToText } from "@/lib/cv/cvDataToText";
+import { parseCVText } from "@/lib/ingest/parse";
 import { coerceCoverLetter } from "@/lib/ai/coverLetter";
 import type { CoverLetter } from "@/lib/cv/coverLetter";
 import { createVersion } from "@/app/actions/library";
@@ -81,6 +82,9 @@ export function Occ4Workspace() {
   const [coverage, setCoverage] = useState<number | null>(null);
   const [templateId, setTemplateId] = useState("aurora");
   const descriptionRef = useRef("");
+  // Text that produced the current draft, so blurring the paste box or
+  // re-uploading the same CV doesn't restructure and re-announce it.
+  const lastStructuredRef = useRef("");
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -182,6 +186,19 @@ export function Occ4Workspace() {
       return patchCvField(prev, field, existing, replacement) ?? prev;
     });
     setPreviewOpen(true);
+  }
+
+  // Structure pasted CV text into the working draft in-browser (same heuristic
+  // parser the upload path uses) when the paste box loses focus — so paste users
+  // get the connected flow, not just PDF/DOCX uploaders. Skips re-announcing the
+  // same text.
+  function structurePastedCv() {
+    const text = cv.trim();
+    if (text.length < 50 || !looksLikeCV(text) || text === lastStructuredRef.current) return;
+    const built = cvDataFromParsed(parseCVText(text));
+    lastStructuredRef.current = text;
+    setDraft(built);
+    push(<CardRow>{renderDraftCard(built, "pasted CV")}</CardRow>);
   }
 
   // Templates are an action on the draft, not a specialist: the picker restyles
@@ -441,11 +458,12 @@ export function Occ4Workspace() {
       if (kind === "cv") {
         setCv(text);
         setCvFileName(file.name);
-        if (structured) {
-          const built = cvDataFromParsed(structured);
-          setDraft(built);
-          push(<CardRow>{renderDraftCard(built, file.name)}</CardRow>);
-        }
+        // PDF/DOCX carry a parsed structure from /api/parse; a TXT upload is
+        // structured in-browser with the same heuristic parser.
+        const built = cvDataFromParsed(structured ?? parseCVText(text));
+        lastStructuredRef.current = text;
+        setDraft(built);
+        push(<CardRow>{renderDraftCard(built, file.name)}</CardRow>);
       } else {
         setDescription(text);
         setRoleFileName(file.name);
@@ -577,6 +595,7 @@ export function Occ4Workspace() {
                 <textarea
                   value={cv}
                   onChange={(e) => setCv(e.target.value)}
+                  onBlur={structurePastedCv}
                   placeholder="…or paste your CV text"
                   rows={4}
                 />
