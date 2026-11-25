@@ -122,7 +122,7 @@
   font-weight: 700;
 }
 .or-msg--bot .or-msg__av { background: linear-gradient(140deg, var(--or-violet), var(--or-gold)); color: #fff; }
-.or-msg--user .or-msg__av { background: var(--or-surface-2); border: 1px solid var(--or-line); color: var(--or-ink-soft); }
+.or-msg--user .or-msg__av { background: var(--or-surface-2); border: 1px solid var(--or-line); color: var(--or-ink-soft); font-size: 11px; font-weight: 600; letter-spacing: -0.01em; }
 .or-msg__bubble {
   background: var(--or-surface);
   border: 1px solid var(--or-line);

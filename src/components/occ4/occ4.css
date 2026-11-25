@@ -199,7 +199,16 @@
 .occ4-disclaimer { font-size: 11px; color: var(--or-muted); line-height: 1.45; margin: 14px 0 0; }
 
 /* ---- keyword comparison ---- */
-.occ4-cov { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+/* ---- working indicator ---- */
+.occ4-working { display: inline-flex; align-items: center; gap: 2px; color: var(--or-ink-soft); font-size: 13px; }
+.occ4-dots { display: inline-flex; gap: 3px; margin-left: 4px; }
+.occ4-dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--or-violet); display: inline-block; animation: occ4-blink 1.2s infinite ease-in-out both; }
+.occ4-dots i:nth-child(2) { animation-delay: 0.2s; }
+.occ4-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes occ4-blink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .occ4-dots i { animation: none; opacity: 0.6; } }
+
+.occ4-cov { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; background: var(--or-surface-2); border: 1px solid var(--or-line); border-radius: var(--or-radius-md); padding: 14px 16px; }
 .occ4-terms { display: flex; flex-direction: column; gap: 12px; }
 .occ4-terms > div > b { font-size: 12.5px; font-weight: 600; }
 .occ4-chiprow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
