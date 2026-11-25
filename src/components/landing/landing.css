@@ -203,6 +203,7 @@
 /* pricing */
 .lp-pricing { padding: 84px 0; text-align: center; scroll-margin-top: 72px; }
 .lp-pricing .lp-eyebrow { justify-content: center; }
+.lp-h1 { font-size: clamp(32px, 4vw, 44px); }
 .lp-psub { max-width: 40em; margin: 14px auto 0; font-size: 16px; color: var(--or-ink-soft); }
 .lp-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; text-align: left; }
 .lp-plan { display: flex; flex-direction: column; padding: 26px; background: var(--or-surface); border: 1px solid var(--or-line); border-radius: 22px; }
@@ -219,6 +220,7 @@
 .lp-plan .lp-btn { width: 100%; margin-top: 22px; }
 .lp-plan ul:last-of-type { flex: 1; }
 .lp-plans-more { margin-top: 22px; font-size: 13px; color: var(--or-muted); }
+.lp-plans-more.lp-disclosure { max-width: 46em; margin-inline: auto; font-size: 12.5px; line-height: 1.6; }
 .lp-plans-more a { color: var(--or-violet-soft); text-decoration: underline; text-underline-offset: 3px; }
 
 /* final CTA */

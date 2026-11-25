@@ -137,7 +137,7 @@ for (const planName of ["Pro", "Career"]) {
   test(`UX87 ${planName} plan intent opens signup without checkout`, async ({ page }) => {
   await page.goto("/pricing", { waitUntil: "domcontentloaded" });
   await page.locator("#pricing").scrollIntoViewIfNeeded();
-  const plan = page.locator(".landing-price-card").filter({ has: page.getByRole("heading", { name: planName, exact: true }) });
+  const plan = page.locator(".lp-plan").filter({ has: page.getByRole("heading", { name: planName, exact: true }) });
   await expect(plan).toBeVisible();
   const action = plan.getByRole("button");
   await action.click();

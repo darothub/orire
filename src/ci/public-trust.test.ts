@@ -10,7 +10,7 @@ const source = (path: string) => readFileSync(resolve(process.cwd(), path), "utf
 /** UX95: contact and discoverability safeguards, not legal-compliance certification. */
 describe("public privacy and support discoverability", () => {
   it("exposes policy and support destinations in the public footer", () => {
-    const landing = source("src/components/landing/Landing.tsx");
+    const landing = source("src/components/landing/LandingFooter.tsx");
     for (const path of ["/privacy", "/terms", "/support"]) {
       expect(landing).toContain(`href="${path}"`);
     }

@@ -4,13 +4,13 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useConsent } from "@/lib/consent/consent";
 import { funnel, type CtaPlacement } from "@/lib/analytics/funnel";
-import { CookiePreferencesLink } from "@/components/analytics/CookiePreferencesLink";
 import { useUIStore } from "@/lib/store/uiStore";
 import { BrandMark } from "@/components/BrandMark";
 import { HeroMatchCard } from "@/components/landing/HeroMatchCard";
 import { LandingMobileNav } from "@/components/landing/LandingMobileNav";
 import { Reveal } from "@/components/landing/Reveal";
-import { landingPlans } from "@/components/landing/pricing";
+import { PlanCards } from "@/components/landing/PlanCards";
+import { LandingFooter } from "@/components/landing/LandingFooter";
 import { ArrowIcon, CheckIcon, ChatIcon, CrossIcon, LockIcon, PlusIcon, ShieldIcon } from "@/components/landing/icons";
 import "./landing.css";
 
@@ -216,29 +216,7 @@ export function Landing() {
               <h2 className="lp-h2">Start free. Upgrade when it lands you interviews.</h2>
               <p className="lp-psub">No card to try it. Tailor a CV, run your first simulation, and export today.</p>
             </Reveal>
-            <div className="lp-plans">
-              {landingPlans().map((p) => (
-                <Reveal key={p.id} className={`lp-plan${p.highlighted ? " is-hot" : ""}`}>
-                  {p.highlighted && <span className="lp-plan-tag">Most popular</span>}
-                  <h3>{p.label}</h3>
-                  <div className="lp-price">{p.priceLabel}<span>{p.cadence}</span></div>
-                  <p className="lp-plan-blurb">{p.blurb}</p>
-                  <ul className="lp-usage" aria-label={`${p.label} usage limits`}>
-                    {p.usageDetails.map((detail) => <li key={detail}><CheckIcon />{detail}</li>)}
-                  </ul>
-                  <ul>
-                    {p.perks.slice(0, TEASER_PERKS).map((perk) => <li key={perk}><CheckIcon />{perk}</li>)}
-                  </ul>
-                  <button
-                    className={`lp-btn ${p.highlighted ? "lp-btn--gold" : "lp-btn--ghost"}`}
-                    disabled={!ready}
-                    onClick={() => startSignup("pricing", p.id)}
-                  >
-                    {p.cta}
-                  </button>
-                </Reveal>
-              ))}
-            </div>
+            <PlanCards perkLimit={TEASER_PERKS} disabled={!ready} onChoose={(p) => startSignup("pricing", p.id)} />
             <p className="lp-plans-more">
               Prices in USD; paid plans renew monthly and free quotas are lifetime totals.{" "}
               <Link href="/pricing">See every feature and the full terms</Link>
@@ -260,42 +238,7 @@ export function Landing() {
         </section>
       </main>
 
-      <footer className="lp-foot">
-        <div className="lp-wrap">
-          <div className="lp-foot-in">
-            <div className="lp-foot-brand">
-              <div className="lp-brand"><BrandMark size={28} badge={false} /><b>Orire</b></div>
-              <p>An AI CV studio and career copilot. Ink and fortune — built in Porto for the whole of Europe.</p>
-            </div>
-            <div className="lp-foot-cols">
-              <nav className="lp-foot-col" aria-label="Product">
-                <h4>Product</h4>
-                <a href="#simulate">Simulate the gap</a>
-                <a href="#copilot">Career Copilot</a>
-                <a href="#studio">CV Studio</a>
-                <a href="#pricing">Pricing</a>
-              </nav>
-              <nav className="lp-foot-col" aria-label="Legal and help">
-                <h4>Trust</h4>
-                <Link href="/privacy">Privacy</Link>
-                <Link href="/terms">Terms</Link>
-                <Link href="/support">Support</Link>
-                <CookiePreferencesLink />
-              </nav>
-              <nav className="lp-foot-col" aria-label="Explore">
-                <h4>Explore</h4>
-                <Link href="/templates">Templates</Link>
-                <Link href="/guides">CV guides</Link>
-                <Link href="/pricing">Plans &amp; features</Link>
-              </nav>
-            </div>
-          </div>
-          <div className="lp-foot-base">
-            <span>© {new Date().getFullYear()} Orire. Made in Porto.</span>
-            <span>ìre — good fortune, engineered.</span>
-          </div>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

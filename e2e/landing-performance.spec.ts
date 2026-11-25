@@ -87,7 +87,7 @@ test("anonymous landing defers workspace JavaScript and still resumes paid plan 
   expect(scriptBytes).toBeGreaterThan(0);
   expect(scriptBytes).toBeLessThan(1_200_000);
   await page.goto("/pricing", { waitUntil: "domcontentloaded" });
-  const pro = page.locator(".landing-price-card").filter({
+  const pro = page.locator(".lp-plan").filter({
     has: page.getByRole("heading", { name: "Pro", exact: true }),
   });
   await pro.getByRole("button").click();
