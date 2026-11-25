@@ -245,6 +245,13 @@
 .occ4-fb-warn { color: var(--or-gold); }
 .occ4-fb-mute { color: var(--or-muted); }
 
+/* ---- library ---- */
+.occ4-lib { display: flex; flex-direction: column; gap: 6px; }
+.occ4-lib-row { display: flex; align-items: center; gap: 12px; padding: 9px 11px; border: 1px solid var(--or-line); border-radius: var(--or-radius-md); }
+.occ4-lib-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.occ4-lib-meta b { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.occ4-lib-meta span { font-size: 10.5px; color: var(--or-muted); }
+
 /* ---- cover letter ---- */
 .occ4-cover { display: flex; flex-direction: column; gap: 9px; border-left: 2px solid var(--or-violet); padding-left: 12px; }
 .occ4-cover p { font-size: 12.5px; line-height: 1.6; color: var(--or-ink-soft); margin: 0; }

@@ -24,6 +24,7 @@ import { MatchRing } from "@/components/ui/MatchRing";
 import { getTemplate } from "@/components/templates/registry";
 import { Occ4Review } from "./Occ4Review";
 import { Occ4Templates } from "./Occ4Templates";
+import { Occ4Library, type SavedDoc } from "./Occ4Library";
 import "./occ4.css";
 
 /**
@@ -42,7 +43,7 @@ import "./occ4.css";
  */
 
 type Msg = { id: number; node: ReactNode };
-type Intent = "review" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "default";
+type Intent = "review" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "library" | "default";
 type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 
 // occ4's specialists behave like a model picker. Kept local (not the shared
@@ -69,6 +70,7 @@ const CHIPS: { label: string; intent: Intent }[] = [
   { label: "Review", intent: "review" },
   { label: "Keyword coverage", intent: "match" },
   { label: "Templates", intent: "template" },
+  { label: "My library", intent: "library" },
   { label: "Save to library", intent: "save" },
 ];
 
@@ -403,6 +405,34 @@ export function Occ4Workspace() {
 
   // Save — persists the working draft as a NEW private library version (never the
   // active editor CV: makeActive=false), carrying the chosen template.
+  // Library — browse saved CV versions and open one as the working draft,
+  // closing the Save → retrieve loop.
+  async function runLibrary() {
+    setRunning(true);
+    sayBot("Fetching your saved CVs…");
+    try {
+      const response = await fetch("/api/occ/versions", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) return sayBot(typeof data?.error === "string" ? data.error : "Couldn't load your library — try again in a moment.");
+      const docs = (Array.isArray(data.documents) ? data.documents : []) as SavedDoc[];
+      push(<CardRow><Occ4Library docs={docs} onOpen={openVersion} /></CardRow>);
+    } catch {
+      sayBot("Couldn't reach your library. Try again in a moment.");
+    } finally {
+      setRunning(false);
+    }
+  }
+  function openVersion(doc: SavedDoc) {
+    const text = cvDataToText(doc.data);
+    setDraft(doc.data);
+    setTemplateId(doc.template || "aurora");
+    setCv(text);
+    lastStructuredRef.current = text;
+    setCvFileName(doc.title);
+    setPreviewOpen(true);
+    sayBot(`Loaded “${doc.title}” as your working draft. Add a job description and I'll review or simulate against it.`);
+  }
+
   async function runSave() {
     if (!draft) return sayBot("There's no working draft to save yet — import a CV first.");
     setRunning(true);
@@ -547,6 +577,7 @@ export function Occ4Workspace() {
     if (intent === "interview") return void askQuestion(0);
     if (intent === "cover") return void runCover();
     if (intent === "save") return void runSave();
+    if (intent === "library") return void runLibrary();
     sayBot("I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.");
   }
 
@@ -1073,7 +1104,8 @@ function classify(text: string): Intent {
   if (/match|keyword|compare|overlap|coverage/.test(t)) return "match";
   if (/template|layout|design|theme|style|look/.test(t)) return "template";
   if (/cover|letter/.test(t)) return "cover";
-  if (/\bsave\b|library|keep this|store it|new version/.test(t)) return "save";
+  if (/my library|saved cv|open a cv|load a cv|my cvs|my versions|browse/.test(t)) return "library";
+  if (/\bsave\b|keep this|store it|new version/.test(t)) return "save";
   if (/interview|practi[cs]e|question/.test(t)) return "interview";
   return "default";
 }
