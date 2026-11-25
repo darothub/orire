@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
-import { OCC_AGENTS, DEFAULT_OCC_AGENT, getOccAgent, type OccAgentId } from "@/lib/occ/agents";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import { MAX_INTERVIEW_TURNS, type InterviewQuestion, type InterviewFeedback } from "@/lib/occ/interview";
 import type { OccAdvice } from "@/lib/occ/recommendations";
@@ -42,8 +41,20 @@ import "./occ4.css";
  */
 
 type Msg = { id: number; node: ReactNode };
-type Intent = "review" | "match" | "template" | "interview" | "cover" | "save" | "default";
+type Intent = "review" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "default";
 type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
+
+// occ4's specialists behave like a model picker. Kept local (not the shared
+// OCC_AGENTS) so occ2/occ3 are untouched: Review is Auto, Simulate/Interview/
+// Cover are explicit. Selecting one runs it.
+type Specialist = "review" | "simulate" | "interview" | "cover";
+const DEFAULT_SPECIALIST: Specialist = "review";
+const SPECIALISTS: { id: Specialist; label: string; desc: string }[] = [
+  { id: "review", label: "CV Review", desc: "Compare your CV with the JD and suggest fixes" },
+  { id: "simulate", label: "Simulate", desc: "Model the gap against the JD and score coverage" },
+  { id: "interview", label: "Interview Coach", desc: "Practise questions with grounded feedback" },
+  { id: "cover", label: "Cover letter", desc: "Draft a grounded letter from your CV" },
+];
 
 const Spark = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="var(--or-violet)" strokeWidth="2" aria-hidden>
@@ -51,17 +62,17 @@ const Spark = () => (
   </svg>
 );
 
+// Chips are quick ACTIONS on the draft — specialists (Interview, Cover) live in
+// the picker, so they're not duplicated here.
 const CHIPS: { label: string; intent: Intent }[] = [
-  { label: "Review my CV against the role", intent: "review" },
+  { label: "Review", intent: "review" },
   { label: "Keyword coverage", intent: "match" },
-  { label: "Preview a template", intent: "template" },
-  { label: "Practise an interview", intent: "interview" },
-  { label: "Draft a cover letter", intent: "cover" },
-  { label: "Save to my library", intent: "save" },
+  { label: "Templates", intent: "template" },
+  { label: "Save to library", intent: "save" },
 ];
 
 export function Occ4Workspace() {
-  const [agent, setAgent] = useState<OccAgentId>(DEFAULT_OCC_AGENT);
+  const [agent, setAgent] = useState<Specialist>(DEFAULT_SPECIALIST);
   const [input, setInput] = useState("");
   const [cv, setCv] = useState("");
   // The working draft — the structured spine every tool reads and writes. When
@@ -120,7 +131,7 @@ export function Occ4Workspace() {
       if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
     });
   }
-  const sayUser = (text: string) => push(<ChatMessage role="user">{text}</ChatMessage>);
+  const sayUser = (text: string) => push(<ChatMessage role="user" avatar="You">{text}</ChatMessage>);
   const sayBot = (text: string) => push(<ChatMessage role="bot">{text}</ChatMessage>);
 
   function needContext() {
@@ -131,7 +142,7 @@ export function Occ4Workspace() {
   async function runReview(goal: string) {
     if (!cvReady || !roleReady) return needContext();
     setRunning(true);
-    sayBot("Reviewing your CV against the role…");
+    sayBot("Reviewing your CV against the JD…");
     try {
       const cvText = draft ? cvDataToText(draft) : cv;
       const response = await fetch("/api/occ/advise", {
@@ -219,6 +230,31 @@ export function Occ4Workspace() {
   // Cover letter — reuses the server-keyed, plan-gated /api/ai/cover-letter with
   // the working draft as the grounding CV, so the letter can only restate facts
   // already in the draft.
+  // Simulate the gap — reuses the deterministic keyword match and reframes it as
+  // a gap view (covered vs missing terms + a coverage reading). Honest by design:
+  // it's keyword overlap with the role, never an AI hiring prediction.
+  async function runSimulate() {
+    if (!cvReady || !roleReady) return needContext();
+    setRunning(true);
+    sayBot("Modelling the gap between your CV and the role…");
+    try {
+      const cvText = draft ? cvDataToText(draft) : cv;
+      const response = await fetch("/api/occ/match", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cv: cvText, description }), cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) return sayBot(typeof data?.error === "string" ? data.error : "Couldn't run the simulation — try again in a moment.");
+      const result = data as MatchResult;
+      setCoverage(result.coverage);
+      push(<CardRow>{renderSimulate(result)}</CardRow>);
+    } catch {
+      sayBot("Couldn't reach the simulation service. Try again in a moment.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
   async function runCover() {
     if (!draft) return sayBot("Import a CV (PDF or DOCX) first so I can ground the cover letter in it.");
     if (!roleReady) return sayBot("Add the job description first and I'll tailor the letter to it.");
@@ -384,6 +420,7 @@ export function Occ4Workspace() {
   function handle(intent: Intent, text: string) {
     if (intent === "review") return void runReview(text);
     if (intent === "match") return void runMatch();
+    if (intent === "simulate") return void runSimulate();
     if (intent === "template") return runTemplates();
     if (intent === "interview") return void askQuestion(0);
     if (intent === "cover") return void runCover();
@@ -404,12 +441,8 @@ export function Occ4Workspace() {
       if (intPhase === "feedback") return sayBot("Tap “Next question” to continue, or switch to CV Review.");
       return void askQuestion(0);
     }
-    if (agent === "improve") {
-      return sayBot("CV Improvement — approving wording into a saved CV version — is coming to occ4 in a later slice.");
-    }
-    if (agent === "memory") {
-      return sayBot("Career Memory — reviewing what the copilot remembers about you — is coming to occ4 in a later slice.");
-    }
+    if (agent === "simulate") return void runSimulate();
+    if (agent === "cover") return void runCover();
     handle(classify(value), value);
   }
 
@@ -511,8 +544,8 @@ export function Occ4Workspace() {
               onClick={() => setModeOpen((o) => !o)}
             >
               <span className="occ4-mode-dot" aria-hidden />
-              <span className="occ4-mode-label">{getOccAgent(agent).label}</span>
-              {agent === DEFAULT_OCC_AGENT && <span className="occ4-mode-auto">Auto</span>}
+              <span className="occ4-mode-label">{SPECIALISTS.find((s) => s.id === agent)?.label}</span>
+              {agent === DEFAULT_SPECIALIST && <span className="occ4-mode-auto">Auto</span>}
               <svg className="occ4-mode-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
                 <path d="M6 9l6 6 6-6" />
               </svg>
@@ -521,7 +554,7 @@ export function Occ4Workspace() {
               <>
                 <button type="button" className="occ4-mode-backdrop" aria-label="Close specialist menu" onClick={() => setModeOpen(false)} />
                 <div className="occ4-mode-menu" role="menu">
-                  {OCC_AGENTS.map((a) => (
+                  {SPECIALISTS.map((a) => (
                     <button
                       key={a.id}
                       type="button"
@@ -531,17 +564,17 @@ export function Occ4Workspace() {
                       onClick={() => {
                         setAgent(a.id);
                         setModeOpen(false);
+                        // A specialist runs when picked (Review stays Auto).
+                        if (a.id === "simulate") void runSimulate();
+                        else if (a.id === "interview") void askQuestion(0);
+                        else if (a.id === "cover") void runCover();
                       }}
                     >
                       <span className="occ4-mode-item-top">
                         <b>{a.label}</b>
-                        {a.id === DEFAULT_OCC_AGENT ? (
-                          <span className="occ4-mode-auto">Auto</span>
-                        ) : a.id === "interview" ? null : (
-                          <span className="occ4-mode-soon">soon</span>
-                        )}
+                        {a.id === DEFAULT_SPECIALIST && <span className="occ4-mode-auto">Auto</span>}
                       </span>
-                      <span className="occ4-mode-desc">{a.description}</span>
+                      <span className="occ4-mode-desc">{a.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -562,15 +595,22 @@ export function Occ4Workspace() {
           </button>
         </header>
 
-        <div className="occ4-thread" ref={threadRef}>
+        <div className="occ4-thread" ref={threadRef} aria-busy={running}>
           <ChatMessage role="bot">
-            Morning, Amara. Add your CV and a job description, then ask me to review your CV against
-            the role or run a keyword comparison. Everything stays grounded in what&rsquo;s actually
-            in your documents.
+            Add your CV and the job description, then pick a specialist or ask me to review, simulate the
+            gap, preview a template or draft a cover letter. Everything stays grounded in what&rsquo;s
+            actually in your documents.
           </ChatMessage>
           {messages.map((m) => (
             <div key={m.id}>{m.node}</div>
           ))}
+          {running && (
+            <ChatMessage role="bot">
+              <span className="occ4-working" role="status" aria-live="polite">
+                Working<span className="occ4-dots" aria-hidden><i /><i /><i /></span>
+              </span>
+            </ChatMessage>
+          )}
         </div>
 
         <div className="occ4-composer">
@@ -637,7 +677,7 @@ export function Occ4Workspace() {
                   disabled={!cvReady || !roleReady || !!uploading || running}
                   onClick={() => {
                     setContextOpen(false);
-                    send("Review my CV against the role", "review");
+                    send("Review my CV against the JD", "review");
                   }}
                 >
                   Review my CV
@@ -654,7 +694,7 @@ export function Occ4Workspace() {
                   Keyword coverage
                 </Button>
                 {(!cvReady || !roleReady) && (
-                  <span className="occ4-context-hint">Add both your CV and the role to continue.</span>
+                  <span className="occ4-context-hint">Add both your CV and the JD to continue.</span>
                 )}
               </div>
               <p className="occ4-context-note">
@@ -665,7 +705,7 @@ export function Occ4Workspace() {
           )}
           <div className="occ4-chips">
             <button type="button" className="occ4-chip" onClick={() => setContextOpen((o) => !o)}>
-              {contextOpen ? "Hide CV & role" : cvReady && roleReady ? "CV & role ✓" : "Add CV & role"}
+              {contextOpen ? "Hide CV & JD" : cvReady && roleReady ? "CV & JD ✓" : "Add CV & JD"}
             </button>
             {CHIPS.map((c) => (
               <button key={c.intent} type="button" className="occ4-chip" disabled={running} onClick={() => send(c.label, c.intent)}>
@@ -717,7 +757,7 @@ export function Occ4Workspace() {
             <span className="occ4-pv-ctx">
               {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "JD ✓" : "JD —"}
             </span>
-            {coverage !== null && <MatchRing value={coverage} tone="gold" size={52} label="coverage" />}
+            {coverage !== null && <MatchRing value={coverage} tone="gold" size={64} label="coverage" />}
             <button type="button" className="occ4-pv-close" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>
               ✕
             </button>
@@ -793,6 +833,38 @@ function renderMatch(result: MatchResult): ReactNode {
   );
 }
 
+function renderSimulate(result: MatchResult): ReactNode {
+  const gaps = result.unverifiedTerms;
+  return (
+    <CopilotCard title="Simulate the gap" icon={<Spark />} tag={`${result.coverage}% covered`}>
+      <div className="occ4-cov">
+        <MatchRing value={result.coverage} tone="gold" size={82} label="coverage" />
+        <p className="occ4-advice-summary" style={{ margin: 0 }}>
+          Against this role, your CV covers {result.matched} of {result.checked} key term
+          {result.checked === 1 ? "" : "s"}.{" "}
+          {gaps.length
+            ? `Closing the ${gaps.length} gap${gaps.length === 1 ? "" : "s"} below would raise that.`
+            : "No obvious keyword gaps."}
+        </p>
+      </div>
+      {gaps.length > 0 && (
+        <div className="occ4-terms">
+          <div>
+            <b>Gaps to close</b>
+            <div className="occ4-chiprow">
+              {gaps.map((t) => <span key={t} className="occ4-term occ4-term--miss">{t}</span>)}
+            </div>
+          </div>
+        </div>
+      )}
+      <p className="occ4-disclaimer">
+        A deterministic keyword model of the role, not an AI hiring prediction. A missing term is a prompt
+        to add evidence, not proof you lack the skill.
+      </p>
+    </CopilotCard>
+  );
+}
+
 function renderDraftCard(cv: CVData, source: string): ReactNode {
   const roles = cv.experience.filter((e) => e.company.trim() || e.role.trim()).length;
   const bullets = cv.experience.reduce((n, e) => n + e.highlights.filter((h) => h.trim()).length, 0);
@@ -851,6 +923,7 @@ function renderSaved(title: string): ReactNode {
 function classify(text: string): Intent {
   const t = text.toLowerCase();
   if (/review|tailor|improve|rewrite|better|advi[cs]e|recommend/.test(t)) return "review";
+  if (/simulate|gap|ideal candidate|how do i stack/.test(t)) return "simulate";
   if (/match|keyword|compare|overlap|coverage/.test(t)) return "match";
   if (/template|layout|design|theme|style|look/.test(t)) return "template";
   if (/cover|letter/.test(t)) return "cover";
