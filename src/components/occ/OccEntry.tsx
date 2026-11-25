@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-/** Visible only when BOTH the server kill switch and Career entitlement pass. */
+/** Visible only when BOTH the server kill switch and Career entitlement pass.
+ *  Also links the /v4 Home preview, which uses the same access rule. */
 export function OccEntry() {
   const [permitted, setPermitted] = useState(false);
   useEffect(() => {
@@ -14,5 +15,10 @@ export function OccEntry() {
     return () => controller.abort();
   }, []);
   if (!permitted) return null;
-  return <Link href="/occ" className="btn-primary" aria-label="Open Orire Career Copilot">✦ Career Copilot</Link>;
+  return (
+    <>
+      <Link href="/v4" className="btn-ghost" aria-label="Open the Orire v4 Home preview">Home v4</Link>
+      <Link href="/occ" className="btn-primary" aria-label="Open Orire Career Copilot">✦ Career Copilot</Link>
+    </>
+  );
 }
