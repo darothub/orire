@@ -12,7 +12,9 @@ import type { Metric } from "@/lib/plan/plan";
 import { ViewIcon } from "@/components/ViewIcon";
 import { getTemplateInfo } from "@/lib/templates/catalog";
 import { useSession } from "next-auth/react";
+import "./home/home.css";
 import { HomeDashboard } from "@/components/home/HomeDashboard";
+import { MatchRing, useTargetMatch } from "@/components/home/MatchRing";
 
 /** Metered blocks that grey out / route to Plans once the free cap is spent. */
 const METRIC_FOR_VIEW: Partial<Record<WorkspaceView, Metric>> = {
@@ -73,23 +75,33 @@ function BlockCard({ view, recommended }: { view: WorkspaceView; recommended: bo
   );
 }
 
-/** The one AI entry point: Tailor holds Simulate, Coach and Refine. */
+/** The one AI entry point: Tailor holds Simulate, Coach and Refine. With a locked
+ *  target role it names the gaps still open and shows the live match. */
 function TailorHero({ recommended }: { recommended: boolean }) {
   const setView = useViewStore((s) => s.setView);
+  const { score, label, missing } = useTargetMatch();
+  const gaps = missing.length;
 
   return (
     <div className="spot-hero">
       <div className="spot-hero-main">
-        {recommended && <span className="spot-hero-eyebrow">Recommended next</span>}
+        {(recommended || score !== null) && <span className="spot-hero-eyebrow">Recommended next</span>}
         <strong className="spot-hero-title">
-          <ViewIcon view="tailor" /> Tailor your CV to a job
+          {score !== null && gaps > 0 ? `Close ${gaps} ${gaps === 1 ? "gap" : "gaps"} for ${label}` : "Tailor your CV to a job"}
         </strong>
         <span className="spot-hero-sub">
-          Simulate the ideal match, answer a few coaching questions, and rewrite the wording. One job, three tools,
-          and nothing changes without your approval.
+          {score !== null && gaps > 0
+            ? "These skills are in the ideal candidate but not on your CV. Add real evidence for each one."
+            : "Simulate the ideal match, answer a few coaching questions, and rewrite the wording. One job, three tools, and nothing changes without your approval."}
         </span>
+        {score !== null && gaps > 0 && (
+          <ul className="spot-gaps" aria-label="Missing skills">
+            {missing.slice(0, 4).map((g) => <li key={g}><span aria-hidden>✕</span> {g}</li>)}
+          </ul>
+        )}
       </div>
-      <div className="spot-hero-actions">
+      <div className="spot-hero-side">
+        <MatchRing score={score} />
         <button type="button" className="flow-btn primary" onClick={() => setView("tailor")}>
           Open Tailor →
         </button>
@@ -113,7 +125,7 @@ export function SpotlightView() {
   const firstName = session?.user?.name?.trim().split(/\s+/)[0];
   const greeting =
     status === "authenticated"
-      ? firstName ? `Good to see you, ${firstName}.` : "Welcome back."
+      ? "Here is where your job search stands."
       : started
         ? "Welcome back, your draft is saved on this device."
         : "Welcome to Orire. Build your CV free; sign up only for AI or to export.";
@@ -127,7 +139,7 @@ export function SpotlightView() {
     >
       <header className="ws-head">
         <div>
-          <h2>Your CV studio</h2>
+          <h2>{firstName && status === "authenticated" ? `Welcome back, ${firstName}.` : "Your CV studio"}</h2>
           <p>{greeting}</p>
         </div>
       </header>
@@ -144,9 +156,9 @@ export function SpotlightView() {
         <div className="spot-studio-actions">
           <button type="button" className="flow-btn primary" onClick={() => setView("edit")}>{started ? "Continue editing →" : "Create your CV →"}</button>
           <button type="button" className="flow-btn" onClick={() => setView("create")}>Build step by step · free</button>
+          <button type="button" className="flow-btn" onClick={() => setView("history")}>Your library</button>
           <button type="button" className="flow-btn" onClick={() => setView("rebrand")}>Change template</button>
           <button type="button" className="flow-btn" onClick={() => setView("export")}>Export</button>
-          <button type="button" className="flow-btn" onClick={() => setView("history")}>Your library</button>
         </div>
       </section>
       <TailorHero recommended={recommendedNext === "tailor"} />

@@ -60,8 +60,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
           if (view !== "Home") {
             await appPage.getByRole("navigation", { name: "Workspaces" }).getByRole("button", { name: view, exact: true }).click();
           }
-          const title = view === "Home" ? "Your CV studio" : view;
-          await expect(appPage.getByRole("heading", { name: title, exact: true })).toBeVisible();
+          const title = view === "Home" ? /^(Your CV studio|Welcome back, .+)$/ : view;
+          await expect(appPage.getByRole("heading", { name: title, exact: typeof title === "string" })).toBeVisible();
           // Audit the settled surface, rather than colors blended mid-entrance.
           await expect(appPage.locator(".ws-view")).toHaveCSS("opacity", "1");
           if (view === "AI Settings") {

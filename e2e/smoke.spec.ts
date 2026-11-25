@@ -20,7 +20,7 @@ function railItem(page: import("@playwright/test").Page, name: string) {
 test.describe("app shell & navigation", () => {
   test("lands on the spotlight, then opens the editor with the live preview", async ({ appPage }) => {
     // Default view is the building-block spotlight (home).
-    await expect(appPage.getByRole("heading", { name: "Your CV studio", exact: true })).toBeVisible();
+    await expect(appPage.getByRole("heading", { name: /^(Your CV studio|Welcome back, .+)$/ })).toBeVisible();
     // Opening Edit shows the two-pane editor; the right pane renders #cv-paper.
     await railItem(appPage, "Edit").click();
     await expect(appPage.getByRole("heading", { name: "Edit", exact: true })).toBeVisible();
