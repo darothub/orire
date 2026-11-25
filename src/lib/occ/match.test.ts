@@ -20,6 +20,18 @@ describe("OCC evidence matcher", () => {
     expect(analyzeEvidence("", "Kubernetes").coverage).toBe(0);
     expect(analyzeEvidence("react typescript", "react typescript").coverage).toBe(100);
   });
+  it("ignores marketing boilerplate and surfaces real requirements", () => {
+    const jd =
+      "Why join us? We are shaping the future of mobility, helping companies worldwide " +
+      "manage their fleet every day. You will build Spring Boot services on PostgreSQL, " +
+      "run Kubernetes and own CI/CD pipelines.";
+    const result = analyzeEvidence("", jd);
+    const junk = ["why", "together", "day", "every", "worldwide", "companies", "shaping", "future", "manage"];
+    for (const w of junk) expect(result.unverifiedTerms).not.toContain(w);
+    expect(result.unverifiedTerms).toEqual(
+      expect.arrayContaining(["postgresql", "kubernetes"]),
+    );
+  });
   it("bounds output size", () => {
     const result = analyzeEvidence("", Array.from({length: 150}, (_, i) => "technology" + i).join(" "));
     expect(result.checked).toBeLessThanOrEqual(80);

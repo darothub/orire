@@ -70,8 +70,8 @@ export function MatchRing({ value, tone = "match", size = 150, label = "match" }
         />
       </svg>
       <div className="or-ring__c">
-        <b className="or-ring__v" style={{ fontSize: Math.round(size * 0.27) }}>
-          {Math.round(shown)}%
+        <b className="or-ring__v" style={{ fontSize: Math.round(size * 0.24) }}>
+          {Math.round(shown)}<span className="or-ring__pct">%</span>
         </b>
         {label && size >= 64 && (
           <span className="or-ring__l" style={{ fontSize: Math.max(9, Math.round(size * 0.12)) }}>

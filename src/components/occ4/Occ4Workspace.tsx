@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCVStore } from "@/lib/store/cvStore";
+import { useTargetStore } from "@/lib/store/targetStore";
+import { persistView } from "@/lib/store/viewStore";
 import { looksLikeCV, looksLikeJobDescription } from "@/lib/occ/document-validation";
 import { MAX_INTERVIEW_TURNS, type InterviewQuestion, type InterviewFeedback } from "@/lib/occ/interview";
 import type { OccAdvice } from "@/lib/occ/recommendations";
@@ -78,15 +82,15 @@ const Spark = () => (
 
 // Chips are quick ACTIONS on the draft — specialists (Interview, Cover) live in
 // the picker, so they're not duplicated here.
-const CHIPS: { label: string; intent: Intent }[] = [
-  { label: "Review", intent: "review" },
-  { label: "Refine for the JD", intent: "refine" },
-  { label: "Keyword coverage", intent: "match" },
-  { label: "Templates", intent: "template" },
-  { label: "My library", intent: "library" },
-  { label: "Save to library", intent: "save" },
-  { label: "Export", intent: "export" },
-  { label: "Applications", intent: "applications" },
+const CHIPS: { label: string; intent: Intent; hint?: string }[] = [
+  { label: "Review", intent: "review", hint: "Critique your CV against the JD — advice only, nothing rewritten. Free." },
+  { label: "Refine for the JD", intent: "refine", hint: "Rewrite your whole CV in the role's voice as accept/reject diffs. Uses one monthly refine." },
+  { label: "Keyword coverage", intent: "match", hint: "Which role keywords appear in your CV — a deterministic check, not a score." },
+  { label: "Templates", intent: "template", hint: "Restyle the working draft with a different template." },
+  { label: "My library", intent: "library", hint: "Open a saved CV version as the working draft." },
+  { label: "Save to library", intent: "save", hint: "Save the working draft as a new version." },
+  { label: "Export", intent: "export", hint: "Download the draft as PDF or Word, or copy as text." },
+  { label: "Applications", intent: "applications", hint: "Track where each application stands — Saved, Applied, Interview, Offer." },
 ];
 
 // A conversation is scoped to one CV + JD. occ4 keeps several in memory and
@@ -138,11 +142,20 @@ export function Occ4Workspace() {
   const [activeId, setActiveId] = useState("c1");
   const [transcript, setTranscript] = useState<SavedOccTurn[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [confirmDel, setConfirmDel] = useState<string | null>(null);
+  // An action the user asked for that's waiting on missing CV/JD context. Once
+  // both are present it runs automatically (resume effect), so a gated action
+  // never dead-ends.
+  const [pending, setPending] = useState<Intent | null>(null);
+  const router = useRouter();
   const snapshots = useRef<Map<string, ConvSnapshot>>(new Map());
   const convSeq = useRef(1);
 
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
+  // In-flight work on the active conversation. While busy, navigation between
+  // conversations is locked so a resolving run can't write into another thread.
+  const busy = running || !!uploading;
 
   useEffect(() => { descriptionRef.current = description; }, [description]);
   useEffect(() => { liveDraftRef.current = draft; }, [draft]);
@@ -165,6 +178,24 @@ export function Occ4Workspace() {
     })();
     return () => { cancelled = true; };
   }, [draft, roleReady]);
+
+  // `handle` is declared later in render; keep a live ref so the resume effect
+  // can dispatch without referencing it before declaration.
+  const handleRef = useRef<(intent: Intent, text: string) => void>(() => {});
+  // Resume a gated action the moment its context is complete. Set by
+  // ensureContext when an action was asked for before the CV/JD existed; here we
+  // run it and clear the flag (inside rAF, off the effect body), so the user
+  // never has to re-issue the command.
+  useEffect(() => {
+    if (!pending || !cvReady || !roleReady) return;
+    const next = pending;
+    const id = requestAnimationFrame(() => {
+      setPending(null);
+      setContextOpen(false);
+      handleRef.current(next, "");
+    });
+    return () => cancelAnimationFrame(id);
+  }, [pending, cvReady, roleReady]);
 
   // On mount, list the user's saved conversations in the sidebar (metadata only).
   // Opening one fetches its transcript on demand.
@@ -192,13 +223,13 @@ export function Occ4Workspace() {
     setMessages([]); setAgent(DEFAULT_SPECIALIST); setCv(""); setDraft(null); setDescription("");
     setCvFileName(""); setRoleFileName(""); setCoverage(null); setTemplateId("aurora");
     setIntPhase("idle"); setIntIndex(0); setIntQuestion(null); lastStructuredRef.current = "";
-    setContextOpen(false); setPreviewOpen(false); setEditMode(false); setUploadError(""); setTranscript([]); setSaveState("idle");
+    setContextOpen(false); setPreviewOpen(false); setEditMode(false); setUploadError(""); setTranscript([]); setSaveState("idle"); setPending(null);
   }
   function applySnapshot(s: ConvSnapshot) {
     setMessages(s.messages); setAgent(s.agent); setCv(s.cv); setDraft(s.draft); setDescription(s.description);
     setCvFileName(s.cvFileName); setRoleFileName(s.roleFileName); setCoverage(s.coverage); setTemplateId(s.templateId);
     setIntPhase(s.intPhase); setIntIndex(s.intIndex); setIntQuestion(s.intQuestion); lastStructuredRef.current = s.lastStructured;
-    setUploadError(""); setTranscript(s.transcript); setSaveState("idle"); setEditMode(false);
+    setUploadError(""); setTranscript(s.transcript); setSaveState("idle"); setEditMode(false); setPending(null);
   }
   // A conversation counts as empty when it's a local (unsaved) one the user
   // hasn't interacted with yet — no transcript turns. Saved conversations
@@ -212,6 +243,8 @@ export function Occ4Workspace() {
   }
   function newConversation() {
     setNavOpen(false);
+    setConfirmDel(null);
+    if (busy) return;
     // Don't stack empty conversations: if the current one is untouched, stay on
     // it; otherwise reuse any existing empty one before creating a fresh one.
     if (isEmptyConversation(activeId)) return;
@@ -223,8 +256,42 @@ export function Occ4Workspace() {
     setActiveId(id);
     resetActiveState();
   }
+  // Delete a conversation. Local ones just drop from the list + snapshots;
+  // saved ones are also removed server-side (userId-scoped). The active one is
+  // replaced by the next in the list, and we always keep at least one.
+  async function deleteConversation(id: string) {
+    if (busy) return;
+    const c = conversations.find((x) => x.id === id);
+    if (!c) return;
+    setConfirmDel(null);
+    snapshots.current.delete(id);
+    if (c.backendId) {
+      void fetch(`/api/occ/conversations/${encodeURIComponent(c.backendId)}`, { method: "DELETE" }).catch(() => {});
+    }
+    const remaining = conversations.filter((x) => x.id !== id);
+    if (remaining.length === 0) {
+      const nid = "c" + (++convSeq.current);
+      setConversations([{ id: nid, title: "New conversation" }]);
+      setActiveId(nid);
+      resetActiveState();
+      return;
+    }
+    setConversations(remaining);
+    if (id === activeId) {
+      const next = remaining[0];
+      setActiveId(next.id);
+      const snap = snapshots.current.get(next.id);
+      if (snap) applySnapshot(snap);
+      else { resetActiveState(); if (next.backendId) void loadSavedTranscript(next.backendId); }
+    }
+  }
   function switchConversation(id: string) {
     setNavOpen(false);
+    setConfirmDel(null);
+    // Don't switch mid-run: a conversation's in-flight result must land in its
+    // own thread, never leak into another. The composer is already locked while
+    // busy; this locks navigation for the same reason.
+    if (busy) return;
     if (id === activeId) return;
     snapshots.current.set(activeId, captureSnapshot());
     const snap = snapshots.current.get(id);
@@ -296,18 +363,38 @@ export function Occ4Workspace() {
   const sayUser = (text: string) => { logTurn("you", text); push(<ChatMessage role="user" avatar="You">{text}</ChatMessage>); };
   const sayBot = (text: string) => { logTurn("OCC", text); push(<ChatMessage role="bot">{text}</ChatMessage>); };
 
-  function needContext() {
-    sayBot("First, add your CV and the job description so I can work against the real role.");
+  // What each action does, phrased for the "add context first" prompt.
+  const INTENT_VERB: Partial<Record<Intent, string>> = {
+    review: "review your CV against it",
+    refine: "refine your whole CV for it",
+    match: "score your keyword coverage",
+    simulate: "simulate the gap",
+    cover: "draft a cover letter tailored to it",
+    interview: "run the interview",
+    template: "fit it to a template",
+  };
+  // Gate an action on the CV + JD context. When something's missing, remember
+  // the action, open the context panel, and say exactly what to add — the action
+  // then runs itself once both are present (see the resume effect below). This is
+  // what keeps "Refine" from dead-ending: it collects the JD and continues,
+  // instead of telling you to add it and leaving you to re-click. Returns true
+  // when the context is already complete.
+  function ensureContext(intent: Intent): boolean {
+    const needCv = !cvReady, needJd = !roleReady;
+    if (!needCv && !needJd) return true;
+    setPending(intent);
     setContextOpen(true);
+    const what = needCv && needJd ? "your CV and the job description" : needCv ? "your CV" : "the job description";
+    sayBot(`Add ${what} and I'll ${INTENT_VERB[intent] ?? "continue"} — paste it below or use “Add CV & JD”.`);
+    return false;
   }
-
   // Refine — a full-CV, JD-tailored rewrite. Reuses the studio's metered,
   // plan-gated flow: authorizeRefineRun consumes one monthly refine and mints a
   // run token that /api/ai/refine requires. The refined CV is grounded, diffed
   // against the draft, and the user accepts/rejects each change before applying.
   async function runRefine() {
-    if (!draft) return sayBot("Import or open a CV first so I can refine it.");
-    if (!roleReady) return sayBot("Add the job description first — Refine tailors the whole CV to it.");
+    if (!ensureContext("refine")) return;
+    if (!draft) return sayBot("One moment — re-open or re-upload your CV so I can structure it first.");
     setRunning(true);
     sayBot("Refining your whole CV against the JD… this uses one of your monthly refines.");
     try {
@@ -348,7 +435,7 @@ export function Occ4Workspace() {
   }
 
   async function runReview(goal: string) {
-    if (!cvReady || !roleReady) return needContext();
+    if (!ensureContext("review")) return;
     setRunning(true);
     sayBot("Reviewing your CV against the JD…");
     try {
@@ -372,7 +459,7 @@ export function Occ4Workspace() {
   }
 
   async function runMatch() {
-    if (!cvReady || !roleReady) return needContext();
+    if (!ensureContext("match")) return;
     setRunning(true);
     sayBot("Comparing the role's keywords against your CV…");
     try {
@@ -419,6 +506,37 @@ export function Occ4Workspace() {
     setPreviewOpen(true);
   }
 
+  // Hand off to the full Studio — load the working draft (and, for Simulate, the
+  // JD) into the shared store, remember which surface to land on, and navigate.
+  // The shared CV store is persisted, so the draft survives the route change; the
+  // view is restored from sessionStorage by WorkspaceApp on mount.
+  function sameCv(a: CVData, b: CVData): boolean {
+    return a.basics.fullName === b.basics.fullName
+      && a.basics.summary === b.basics.summary
+      && a.experience.length === b.experience.length;
+  }
+  function goToStudio(view: "target" | "edit") {
+    if (!draft) return;
+    const store = useCVStore.getState();
+    store.loadCV(draft);
+    store.setTemplate(templateId);
+    if (view === "target" && roleReady) useTargetStore.getState().setJd(description);
+    persistView(view);
+    router.push("/");
+  }
+  // Open in Studio, confirming first only when a *different* CV is already open
+  // there (the user's choice: converge on one shared CV, but never silently
+  // overwrite). A fresh/empty Studio proceeds straight through.
+  function openInStudio(view: "target" | "edit") {
+    if (!draft) return;
+    const studio = useCVStore.getState();
+    if (studio.started && !sameCv(studio.cv, draft)) {
+      push(<CardRow>{renderStudioHandoff(view, () => goToStudio(view))}</CardRow>);
+      return;
+    }
+    goToStudio(view);
+  }
+
   // Structure pasted CV text into the working draft in-browser (same heuristic
   // parser the upload path uses) when the paste box loses focus — so paste users
   // get the connected flow, not just PDF/DOCX uploaders. Skips re-announcing the
@@ -454,7 +572,7 @@ export function Occ4Workspace() {
   // a gap view (covered vs missing terms + a coverage reading). Honest by design:
   // it's keyword overlap with the role, never an AI hiring prediction.
   async function runSimulate() {
-    if (!cvReady || !roleReady) return needContext();
+    if (!ensureContext("simulate")) return;
     setRunning(true);
     sayBot("Modelling the gap between your CV and the role…");
     try {
@@ -467,7 +585,7 @@ export function Occ4Workspace() {
       if (!response.ok) return sayBot(typeof data?.error === "string" ? data.error : "Couldn't run the simulation — try again in a moment.");
       const result = data as MatchResult;
       setCoverage(result.coverage);
-      push(<CardRow>{renderSimulate(result)}</CardRow>);
+      push(<CardRow>{renderSimulate(result, () => openInStudio("target"))}</CardRow>);
     } catch {
       sayBot("Couldn't reach the simulation service. Try again in a moment.");
     } finally {
@@ -476,8 +594,8 @@ export function Occ4Workspace() {
   }
 
   async function runCover() {
-    if (!draft) return sayBot("Import a CV (PDF or DOCX) first so I can ground the cover letter in it.");
-    if (!roleReady) return sayBot("Add the job description first and I'll tailor the letter to it.");
+    if (!ensureContext("cover")) return;
+    if (!draft) return sayBot("One moment — re-open or re-upload your CV so I can ground the cover letter in it.");
     setRunning(true);
     sayBot("Drafting a cover letter grounded in your CV…");
     try {
@@ -576,10 +694,7 @@ export function Occ4Workspace() {
   }
 
   async function askQuestion(index: number) {
-    if (!roleReady) {
-      needContext();
-      return;
-    }
+    if (!ensureContext("interview")) return;
     setRunning(true);
     sayBot(index === 0 ? "Let's practise — here's your first question." : "Next question coming up.");
     try {
@@ -706,6 +821,7 @@ export function Occ4Workspace() {
     if (intent === "applications") return runApplications();
     sayBot("I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.");
   }
+  useEffect(() => { handleRef.current = handle; });
 
   function send(text: string, intent?: Intent) {
     const value = text.trim();
@@ -717,6 +833,22 @@ export function Occ4Workspace() {
     // selected specialist/mode routes the message — except CV Review, which is
     // Auto: it classifies the message by what you actually asked for.
     if (intent) return handle(intent, value);
+    // Waiting on context (a gated action set `pending`)? Treat a pasted JD or CV
+    // as the missing input instead of a command, then the resume effect fires the
+    // action the user originally asked for.
+    if (pending) {
+      if (!roleReady && looksLikeJobDescription(value)) {
+        setDescription(value); setRoleFileName("");
+        return sayBot("Got the job description — using it for this conversation.");
+      }
+      if (!cvReady && looksLikeCV(value)) {
+        setCv(value);
+        const built = cvDataFromParsed(parseCVText(value));
+        lastStructuredRef.current = value;
+        setDraft(built);
+        return push(<CardRow>{renderDraftCard(built, "pasted CV")}</CardRow>);
+      }
+    }
     if (agent === "interview") {
       if (intPhase === "question") return void submitAnswer(value);
       if (intPhase === "feedback") return sayBot("Tap “Next question” to continue, or switch to CV Review.");
@@ -802,21 +934,39 @@ export function Occ4Workspace() {
             <small>CAREER COPILOT</small>
           </div>
         </div>
-        <button type="button" className="occ4-newchat" onClick={newConversation}>
+        <button type="button" className="occ4-newchat" onClick={newConversation} disabled={busy}>
           ＋ New conversation
         </button>
         <div className="occ4-side-label">Conversations</div>
         <div className="occ4-convlist">
           {conversations.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`occ4-conv${c.id === activeId ? " on" : ""}`}
-              aria-current={c.id === activeId}
-              onClick={() => switchConversation(c.id)}
-            >
-              {c.title}
-            </button>
+            <div key={c.id} className={`occ4-conv${c.id === activeId ? " on" : ""}`}>
+              <button
+                type="button"
+                className="occ4-conv-open"
+                aria-current={c.id === activeId}
+                disabled={busy}
+                onClick={() => switchConversation(c.id)}
+              >
+                {c.title}
+              </button>
+              {confirmDel === c.id ? (
+                <span className="occ4-conv-confirm">
+                  <button type="button" className="occ4-conv-yes" onClick={() => void deleteConversation(c.id)}>Delete</button>
+                  <button type="button" className="occ4-conv-no" aria-label="Keep conversation" onClick={() => setConfirmDel(null)}>✕</button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="occ4-conv-del"
+                  disabled={busy}
+                  aria-label={`Delete ${c.title}`}
+                  onClick={() => setConfirmDel(c.id)}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           ))}
         </div>
         <p className="occ4-side-hint">
@@ -1013,7 +1163,7 @@ export function Occ4Workspace() {
               {contextOpen ? "Hide CV & JD" : cvReady && roleReady ? "CV & JD ✓" : "Add CV & JD"}
             </button>
             {CHIPS.map((c) => (
-              <button key={c.intent} type="button" className="occ4-chip" disabled={running} onClick={() => send(c.label, c.intent)}>
+              <button key={c.intent} type="button" className="occ4-chip" title={c.hint} disabled={running} onClick={() => send(c.label, c.intent)}>
                 {c.label}
               </button>
             ))}
@@ -1074,6 +1224,11 @@ export function Occ4Workspace() {
                 {editMode ? "Done" : "Edit"}
               </button>
             )}
+            {draft && (
+              <button type="button" className="occ4-pv-studio" onClick={() => openInStudio("edit")} title="Open this draft in the full Studio editor">
+                Studio →
+              </button>
+            )}
             <button type="button" className="occ4-pv-close" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>
               ✕
             </button>
@@ -1110,7 +1265,7 @@ function renderMatch(result: MatchResult): ReactNode {
   return (
     <CopilotCard title="Keyword coverage" icon={<Spark />} tag={`${result.coverage}%`}>
       <div className="occ4-cov">
-        <MatchRing value={result.coverage} tone="gold" size={82} label="coverage" />
+        <MatchRing value={result.coverage} tone="gold" size={96} label="coverage" />
         <p className="occ4-advice-summary" style={{ margin: 0 }}>
           {result.matched} of {result.checked} role term{result.checked === 1 ? "" : "s"} appear in your
           CV. This is keyword coverage, not a hiring score.
@@ -1151,12 +1306,35 @@ function renderMatch(result: MatchResult): ReactNode {
   );
 }
 
-function renderSimulate(result: MatchResult): ReactNode {
+// Handoff card shown when a *different* CV is already open in Studio: confirm
+// before converging on the working draft so Studio is never silently overwritten.
+function renderStudioHandoff(view: "target" | "edit", onConfirm: () => void): ReactNode {
+  const where = view === "target" ? "the full simulation" : "the editor";
+  return (
+    <CopilotCard
+      title="Open in Studio?"
+      icon={<Spark />}
+      footer={<Button variant="primary" size="sm" onClick={onConfirm}>Replace & open {where}</Button>}
+    >
+      <p className="occ4-advice-summary" style={{ margin: 0 }}>
+        A different CV is already open in Studio. Opening {where} will replace it with this conversation&rsquo;s
+        working draft. Your saved versions in the library aren&rsquo;t affected.
+      </p>
+    </CopilotCard>
+  );
+}
+
+function renderSimulate(result: MatchResult, onStudio?: () => void): ReactNode {
   const gaps = result.unverifiedTerms;
   return (
-    <CopilotCard title="Simulate the gap" icon={<Spark />} tag={`${result.coverage}% covered`}>
+    <CopilotCard
+      title="Simulate the gap"
+      icon={<Spark />}
+      tag={`${result.coverage}% covered`}
+      footer={onStudio && <Button variant="ghost" size="sm" onClick={onStudio}>See the full simulation in Studio →</Button>}
+    >
       <div className="occ4-cov">
-        <MatchRing value={result.coverage} tone="gold" size={82} label="coverage" />
+        <MatchRing value={result.coverage} tone="gold" size={96} label="coverage" />
         <p className="occ4-advice-summary" style={{ margin: 0 }}>
           Against this role, your CV covers {result.matched} of {result.checked} key term
           {result.checked === 1 ? "" : "s"}.{" "}

@@ -20,7 +20,10 @@
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: var(--or-ink);
+  display: inline-flex;
+  align-items: baseline;
 }
+.or-ring__pct { font-size: 0.6em; font-weight: 700; margin-left: 1px; color: var(--or-muted); }
 .or-ring__l { font-family: var(--or-font-sans); font-size: 11px; color: var(--or-muted); margin-top: 3px; }
 
 /* ---- Diff (trust primitive) ---- */
