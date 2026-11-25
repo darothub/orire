@@ -21,7 +21,7 @@ import { cvToPlainText } from "@/lib/export/plaintext";
 import { coerceCoverLetter } from "@/lib/ai/coverLetter";
 import type { CoverLetter } from "@/lib/cv/coverLetter";
 import { createVersion } from "@/app/actions/library";
-import { type CvField, readCvField, patchCvField } from "@/lib/occ/versionPatch";
+import { type CvField, readCvField, patchCvField, writeCvField } from "@/lib/occ/versionPatch";
 import type { SavedOccTurn } from "@/lib/occ/conversationSave";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +35,7 @@ import { Occ4Templates } from "./Occ4Templates";
 import { Occ4Library, type SavedDoc } from "./Occ4Library";
 import { Occ4Refine } from "./Occ4Refine";
 import { Occ4Export } from "./Occ4Export";
+import { Occ4Editor } from "./Occ4Editor";
 import "./occ4.css";
 
 /**
@@ -117,6 +118,8 @@ export function Occ4Workspace() {
   const [intIndex, setIntIndex] = useState(0);
   const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editOpenSeq, setEditOpenSeq] = useState(0);
   const [coverage, setCoverage] = useState<number | null>(null);
   const [templateId, setTemplateId] = useState("aurora");
   const descriptionRef = useRef("");
@@ -186,13 +189,13 @@ export function Occ4Workspace() {
     setMessages([]); setAgent(DEFAULT_SPECIALIST); setCv(""); setDraft(null); setDescription("");
     setCvFileName(""); setRoleFileName(""); setCoverage(null); setTemplateId("aurora");
     setIntPhase("idle"); setIntIndex(0); setIntQuestion(null); lastStructuredRef.current = "";
-    setContextOpen(false); setPreviewOpen(false); setUploadError(""); setTranscript([]); setSaveState("idle");
+    setContextOpen(false); setPreviewOpen(false); setEditMode(false); setUploadError(""); setTranscript([]); setSaveState("idle");
   }
   function applySnapshot(s: ConvSnapshot) {
     setMessages(s.messages); setAgent(s.agent); setCv(s.cv); setDraft(s.draft); setDescription(s.description);
     setCvFileName(s.cvFileName); setRoleFileName(s.roleFileName); setCoverage(s.coverage); setTemplateId(s.templateId);
     setIntPhase(s.intPhase); setIntIndex(s.intIndex); setIntQuestion(s.intQuestion); lastStructuredRef.current = s.lastStructured;
-    setUploadError(""); setTranscript(s.transcript); setSaveState("idle");
+    setUploadError(""); setTranscript(s.transcript); setSaveState("idle"); setEditMode(false);
   }
   function newConversation() {
     snapshots.current.set(activeId, captureSnapshot());
@@ -380,6 +383,18 @@ export function Occ4Workspace() {
       const existing = readCvField(prev, field);
       if (existing === null) return prev;
       return patchCvField(prev, field, existing, replacement) ?? prev;
+    });
+    setPreviewOpen(true);
+  }
+
+  // Free inline edit from the preview's edit mode.
+  function handleInlineEdit(field: CvField, text: string) {
+    setDraft((prev) => (prev ? writeCvField(prev, field, text) ?? prev : prev));
+  }
+  function toggleEdit() {
+    setEditMode((on) => {
+      if (!on) setEditOpenSeq((s) => s + 1);
+      return !on;
     });
     setPreviewOpen(true);
   }
@@ -1028,16 +1043,23 @@ export function Occ4Workspace() {
               {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "JD ✓" : "JD —"}
             </span>
             {coverage !== null && <MatchRing value={coverage} tone="gold" size={64} label="coverage" />}
+            {draft && (
+              <button type="button" className={`occ4-pv-edit${editMode ? " on" : ""}`} aria-pressed={editMode} onClick={toggleEdit}>
+                {editMode ? "Done" : "Edit"}
+              </button>
+            )}
             <button type="button" className="occ4-pv-close" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>
               ✕
             </button>
           </div>
           <div className="occ4-pv-scroll">
-            {draft && DraftTemplate ? (
-              <div className="occ4-pv-page paper"><DraftTemplate cv={draft} /></div>
-            ) : (
+            {!draft ? (
               <p className="occ4-pv-empty">Bring a CV (PDF or DOCX) to see your working draft here.</p>
-            )}
+            ) : editMode ? (
+              <Occ4Editor key={editOpenSeq} cv={draft} onEdit={handleInlineEdit} />
+            ) : DraftTemplate ? (
+              <div className="occ4-pv-page paper"><DraftTemplate cv={draft} /></div>
+            ) : null}
           </div>
         </aside>
       )}
