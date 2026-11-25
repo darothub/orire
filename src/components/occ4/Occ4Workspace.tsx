@@ -136,11 +136,15 @@ export function Occ4Workspace() {
   const [activeId, setActiveId] = useState("c1");
   const [transcript, setTranscript] = useState<SavedOccTurn[]>([]);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const snapshots = useRef<Map<string, ConvSnapshot>>(new Map());
   const convSeq = useRef(1);
 
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
+  // In-flight work on the active conversation. While busy, navigation between
+  // conversations is locked so a resolving run can't write into another thread.
+  const busy = running || !!uploading;
 
   useEffect(() => { descriptionRef.current = description; }, [description]);
   useEffect(() => { liveDraftRef.current = draft; }, [draft]);
@@ -210,6 +214,8 @@ export function Occ4Workspace() {
   }
   function newConversation() {
     setNavOpen(false);
+    setConfirmDel(null);
+    if (busy) return;
     // Don't stack empty conversations: if the current one is untouched, stay on
     // it; otherwise reuse any existing empty one before creating a fresh one.
     if (isEmptyConversation(activeId)) return;
@@ -221,8 +227,42 @@ export function Occ4Workspace() {
     setActiveId(id);
     resetActiveState();
   }
+  // Delete a conversation. Local ones just drop from the list + snapshots;
+  // saved ones are also removed server-side (userId-scoped). The active one is
+  // replaced by the next in the list, and we always keep at least one.
+  async function deleteConversation(id: string) {
+    if (busy) return;
+    const c = conversations.find((x) => x.id === id);
+    if (!c) return;
+    setConfirmDel(null);
+    snapshots.current.delete(id);
+    if (c.backendId) {
+      void fetch(`/api/occ/conversations/${encodeURIComponent(c.backendId)}`, { method: "DELETE" }).catch(() => {});
+    }
+    const remaining = conversations.filter((x) => x.id !== id);
+    if (remaining.length === 0) {
+      const nid = "c" + (++convSeq.current);
+      setConversations([{ id: nid, title: "New conversation" }]);
+      setActiveId(nid);
+      resetActiveState();
+      return;
+    }
+    setConversations(remaining);
+    if (id === activeId) {
+      const next = remaining[0];
+      setActiveId(next.id);
+      const snap = snapshots.current.get(next.id);
+      if (snap) applySnapshot(snap);
+      else { resetActiveState(); if (next.backendId) void loadSavedTranscript(next.backendId); }
+    }
+  }
   function switchConversation(id: string) {
     setNavOpen(false);
+    setConfirmDel(null);
+    // Don't switch mid-run: a conversation's in-flight result must land in its
+    // own thread, never leak into another. The composer is already locked while
+    // busy; this locks navigation for the same reason.
+    if (busy) return;
     if (id === activeId) return;
     snapshots.current.set(activeId, captureSnapshot());
     const snap = snapshots.current.get(id);
@@ -796,21 +836,39 @@ export function Occ4Workspace() {
             <small>CAREER COPILOT</small>
           </div>
         </div>
-        <button type="button" className="occ4-newchat" onClick={newConversation}>
+        <button type="button" className="occ4-newchat" onClick={newConversation} disabled={busy}>
           ＋ New conversation
         </button>
         <div className="occ4-side-label">Conversations</div>
         <div className="occ4-convlist">
           {conversations.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className={`occ4-conv${c.id === activeId ? " on" : ""}`}
-              aria-current={c.id === activeId}
-              onClick={() => switchConversation(c.id)}
-            >
-              {c.title}
-            </button>
+            <div key={c.id} className={`occ4-conv${c.id === activeId ? " on" : ""}`}>
+              <button
+                type="button"
+                className="occ4-conv-open"
+                aria-current={c.id === activeId}
+                disabled={busy}
+                onClick={() => switchConversation(c.id)}
+              >
+                {c.title}
+              </button>
+              {confirmDel === c.id ? (
+                <span className="occ4-conv-confirm">
+                  <button type="button" className="occ4-conv-yes" onClick={() => void deleteConversation(c.id)}>Delete</button>
+                  <button type="button" className="occ4-conv-no" aria-label="Keep conversation" onClick={() => setConfirmDel(null)}>✕</button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="occ4-conv-del"
+                  disabled={busy}
+                  aria-label={`Delete ${c.title}`}
+                  onClick={() => setConfirmDel(c.id)}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           ))}
         </div>
         <p className="occ4-side-hint">

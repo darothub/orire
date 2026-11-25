@@ -40,12 +40,33 @@
 }
 .occ4-convlist { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
 .occ4-conv {
-  text-align: left; background: none; border: 1px solid transparent; cursor: pointer;
-  padding: 8px 10px; border-radius: var(--or-radius-sm); color: var(--or-ink-soft);
-  font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  display: flex; align-items: center; gap: 2px;
+  border: 1px solid transparent; border-radius: var(--or-radius-sm); color: var(--or-ink-soft);
 }
 .occ4-conv:hover { background: var(--or-surface); }
 .occ4-conv.on { background: var(--or-violet-ghost); color: var(--or-ink); border-color: var(--or-line); }
+.occ4-conv-open {
+  flex: 1; min-width: 0; text-align: left; background: none; border: none; cursor: pointer;
+  padding: 8px 10px; color: inherit; font: inherit; font-size: 12.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.occ4-conv-del {
+  flex: none; width: 24px; height: 24px; margin-right: 4px; border: none; background: none; cursor: pointer;
+  border-radius: var(--or-radius-sm); color: var(--or-muted); font-size: 12px; line-height: 1;
+  opacity: 0; transition: opacity 0.12s;
+}
+.occ4-conv:hover .occ4-conv-del, .occ4-conv.on .occ4-conv-del { opacity: 1; }
+.occ4-conv-del:hover:not(:disabled) { background: var(--or-surface-2); color: var(--or-ink); }
+.occ4-conv-del:disabled { cursor: default; }
+.occ4-conv-confirm { display: flex; align-items: center; gap: 2px; margin-right: 4px; }
+.occ4-conv-yes {
+  border: none; cursor: pointer; padding: 4px 8px; border-radius: var(--or-radius-sm);
+  background: var(--or-gap); color: #fff; font: inherit; font-size: 11px; font-weight: 600;
+}
+.occ4-conv-no {
+  width: 22px; height: 22px; border: 1px solid var(--or-line); background: var(--or-surface-2); cursor: pointer;
+  border-radius: var(--or-radius-sm); color: var(--or-ink-soft); font-size: 11px; line-height: 1;
+}
 .occ4-spec {
   display: flex; flex-direction: column; gap: 2px;
   padding: 10px 11px; border-radius: var(--or-radius-md);
