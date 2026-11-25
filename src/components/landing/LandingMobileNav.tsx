@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import Link from "next/link";
 import { useUIStore } from "@/lib/store/uiStore";
 
 const SECTIONS = [
-  { href: "#how", label: "How it works" },
-  { href: "#demo", label: "Live demo" },
+  { href: "#simulate", label: "Simulate" },
+  { href: "#copilot", label: "Copilot" },
+  { href: "#studio", label: "Studio" },
+  { href: "#pricing", label: "Pricing" },
 ] as const;
 
 /**
@@ -21,6 +22,7 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
   const toggleRef = useRef<HTMLButtonElement>(null);
   const reducedMotion = useReducedMotion();
   const openAuth = useUIStore((s) => s.openAuth);
+  const setExplored = useUIStore((s) => s.setExplored);
 
   useEffect(() => {
     if (!open) return;
@@ -49,18 +51,18 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
   }, [open]);
 
   return (
-    <div className="landing-mobile-menu" ref={rootRef}>
+    <div className="lp-menu" ref={rootRef}>
       <button
         ref={toggleRef}
         type="button"
         disabled={!interactiveReady}
-        className={`landing-mobile-menu-toggle${open ? " is-open" : ""}`}
+        className={`lp-menu-toggle${open ? " is-open" : ""}`}
         aria-label={open ? "Close section menu" : "Open section menu"}
         aria-expanded={open}
         aria-controls="landing-mobile-section-links"
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="landing-mobile-menu-icon" aria-hidden="true">
+        <span className="lp-menu-icon" aria-hidden="true">
           <span />
           <span />
           <span />
@@ -70,7 +72,7 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
         <AnimatePresence>
         {open && (
           <motion.nav
-            className="landing-mobile-menu-panel"
+            className="lp-menu-panel"
             aria-label="Mobile page sections"
             initial={reducedMotion ? false : { opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -82,21 +84,25 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
                 {label}
               </a>
             ))}
-            <Link href="/templates" onClick={() => setOpen(false)}>
-              Templates
-            </Link>
-            <Link href="/pricing" onClick={() => setOpen(false)}>
-              Pricing
-            </Link>
             <button
               type="button"
-              className="landing-mobile-menu-signin"
+              className="lp-menu-signin"
               onClick={() => {
                 setOpen(false);
                 openAuth("signin");
               }}
             >
               Sign in
+            </button>
+            <button
+              type="button"
+              className="lp-menu-signin"
+              onClick={() => {
+                setOpen(false);
+                setExplored(true);
+              }}
+            >
+              Try as guest
             </button>
           </motion.nav>
         )}

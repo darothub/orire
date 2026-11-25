@@ -30,7 +30,7 @@ for (const viewport of [
     }
 
     // Begin from the actual public hero CTA.
-    const primary = page.getByRole("button", { name: "Create your CV" }).first();
+    const primary = page.getByRole("button", { name: "Start free" }).first();
     await expect(primary).toBeVisible({ timeout: 20_000 });
     await primary.click();
     const signup = page.getByRole("dialog", { name: "Create your account" });

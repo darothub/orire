@@ -5,20 +5,20 @@ for (const viewport of [
   { width: 1440, height: 900, name: "desktop" },
   { width: 390, height: 844, name: "mobile" },
 ]) {
-  test("hero and demo remain functional with reduced motion " + viewport.name, async ({ page }, testInfo) => {
+  test("hero remains functional with reduced motion " + viewport.name, async ({ page }, testInfo) => {
     await page.addInitScript(() => localStorage.setItem("orire-consent", "denied"));
     await page.setViewportSize(viewport);
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const title = page.getByRole("heading", { level: 1 });
     await expect(title).toBeVisible();
-    const cta = page.getByRole("button", { name: /Create your CV/ }).first();
+    const cta = page.locator(".lp-cta-row").getByRole("button", { name: /Start free/ });
     await expect(cta).toBeVisible();
     await expect(cta).toBeEnabled();
-    await expect(page.locator(".lx-hero-copy")).toHaveCSS("opacity", "1");
-    await expect(page.locator(".lx-hero-copy")).toHaveCSS("transform", "none");
-    await expect(page.locator(".lx-hero-copy")).toHaveCSS("filter", "none");
-    const animatedSections = await page.locator(".landing-motion-reveal").evaluateAll((nodes) => nodes.map((node) => {
+    await expect(page.locator(".lp-hero-copy")).toHaveCSS("opacity", "1");
+    await expect(page.locator(".lp-hero-copy")).toHaveCSS("transform", "none");
+    await expect(page.locator(".lp-hero-copy")).toHaveCSS("filter", "none");
+    const animatedSections = await page.locator(".lp-feat, .lp-mcard, .lp-final-card").evaluateAll((nodes) => nodes.map((node) => {
       const style = getComputedStyle(node);
       return { opacity: style.opacity, transform: style.transform, filter: style.filter };
     }));
@@ -32,32 +32,15 @@ for (const viewport of [
     await page.keyboard.press("Tab");
     await expect(cta).toBeFocused();
     await expect(cta).toHaveCSS("outline-style", "solid");
-    await expect(cta).toHaveCSS("outline-width", "3px");
-    await expect(cta).toHaveCSS("outline-color", "rgb(47, 224, 255)");
+    await expect(cta).toHaveCSS("outline-width", "2px");
+    await expect(cta).toHaveCSS("outline-color", "rgb(130, 115, 246)");
     await page.keyboard.down("Space");
     await expect(cta).toHaveCSS("filter", "brightness(0.92)");
     await page.keyboard.up("Space");
     await expect(page.getByRole("dialog", { name: "Create your account" })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(cta).toBeFocused();
-    await page.locator("#demo").scrollIntoViewIfNeeded();
-    const options = page.getByRole("group", { name: "Demo templates" });
-    const buttons = options.getByRole("button");
-    await expect(buttons.first()).toBeVisible();
-    const second = buttons.nth(1);
-    await second.click();
-    await expect(second).toHaveAttribute("aria-pressed", "true");
-    await second.hover();
-    await expect(second).toHaveCSS("transform", "none");
-    await expect(second).toHaveCSS("transition-duration", "0s");
-    await second.focus();
-    await page.keyboard.press("Tab");
-    const third = buttons.nth(2);
-    await expect(third).toBeFocused();
-    await expect(third).toHaveCSS("outline-color", "rgb(58, 217, 180)");
-    await page.keyboard.press("Enter");
-    await expect(third).toHaveAttribute("aria-pressed", "true");
-    await testInfo.attach("REAL-reduced-motion-demo-" + viewport.name, {
+    await testInfo.attach("REAL-reduced-motion-hero-" + viewport.name, {
       body: await page.screenshot({ animations: "disabled" }),
       contentType: "image/png",
     });
@@ -90,14 +73,14 @@ for (const viewport of [
       });
       try {
         await page.goto("/", { waitUntil: "commit" });
-        const hero = page.locator(".lx-hero-copy");
+        const hero = page.locator(".lp-hero-copy");
         await expect(hero).toBeVisible();
         await expect(hero).toHaveCSS("opacity", "1");
         await expect(hero).toHaveCSS("transform", "none");
         await expect(hero).toHaveCSS("filter", "none");
         await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-        const cta = page.getByRole("button", { name: /Create your CV/ }).first();
-        const guestCta = page.getByRole("button", { name: "Try it as a guest" });
+        const cta = page.locator(".lp-cta-row").getByRole("button", { name: /Start free/ });
+        const guestCta = page.getByRole("button", { name: "Or try it as a guest" });
         await expect(cta).toBeDisabled();
         await expect(guestCta).toBeDisabled();
         await expect.poll(() => heldRequests).toBeGreaterThan(0);
@@ -108,7 +91,7 @@ for (const viewport of [
           body: await page.screenshot(), contentType: "image/png",
         });
         if (viewport.name === "desktop") {
-          const templatesLink = page.getByRole("navigation", { name: "Sections" })
+          const templatesLink = page.getByRole("navigation", { name: "Explore" })
             .getByRole("link", { name: "Templates" });
           await templatesLink.click();
           await expect(page).toHaveURL(/\/templates$/);
@@ -117,9 +100,9 @@ for (const viewport of [
         releaseScripts();
       }
       if (viewport.name === "desktop") await page.goto("/", { waitUntil: "domcontentloaded" });
-      const cta = page.getByRole("button", { name: /Create your CV/ }).first();
+      const cta = page.locator(".lp-cta-row").getByRole("button", { name: /Start free/ });
       await expect(cta).toBeEnabled();
-      const guestCta = page.getByRole("button", { name: "Try it as a guest" });
+      const guestCta = page.getByRole("button", { name: "Or try it as a guest" });
       await expect(guestCta).toBeEnabled();
       if (viewport.name === "mobile") {
         const menu = page.getByRole("button", { name: "Open section menu" });

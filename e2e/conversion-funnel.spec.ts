@@ -19,7 +19,7 @@ test("@smoke UX98 consented landing milestones dedupe and stop after withdrawal"
   await observe(page, "granted");
   await page.goto("/");
   await expect.poll(async () => (await events(page)).map((e) => e.name)).toContain("landing_viewed");
-  const cta = page.getByRole("button", { name: "Create your CV" }).first();
+  const cta = page.getByRole("button", { name: "Start free" }).first();
   await cta.click();
   await expect(page.getByRole("dialog", { name: "Create your account" })).toBeVisible();
   await page.getByRole("button", { name: "Close and return to the landing page" }).click();
@@ -62,7 +62,7 @@ test("@smoke UX98 editor and successful download emit only anonymous milestones"
 test("@smoke UX98 opt-out queues no landing or signup events", async ({ page }) => {
   await observe(page, "denied");
   await page.goto("/");
-  await page.getByRole("button", { name: "Create your CV" }).first().click();
+  await page.getByRole("button", { name: "Start free" }).first().click();
   await expect(page.getByRole("dialog", { name: "Create your account" })).toBeVisible();
   expect(await events(page)).toEqual([]);
 });

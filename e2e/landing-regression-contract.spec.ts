@@ -1,8 +1,10 @@
 import { test, expect } from "./fixtures";
 
 const sections = [
-  { name: "How it works", id: "how" },
-  { name: "Live demo", id: "demo" },
+  { name: "Simulate", id: "simulate" },
+  { name: "Copilot", id: "copilot" },
+  { name: "Studio", id: "studio" },
+  { name: "Pricing", id: "pricing" },
 ] as const;
 
 for (const viewport of [

@@ -19,7 +19,7 @@ for (const viewport of viewports) {
     await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
     await page.goto("/", { waitUntil: "domcontentloaded" });
     await expect(
-      page.getByRole("heading", { name: "Measure the gap to the job. Then close it, honestly." }),
+      page.getByRole("heading", { name: "Meet the ideal candidate. Then close the gap." }),
     ).toBeVisible({ timeout: 20_000 });
 
     const consent = page.getByRole("dialog", { name: "Cookie consent" });
@@ -32,8 +32,8 @@ for (const viewport of viewports) {
     const menu = page.getByRole("button", { name: "Open section menu" });
     if (isMobileMenu) {
       await expect(menu).toBeVisible();
-      await expect(page.getByRole("button", { name: "Get started", exact: true })).toBeVisible();
-      const sizes = await page.locator(".landing-mobile-menu-toggle, .landing-nav-actions > .landing-header-cta")
+      await expect(page.locator(".lp-header-cta")).toBeVisible();
+      const sizes = await page.locator(".lp-menu-toggle, .lp-actions > .lp-header-cta")
         .evaluateAll((nodes) => nodes.map((el) => {
           const box = el.getBoundingClientRect();
           return { width: box.width, height: box.height };
@@ -64,9 +64,9 @@ for (const viewport of viewports) {
       await expect(mobileNav).toBeHidden();
 
       await menu.click();
-      await mobileNav.getByRole("link", { name: "Live demo" }).click();
+      await mobileNav.getByRole("link", { name: "Studio" }).click();
       await expect(mobileNav).toBeHidden();
-      await expect(page).toHaveURL(/#demo$/);
+      await expect(page).toHaveURL(/#studio$/);
 
       await page.evaluate(() => window.scrollTo(0, 0));
       await page.screenshot({
@@ -78,46 +78,18 @@ for (const viewport of viewports) {
       await expect(page.getByRole("navigation", { name: "Sections" })).toBeVisible();
     }
 
-    const frame = page.locator("#demo .landing-demo-frame");
-    await frame.scrollIntoViewIfNeeded();
-    await expect(frame).toBeVisible();
-    const fit = await page.locator("#demo").evaluate((root) => {
-      const windowFrame = root.querySelector(".landing-demo-frame")!.getBoundingClientRect();
-      const paper = root.querySelector(".landing-demo-paper")!.getBoundingClientRect();
-      return {
-        frameWidth: windowFrame.width,
-        paperWidth: paper.width,
-        marginLeft: paper.left - windowFrame.left,
-        marginRight: windowFrame.right - paper.right,
-        fits: paper.left >= windowFrame.left - 1 && paper.right <= windowFrame.right + 1,
-      };
-    });
-    console.log(`UX86_IMPLEMENTED ${viewport.name}: ${JSON.stringify(fit)}`);
-    expect(fit.fits).toBe(true);
-    expect(Math.abs(fit.marginLeft - fit.marginRight)).toBeLessThan(2);
-
-    await page.locator("#demo").screenshot({
-      path: `${dir}/AFTER-demo-${viewport.name}.png`,
-      animations: "disabled",
-    });
-
-    // The expandable view is an actual modal, and Escape returns to the page.
-    const enlarge = page.getByRole("button", { name: /Enlarge .* CV preview/ });
-    await enlarge.click();
-    const dialog = page.getByRole("dialog", { name: /full-size CV preview/i });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.locator(".landing-demo-full-paper")).toBeVisible();
-    await expect(dialog.getByRole("region", { name: /Full-size .* fictional CV/ })).toBeVisible();
-    await page.screenshot({
-      path: `${dir}/AFTER-enlarged-${viewport.name}.png`,
-      animations: "disabled",
-    });
-    await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
-
-    await page.locator(".landing-demo-rail").getByRole("button", { name: /Noir/ }).click();
-    await expect(page.locator(".landing-demo-rail").getByRole("button", { name: /Noir/ })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator(".landing-demo-foot")).toContainText("Noir");
+    // The hero match card and the three feature visuals stay inside the viewport.
+    const card = page.locator(".lp-mcard").first();
+    await card.scrollIntoViewIfNeeded();
+    await expect(card).toBeVisible();
+    const box = await card.boundingBox();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 1);
+    for (const id of ["simulate", "copilot", "studio", "pricing"]) {
+      await page.locator(`#${id}`).scrollIntoViewIfNeeded();
+      await expect(page.locator(`#${id}`)).toBeVisible();
+    }
+    await page.screenshot({ path: `${dir}/AFTER-studio-${viewport.name}.png`, animations: "disabled" });
 
     // No overall document overflow, even when the full-size preview is scrollable.
     const horizontalOverflow = await page.evaluate(
@@ -134,7 +106,7 @@ test("animations respect the browser's reduced-motion preference", async ({ page
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: "Open section menu" }).click();
   await expect(page.getByRole("navigation", { name: "Mobile page sections" })).toBeVisible();
-  const duration = await page.locator(".landing-mobile-menu-icon span").first().evaluate(
+  const duration = await page.locator(".lp-menu-icon span").first().evaluate(
     el => getComputedStyle(el).transitionDuration,
   );
   expect(duration.split(",").every(part => parseFloat(part) === 0)).toBe(true);
