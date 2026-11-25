@@ -12,6 +12,7 @@ import type { Metric } from "@/lib/plan/plan";
 import { ViewIcon } from "@/components/ViewIcon";
 import { getTemplateInfo } from "@/lib/templates/catalog";
 import { useSession } from "next-auth/react";
+import { HomeDashboard } from "@/components/home/HomeDashboard";
 
 /** Metered blocks that grey out / route to Plans once the free cap is spent. */
 const METRIC_FOR_VIEW: Partial<Record<WorkspaceView, Metric>> = {
@@ -143,11 +144,15 @@ export function SpotlightView() {
         <div className="spot-studio-actions">
           <button type="button" className="flow-btn primary" onClick={() => setView("edit")}>{started ? "Continue editing →" : "Create your CV →"}</button>
           <button type="button" className="flow-btn" onClick={() => setView("create")}>Build step by step · free</button>
+          <button type="button" className="flow-btn" onClick={() => setView("rebrand")}>Change template</button>
+          <button type="button" className="flow-btn" onClick={() => setView("export")}>Export</button>
           <button type="button" className="flow-btn" onClick={() => setView("history")}>Your library</button>
         </div>
       </section>
       <TailorHero recommended={recommendedNext === "tailor"} />
       </div>
+
+      <HomeDashboard />
 
       <section className="spot-studio-tools" aria-labelledby="spot-studio-tools-title">
         <div className="spot-studio-tools-head">
