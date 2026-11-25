@@ -256,7 +256,7 @@
   .lp-final-card { padding: 48px 24px; }
 }
 @media (max-width: 860px) {
-  .lp-links, .lp-guest { display: none; }
+  .lp-links { display: none; }
   .lp-actions { margin-left: auto; }
   .lp-menu { display: block; }
   .lp-header-cta { height: 44px; min-width: 44px; }

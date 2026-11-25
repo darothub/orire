@@ -32,7 +32,7 @@ for (const viewport of viewports) {
     const menu = page.getByRole("button", { name: "Open section menu" });
     if (isMobileMenu) {
       await expect(menu).toBeVisible();
-      await expect(page.getByRole("button", { name: "Start free", exact: true })).toBeVisible();
+      await expect(page.locator(".lp-header-cta")).toBeVisible();
       const sizes = await page.locator(".lp-menu-toggle, .lp-actions > .lp-header-cta")
         .evaluateAll((nodes) => nodes.map((el) => {
           const box = el.getBoundingClientRect();
