@@ -71,6 +71,18 @@ const CHIPS: { label: string; intent: Intent }[] = [
   { label: "Save to library", intent: "save" },
 ];
 
+// A conversation is scoped to one CV + JD. occ4 keeps several in memory and
+// swaps the full working state when you switch — so you can tailor for a few
+// jobs in parallel. (Cross-reload/device persistence of the transcript is a
+// follow-up that reuses /api/occ/conversations.)
+type ConvMeta = { id: string; title: string };
+type ConvSnapshot = {
+  messages: Msg[]; agent: Specialist; cv: string; draft: CVData | null; description: string;
+  cvFileName: string; roleFileName: string; coverage: number | null; templateId: string;
+  intPhase: "idle" | "question" | "feedback"; intIndex: number; intQuestion: InterviewQuestion | null;
+  lastStructured: string;
+};
+
 export function Occ4Workspace() {
   const [agent, setAgent] = useState<Specialist>(DEFAULT_SPECIALIST);
   const [input, setInput] = useState("");
@@ -99,6 +111,10 @@ export function Occ4Workspace() {
   const idRef = useRef(1);
   const threadRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [conversations, setConversations] = useState<ConvMeta[]>([{ id: "c1", title: "New conversation" }]);
+  const [activeId, setActiveId] = useState("c1");
+  const snapshots = useRef<Map<string, ConvSnapshot>>(new Map());
+  const convSeq = useRef(1);
 
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
@@ -123,6 +139,37 @@ export function Occ4Workspace() {
     })();
     return () => { cancelled = true; };
   }, [draft, roleReady]);
+
+  function captureSnapshot(): ConvSnapshot {
+    return { messages, agent, cv, draft, description, cvFileName, roleFileName, coverage, templateId, intPhase, intIndex, intQuestion, lastStructured: lastStructuredRef.current };
+  }
+  function resetActiveState() {
+    setMessages([]); setAgent(DEFAULT_SPECIALIST); setCv(""); setDraft(null); setDescription("");
+    setCvFileName(""); setRoleFileName(""); setCoverage(null); setTemplateId("aurora");
+    setIntPhase("idle"); setIntIndex(0); setIntQuestion(null); lastStructuredRef.current = "";
+    setContextOpen(false); setPreviewOpen(false); setUploadError("");
+  }
+  function applySnapshot(s: ConvSnapshot) {
+    setMessages(s.messages); setAgent(s.agent); setCv(s.cv); setDraft(s.draft); setDescription(s.description);
+    setCvFileName(s.cvFileName); setRoleFileName(s.roleFileName); setCoverage(s.coverage); setTemplateId(s.templateId);
+    setIntPhase(s.intPhase); setIntIndex(s.intIndex); setIntQuestion(s.intQuestion); lastStructuredRef.current = s.lastStructured;
+    setUploadError("");
+  }
+  function newConversation() {
+    snapshots.current.set(activeId, captureSnapshot());
+    const id = "c" + (++convSeq.current);
+    setConversations((cs) => [...cs, { id, title: "New conversation" }]);
+    setActiveId(id);
+    resetActiveState();
+  }
+  function switchConversation(id: string) {
+    if (id === activeId) return;
+    snapshots.current.set(activeId, captureSnapshot());
+    const snap = snapshots.current.get(id);
+    setActiveId(id);
+    if (snap) applySnapshot(snap);
+    else resetActiveState();
+  }
 
   function push(node: ReactNode) {
     const id = idRef.current++;
@@ -432,6 +479,8 @@ export function Occ4Workspace() {
     const value = text.trim();
     if (!value || running) return;
     sayUser(value);
+    // Name the conversation from its first message.
+    setConversations((cs) => cs.map((c) => (c.id === activeId && c.title === "New conversation" ? { ...c, title: value.length > 40 ? value.slice(0, 40) + "…" : value } : c)));
     // An explicit action (a chip or a panel button) always wins. Otherwise the
     // selected specialist/mode routes the message — except CV Review, which is
     // Auto: it classifies the message by what you actually asked for.
@@ -520,11 +569,25 @@ export function Occ4Workspace() {
             <small>CAREER COPILOT</small>
           </div>
         </div>
-        <button type="button" className="occ4-newchat" onClick={() => setMessages([])}>
+        <button type="button" className="occ4-newchat" onClick={newConversation}>
           ＋ New conversation
         </button>
+        <div className="occ4-side-label">Conversations</div>
+        <div className="occ4-convlist">
+          {conversations.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={`occ4-conv${c.id === activeId ? " on" : ""}`}
+              aria-current={c.id === activeId}
+              onClick={() => switchConversation(c.id)}
+            >
+              {c.title}
+            </button>
+          ))}
+        </div>
         <p className="occ4-side-hint">
-          Pick a specialist from the mode selector at the top — <b>CV Review</b> is Auto.
+          Each conversation keeps its own CV, JD and draft — start a new one for a different job.
         </p>
         <div className="occ4-side-foot">
           <Link href="/occ" className="occ4-back">
