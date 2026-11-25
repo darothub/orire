@@ -49,18 +49,18 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
   }, [open]);
 
   return (
-    <div className="landing-mobile-menu" ref={rootRef}>
+    <div className="lp-menu" ref={rootRef}>
       <button
         ref={toggleRef}
         type="button"
         disabled={!interactiveReady}
-        className={`landing-mobile-menu-toggle${open ? " is-open" : ""}`}
+        className={`lp-menu-toggle${open ? " is-open" : ""}`}
         aria-label={open ? "Close section menu" : "Open section menu"}
         aria-expanded={open}
         aria-controls="landing-mobile-section-links"
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="landing-mobile-menu-icon" aria-hidden="true">
+        <span className="lp-menu-icon" aria-hidden="true">
           <span />
           <span />
           <span />
@@ -70,7 +70,7 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
         <AnimatePresence>
         {open && (
           <motion.nav
-            className="landing-mobile-menu-panel"
+            className="lp-menu-panel"
             aria-label="Mobile page sections"
             initial={reducedMotion ? false : { opacity: 0, y: -8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -90,7 +90,7 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
             </Link>
             <button
               type="button"
-              className="landing-mobile-menu-signin"
+              className="lp-menu-signin"
               onClick={() => {
                 setOpen(false);
                 openAuth("signin");

@@ -48,7 +48,7 @@ for (const viewport of [
 
     const previewStatus = page.locator("#demo [role='status']");
     await expect(previewStatus).toHaveAttribute("aria-live", "polite");
-    const noir = page.locator("#demo .landing-demo-rail").getByRole("button", { name: /Noir/ });
+    const noir = page.locator("#demo .lp-demo-rail").getByRole("button", { name: /Noir/ });
     await noir.click();
     await expect(noir).toHaveAttribute("aria-pressed", "true");
     await expect(previewStatus).toContainText("Noir");
@@ -64,7 +64,7 @@ for (const viewport of [
     await expect(textAlternative).toContainText("Experience");
     await expect(textAlternative).toContainText("Education");
     await expect(textAlternative).toContainText("Skills");
-    await expect(dialog.locator(".landing-demo-full-paper")).toHaveAttribute("inert", "");
+    await expect(dialog.locator(".lp-full-paper")).toHaveAttribute("inert", "");
     await page.screenshot({
       path: "test-results/ux92-a11y/AFTER-screenreader-CV-dialog-" + viewport.id + ".png",
       animations: "disabled",

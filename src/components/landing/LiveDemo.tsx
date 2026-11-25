@@ -25,20 +25,15 @@ export function LiveDemo() {
   const active = options.find((o) => o.id === activeId) ?? options[0];
 
   return (
-    <section id="demo" className="landing-section landing-demo" aria-label="Try Orire">
-      <motion.div
-        className="landing-motion-reveal landing-about-head"
-        initial={reducedMotion ? false : { opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.4 }}
-        transition={reducedMotion ? { duration: 0 } : { duration: 0.5, ease: EASE }}
-      >
-        <span className="landing-eyebrow">See it live</span>
-        <h2 className="landing-h2">Preview a fictional example CV, choose a template and watch its layout change.</h2>
-      </motion.div>
+    <section id="demo" className="lp-section" aria-label="Try Orire">
+     <div className="lp-wrap">
+      <div className="lp-head">
+        <span className="lp-eyebrow">See it live</span>
+        <h2 className="lp-h2">Preview a fictional example CV, choose a template and watch its layout change.</h2>
+      </div>
 
-      <div className="landing-demo-stage">
-        <div className="landing-demo-rail" role="group" aria-label="Demo templates">
+      <div className="lp-demo-stage">
+        <div className="lp-demo-rail" role="group" aria-label="Demo templates">
           {options.map((t) => {
             const selected = t.id === activeId;
             return (
@@ -46,24 +41,24 @@ export function LiveDemo() {
                 key={t.id}
                 type="button"
                 aria-pressed={selected}
-                className={`landing-demo-swatch${selected ? " is-active" : ""}`}
+                className={`lp-swatch${selected ? " is-active" : ""}`}
                 onClick={() => setActiveId(t.id)}
               >
-                <span className="landing-demo-chip" style={{ background: t.swatch }} aria-hidden />
-                <span className="landing-demo-meta">
-                  <span className="landing-demo-name">{t.name}</span>
-                  <span className="landing-demo-blurb">{t.blurb}</span>
+                <span className="lp-swatch-chip" style={{ background: t.swatch }} aria-hidden />
+                <span className="lp-swatch-meta">
+                  <span className="lp-swatch-name">{t.name}</span>
+                  <span className="lp-swatch-blurb">{t.blurb}</span>
                 </span>
               </button>
             );
           })}
         </div>
 
-        <div className="landing-demo-preview">
-          <div className="landing-demo-frame" role="group" aria-label="Fictional example CV preview">
+        <div className="lp-demo-preview">
+          <div className="lp-demo-frame" role="group" aria-label="Fictional example CV preview">
             <button
               type="button"
-              className="landing-demo-expand"
+              className="lp-demo-expand"
               ref={expandRef}
               onClick={() => { setFullPreviewOpen(true); dialogRef.current?.showModal(); }}
               aria-label={`Enlarge ${active.name} CV preview`}
@@ -75,7 +70,7 @@ export function LiveDemo() {
               <AnimatePresence mode={reducedMotion ? "sync" : "wait"}>
                 <motion.div
                   key={activeId}
-                  className="landing-demo-paper-scale"
+                  className="lp-demo-scale"
                   initial={reducedMotion ? false : { opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={reducedMotion ? { opacity: 1 } : { opacity: 0 }}
@@ -83,7 +78,7 @@ export function LiveDemo() {
                 >
                   {/* The document scales separately from the motion wrapper,
                       so Framer Motion cannot override its responsive scale. */}
-                  <div className="paper landing-demo-paper" aria-hidden="true" inert>
+                  <div className="paper lp-demo-paper" aria-hidden="true" inert>
                     <Component cv={sampleCV} />
                   </div>
                 </motion.div>
@@ -92,11 +87,11 @@ export function LiveDemo() {
           </div>
           <dialog
             ref={dialogRef}
-            className="landing-demo-dialog"
+            className="lp-dialog"
             onClose={() => { setFullPreviewOpen(false); expandRef.current?.focus({ preventScroll: true }); }}
             onCancel={() => { setFullPreviewOpen(false); }}
-            aria-labelledby="landing-demo-dialog-heading"
-            aria-describedby="landing-demo-dialog-description"
+            aria-labelledby="lp-dialog-heading"
+            aria-describedby="lp-dialog-description"
             onKeyDown={(event) => {
               if (event.key !== "Tab") return;
               const dialog = dialogRef.current;
@@ -125,16 +120,16 @@ export function LiveDemo() {
               if (event.target === dialogRef.current) dialogRef.current?.close();
             }}
           >
-            <div className="landing-demo-dialog-header">
+            <div className="lp-dialog-head">
               <div>
-                <h3 id="landing-demo-dialog-heading">{active.name}, full-size CV preview</h3>
-                <p id="landing-demo-dialog-description">
+                <h3 id="lp-dialog-heading">{active.name}, full-size CV preview</h3>
+                <p id="lp-dialog-description">
                   Fictional details. Scroll vertically and sideways to inspect the full-size document.
                 </p>
               </div>
               <button
                 type="button"
-                className="landing-demo-dialog-close"
+                className="lp-dialog-close"
                 onClick={() => dialogRef.current?.close()}
                 aria-label="Close full-size preview"
               >
@@ -172,26 +167,27 @@ export function LiveDemo() {
               </ul>
             </section>
             <div
-              className="landing-demo-dialog-scroll"
+              className="lp-dialog-scroll"
               role="region"
               aria-label={`Full-size ${active.name} fictional CV`}
               tabIndex={0}
             >
-              <div className="paper landing-demo-full-paper" aria-hidden="true" inert>
+              <div className="paper lp-full-paper" aria-hidden="true" inert>
                 {fullPreviewOpen && <Component cv={sampleCV} />}
               </div>
             </div>
           </dialog>
-          <div className="landing-demo-foot">
-            <span className="landing-demo-foot-label" role="status" aria-live="polite" aria-atomic="true">
+          <div className="lp-demo-foot">
+            <span className="lp-demo-foot-label" role="status" aria-live="polite" aria-atomic="true">
               Previewing <strong>{active.name}</strong> with fictional example details. Your own CV stays yours.
             </span>
-            <button type="button" className="landing-cta" onClick={() => openAuth("signup")}>
+            <button type="button" className="lp-btn lp-btn--primary" onClick={() => openAuth("signup")}>
               Start free with your own CV
             </button>
           </div>
         </div>
       </div>
+     </div>
     </section>
   );
 }

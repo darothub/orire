@@ -33,7 +33,7 @@ for (const viewport of viewports) {
     if (isMobileMenu) {
       await expect(menu).toBeVisible();
       await expect(page.getByRole("button", { name: "Get started", exact: true })).toBeVisible();
-      const sizes = await page.locator(".landing-mobile-menu-toggle, .landing-nav-actions > .landing-header-cta")
+      const sizes = await page.locator(".lp-menu-toggle, .lp-actions > .lp-header-cta")
         .evaluateAll((nodes) => nodes.map((el) => {
           const box = el.getBoundingClientRect();
           return { width: box.width, height: box.height };
@@ -78,12 +78,12 @@ for (const viewport of viewports) {
       await expect(page.getByRole("navigation", { name: "Sections" })).toBeVisible();
     }
 
-    const frame = page.locator("#demo .landing-demo-frame");
+    const frame = page.locator("#demo .lp-demo-frame");
     await frame.scrollIntoViewIfNeeded();
     await expect(frame).toBeVisible();
     const fit = await page.locator("#demo").evaluate((root) => {
-      const windowFrame = root.querySelector(".landing-demo-frame")!.getBoundingClientRect();
-      const paper = root.querySelector(".landing-demo-paper")!.getBoundingClientRect();
+      const windowFrame = root.querySelector(".lp-demo-frame")!.getBoundingClientRect();
+      const paper = root.querySelector(".lp-demo-paper")!.getBoundingClientRect();
       return {
         frameWidth: windowFrame.width,
         paperWidth: paper.width,
@@ -106,7 +106,7 @@ for (const viewport of viewports) {
     await enlarge.click();
     const dialog = page.getByRole("dialog", { name: /full-size CV preview/i });
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator(".landing-demo-full-paper")).toBeVisible();
+    await expect(dialog.locator(".lp-full-paper")).toBeVisible();
     await expect(dialog.getByRole("region", { name: /Full-size .* fictional CV/ })).toBeVisible();
     await page.screenshot({
       path: `${dir}/AFTER-enlarged-${viewport.name}.png`,
@@ -115,9 +115,9 @@ for (const viewport of viewports) {
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
 
-    await page.locator(".landing-demo-rail").getByRole("button", { name: /Noir/ }).click();
-    await expect(page.locator(".landing-demo-rail").getByRole("button", { name: /Noir/ })).toHaveAttribute("aria-pressed", "true");
-    await expect(page.locator(".landing-demo-foot")).toContainText("Noir");
+    await page.locator(".lp-demo-rail").getByRole("button", { name: /Noir/ }).click();
+    await expect(page.locator(".lp-demo-rail").getByRole("button", { name: /Noir/ })).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator(".lp-demo-foot")).toContainText("Noir");
 
     // No overall document overflow, even when the full-size preview is scrollable.
     const horizontalOverflow = await page.evaluate(
@@ -134,7 +134,7 @@ test("animations respect the browser's reduced-motion preference", async ({ page
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: "Open section menu" }).click();
   await expect(page.getByRole("navigation", { name: "Mobile page sections" })).toBeVisible();
-  const duration = await page.locator(".landing-mobile-menu-icon span").first().evaluate(
+  const duration = await page.locator(".lp-menu-icon span").first().evaluate(
     el => getComputedStyle(el).transitionDuration,
   );
   expect(duration.split(",").every(part => parseFloat(part) === 0)).toBe(true);

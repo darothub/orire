@@ -32,17 +32,17 @@ const ROTATE_MS = 7000;
 function Pane({ i }: { i: number }) {
   if (i === 0) {
     return (
-      <div className="gx-two">
-        <div className="gx-card">
+      <div className="lp-two">
+        <div className="lp-mini">
           <h4>Coverage by area</h4>
-          <p className="gx-row">Backend &amp; APIs<span className="gx-pill is-hi">92%</span></p>
-          <p className="gx-row">Testing (TDD/BDD)<span className="gx-pill is-lo">31%</span></p>
-          <p className="gx-row">Cloud &amp; containers<span className="gx-pill is-mid">58%</span></p>
-          <p className="gx-row">Delivery &amp; CI/CD<span className="gx-pill is-lo">22%</span></p>
+          <div className="lp-row">Backend &amp; APIs<span className="lp-badge is-hi">92%</span></div>
+          <div className="lp-row">Testing (TDD/BDD)<span className="lp-badge is-lo">31%</span></div>
+          <div className="lp-row">Cloud &amp; containers<span className="lp-badge is-mid">58%</span></div>
+          <div className="lp-row">Delivery &amp; CI/CD<span className="lp-badge is-lo">22%</span></div>
         </div>
-        <div className="gx-card">
+        <div className="lp-mini">
           <h4>What the ideal has that you don’t</h4>
-          <ul className="gx-tags">
+          <ul className="lp-tags">
             {["Karate", "GitLab CI", "Kubernetes", "OpenShift"].map((m) => <li key={m} className="is-miss">{m}</li>)}
           </ul>
         </div>
@@ -51,34 +51,34 @@ function Pane({ i }: { i: number }) {
   }
   if (i === 1) {
     return (
-      <div className="gx-two">
-        <div className="gx-card">
+      <div className="lp-two">
+        <div className="lp-mini">
           <h4>Question 2 of 5</h4>
-          <p className="gx-q">The role needs automated testing. Have you written tests at your last job?</p>
-          <p className="gx-ans">“Yes, JUnit suites for the payments service, around 400 cases.”</p>
-          <p className="gx-verdict">✓ Grounded in your answer, added as a bullet.</p>
+          <p className="lp-q">The role needs automated testing. Have you written tests at your last job?</p>
+          <p className="lp-ans">“Yes, JUnit suites for the payments service, around 400 cases.”</p>
+          <p className="lp-verdict">✓ Grounded in your answer, added as a bullet.</p>
         </div>
-        <div className="gx-card">
+        <div className="lp-mini">
           <h4>Already strong / not shown</h4>
-          <p className="gx-row">Java, Spring Boot<span className="gx-pill is-hi">strong</span></p>
-          <p className="gx-row">PostgreSQL<span className="gx-pill is-hi">strong</span></p>
-          <p className="gx-row">OpenShift<span className="gx-pill is-lo">not shown, we won’t fake it</span></p>
+          <div className="lp-row">Java, Spring Boot<span className="lp-badge is-hi">strong</span></div>
+          <div className="lp-row">PostgreSQL<span className="lp-badge is-hi">strong</span></div>
+          <div className="lp-row">OpenShift<span className="lp-badge is-lo">not shown, we won’t fake it</span></div>
         </div>
       </div>
     );
   }
   return (
-    <div className="gx-two">
-      <div className="gx-card">
+    <div className="lp-two">
+      <div className="lp-mini">
         <h4>Before → after</h4>
-        <p className="gx-diff"><del>Responsible for backend services and testing.</del></p>
-        <p className="gx-diff"><ins>Built Spring Boot services on PostgreSQL and a JUnit suite of ~400 tests.</ins></p>
+        <p className="lp-diff"><del>Responsible for backend services and testing.</del></p>
+        <p className="lp-diff"><ins>Built Spring Boot services on PostgreSQL and a JUnit suite of ~400 tests.</ins></p>
       </div>
-      <div className="gx-card">
+      <div className="lp-mini">
         <h4>Guardrails</h4>
-        <p className="gx-row">New facts added<span className="gx-pill is-hi">0</span></p>
-        <p className="gx-row">Numbers invented<span className="gx-pill is-hi">0</span></p>
-        <p className="gx-row">Changes you can reject<span className="gx-pill is-hi">all</span></p>
+        <div className="lp-row">New facts added<span className="lp-badge is-hi">0</span></div>
+        <div className="lp-row">Numbers invented<span className="lp-badge is-hi">0</span></div>
+        <div className="lp-row">Changes you can reject<span className="lp-badge is-hi">all</span></div>
       </div>
     </div>
   );
@@ -100,34 +100,34 @@ export function TailorTrio() {
   }, [cur, paused, reduced]);
 
   return (
-    <div className="gx-trio" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
-      <div className="gx-tabs" role="tablist" aria-label="Simulate, Coach and Rewrite">
+    <div className="lp-trio" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocus={() => setPaused(true)} onBlur={() => setPaused(false)}>
+      <div className="lp-trio-tabs" role="tablist" aria-label="Simulate, Coach and Rewrite">
         {TABS.map((t, i) => (
           <button
             key={t.id}
             type="button"
             role="tab"
-            id={`gx-tab-${t.id}`}
+            id={`lp-tab-${t.id}`}
             aria-selected={cur === i}
-            aria-controls={`gx-pane-${t.id}`}
-            className={`gx-tab${cur === i ? " is-on" : ""}`}
+            aria-controls={`lp-pane-${t.id}`}
+            className={`lp-tab${cur === i ? " is-on" : ""}`}
             onClick={() => setCur(i)}
           >
-            <span className="gx-tab-k">{t.kicker}</span>
+            <span className="lp-tab-k">{t.kicker}</span>
             <strong>{t.title}</strong>
-            <span className="gx-tab-p">{t.blurb}</span>
-            {cur === i && !reduced && !paused && <i key={`${cur}-p`} className="gx-prog" />}
+            <span className="lp-tab-p">{t.blurb}</span>
+            {cur === i && !reduced && !paused && <i key={`${cur}-p`} className="lp-prog" />}
           </button>
         ))}
       </div>
-      <div className="gx-stage">
+      <div className="lp-stage">
         {TABS.map((t, i) => (
-          <div key={t.id} role="tabpanel" id={`gx-pane-${t.id}`} aria-labelledby={`gx-tab-${t.id}`} hidden={cur !== i} className="gx-pane">
+          <div key={t.id} role="tabpanel" id={`lp-pane-${t.id}`} aria-labelledby={`lp-tab-${t.id}`} hidden={cur !== i} className="lp-pane">
             <Pane i={i} />
           </div>
         ))}
       </div>
-      <p className="gx-caption" aria-live="polite">{TABS[cur].caption} <span className="gx-ill">Illustrative example.</span></p>
+      <p className="lp-caption" aria-live="polite">{TABS[cur].caption} <span className="lp-ill">Illustrative example.</span></p>
     </div>
   );
 }
