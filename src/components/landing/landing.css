@@ -100,7 +100,7 @@
 .lp-cta-row { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 30px; }
 .lp-note { display: flex; align-items: center; gap: 8px; margin-top: 18px; font-size: 13px; color: var(--or-muted); }
 .lp-note svg { flex: none; width: 15px; height: 15px; color: var(--or-match); }
-.lp-guest-link { margin-top: 10px; padding: 0; font: inherit; font-size: 13px; color: var(--or-violet-soft); text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; cursor: pointer; }
+.lp-guest-link { margin-top: 4px; min-height: 44px; padding: 0; font: inherit; font-size: 13px; color: var(--or-violet-soft); text-decoration: underline; text-underline-offset: 3px; background: none; border: 0; cursor: pointer; }
 .lp-guest-link:disabled { opacity: 0.55; cursor: default; }
 
 /* match card (hero visual + simulate visual) */
