@@ -3833,6 +3833,7 @@ html[data-theme="light"] .app :is(
   color: var(--or-ink);
 }
 .auth-head p { color: var(--or-muted); }
+.auth-divider, .auth-fine { color: var(--or-muted); }
 .auth-switch { background: var(--or-surface-2); border-color: var(--or-line); }
 .auth-switch-pill { background: var(--or-raised); border-color: var(--or-line-strong); box-shadow: none; }
 .auth-input { background: var(--or-surface-2); border-color: var(--or-line-strong); border-radius: 12px; }
