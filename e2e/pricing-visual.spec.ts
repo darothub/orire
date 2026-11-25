@@ -9,7 +9,7 @@ test("desktop pricing cards are consistently aligned", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/pricing", { waitUntil: "domcontentloaded" });
   const pricing = page.locator("#pricing");
-  const cards = pricing.locator(".landing-price-card");
+  const cards = pricing.locator(".lp-plan");
 
   await expect(cards).toHaveCount(3);
   await expect(pricing.getByRole("heading", { name: /Start free/ })).toBeVisible();
