@@ -14,6 +14,7 @@ import { coerceCoverLetter } from "@/lib/ai/coverLetter";
 import type { CoverLetter } from "@/lib/cv/coverLetter";
 import { createVersion } from "@/app/actions/library";
 import { type CvField, readCvField, patchCvField } from "@/lib/occ/versionPatch";
+import type { SavedOccTurn } from "@/lib/occ/conversationSave";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/Button";
 import { ChatMessage } from "@/components/ui/ChatMessage";
@@ -75,12 +76,12 @@ const CHIPS: { label: string; intent: Intent }[] = [
 // swaps the full working state when you switch — so you can tailor for a few
 // jobs in parallel. (Cross-reload/device persistence of the transcript is a
 // follow-up that reuses /api/occ/conversations.)
-type ConvMeta = { id: string; title: string };
+type ConvMeta = { id: string; title: string; backendId?: string; readOnly?: boolean };
 type ConvSnapshot = {
   messages: Msg[]; agent: Specialist; cv: string; draft: CVData | null; description: string;
   cvFileName: string; roleFileName: string; coverage: number | null; templateId: string;
   intPhase: "idle" | "question" | "feedback"; intIndex: number; intQuestion: InterviewQuestion | null;
-  lastStructured: string;
+  lastStructured: string; transcript: SavedOccTurn[];
 };
 
 export function Occ4Workspace() {
@@ -113,6 +114,8 @@ export function Occ4Workspace() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [conversations, setConversations] = useState<ConvMeta[]>([{ id: "c1", title: "New conversation" }]);
   const [activeId, setActiveId] = useState("c1");
+  const [transcript, setTranscript] = useState<SavedOccTurn[]>([]);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const snapshots = useRef<Map<string, ConvSnapshot>>(new Map());
   const convSeq = useRef(1);
 
@@ -140,20 +143,39 @@ export function Occ4Workspace() {
     return () => { cancelled = true; };
   }, [draft, roleReady]);
 
+  // On mount, list the user's saved conversations in the sidebar (metadata only).
+  // Opening one fetches its transcript on demand.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const r = await fetch("/api/occ/conversations", { cache: "no-store" });
+        if (!r.ok) return;
+        const data = await r.json();
+        const saved: { id: string; title: string }[] = Array.isArray(data.conversations) ? data.conversations : [];
+        if (cancelled || !saved.length) return;
+        setConversations((cs) => [...cs, ...saved.map((s) => ({ id: "saved-" + s.id, title: s.title, backendId: s.id, readOnly: true }))]);
+      } catch {
+        // Offline or not available — just the in-session conversation.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   function captureSnapshot(): ConvSnapshot {
-    return { messages, agent, cv, draft, description, cvFileName, roleFileName, coverage, templateId, intPhase, intIndex, intQuestion, lastStructured: lastStructuredRef.current };
+    return { messages, agent, cv, draft, description, cvFileName, roleFileName, coverage, templateId, intPhase, intIndex, intQuestion, lastStructured: lastStructuredRef.current, transcript };
   }
   function resetActiveState() {
     setMessages([]); setAgent(DEFAULT_SPECIALIST); setCv(""); setDraft(null); setDescription("");
     setCvFileName(""); setRoleFileName(""); setCoverage(null); setTemplateId("aurora");
     setIntPhase("idle"); setIntIndex(0); setIntQuestion(null); lastStructuredRef.current = "";
-    setContextOpen(false); setPreviewOpen(false); setUploadError("");
+    setContextOpen(false); setPreviewOpen(false); setUploadError(""); setTranscript([]); setSaveState("idle");
   }
   function applySnapshot(s: ConvSnapshot) {
     setMessages(s.messages); setAgent(s.agent); setCv(s.cv); setDraft(s.draft); setDescription(s.description);
     setCvFileName(s.cvFileName); setRoleFileName(s.roleFileName); setCoverage(s.coverage); setTemplateId(s.templateId);
     setIntPhase(s.intPhase); setIntIndex(s.intIndex); setIntQuestion(s.intQuestion); lastStructuredRef.current = s.lastStructured;
-    setUploadError("");
+    setUploadError(""); setTranscript(s.transcript); setSaveState("idle");
   }
   function newConversation() {
     snapshots.current.set(activeId, captureSnapshot());
@@ -166,9 +188,56 @@ export function Occ4Workspace() {
     if (id === activeId) return;
     snapshots.current.set(activeId, captureSnapshot());
     const snap = snapshots.current.get(id);
+    const target = conversations.find((c) => c.id === id);
     setActiveId(id);
-    if (snap) applySnapshot(snap);
-    else resetActiveState();
+    if (snap) {
+      applySnapshot(snap);
+    } else {
+      resetActiveState();
+      // A saved conversation opened for the first time: load its transcript
+      // (text history only — the draft and JD were never persisted).
+      if (target?.backendId) void loadSavedTranscript(target.backendId);
+    }
+  }
+  async function loadSavedTranscript(backendId: string) {
+    try {
+      const r = await fetch(`/api/occ/conversations/${encodeURIComponent(backendId)}`, { cache: "no-store" });
+      if (!r.ok) return;
+      const data = await r.json();
+      const msgs: { sender: string; text: string }[] = Array.isArray(data.conversation?.messages) ? data.conversation.messages : [];
+      setTranscript(msgs.map((m) => ({ role: m.sender === "you" ? "you" : "OCC", text: m.text })));
+      sayBot("Here's your saved conversation. Your CV and the JD aren't stored, so add them again to continue working.");
+      for (const m of msgs) {
+        push(
+          <ChatMessage role={m.sender === "you" ? "user" : "bot"} avatar={m.sender === "you" ? "You" : undefined}>
+            {m.text}
+          </ChatMessage>,
+        );
+      }
+    } catch {
+      // Offline or gone — leave the fresh conversation as-is.
+    }
+  }
+  // Explicit save of the active conversation's transcript (text only; CV/JD are
+  // never persisted). Upserts by the stored backend id.
+  async function saveActive() {
+    if (saveState === "saving" || transcript.length === 0) return;
+    setSaveState("saving");
+    const active = conversations.find((c) => c.id === activeId);
+    const title = active && active.title !== "New conversation" ? active.title : (transcript[0]?.text.slice(0, 60) || "Conversation");
+    try {
+      const r = await fetch("/api/occ/conversations", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: active?.backendId, title, primaryAgent: "review", usedAgents: ["review"], turns: transcript }),
+      });
+      const data = await r.json();
+      if (!r.ok || typeof data?.id !== "string") return setSaveState("error");
+      const backendId = data.id as string;
+      setConversations((cs) => cs.map((c) => (c.id === activeId ? { ...c, backendId, title } : c)));
+      setSaveState("saved");
+    } catch {
+      setSaveState("error");
+    }
   }
 
   function push(node: ReactNode) {
@@ -178,8 +247,14 @@ export function Occ4Workspace() {
       if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
     });
   }
-  const sayUser = (text: string) => push(<ChatMessage role="user" avatar="You">{text}</ChatMessage>);
-  const sayBot = (text: string) => push(<ChatMessage role="bot">{text}</ChatMessage>);
+  // Keep a text transcript (you/OCC turns) for persistence — alongside the rich
+  // card messages, which aren't serialised. Capped to the save limits.
+  const logTurn = (role: "you" | "OCC", text: string) => {
+    setSaveState("idle");
+    setTranscript((t) => (t.length >= 100 ? t : [...t, { role, text: text.slice(0, 2500) }]));
+  };
+  const sayUser = (text: string) => { logTurn("you", text); push(<ChatMessage role="user" avatar="You">{text}</ChatMessage>); };
+  const sayBot = (text: string) => { logTurn("OCC", text); push(<ChatMessage role="bot">{text}</ChatMessage>); };
 
   function needContext() {
     sayBot("First, add your CV and the job description so I can work against the real role.");
@@ -589,6 +664,14 @@ export function Occ4Workspace() {
         <p className="occ4-side-hint">
           Each conversation keeps its own CV, JD and draft — start a new one for a different job.
         </p>
+        <button
+          type="button"
+          className="occ4-save-conv"
+          onClick={() => void saveActive()}
+          disabled={transcript.length === 0 || saveState === "saving"}
+        >
+          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : saveState === "error" ? "Save failed — retry" : "Save conversation"}
+        </button>
         <div className="occ4-side-foot">
           <Link href="/occ" className="occ4-back">
             ← Current Career Copilot
