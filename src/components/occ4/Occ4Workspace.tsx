@@ -41,6 +41,8 @@ import { Occ4Refine } from "./Occ4Refine";
 import { Occ4Export } from "./Occ4Export";
 import { Occ4Editor } from "./Occ4Editor";
 import { Occ4Applications } from "./Occ4Applications";
+import { Occ4Home } from "./Occ4Home";
+import type { HomeAction } from "@/lib/occ/home";
 import "./occ4.css";
 
 /**
@@ -125,6 +127,7 @@ export function Occ4Workspace() {
   const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [navOpen, setNavOpen] = useState(false);
+  const [view, setView] = useState<"home" | "chat">("home");
   const [editMode, setEditMode] = useState(false);
   const [editOpenSeq, setEditOpenSeq] = useState(0);
   const [coverage, setCoverage] = useState<number | null>(null);
@@ -638,6 +641,22 @@ export function Occ4Workspace() {
     if (!c) return false;
     try { await navigator.clipboard.writeText(cvToPlainText(c)); return true; } catch { return false; }
   }
+  // Home actions hand off to the conversation: they switch to it and run the
+  // same chip action, so Home and chat share one implementation of each feature.
+  function runHomeAction(action: HomeAction) {
+    setView("chat");
+    if (action === "context") { setContextOpen(true); return; }
+    const chip = CHIPS.find((c) => c.intent === action);
+    if (chip) send(chip.label, chip.intent);
+  }
+  function homeEdit() {
+    setView("chat");
+    if (!editMode) toggleEdit();
+  }
+  function homeTemplates() {
+    setView("chat");
+    runTemplates();
+  }
   function runApplications() {
     push(<CardRow><Occ4Applications seedRole={draft?.basics.title.trim() || ""} /></CardRow>);
   }
@@ -934,7 +953,17 @@ export function Occ4Workspace() {
             <small>CAREER COPILOT</small>
           </div>
         </div>
-        <button type="button" className="occ4-newchat" onClick={newConversation} disabled={busy}>
+        <nav className="occ4-side-nav" aria-label="Orire">
+          <button type="button" className={`occ4-navitem${view === "home" ? " on" : ""}`} aria-current={view === "home" ? "page" : undefined} onClick={() => { setView("home"); setNavOpen(false); }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" /></svg>
+            Home
+          </button>
+          <button type="button" className={`occ4-navitem${view === "chat" ? " on" : ""}`} aria-current={view === "chat" ? "page" : undefined} onClick={() => { setView("chat"); setNavOpen(false); }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
+            Copilot
+          </button>
+        </nav>
+        <button type="button" className="occ4-newchat" onClick={() => { setView("chat"); newConversation(); }} disabled={busy}>
           ＋ New conversation
         </button>
         <div className="occ4-side-label">Conversations</div>
@@ -946,7 +975,7 @@ export function Occ4Workspace() {
                 className="occ4-conv-open"
                 aria-current={c.id === activeId}
                 disabled={busy}
-                onClick={() => switchConversation(c.id)}
+                onClick={() => { setView("chat"); switchConversation(c.id); }}
               >
                 {c.title}
               </button>
@@ -987,6 +1016,19 @@ export function Occ4Workspace() {
         </div>
       </aside>
 
+      {view === "home" && (
+        <Occ4Home
+          hasCv={cvReady}
+          hasJd={roleReady}
+          coverage={coverage}
+          draft={draft ? { name: draft.basics.fullName.trim(), template: getTemplate(templateId).name } : null}
+          onAction={runHomeAction}
+          onEdit={homeEdit}
+          onTemplates={homeTemplates}
+          onOpenNav={() => setNavOpen(true)}
+        />
+      )}
+      {view === "chat" && (
       <main className="occ4-main">
         <header className="occ4-head">
           <button type="button" className="occ4-navtoggle" aria-label="Conversations" onClick={() => setNavOpen(true)}>☰</button>
@@ -1205,6 +1247,7 @@ export function Occ4Workspace() {
           </div>
         </div>
       </main>
+      )}
 
       {draft && DraftTemplate && (
         <div id="cv-paper" aria-hidden className="occ4-export-paper">
