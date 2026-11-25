@@ -13,25 +13,41 @@ export function readCvField(cv: CVData, field: CvField): string | null {
   return entry?.highlights[field.index] ?? null;
 }
 
-export function patchCvField(cv: CVData, field: CvField, expected: string, replacement: string): CVData | null {
-  if (typeof expected !== "string" || typeof replacement !== "string" ||
-      replacement.trim().length < 10 || replacement.length > 1500 ||
-      readCvField(cv, field) !== expected || replacement.trim() === expected) return null;
+/** Write a value into one CV field (summary / experience or project bullet),
+ * returning a new CV. The single place the field mutation lives. */
+function setCvFieldValue(cv: CVData, field: CvField, value: string): CVData {
   if (field.kind === "summary") {
-    return { ...cv, basics: { ...cv.basics, summary: replacement.trim() } };
+    return { ...cv, basics: { ...cv.basics, summary: value } };
   }
   if (field.kind === "experience") {
     return { ...cv, experience: cv.experience.map(item =>
       item.id !== field.itemId ? item : {
-        ...item, highlights: item.highlights.map((value, index) => index === field.index ? replacement.trim() : value),
+        ...item, highlights: item.highlights.map((v, index) => index === field.index ? value : v),
       },
     ) };
   }
   return { ...cv, projects: cv.projects.map(item =>
     item.id !== field.itemId ? item : {
-      ...item, highlights: item.highlights.map((value, index) => index === field.index ? replacement.trim() : value),
+      ...item, highlights: item.highlights.map((v, index) => index === field.index ? value : v),
     },
   ) };
+}
+
+/** Approve a safe rewrite: guarded (must match `expected`, differ, and be a
+ * substantial 10–1500 chars). Used by the review Apply flow. */
+export function patchCvField(cv: CVData, field: CvField, expected: string, replacement: string): CVData | null {
+  if (typeof expected !== "string" || typeof replacement !== "string" ||
+      replacement.trim().length < 10 || replacement.length > 1500 ||
+      readCvField(cv, field) !== expected || replacement.trim() === expected) return null;
+  return setCvFieldValue(cv, field, replacement.trim());
+}
+
+/** Free inline edit: looser than patchCvField — any non-empty text up to 2000
+ * chars, as long as the field exists. Used by the preview's edit mode. */
+export function writeCvField(cv: CVData, field: CvField, text: string): CVData | null {
+  const value = text.trim();
+  if (!value || value.length > 2000 || readCvField(cv, field) === null) return null;
+  return setCvFieldValue(cv, field, value);
 }
 
 export type CvFieldChoice = { label: string; field: CvField; text: string };
