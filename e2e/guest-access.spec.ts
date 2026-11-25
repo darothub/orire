@@ -3,7 +3,7 @@ import { test, expect } from "./fixtures";
 test.describe("guest access", () => {
   test("guest can open the editor, and AI/export prompt sign-up with a reason", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Try as guest" }).click();
+    await page.getByRole("button", { name: "Or try it as a guest" }).click();
 
     const rail = page.getByRole("navigation", { name: "Workspaces" });
     await expect(rail).toBeVisible({ timeout: 30_000 });

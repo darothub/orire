@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import Link from "next/link";
 import { useUIStore } from "@/lib/store/uiStore";
 
 const SECTIONS = [
-  { href: "#how", label: "How it works" },
-  { href: "#demo", label: "Live demo" },
+  { href: "#simulate", label: "Simulate" },
+  { href: "#copilot", label: "Copilot" },
+  { href: "#studio", label: "Studio" },
+  { href: "#pricing", label: "Pricing" },
 ] as const;
 
 /**
@@ -21,6 +22,7 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
   const toggleRef = useRef<HTMLButtonElement>(null);
   const reducedMotion = useReducedMotion();
   const openAuth = useUIStore((s) => s.openAuth);
+  const setExplored = useUIStore((s) => s.setExplored);
 
   useEffect(() => {
     if (!open) return;
@@ -82,12 +84,6 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
                 {label}
               </a>
             ))}
-            <Link href="/templates" onClick={() => setOpen(false)}>
-              Templates
-            </Link>
-            <Link href="/pricing" onClick={() => setOpen(false)}>
-              Pricing
-            </Link>
             <button
               type="button"
               className="lp-menu-signin"
@@ -97,6 +93,16 @@ export function LandingMobileNav({ interactiveReady }: { interactiveReady: boole
               }}
             >
               Sign in
+            </button>
+            <button
+              type="button"
+              className="lp-menu-signin"
+              onClick={() => {
+                setOpen(false);
+                setExplored(true);
+              }}
+            >
+              Try as guest
             </button>
           </motion.nav>
         )}

@@ -29,7 +29,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 
       }
       test("signup keyboard reveal, modal focus and WCAG", async ({ page }, testInfo) => {
         await page.goto("/");
-        const opener = page.getByRole("button", { name: "Create your CV" }).first();
+        const opener = page.getByRole("button", { name: "Start free" }).first();
         await opener.click();
         const dialog = page.getByRole("dialog", { name: "Create your account" });
         await expect(dialog).toBeVisible();

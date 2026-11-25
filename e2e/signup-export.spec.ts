@@ -24,7 +24,7 @@ function railItem(page: Page, name: string) {
 
 /** Landing hero can render multiple identical CTAs (slider slides). */
 function guestCta(page: Page) {
-  return page.getByRole("button", { name: "Get started free" }).first();
+  return page.getByRole("button", { name: "Start free" }).first();
 }
 
 
