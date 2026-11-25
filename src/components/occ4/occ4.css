@@ -245,6 +245,29 @@
 .occ4-fb-warn { color: var(--or-gold); }
 .occ4-fb-mute { color: var(--or-muted); }
 
+/* ---- inline edit ---- */
+.occ4-pv-edit {
+  font-family: var(--or-font-sans); font-size: 11.5px; font-weight: 600; cursor: pointer;
+  background: var(--or-surface-2); border: 1px solid var(--or-line); color: var(--or-ink-soft);
+  border-radius: var(--or-radius-sm); padding: 5px 11px;
+}
+.occ4-pv-edit.on { color: var(--or-ink); border-color: var(--or-violet); background: var(--or-violet-ghost); }
+.occ4-editor { display: flex; flex-direction: column; gap: 12px; }
+.occ4-editor-hint { font-size: 11.5px; color: var(--or-muted); margin: 0; }
+.occ4-editor-field { display: flex; flex-direction: column; gap: 4px; }
+.occ4-editor-field > span { font-size: 11px; font-weight: 600; color: var(--or-ink-soft); }
+.occ4-editor-field textarea {
+  width: 100%; font: inherit; font-size: 12.5px; line-height: 1.5; color: var(--or-ink);
+  background: var(--or-surface); border: 1px solid var(--or-line); border-radius: var(--or-radius-sm);
+  padding: 8px 10px; resize: vertical;
+}
+.occ4-editor-field textarea:focus-visible { outline: 2px solid var(--or-violet); outline-offset: 1px; border-color: var(--or-violet); }
+
+/* ---- export ---- */
+.occ4-export-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Off-screen, unscaled render used only as the PDF rasterisation source. */
+.occ4-export-paper { position: absolute; left: -10000px; top: 0; width: 794px; pointer-events: none; }
+
 /* ---- library ---- */
 .occ4-lib { display: flex; flex-direction: column; gap: 6px; }
 .occ4-lib-row { display: flex; align-items: center; gap: 12px; padding: 9px 11px; border: 1px solid var(--or-line); border-radius: var(--or-radius-md); }

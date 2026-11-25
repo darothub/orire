@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { blankCV } from "@/lib/cv/schema";
-import { patchCvField, readCvField, parseCvField, cvFieldChoices, cvFieldForEvidence } from "./versionPatch";
+import { patchCvField, writeCvField, readCvField, parseCvField, cvFieldChoices, cvFieldForEvidence } from "./versionPatch";
 
 describe("OCC structured CV version patch", () => {
   const cv = blankCV();
@@ -19,6 +19,12 @@ describe("OCC structured CV version patch", () => {
     const field = cvFieldForEvidence(cv, "delivered kafka-based authentication workflows for clients");
     expect(field).toEqual({ kind: "experience", itemId: "exp-1", index: 0 });
     expect(cvFieldForEvidence(cv, "something entirely unrelated to this cv")).toBeNull();
+  });
+  it("writeCvField does a free inline edit (looser than patch) but rejects empty / unknown", () => {
+    const edited = writeCvField(cv, { kind: "summary" }, "Short bit.");
+    expect(edited?.basics.summary).toBe("Short bit."); // under patch's 10-char floor, allowed here
+    expect(writeCvField(cv, { kind: "summary" }, "   ")).toBeNull();
+    expect(writeCvField(cv, { kind: "experience", itemId: "nope", index: 0 }, "x")).toBeNull();
   });
   it("fails closed for stale content or an unknown field", () => {
     expect(patchCvField(cv, { kind: "summary" }, "Old summary", "This has sufficient characters.")).toBeNull();

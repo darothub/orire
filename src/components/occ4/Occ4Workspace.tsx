@@ -15,10 +15,13 @@ import { applyRefinePatch } from "@/lib/ai/refinePatch";
 import { parseModelJSON, factGround } from "@/lib/ai/guardrails";
 import { diffCv, applyReviewed } from "@/lib/ai/cvDiff";
 import { useSettingsStore } from "@/lib/store/settingsStore";
+import { exportCVtoPDF } from "@/lib/export/pdf";
+import { exportCVtoDocx } from "@/lib/export/docx";
+import { cvToPlainText } from "@/lib/export/plaintext";
 import { coerceCoverLetter } from "@/lib/ai/coverLetter";
 import type { CoverLetter } from "@/lib/cv/coverLetter";
 import { createVersion } from "@/app/actions/library";
-import { type CvField, readCvField, patchCvField } from "@/lib/occ/versionPatch";
+import { type CvField, readCvField, patchCvField, writeCvField } from "@/lib/occ/versionPatch";
 import type { SavedOccTurn } from "@/lib/occ/conversationSave";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +34,8 @@ import { Occ4Review } from "./Occ4Review";
 import { Occ4Templates } from "./Occ4Templates";
 import { Occ4Library, type SavedDoc } from "./Occ4Library";
 import { Occ4Refine } from "./Occ4Refine";
+import { Occ4Export } from "./Occ4Export";
+import { Occ4Editor } from "./Occ4Editor";
 import "./occ4.css";
 
 /**
@@ -49,7 +54,7 @@ import "./occ4.css";
  */
 
 type Msg = { id: number; node: ReactNode };
-type Intent = "review" | "refine" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "library" | "default";
+type Intent = "review" | "refine" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "library" | "export" | "default";
 type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 
 // occ4's specialists behave like a model picker. Kept local (not the shared
@@ -79,6 +84,7 @@ const CHIPS: { label: string; intent: Intent }[] = [
   { label: "Templates", intent: "template" },
   { label: "My library", intent: "library" },
   { label: "Save to library", intent: "save" },
+  { label: "Export", intent: "export" },
 ];
 
 // A conversation is scoped to one CV + JD. occ4 keeps several in memory and
@@ -112,9 +118,13 @@ export function Occ4Workspace() {
   const [intIndex, setIntIndex] = useState(0);
   const [intQuestion, setIntQuestion] = useState<InterviewQuestion | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editOpenSeq, setEditOpenSeq] = useState(0);
   const [coverage, setCoverage] = useState<number | null>(null);
   const [templateId, setTemplateId] = useState("aurora");
   const descriptionRef = useRef("");
+  // Latest draft, so a pushed export card always exports the current CV.
+  const liveDraftRef = useRef<CVData | null>(null);
   // Text that produced the current draft, so blurring the paste box or
   // re-uploading the same CV doesn't restructure and re-announce it.
   const lastStructuredRef = useRef("");
@@ -132,6 +142,7 @@ export function Occ4Workspace() {
   const roleReady = description.trim().length >= 30;
 
   useEffect(() => { descriptionRef.current = description; }, [description]);
+  useEffect(() => { liveDraftRef.current = draft; }, [draft]);
   // Keep the preview's coverage ring in step with the working draft — recomputes
   // whenever the draft changes (e.g. after an applied rewrite) or a JD arrives.
   useEffect(() => {
@@ -178,13 +189,13 @@ export function Occ4Workspace() {
     setMessages([]); setAgent(DEFAULT_SPECIALIST); setCv(""); setDraft(null); setDescription("");
     setCvFileName(""); setRoleFileName(""); setCoverage(null); setTemplateId("aurora");
     setIntPhase("idle"); setIntIndex(0); setIntQuestion(null); lastStructuredRef.current = "";
-    setContextOpen(false); setPreviewOpen(false); setUploadError(""); setTranscript([]); setSaveState("idle");
+    setContextOpen(false); setPreviewOpen(false); setEditMode(false); setUploadError(""); setTranscript([]); setSaveState("idle");
   }
   function applySnapshot(s: ConvSnapshot) {
     setMessages(s.messages); setAgent(s.agent); setCv(s.cv); setDraft(s.draft); setDescription(s.description);
     setCvFileName(s.cvFileName); setRoleFileName(s.roleFileName); setCoverage(s.coverage); setTemplateId(s.templateId);
     setIntPhase(s.intPhase); setIntIndex(s.intIndex); setIntQuestion(s.intQuestion); lastStructuredRef.current = s.lastStructured;
-    setUploadError(""); setTranscript(s.transcript); setSaveState("idle");
+    setUploadError(""); setTranscript(s.transcript); setSaveState("idle"); setEditMode(false);
   }
   function newConversation() {
     snapshots.current.set(activeId, captureSnapshot());
@@ -376,6 +387,18 @@ export function Occ4Workspace() {
     setPreviewOpen(true);
   }
 
+  // Free inline edit from the preview's edit mode.
+  function handleInlineEdit(field: CvField, text: string) {
+    setDraft((prev) => (prev ? writeCvField(prev, field, text) ?? prev : prev));
+  }
+  function toggleEdit() {
+    setEditMode((on) => {
+      if (!on) setEditOpenSeq((s) => s + 1);
+      return !on;
+    });
+    setPreviewOpen(true);
+  }
+
   // Structure pasted CV text into the working draft in-browser (same heuristic
   // parser the upload path uses) when the paste box loses focus — so paste users
   // get the connected flow, not just PDF/DOCX uploaders. Skips re-announcing the
@@ -458,6 +481,30 @@ export function Occ4Workspace() {
 
   // Save — persists the working draft as a NEW private library version (never the
   // active editor CV: makeActive=false), carrying the chosen template.
+  // In-chat export of the working draft, via the studio's export functions.
+  // PDF rasterises the hidden off-screen #cv-paper render; Word and text are
+  // built from the CVData directly.
+  const exportFileName = (c: CVData) => `${c.basics.fullName.trim() || "cv"} CV`;
+  async function exportPdf() {
+    const c = liveDraftRef.current;
+    if (!c) return false;
+    return exportCVtoPDF("continuous", exportFileName(c), c);
+  }
+  async function exportDocx() {
+    const c = liveDraftRef.current;
+    if (!c) return false;
+    return exportCVtoDocx(exportFileName(c), c);
+  }
+  async function copyDraftText() {
+    const c = liveDraftRef.current;
+    if (!c) return false;
+    try { await navigator.clipboard.writeText(cvToPlainText(c)); return true; } catch { return false; }
+  }
+  function runExport() {
+    if (!draft) return sayBot("Nothing to export yet — add or open a CV first.");
+    push(<CardRow><Occ4Export onPdf={exportPdf} onDocx={exportDocx} onCopy={copyDraftText} /></CardRow>);
+  }
+
   // Library — browse saved CV versions and open one as the working draft,
   // closing the Save → retrieve loop.
   async function runLibrary() {
@@ -632,6 +679,7 @@ export function Occ4Workspace() {
     if (intent === "cover") return void runCover();
     if (intent === "save") return void runSave();
     if (intent === "library") return void runLibrary();
+    if (intent === "export") return runExport();
     sayBot("I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.");
   }
 
@@ -982,6 +1030,12 @@ export function Occ4Workspace() {
         </div>
       </main>
 
+      {draft && DraftTemplate && (
+        <div id="cv-paper" aria-hidden className="occ4-export-paper">
+          <DraftTemplate cv={draft} />
+        </div>
+      )}
+
       {previewOpen && (
         <aside className="occ4-preview" aria-label="Working CV preview">
           <div className="occ4-pv-head">
@@ -989,16 +1043,23 @@ export function Occ4Workspace() {
               {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "JD ✓" : "JD —"}
             </span>
             {coverage !== null && <MatchRing value={coverage} tone="gold" size={64} label="coverage" />}
+            {draft && (
+              <button type="button" className={`occ4-pv-edit${editMode ? " on" : ""}`} aria-pressed={editMode} onClick={toggleEdit}>
+                {editMode ? "Done" : "Edit"}
+              </button>
+            )}
             <button type="button" className="occ4-pv-close" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>
               ✕
             </button>
           </div>
           <div className="occ4-pv-scroll">
-            {draft && DraftTemplate ? (
-              <div className="occ4-pv-page paper"><DraftTemplate cv={draft} /></div>
-            ) : (
+            {!draft ? (
               <p className="occ4-pv-empty">Bring a CV (PDF or DOCX) to see your working draft here.</p>
-            )}
+            ) : editMode ? (
+              <Occ4Editor key={editOpenSeq} cv={draft} onEdit={handleInlineEdit} />
+            ) : DraftTemplate ? (
+              <div className="occ4-pv-page paper"><DraftTemplate cv={draft} /></div>
+            ) : null}
           </div>
         </aside>
       )}
@@ -1159,6 +1220,7 @@ function classify(text: string): Intent {
   if (/match|keyword|compare|overlap|coverage/.test(t)) return "match";
   if (/template|layout|design|theme|style|look/.test(t)) return "template";
   if (/cover|letter/.test(t)) return "cover";
+  if (/export|download|pdf|docx|word file|copy as text/.test(t)) return "export";
   if (/my library|saved cv|open a cv|load a cv|my cvs|my versions|browse/.test(t)) return "library";
   if (/\bsave\b|keep this|store it|new version/.test(t)) return "save";
   if (/interview|practi[cs]e|question/.test(t)) return "interview";
