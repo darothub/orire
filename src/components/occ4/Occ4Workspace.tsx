@@ -10,6 +10,9 @@ import type { CVData } from "@/lib/cv/schema";
 import type { ParsedCV } from "@/lib/ingest/parse";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { cvDataToText } from "@/lib/cv/cvDataToText";
+import { coerceCoverLetter } from "@/lib/ai/coverLetter";
+import type { CoverLetter } from "@/lib/cv/coverLetter";
+import { createVersion } from "@/app/actions/library";
 import { type CvField, readCvField, patchCvField } from "@/lib/occ/versionPatch";
 import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/ui/Button";
@@ -32,12 +35,13 @@ import "./occ4.css";
  * responses on the design-system primitives. The product deliberately does NOT
  * produce a hiring score, so the match result is a keyword comparison, not a %.
  *
- * Interview and cover-letter flows stay in the current Career Copilot (/occ) and
- * come to occ4 in a later slice.
+ * The flow is one working draft: import a CV (structured into a draft), review
+ * with Apply, restyle with templates, draft a grounded cover letter, and save
+ * the draft as a new private library version — all on the same draft.
  */
 
 type Msg = { id: number; node: ReactNode };
-type Intent = "review" | "match" | "template" | "interview" | "cover" | "default";
+type Intent = "review" | "match" | "template" | "interview" | "cover" | "save" | "default";
 type MatchResult = { coverage: number; matched: number; matchedTerms: string[]; unverifiedTerms: string[]; checked: number; disclaimer: string };
 
 const Spark = () => (
@@ -52,6 +56,7 @@ const CHIPS: { label: string; intent: Intent }[] = [
   { label: "Preview a template", intent: "template" },
   { label: "Practise an interview", intent: "interview" },
   { label: "Draft a cover letter", intent: "cover" },
+  { label: "Save to my library", intent: "save" },
 ];
 
 export function Occ4Workspace() {
@@ -194,6 +199,54 @@ export function Occ4Workspace() {
     setPreviewOpen(true);
   }
 
+  // Cover letter — reuses the server-keyed, plan-gated /api/ai/cover-letter with
+  // the working draft as the grounding CV, so the letter can only restate facts
+  // already in the draft.
+  async function runCover() {
+    if (!draft) return sayBot("Import a CV (PDF or DOCX) first so I can ground the cover letter in it.");
+    if (!roleReady) return sayBot("Add the job description first and I'll tailor the letter to it.");
+    setRunning(true);
+    sayBot("Drafting a cover letter grounded in your CV…");
+    try {
+      const response = await fetch("/api/ai/cover-letter", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cv: draft, jobDescription: description }), cache: "no-store",
+      });
+      const data = await response.json();
+      if (!data?.ok) {
+        return sayBot(typeof data?.error?.message === "string" ? data.error.message : "Couldn't draft the cover letter — try again in a moment.");
+      }
+      const letter = coerceCoverLetter(typeof data.raw === "string" ? data.raw : "");
+      push(<CardRow>{renderCover(letter)}</CardRow>);
+      sayBot("Grounded in your draft. When you're happy with the CV, save it to your library.");
+    } catch {
+      sayBot("Couldn't reach the cover-letter service. Try again in a moment.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  // Save — persists the working draft as a NEW private library version (never the
+  // active editor CV: makeActive=false), carrying the chosen template.
+  async function runSave() {
+    if (!draft) return sayBot("There's no working draft to save yet — import a CV first.");
+    setRunning(true);
+    sayBot("Saving your draft as a new library version…");
+    try {
+      const name = draft.basics.fullName.trim();
+      const title = name ? `${name} — tailored CV` : "OCC tailored CV";
+      const res = await createVersion({ title, template: templateId, data: draft, baseline: null, makeActive: false });
+      if (!res.ok) {
+        return sayBot(res.reason === "unauthenticated" ? "You'll need to sign in to save to your library." : "Couldn't save the version — try again in a moment.");
+      }
+      push(<CardRow>{renderSaved(title)}</CardRow>);
+    } catch {
+      sayBot("Couldn't save the version. Try again in a moment.");
+    } finally {
+      setRunning(false);
+    }
+  }
+
   async function askQuestion(index: number) {
     if (!roleReady) {
       needContext();
@@ -316,9 +369,8 @@ export function Occ4Workspace() {
     if (intent === "match") return void runMatch();
     if (intent === "template") return runTemplates();
     if (intent === "interview") return void askQuestion(0);
-    if (intent === "cover") {
-      return sayBot("Cover-letter drafting is coming to occ4 in a later slice.");
-    }
+    if (intent === "cover") return void runCover();
+    if (intent === "save") return void runSave();
     sayBot("I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.");
   }
 
@@ -744,12 +796,46 @@ function renderDraftCard(cv: CVData, source: string): ReactNode {
   );
 }
 
+function renderCover(letter: CoverLetter): ReactNode {
+  const full = [letter.opening, ...letter.body, letter.closing, letter.signoff].filter(Boolean).join("\n\n");
+  return (
+    <CopilotCard title="Cover letter" icon={<Spark />} tag="grounded draft">
+      <div className="occ4-cover">
+        {letter.opening && <p>{letter.opening}</p>}
+        {letter.body.map((p, i) => <p key={i}>{p}</p>)}
+        {letter.closing && <p>{letter.closing}</p>}
+        {letter.signoff && <p>{letter.signoff}</p>}
+      </div>
+      <div className="occ4-rec-apply">
+        <Button variant="ghost" size="sm" onClick={() => { void navigator.clipboard?.writeText(full); }}>Copy letter</Button>
+      </div>
+      <p className="occ4-disclaimer">
+        Grounded in your working draft — it only restates facts already in your CV. Check names and dates
+        before sending.
+      </p>
+    </CopilotCard>
+  );
+}
+
+function renderSaved(title: string): ReactNode {
+  return (
+    <CopilotCard title="Saved to your library" icon={<Spark />} tag="done">
+      <p className="occ4-advice-summary">
+        Saved <b>{title}</b> as a new private version. Your active CV is untouched — open Orire to find it in
+        your library and export to PDF or DOCX.
+      </p>
+      <div className="occ4-rec-apply"><Link className="occ4-pv-toggle" href="/">Open Orire</Link></div>
+    </CopilotCard>
+  );
+}
+
 function classify(text: string): Intent {
   const t = text.toLowerCase();
   if (/review|tailor|improve|rewrite|better|advi[cs]e|recommend/.test(t)) return "review";
   if (/match|keyword|compare|overlap|coverage/.test(t)) return "match";
   if (/template|layout|design|theme|style|look/.test(t)) return "template";
   if (/cover|letter/.test(t)) return "cover";
+  if (/\bsave\b|library|keep this|store it|new version/.test(t)) return "save";
   if (/interview|practi[cs]e|question/.test(t)) return "interview";
   return "default";
 }
