@@ -263,6 +263,27 @@
 }
 .occ4-editor-field textarea:focus-visible { outline: 2px solid var(--or-violet); outline-offset: 1px; border-color: var(--or-violet); }
 
+/* ---- applications ---- */
+.occ4-apps-add { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.occ4-apps-add input {
+  flex: 1; min-width: 120px; font: inherit; font-size: 12.5px; color: var(--or-ink);
+  background: var(--or-surface-2); border: 1px solid var(--or-line); border-radius: var(--or-radius-sm); padding: 7px 10px;
+}
+.occ4-apps-add input:focus-visible { outline: 2px solid var(--or-violet); outline-offset: 1px; border-color: var(--or-violet); }
+.occ4-apps-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.occ4-apps-col { background: var(--or-surface-2); border: 1px solid var(--or-line); border-radius: var(--or-radius-md); padding: 8px; min-height: 56px; }
+.occ4-apps-col-head { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--or-muted); margin-bottom: 7px; }
+.occ4-apps-card { background: var(--or-surface); border: 1px solid var(--or-line); border-radius: var(--or-radius-sm); padding: 7px 8px; margin-bottom: 6px; }
+.occ4-apps-card b { font-size: 12px; display: block; }
+.occ4-apps-role { font-size: 10.5px; color: var(--or-muted); display: block; }
+.occ4-apps-ctl { display: flex; gap: 4px; margin-top: 5px; }
+.occ4-apps-ctl button {
+  width: 22px; height: 22px; border-radius: var(--or-radius-sm); cursor: pointer;
+  background: var(--or-surface-2); border: 1px solid var(--or-line); color: var(--or-ink-soft); font-size: 12px; line-height: 1;
+}
+.occ4-apps-ctl button:disabled { opacity: 0.4; cursor: default; }
+@media (max-width: 680px) { .occ4-apps-board { grid-template-columns: 1fr 1fr; } }
+
 /* ---- export ---- */
 .occ4-export-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 /* Off-screen, unscaled render used only as the PDF rasterisation source. */
