@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { BrandMark } from "@/components/BrandMark";
 import { CloudSync } from "@/components/auth/CloudSync";
-import { V4_NAV, type V4NavKey } from "@/lib/v4/nav";
+import { type V4NavKey, V4_HOME_HREF, V4_NAV } from "@/lib/v4/nav";
 import { useCollapsed } from "@/lib/v4/useCollapsed";
 import "./v4.css";
 
@@ -19,7 +19,7 @@ export function V4Shell({ active, label, children }: { active: V4NavKey; label: 
     <div className={`v4${collapsed ? " v4--collapsed" : ""}`}>
       <CloudSync />
       <aside className="v4-side">
-        <Link href="/v4" className="v4-brand" aria-label="Orire home">
+        <Link href={V4_HOME_HREF} className="v4-brand" aria-label="Orire home">
           <BrandMark size={28} />
           <span><b>Orire</b><small>v4</small></span>
         </Link>

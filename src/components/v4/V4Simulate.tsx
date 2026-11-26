@@ -18,7 +18,7 @@ import { TONE_OPTIONS, useRetone } from "@/lib/ai/useRetone";
 import { useSimulateRun } from "@/lib/ai/useSimulateRun";
 import { compareBullets } from "@/lib/v4/simulate";
 import { useHydrated } from "@/lib/v4/useHydrated";
-import { V4_COPILOT_HREF } from "@/lib/v4/nav";
+import { V4_COPILOT_HREF, V4_LIBRARY_HREF, V4_STUDIO_HREF } from "@/lib/v4/nav";
 import { Card } from "@/components/ui/Card";
 import { MatchRing } from "@/components/ui/MatchRing";
 import { V4ChangeList } from "./V4ChangeList";
@@ -105,7 +105,7 @@ function SetupView({ sim, canKeep, onKeep, onDone }: { sim: Sim; canKeep: boolea
             </label>
             <div className="v4-using">
               <span><b>Using: {using}</b><small>{versionTitle ? "Your active CV version" : "The CV in your studio"}</small></span>
-              <Link href="/v4/library" className="or-btn">Change</Link>
+              <Link href={V4_LIBRARY_HREF} className="or-btn">Change</Link>
             </div>
             <div className="v4-sim-run">
               <button type="button" className="or-btn or-btn--primary" disabled={sim.running || !jd.trim()} onClick={() => void run()}>
@@ -253,8 +253,8 @@ function ResultView({ onNew, usageNote }: { onNew: () => void; usageNote: string
           </p>
           <Spark history={history.map((h) => h.score)} />
           <div className="v4-sim-actions">
-            <button type="button" className="or-btn gold" onClick={() => router.push("/v4/studio")}>Rewrite to the role</button>
-            <button type="button" className="or-btn or-btn--primary" onClick={() => router.push("/v4/studio")}>Edit my CV</button>
+            <button type="button" className="or-btn gold" onClick={() => router.push(V4_STUDIO_HREF)}>Rewrite to the role</button>
+            <button type="button" className="or-btn or-btn--primary" onClick={() => router.push(V4_STUDIO_HREF)}>Edit my CV</button>
           </div>
         </Card>
       </div>

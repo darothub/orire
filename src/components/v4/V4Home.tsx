@@ -9,7 +9,7 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useTargetMatch } from "@/components/home/MatchRing";
 import { getTemplateInfo } from "@/lib/templates/catalog";
-import { V4_COPILOT_HREF } from "@/lib/v4/nav";
+import { V4_COPILOT_HREF, V4_EXPORT_HREF, V4_SIMULATE_HREF, V4_STUDIO_HREF } from "@/lib/v4/nav";
 import { V4Shell } from "./V4Shell";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -19,7 +19,7 @@ import { Pill } from "@/components/ui/Pill";
 type App = { id: string; company: string; role: string; status: ApplicationStatus; updatedAt: string };
 
 /** Where each recommended action lives. Every target is a v4 page. */
-const V4_ROUTE = { copilot: V4_COPILOT_HREF, simulate: "/v4/studio/simulate", studio: "/v4/studio", export: "/v4/export" } as const;
+const V4_ROUTE = { copilot: V4_COPILOT_HREF, simulate: V4_SIMULATE_HREF, studio: V4_STUDIO_HREF, export: V4_EXPORT_HREF } as const;
 const ACTION_HREF: Record<HomeAction, string> = {
   context: V4_ROUTE.copilot,
   match: V4_ROUTE.simulate,
