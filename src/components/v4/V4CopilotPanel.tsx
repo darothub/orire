@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useCollapsed } from "@/lib/v4/useCollapsed";
 import { ASK_SHORTCUTS, actionLock, chatMeta, type AskShortcut } from "@/lib/v4/copilot";
+import { V4_PLAN_HREF } from "@/lib/v4/nav";
 
 export interface PanelChat { id: string; title: string; saved: boolean }
 
@@ -60,7 +61,7 @@ export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete,
           </button>
         ))}
         {anyLocked && (
-          <Link href="/pricing" className="v4-cop-upgrade"><span className="v4-cop-label">See plans</span></Link>
+          <Link href={V4_PLAN_HREF} className="v4-cop-upgrade"><span className="v4-cop-label">See plans</span></Link>
         )}
       </div>
 

@@ -18,7 +18,7 @@ import { TONE_OPTIONS, useRetone } from "@/lib/ai/useRetone";
 import { useSimulateRun } from "@/lib/ai/useSimulateRun";
 import { compareBullets } from "@/lib/v4/simulate";
 import { useHydrated } from "@/lib/v4/useHydrated";
-import { V4_COPILOT_HREF, V4_LIBRARY_HREF, V4_STUDIO_HREF } from "@/lib/v4/nav";
+import { V4_COPILOT_HREF, V4_LIBRARY_HREF, V4_STUDIO_HREF, V4_PLAN_HREF } from "@/lib/v4/nav";
 import { Card } from "@/components/ui/Card";
 import { MatchRing } from "@/components/ui/MatchRing";
 import { V4ChangeList } from "./V4ChangeList";
@@ -114,7 +114,7 @@ function SetupView({ sim, canKeep, onKeep, onDone }: { sim: Sim; canKeep: boolea
               {canKeep && <button type="button" className="or-btn" onClick={onKeep}>Keep current target</button>}
               <span className="v4-hint">
                 {allowance ? `${allowance} ` : "Uses 1 simulation. "}
-                {planQualityLabel(plan)} plan. <Link href="/pricing" className="v4-link">See plans</Link>
+                {planQualityLabel(plan)} plan. <Link href={V4_PLAN_HREF} className="v4-link">See plans</Link>
               </span>
             </div>
           </div>

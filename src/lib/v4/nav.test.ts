@@ -3,7 +3,7 @@ import { V4_BASE, V4_NAV, V4_STUDIO_TABS, studioTabFor } from "./nav";
 
 describe("v4 navigation", () => {
   it("lists the Copilot as its own destination, beside the studio", () => {
-    expect(V4_NAV.map((n) => n.key)).toEqual(["home", "studio", "copilot", "library", "export"]);
+    expect(V4_NAV.map((n) => n.key)).toEqual(["home", "studio", "copilot", "library", "export", "plan"]);
   });
 
   it("maps studio paths to their tool, with Edit as the default", () => {

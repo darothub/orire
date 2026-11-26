@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
 import { V4Shell } from "./V4Shell";
 import { V4Paper } from "./V4Paper";
-import { V4_LIBRARY_HREF, V4_STUDIO_HREF } from "@/lib/v4/nav";
+import { V4_LIBRARY_HREF, V4_STUDIO_HREF, V4_PLAN_HREF } from "@/lib/v4/nav";
 
 const ALIGNS: { id: CVAlign; label: string }[] = [
   { id: "left", label: "Left" },
@@ -180,7 +180,7 @@ function UsageCard({ usage }: { usage: { used: number; cap: number | null; scope
           <span style={{ width: `${pct}%` }} />
         </div>
       )}
-      <p className="v4-hint">Copying text never counts. <Link href="/pricing" className="v4-link">See plans</Link></p>
+      <p className="v4-hint">Copying text never counts. <Link href={V4_PLAN_HREF} className="v4-link">See plans</Link></p>
     </Card>
   );
 }

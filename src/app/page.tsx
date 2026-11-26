@@ -8,8 +8,7 @@ import { useUIStore, readGuestFlag } from "@/lib/store/uiStore";
 import { AuthOverlay } from "@/components/auth/AuthOverlay";
 import { Landing } from "@/components/landing/Landing";
 import { clearResumeOverlay, RESUME_SCRIPT } from "@/lib/resume";
-import { classicChosen, setClassicChosen, wantsClassic } from "@/lib/v4/classic";
-import { V4_HOME_HREF } from "@/lib/v4/nav";
+import { classicChosen, setClassicChosen, v4Landing, wantsClassic } from "@/lib/v4/classic";
 
 // Keep editor, AI and export dependencies out of anonymous landing requests.
 // SSR stays enabled so a seeded authenticated session still receives its shell.
@@ -45,7 +44,7 @@ export default function Home() {
     fetch("/api/v4/access", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { enabled?: boolean } | null) => {
-        if (live && d?.enabled) router.replace(V4_HOME_HREF);
+        if (live && d?.enabled) router.replace(v4Landing(window.location.search));
       })
       .catch(() => {});
     return () => {
