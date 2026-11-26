@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireV4User } from "@/lib/v4/access";
 import { validateApplicationInput } from "@/lib/occ/applicationSave";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ const SELECT = {
 
 /** The signed-in user's application board (never other users'). */
 export async function GET() {
-  const access = await requireOccAccess();
+  const access = await requireV4User();
   if (!access) return send({ error: "Not available" }, 403);
   const applications = await prisma.occApplication.findMany({
     where: { userId: access.userId },
@@ -26,7 +26,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const access = await requireOccAccess();
+  const access = await requireV4User();
   if (!access) return send({ error: "Not available" }, 403);
   let raw: unknown;
   try { raw = await request.json(); } catch { return send({ error: "Invalid JSON" }, 400); }

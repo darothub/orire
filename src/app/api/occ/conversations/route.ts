@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireV4Career } from "@/lib/v4/access";
 import { validateOccConversationSave } from "@/lib/occ/conversationSave";
 import { Prisma } from "@prisma/client";
 
@@ -11,7 +11,7 @@ const send = (body: unknown, status = 200) => NextResponse.json(body, {
 
 /** Only user-owned transcript metadata; never return other users' conversations. */
 export async function GET() {
-  const access = await requireOccAccess();
+  const access = await requireV4Career();
   if (!access) return send({ error: "Not available" }, 403);
   const conversations = await prisma.occConversation.findMany({
     where: { userId: access.userId },
@@ -23,7 +23,7 @@ export async function GET() {
 
 /** The transcript, plus (v4) a reference to the CV version and the job description the chat used. CV text is never stored here. */
 export async function POST(request: Request) {
-  const access = await requireOccAccess();
+  const access = await requireV4Career();
   if (!access) return send({ error: "Not available" }, 403);
   if (Number(request.headers.get("content-length") || "0") > 80000)
     return send({ error: "Request too large" }, 413);

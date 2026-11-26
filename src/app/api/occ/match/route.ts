@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireV4Career } from "@/lib/v4/access";
 import { analyzeEvidence } from "@/lib/occ/match";
 
 export async function POST(request: Request) {
-  const access = await requireOccAccess();
+  const access = await requireV4Career();
   if (!access) return NextResponse.json({ error: "Not available" }, { status: 403 });
   let payload: unknown;
   try { payload = await request.json(); } catch {

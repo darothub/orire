@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireV4Career } from "@/lib/v4/access";
 import { validateOccCoachingSnapshot } from "@/lib/occ/coachingSnapshot";
 
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ const send = (body: unknown, status = 200) => NextResponse.json(body, {
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, { params }: Params) {
-  const access = await requireOccAccess();
+  const access = await requireV4Career();
   if (!access) return send({ error: "Not available" }, 403);
   const { id } = await params;
   if (id.length > 100) return send({ error: "Not found" }, 404);
@@ -44,7 +44,7 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
-  const access = await requireOccAccess();
+  const access = await requireV4Career();
   if (!access) return send({ error: "Not available" }, 403);
   const { id } = await params;
   if (id.length > 100) return send({ error: "Not found" }, 404);
