@@ -161,6 +161,8 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
   const router = useRouter();
   const snapshots = useRef<Map<string, ConvSnapshot>>(new Map());
   const convSeq = useRef(1);
+  // Transcript length last written to the server, per saved conversation (or local id before its first save).
+  const savedLen = useRef<Map<string, number>>(new Map());
 
   // Chat replies are Career only and spend a monthly coach run (v4 shell only;
   // the classic shell keeps its canned reply).
@@ -232,6 +234,19 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // Career chats save themselves a moment after each turn (text only). The
+  // manual Save chat button is gone for them. Stops on an error until the next turn.
+  const autoSave = shell === "v4" && plan === "career";
+  const activeBackendId = conversations.find((c) => c.id === activeId)?.backendId;
+  useEffect(() => {
+    if (!autoSave || running || transcript.length === 0 || saveState === "saving" || saveState === "error") return;
+    if (savedLen.current.get(activeBackendId ?? activeId) === transcript.length) return;
+    const t = setTimeout(() => void saveActive(), 1500);
+    return () => clearTimeout(t);
+    // saveActive reads the latest state through its own closure on each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSave, running, transcript, saveState, activeBackendId, activeId]);
 
   function captureSnapshot(): ConvSnapshot {
     return { messages, agent, cv, draft, description, cvFileName, roleFileName, coverage, templateId, intPhase, intIndex, intQuestion, lastStructured: lastStructuredRef.current, transcript };
@@ -330,6 +345,8 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
       const data = await r.json();
       const msgs: { sender: string; text: string }[] = Array.isArray(data.conversation?.messages) ? data.conversation.messages : [];
       setTranscript(msgs.map((m) => ({ role: m.sender === "you" ? "you" : "OCC", text: m.text })));
+      // The intro line below is appended to the transcript too; none of it needs saving again.
+      savedLen.current.set(backendId, msgs.length + 1);
       sayBot("Here's your saved conversation. Your CV and the JD aren't stored, so add them again to continue working.");
       for (const m of msgs) {
         push(
@@ -357,6 +374,7 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
       const data = await r.json();
       if (!r.ok || typeof data?.id !== "string") return setSaveState("error");
       const backendId = data.id as string;
+      savedLen.current.set(backendId, transcript.length);
       setConversations((cs) => cs.map((c) => (c.id === activeId ? { ...c, backendId, title } : c)));
       setSaveState("saved");
     } catch {
@@ -983,8 +1001,9 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
       onDelete={(id) => void deleteConversation(id)}
       onAsk={(a) => (access === "upgrade" ? push(<CardRow>{renderChatLock(access, null)}</CardRow>) : send(a.label, a.intent))}
       locked={access === "upgrade"}
+      autoSave={autoSave}
       onSave={() => void saveActive()}
-      saveLabel={saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : saveState === "error" ? "Save failed, retry" : "Save chat"}
+      saveLabel={saveLabelFor(saveState, autoSave)}
       canSave={transcript.length > 0 && saveState !== "saving"}
       onChoose={() => setNavOpen(false)}
     />
@@ -1485,6 +1504,15 @@ function renderCover(letter: CoverLetter): ReactNode {
       </p>
     </CopilotCard>
   );
+}
+
+function saveLabelFor(state: "idle" | "saving" | "saved" | "error", auto: boolean): string {
+  if (state === "saving") return "Saving…";
+  if (auto) {
+    if (state === "saved") return "Saved automatically";
+    return state === "error" ? "Couldn't save this chat. It retries after your next message." : "Chats save automatically";
+  }
+  return state === "saved" ? "Saved ✓" : state === "error" ? "Save failed, retry" : "Save chat";
 }
 
 function renderChatLock(kind: Exclude<ChatAccess, "ok">, cap: number | null): ReactNode {
