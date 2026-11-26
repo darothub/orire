@@ -396,3 +396,29 @@
   .v4-subcollapse { display: none; }
   .v4-frame-body--collapsed .v4-sublabel { position: static; width: auto; height: auto; clip: auto; }
 }
+
+/* ---- Interview ---- */
+.v4-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.v4-int-role { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.v4-int-start { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
+.v4-int-start .v4-muted { max-width: 60ch; }
+.v4-int-cta { height: 48px; }
+.v4-int-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.v4-int-steps li { display: flex; align-items: center; gap: 8px; flex: 1 1 150px; min-width: 0; font-size: 12.5px; font-weight: 500; color: var(--or-ink-soft); }
+.v4-int-steps li span { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--or-surface-2); color: var(--or-muted); }
+.v4-int-steps li.now { color: var(--or-ink); font-weight: 600; }
+.v4-int-steps li.now span { background: var(--or-violet); color: #fff; }
+.v4-int-steps li.done span { background: var(--or-match); color: #06241a; }
+.v4-int-qhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.v4-int-q, .v4-int-fb { display: flex; flex-direction: column; gap: 12px; }
+.v4-int-question { margin: 0; font-family: var(--or-font-display); font-size: 21px; font-weight: 700; line-height: 1.3; }
+.v4-int-ways { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.v4-int-ways ul { list-style: disc; margin: 0; padding-left: 18px; color: var(--or-ink-soft); display: flex; flex-direction: column; gap: 4px; }
+.v4-int-answer { margin-top: 0; }
+.v4-int-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.v4-int-actions .v4-int-cta { flex: 1 1 180px; }
+.v4-int-actions .v4-hint { flex: 1 1 220px; }
+.v4-int-fbrows { display: flex; flex-direction: column; gap: 10px; }
+.v4-int-fbrow { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px; border: 1px solid var(--or-line); border-radius: var(--or-radius-lg); background: var(--or-surface-2); }
+.v4-int-fbrow p, .v4-int-fb .v4-muted, .v4-int-fb .v4-h2 { margin: 0; }
+.v4-int-fbrow p { font-size: 14px; }
