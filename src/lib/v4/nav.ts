@@ -19,7 +19,7 @@ export const V4_NAV: readonly V4NavItem[] = [
 /** The Copilot is a switch on the CV Studio, not a menu item. */
 export const V4_COPILOT_HREF = "/occ/v4";
 
-export type V4StudioKey = "edit" | "simulate" | "refine";
+export type V4StudioKey = "edit" | "simulate" | "refine" | "interview";
 
 export interface V4StudioTab {
   key: V4StudioKey;
@@ -35,6 +35,7 @@ export const V4_STUDIO_TABS: readonly V4StudioTab[] = [
   { key: "edit", href: "/v4/studio", label: "Edit", blurb: "Edit, simulate and refine your CV in one place.", icon: "M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" },
   { key: "simulate", href: "/v4/studio/simulate", label: "Simulate", blurb: "Compare your CV with an ideal candidate for the role.", icon: "M12 21a9 9 0 100-18 9 9 0 000 18zM12 16a4 4 0 100-8 4 4 0 000 8zM12 3v3M12 18v3M3 12h3M18 12h3" },
   { key: "refine", href: "/v4/studio/refine", label: "Refine", blurb: "Tailor the whole CV to one job description.", icon: "M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4zM19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" },
+  { key: "interview", href: "/v4/studio/interview", label: "Interview", blurb: "Practise answers for the role and get feedback.", icon: "M9 3h6v11H9zM5 11a7 7 0 0014 0M12 18v3" },
 ];
 
 /** The studio tab a pathname belongs to (Edit for /v4/studio itself). */
