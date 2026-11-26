@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Orire Career Copilot — Connected Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Inter:wght@400..700&display=swap" rel="stylesheet" />
+<style>
+  /* Ink + Fortune — violet = copilot/AI, gold = match/fortune payoff. Chat is the surface; the CV draft is a toggled preview. */
+  :root {
+    --canvas:#14121C; --surface:#1C1926; --surface-2:#242030; --raised:#2B2639;
+    --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.14);
+    --ink:#F4F2F8; --ink-soft:#C9C4DC; --muted:#938DA8;
+    --violet:#8273F6; --violet-soft:#A99EF9; --violet-ghost:rgba(130,115,246,.14);
+    --gold:#F5C56B; --gold-ghost:rgba(245,197,107,.13);
+    --match:#5FD4A6; --gap:#F2795E; --page:#211D2E; --page-ink:#F4F2F8; --page-soft:#B8B2CC;
+    --r-sm:9px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif;
+    color-scheme:dark;
+  }
+  :root[data-theme="light"] {
+    --canvas:#F6F5FB; --surface:#FFFFFF; --surface-2:#FBFAFE; --raised:#FFFFFF;
+    --line:rgba(31,24,54,.10); --line-strong:rgba(31,24,54,.16);
+    --ink:#1B1726; --ink-soft:#413A54; --muted:#6B6480;
+    --violet:#5B45E0; --violet-soft:#6E58F0; --violet-ghost:rgba(91,69,224,.09);
+    --gold:#C78A1E; --gold-ghost:rgba(199,138,30,.12);
+    --match:#1E9E72; --gap:#D65A3C; --page:#FFFFFF; --page-ink:#1B1726; --page-soft:#413A54;
+    color-scheme:light;
+  }
+  * { box-sizing:border-box; }
+  html,body { height:100%; margin:0; overflow:hidden; }
+  body { background:var(--canvas); color:var(--ink); font-family:var(--body); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .app { display:grid; grid-template-columns:248px 1fr; height:100%; position:relative; }
+  @media (min-width:881px){
+    .app.show-preview { grid-template-columns:248px minmax(0,1fr) minmax(0,0.85fr); }
+    .app.show-preview .pane-chat { border-right:1px solid var(--line); }
+  }
+  @media (max-width:880px){
+    .app, .app.show-preview { grid-template-columns:1fr; }
+    .pane-nav { position:absolute; inset:0 auto 0 0; width:264px; transform:translateX(-100%); transition:transform .25s var(--ease); z-index:60; box-shadow:0 0 40px rgba(0,0,0,.4); }
+    .app.show-nav .pane-nav { transform:none; }
+    .app.show-preview .pane-chat { display:none; }
+  }
+  .nav-backdrop { display:none; }
+  @media (max-width:880px){ .app.show-nav .nav-backdrop { display:block; position:absolute; inset:0; z-index:55; background:rgba(0,0,0,.4); border:0; } }
+
+  /* ---- nav pane ---- */
+  .pane-nav { display:flex; flex-direction:column; min-height:0; background:var(--surface); border-right:1px solid var(--line); padding:14px 12px; }
+  .nav-new { font-family:var(--body); font-size:12.5px; font-weight:600; color:var(--ink); background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:9px 12px; cursor:pointer; text-align:left; }
+  .nav-new:hover { border-color:var(--violet); }
+  .nav-label { font-size:9.5px; letter-spacing:.12em; color:var(--muted); font-weight:600; margin:14px 4px 6px; text-transform:uppercase; }
+  .nav-list { display:flex; flex-direction:column; gap:3px; overflow-y:auto; min-height:0; }
+  .nav-item { text-align:left; background:none; border:0; border-radius:var(--r-sm); padding:9px 10px; cursor:pointer; color:var(--ink-soft); display:flex; flex-direction:column; gap:2px; }
+  .nav-item:hover { background:var(--surface-2); }
+  .nav-item.on { background:var(--violet-ghost); color:var(--ink); }
+  .nav-item b { font-size:12.5px; font-weight:500; }
+  .nav-item small { font-size:10.5px; color:var(--muted); }
+  .navtoggle { display:none; }
+  @media (max-width:880px){ .navtoggle{ display:inline-flex; } }
+
+  /* ---- chat pane ---- */
+  .pane-chat { display:flex; flex-direction:column; min-width:0; min-height:0; height:100%; }
+  .top { display:flex; align-items:center; gap:12px; padding:14px 20px; border-bottom:1px solid var(--line); flex:none; }
+  .brand { display:flex; align-items:center; gap:10px; margin-right:auto; }
+  .brand b { font-family:var(--display); font-weight:700; letter-spacing:-.01em; font-size:16px; }
+  .brand small { display:block; font-size:9.5px; letter-spacing:.14em; color:var(--muted); font-weight:600; }
+  .mark { width:28px; height:28px; flex:none; }
+  .modepick { position:relative; }
+  .mode-btn { display:flex; align-items:center; gap:8px; background:var(--surface-2); border:1px solid var(--line); color:var(--ink); padding:7px 11px; border-radius:var(--r-md); cursor:pointer; font-family:var(--body); font-size:12.5px; }
+  .mode-dot { width:7px; height:7px; border-radius:50%; background:var(--violet); box-shadow:0 0 0 3px var(--violet-ghost); }
+  .mode-auto { font-size:10px; color:var(--gold); border:1px solid var(--gold-ghost); background:var(--gold-ghost); padding:1px 6px; border-radius:999px; font-weight:600; }
+  .mode-menu { position:absolute; top:calc(100% + 6px); right:0; width:280px; background:var(--raised); border:1px solid var(--line-strong); border-radius:var(--r-md); padding:6px; z-index:40; box-shadow:0 18px 40px rgba(0,0,0,.35); }
+  .mode-item { display:block; width:100%; text-align:left; background:none; border:0; color:var(--ink); padding:10px 11px; border-radius:var(--r-sm); cursor:pointer; font-family:var(--body); }
+  .mode-item:hover { background:var(--surface-2); }
+  .mode-item.on { background:var(--violet-ghost); }
+  .mode-item .mi-top { display:flex; align-items:center; gap:8px; }
+  .mode-item b { font-size:13px; }
+  .mode-item .mi-desc { display:block; font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .iconbtn { position:relative; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-soft); min-width:34px; height:34px; padding:0 9px; border-radius:var(--r-md); cursor:pointer; font-size:13px; display:inline-flex; align-items:center; gap:6px; }
+  .iconbtn.on { color:var(--ink); border-color:var(--violet); background:var(--violet-ghost); }
+  .iconbtn .dot { position:absolute; top:-3px; right:-3px; width:9px; height:9px; border-radius:50%; background:var(--gold); border:2px solid var(--canvas); }
+  .iconbtn .lbl { font-size:11.5px; }
+  @media (max-width:560px){ .iconbtn .lbl{ display:none; } }
+
+  .scroll { flex:1; min-height:0; overflow-y:auto; scroll-behavior:smooth; }
+  .thread { max-width:800px; margin:0 auto; width:100%; padding:22px 20px 10px; display:flex; flex-direction:column; gap:14px; }
+  .msg { display:flex; gap:10px; max-width:94%; animation:rise .4s var(--ease); }
+  @keyframes rise { from{ opacity:0; transform:translateY(8px);} to{ opacity:1; transform:none; } }
+  .msg.user { margin-left:auto; flex-direction:row-reverse; }
+  .av { width:28px; height:28px; border-radius:50%; flex:none; display:grid; place-items:center; font-size:13px; font-weight:600; }
+  .av.bot { background:linear-gradient(135deg,var(--violet),var(--gold)); color:#1b1626; }
+  .av.user { background:var(--surface-2); color:var(--ink-soft); border:1px solid var(--line); font-size:11px; }
+  .bubble { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); border-top-left-radius:6px; padding:11px 14px; color:var(--ink-soft); }
+  .msg.user .bubble { background:var(--violet); color:#fff; border:0; border-top-left-radius:var(--r-lg); border-top-right-radius:6px; }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); overflow:hidden; width:100%; }
+  .card-h { display:flex; align-items:center; gap:9px; padding:12px 14px; border-bottom:1px solid var(--line); }
+  .card-h .spark { width:16px; height:16px; }
+  .card-h b { font-family:var(--display); font-weight:600; font-size:14px; flex:1; }
+  .card-h .tag { font-size:11px; color:var(--gold); background:var(--gold-ghost); padding:3px 9px; border-radius:999px; font-weight:600; }
+  .card-b { padding:14px; display:flex; flex-direction:column; gap:12px; }
+  .summary { font-size:13px; color:var(--ink-soft); margin:0; }
+  .disc { font-size:10.5px; color:var(--muted); line-height:1.45; margin:0; }
+
+  .rec { border:1px solid var(--line); border-radius:var(--r-md); padding:11px; display:flex; flex-direction:column; gap:8px; }
+  .rec-h { display:flex; align-items:center; gap:8px; }
+  .rec-h b { font-size:12.5px; flex:1; }
+  .badge { font-size:10px; padding:2px 8px; border-radius:999px; font-weight:600; }
+  .badge.sup { color:var(--match); background:rgba(95,212,166,.13); }
+  .badge.need { color:var(--gold); background:var(--gold-ghost); }
+  .badge.have { color:var(--match); background:rgba(95,212,166,.13); }
+  .badge.part { color:var(--gold); background:var(--gold-ghost); }
+  .badge.miss { color:var(--gap); background:rgba(242,121,94,.14); }
+  .diff { font-size:12px; line-height:1.5; }
+  .diff .old { color:var(--gap); text-decoration:line-through; opacity:.8; }
+  .diff .new { color:var(--match); }
+  .why { font-size:10.5px; color:var(--muted); margin-top:4px; }
+  .rec-q { display:flex; gap:7px; }
+  .rec-q input { flex:1; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-sm); color:var(--ink); padding:7px 9px; font-family:var(--body); font-size:12px; }
+
+  .bar { height:9px; border-radius:999px; background:var(--surface-2); overflow:hidden; position:relative; }
+  .bar .cur { position:absolute; inset:0 auto 0 0; background:var(--violet); border-radius:999px; }
+  .bar .pot { position:absolute; inset:0 auto 0 0; background:var(--gold); border-radius:999px; opacity:.45; }
+  .barlbl { display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-top:5px; }
+
+  .btn { font-family:var(--body); font-weight:600; font-size:12.5px; border-radius:var(--r-md); padding:8px 13px; cursor:pointer; border:1px solid transparent; transition:transform .15s var(--ease),filter .15s var(--ease); }
+  .btn:active { transform:translateY(1px); }
+  .btn-primary { background:var(--violet); color:#fff; }
+  .btn-gold { background:var(--gold); color:#2a2010; }
+  .btn-ghost { background:var(--surface-2); color:var(--ink); border-color:var(--line); }
+  .btn-sm { padding:6px 10px; font-size:11.5px; }
+  .btn[disabled] { opacity:.5; cursor:default; }
+  .btn:hover:not([disabled]).btn-primary,.btn:hover:not([disabled]).btn-gold { filter:brightness(1.07); transform:translateY(-1px); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .applied-tick { color:var(--match); font-size:12px; font-weight:600; }
+
+  .tpl-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .tpl { border:1px solid var(--line); border-radius:var(--r-md); padding:9px; cursor:pointer; text-align:left; background:none; color:var(--ink); transition:border-color .15s; }
+  .tpl:hover { border-color:var(--violet); }
+  .tpl.on { border-color:var(--gold); box-shadow:0 0 0 1px var(--gold); }
+  .tpl .sw { height:40px; border-radius:7px; margin-bottom:7px; }
+  .tpl b { font-size:12px; display:block; }
+  .tpl span { font-size:10px; color:var(--muted); }
+  .tpl .ats { font-size:9px; padding:1px 5px; border-radius:999px; border:1px solid var(--line); margin-top:5px; display:inline-block; }
+
+  .composer { border-top:1px solid var(--line); padding:12px 20px 16px; background:var(--canvas); flex:none; }
+  .composer .inner { max-width:800px; margin:0 auto; width:100%; }
+  .nextpill { font-size:11.5px; color:var(--violet-soft); background:var(--violet-ghost); border:1px solid var(--line); border-radius:999px; padding:5px 11px; display:inline-flex; gap:6px; align-items:center; margin-bottom:10px; cursor:pointer; }
+  .chips { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:10px; }
+  .chip { font-size:11.5px; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-soft); padding:6px 11px; border-radius:999px; cursor:pointer; }
+  .chip:hover { border-color:var(--violet); color:var(--ink); }
+  .box { display:flex; gap:8px; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:var(--r-md); padding:5px 5px 5px 14px; }
+  .box input { flex:1; background:none; border:0; color:var(--ink); font-family:var(--body); font-size:13px; outline:none; }
+  .send { background:var(--violet); border:0; width:34px; height:34px; border-radius:var(--r-sm); color:#fff; cursor:pointer; display:grid; place-items:center; }
+
+  /* ---- preview pane (toggled) ---- */
+  .pane-preview { display:none; flex-direction:column; min-width:0; min-height:0; height:100%; background:var(--canvas); }
+  .app.show-preview .pane-preview { display:flex; }
+  .ctxbar { display:flex; align-items:center; gap:14px; padding:14px 20px; border-bottom:1px solid var(--line); flex:none; }
+  .ctxbar .ctx { font-size:11.5px; color:var(--muted); display:flex; gap:5px; align-items:center; }
+  .ctxbar .ok { color:var(--match); } .ctxbar .no { color:var(--muted); }
+  .ring-wrap { margin-left:auto; display:flex; align-items:center; gap:9px; }
+  .ring-wrap .lbl { text-align:right; }
+  .ring-wrap .lbl b { font-family:var(--display); font-size:17px; display:block; line-height:1; }
+  .ring-wrap .lbl small { font-size:10px; color:var(--muted); }
+  .preview-scroll { flex:1; min-height:0; overflow-y:auto; padding:24px; display:flex; justify-content:center; }
+  #backBtn { display:none; }
+  @media (max-width:880px){ #backBtn{ display:inline-flex; } }
+
+  .paper { background:var(--page); color:var(--page-ink); width:100%; max-width:540px; border-radius:var(--r-md); box-shadow:0 14px 40px rgba(0,0,0,.28); padding:34px 36px; align-self:flex-start;
+    --accent:var(--violet); --pdisplay:var(--display); }
+  .paper h1 { font-family:var(--pdisplay); font-size:25px; margin:0; letter-spacing:-.01em; }
+  .paper .ptitle { color:var(--accent); font-weight:600; font-size:13.5px; margin:3px 0 0; }
+  .paper .pcontact { font-size:10.5px; color:var(--page-soft); margin-top:5px; }
+  .paper .spine { height:4px; background:var(--accent); border-radius:2px; margin:16px 0; }
+  .paper h2 { font-family:var(--pdisplay); font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); margin:18px 0 7px; font-weight:700; }
+  .paper .psum { font-size:12px; line-height:1.55; color:var(--page-ink); margin:0; }
+  .paper .job { margin-top:11px; }
+  .paper .job .jh { display:flex; justify-content:space-between; font-size:12px; }
+  .paper .job .jh b { font-weight:600; }
+  .paper .job .jh span { color:var(--page-soft); font-size:10.5px; }
+  .paper ul { margin:6px 0 0; padding-left:16px; }
+  .paper li { font-size:11.5px; line-height:1.5; margin-bottom:4px; }
+  .paper li.hl { animation:hl 1.4s var(--ease); border-radius:3px; }
+  @keyframes hl { 0%{ background:rgba(95,212,166,.28);} 100%{ background:transparent; } }
+  .paper .skills { display:flex; flex-wrap:wrap; gap:5px; }
+  .paper .skills span { font-size:10.5px; border:1px solid color-mix(in srgb,var(--accent) 40%,transparent); color:var(--accent); padding:2px 8px; border-radius:999px; }
+  .paper .skills span.add { animation:hl 1.4s var(--ease); }
+  .paper.t-noir { --accent:#C9A24B; background:#17151b; --page-ink:#F2EEE4; --page-soft:#b3ad9c; }
+  .paper.t-meridian { --accent:#111318; }
+  :root[data-theme="light"] .paper.t-meridian { --accent:#111318; }
+  .paper.t-meridian h2 { letter-spacing:.14em; }
+
+  .empty { margin:auto; text-align:center; color:var(--muted); max-width:260px; }
+  .empty .mark { width:44px; height:44px; margin:0 auto 14px; opacity:.6; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<h2 class="sr-only">Interactive prototype of the Orire Career Copilot: a scrollable chat drives one shared CV draft you can toggle into view.</h2>
+<div class="app" id="app">
+  <aside class="pane-nav" id="nav">
+    <button class="nav-new" id="newBtn">＋ New conversation</button>
+    <div class="nav-label">Conversations</div>
+    <div class="nav-list" id="navList"></div>
+  </aside>
+  <button class="nav-backdrop" id="navBackdrop" aria-label="Close conversations"></button>
+  <!-- CHAT PANE -->
+  <section class="pane-chat">
+    <div class="top">
+      <button class="iconbtn navtoggle" id="navBtn" title="Conversations">☰</button>
+      <span class="brand">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <g transform="translate(16 16)">
+            <path d="M0,-14 L2,-2 L0,-0 Z M0,14 L-2,2 L0,0 Z M-14,0 L-2,-2 L0,0 Z M14,0 L2,2 L0,0 Z" fill="#F5C56B"/>
+            <path d="M-9,-9 L-1.5,-1.5 L-2.5,0 Z M9,9 L1.5,1.5 L2.5,0 Z M9,-9 L1.5,-1.5 L0,-2.5 Z M-9,9 L-1.5,1.5 L0,2.5 Z" fill="#8273F6"/>
+            <circle r="2.2" fill="#F5C56B"/>
+          </g>
+        </svg>
+        <span><b>Orire</b><small>CAREER COPILOT</small></span>
+      </span>
+      <div class="modepick">
+        <button class="mode-btn" id="modeBtn" aria-haspopup="menu">
+          <span class="mode-dot"></span><span id="modeLabel">CV Review</span><span class="mode-auto">Auto</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="mode-menu" id="modeMenu" role="menu" hidden></div>
+      </div>
+      <button class="iconbtn" id="previewBtn" title="Toggle CV preview" aria-pressed="false">▦<span class="lbl">Preview</span><span class="dot" id="pvDot" hidden></span></button>
+      <button class="iconbtn" id="themeBtn" title="Toggle theme">☾</button>
+    </div>
+
+    <div class="scroll"><div class="thread" id="thread"></div></div>
+
+    <div class="composer"><div class="inner">
+      <div id="nextWrap"></div>
+      <div class="chips" id="chips"></div>
+      <div class="box">
+        <input id="input" placeholder="Ask Orire to do something…" aria-label="Message the Career Copilot" />
+        <button class="send" id="sendBtn" aria-label="Send">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+        </button>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- PREVIEW PANE -->
+  <section class="pane-preview">
+    <div class="ctxbar">
+      <button class="iconbtn" id="backBtn" title="Back to chat">←</button>
+      <span class="ctx" id="ctxCv"><span class="no">○</span> CV</span>
+      <span class="ctx" id="ctxRole"><span class="no">○</span> JD</span>
+      <div class="ring-wrap" id="ringWrap" hidden>
+        <svg width="46" height="46" viewBox="0 0 46 46"><circle cx="23" cy="23" r="18" fill="none" stroke="var(--line-strong)" stroke-width="5"/><circle id="ring" cx="23" cy="23" r="18" fill="none" stroke="var(--gold)" stroke-width="5" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" transform="rotate(-90 23 23)"/></svg>
+        <span class="lbl"><b id="ringPct">0%</b><small>coverage</small></span>
+      </div>
+    </div>
+    <div class="preview-scroll" id="previewScroll">
+      <div class="empty" id="emptyState">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><g transform="translate(16 16)"><path d="M0,-14 L2,-2 L0,-0 Z M0,14 L-2,2 L0,0 Z M-14,0 L-2,-2 L0,0 Z M14,0 L2,2 L0,0 Z" fill="#F5C56B"/><path d="M-9,-9 L-1.5,-1.5 L-2.5,0 Z M9,9 L1.5,1.5 L2.5,0 Z M9,-9 L1.5,-1.5 L0,-2.5 Z M-9,9 L-1.5,1.5 L0,2.5 Z" fill="#8273F6"/></g></svg>
+        Your working CV appears here. Bring a CV in the chat — every change shows up live.
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const thread = $("thread");
+const EMPTY_HTML = $("previewScroll").innerHTML;
+
+let draft = null, jdReady = false, coverage = 0, template = "aurora";
+const applied = new Set();
+
+const SEED = {
+  name:"Amara Okafor", title:"Backend Engineer",
+  contact:"Lisbon · amara.okafor@email.com · github.com/amarao",
+  summary:"Backend engineer with 6 years building services for payments and fintech teams. Comfortable across the stack, from APIs to data.",
+  exp:[
+    { company:"Mastercard", role:"Backend Engineer", when:"2022–now", bullets:[
+      "Worked on authentication services for the payments team.",
+      "Built APIs used by internal teams." ] },
+    { company:"Moofwd", role:"Android Engineer", when:"2018–2022", bullets:[
+      "Led Android app development for several clients." ] },
+  ],
+  skills:["Java","Kotlin","REST","Git"],
+};
+const ROLE = "Senior Backend Engineer · Payments platform";
+const SUGS = [
+  { id:"s1", req:"Event-driven / Kafka", kind:"sup", exp:0, bi:0,
+    old:"Worked on authentication services for the payments team.",
+    neo:"Built Kafka-based, event-driven authentication services for the payments platform, handling high-volume auth events.",
+    why:"Reorders and clarifies your existing work — no new facts. Adds the role's exact terms.", adds:["Kafka","Event-driven"] },
+  { id:"s2", req:"APIs backed by PostgreSQL", kind:"sup", exp:0, bi:1,
+    old:"Built APIs used by internal teams.",
+    neo:"Designed and shipped REST APIs backed by PostgreSQL for internal payment teams.",
+    why:"Clarifies scope using terms from your CV. Verify PostgreSQL before saving.", adds:["PostgreSQL"] },
+  { id:"s3", req:"Kubernetes / CI/CD", kind:"need", exp:0, bi:null,
+    q:"Have you deployed services on Kubernetes with CI/CD? Add it in your words:",
+    placeholder:"e.g. Deployed auth services on Kubernetes via GitHub Actions CI/CD", adds:["Kubernetes","CI/CD"] },
+];
+
+const AGENTS = [
+  { id:"review", label:"CV Review", desc:"Compare your CV with the JD and suggest fixes", tag:"auto" },
+  { id:"simulate", label:"Simulate", desc:"Model the ideal candidate and score the gap", tag:"" },
+  { id:"interview", label:"Interview Coach", desc:"Practise with grounded feedback", tag:"" },
+  { id:"cover", label:"Cover letter", desc:"A grounded first draft", tag:"" },
+];
+let agent = "review";
+
+/* ---- conversation list (each scoped to one JD) ---- */
+let convoSeq = 1;
+let convos = [
+  { id:"c0", title:"New conversation", meta:"draft", active:true },
+  { id:"s-stripe", title:"Senior Backend · Stripe", meta:"92% · applied" },
+  { id:"s-monzo", title:"Platform Engineer · Monzo", meta:"78% coverage" },
+  { id:"s-revolut", title:"Android → Backend · Revolut", meta:"saved" },
+];
+function renderNav(){
+  $("navList").innerHTML = convos.map(c=>`<button class="nav-item ${c.active?'on':''}" data-id="${c.id}"><b>${esc(c.title)}</b><small>${esc(c.meta)}</small></button>`).join("");
+  $("navList").querySelectorAll(".nav-item").forEach(b=>b.onclick=()=>openConvo(b.dataset.id));
+}
+function openConvo(id){
+  const c=convos.find(x=>x.id===id); closeNav();
+  if(!c||c.active) return;
+  convos.forEach(x=>x.active=x.id===id); renderNav();
+  if(id!=="c0") bot(`Opened "<b>${esc(c.title)}</b>". In the real app this restores that conversation's own CV + JD and everything you did in it — each conversation is scoped to one job. (Prototype keeps the live thread.)`);
+}
+function closeNav(){ $("app").classList.remove("show-nav"); }
+
+function scrollDown(){ const s=thread.parentElement; requestAnimationFrame(()=>{ s.scrollTop = s.scrollHeight; }); }
+function esc(s){ return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function bot(html){ const m=document.createElement("div"); m.className="msg bot"; m.innerHTML=`<div class="av bot">✦</div><div class="bubble">${html}</div>`; thread.appendChild(m); scrollDown(); }
+function user(text){ const m=document.createElement("div"); m.className="msg user"; m.innerHTML=`<div class="av user">You</div><div class="bubble">${esc(text)}</div>`; thread.appendChild(m); scrollDown(); }
+const sparkSvg = `<svg class="spark" viewBox="0 0 24 24" fill="none" stroke="var(--violet)" stroke-width="2"><path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.5 5.7 21l2.3-7.1-6-4.5h7.6z"/></svg>`;
+function card(title, tag, bodyHtml){ const m=document.createElement("div"); m.className="msg bot"; m.innerHTML=`<div class="av bot">✦</div><div class="card"><div class="card-h">${sparkSvg}<b>${title}</b>${tag?`<span class="tag">${tag}</span>`:""}</div><div class="card-b">${bodyHtml}</div></div>`; thread.appendChild(m); scrollDown(); return m; }
+
+function renderPaper(){
+  if(!draft) return;
+  const expHtml = draft.exp.map(e=>`
+    <div class="job"><div class="jh"><b>${esc(e.role)} · ${esc(e.company)}</b><span>${esc(e.when)}</span></div>
+    <ul>${e.bullets.map(b=>`<li class="${b.hl?'hl':''}">${esc(b.t)}</li>`).join("")}</ul></div>`).join("");
+  const skillsHtml = draft.skills.map(s=>`<span class="${s.add?'add':''}">${esc(s.t)}</span>`).join("");
+  const el = document.createElement("div");
+  el.className = "paper t-"+template;
+  el.innerHTML = `<h1>${esc(draft.name)}</h1><div class="ptitle">${esc(draft.title)}</div><div class="pcontact">${esc(draft.contact)}</div>
+    <div class="spine"></div><h2>Summary</h2><p class="psum">${esc(draft.summary)}</p>
+    <h2>Experience</h2>${expHtml}<h2>Skills</h2><div class="skills">${skillsHtml}</div>`;
+  const scroll = $("previewScroll"); scroll.innerHTML = ""; scroll.appendChild(el);
+  setTimeout(()=>{ draft.exp.forEach(e=>e.bullets.forEach(b=>b.hl=false)); draft.skills.forEach(s=>s.add=false); },10);
+  if(!$("app").classList.contains("show-preview")) $("pvDot").hidden=false;
+}
+function liftDraft(){
+  draft = { name:SEED.name, title:SEED.title, contact:SEED.contact, summary:SEED.summary,
+    exp:SEED.exp.map(e=>({...e, bullets:e.bullets.map(t=>({t,hl:false}))})),
+    skills:SEED.skills.map(t=>({t,add:false})) };
+}
+function setCtx(){
+  $("ctxCv").innerHTML = draft?`<span class="ok">✓</span> CV`:`<span class="no">○</span> CV`;
+  $("ctxRole").innerHTML = jdReady?`<span class="ok">✓</span> JD`:`<span class="no">○</span> JD`;
+}
+function setCoverage(v){ coverage=v; const C=113; $("ringWrap").hidden=false; const r=$("ring"); r.style.transition="stroke-dashoffset 1s var(--ease)"; r.style.strokeDashoffset=C-C*(v/100); $("ringPct").textContent=v+"%"; }
+function setNext(label, fn){ const w=$("nextWrap"); if(!label){ w.innerHTML=""; return; } w.innerHTML=`<button class="nextpill" id="nextPill">✦ ${label}</button>`; $("nextPill").onclick=fn; }
+
+function stepBringCV(){
+  user("Here's my CV");
+  liftDraft(); setCtx(); renderPaper();
+  card("Imported your CV", "draft ready",
+    `<p class="summary">I read your CV into an editable draft — toggle <b>Preview</b> (top-right) to see it. Looks like <b>${SEED.name}</b>, ${SEED.exp.length} roles, ${SEED.skills.length} skills. Paste the job description next and I'll tailor to it.</p>
+     <div class="row"><button class="btn btn-ghost btn-sm" onclick="openPreview()">Show preview</button><button class="btn btn-ghost btn-sm" onclick="stepAddJD()">Add the job description</button></div>
+     <p class="disc">Structured with the same importer the editor uses — nothing invented. This is your working draft; every tool reads and writes it.</p>`);
+  setNext("Add the job description", stepAddJD);
+}
+function stepAddJD(){
+  if(!draft) return stepBringCV();
+  if(jdReady){ bot(`This conversation is tailored to one JD — <b>${ROLE}</b>. Targeting a different job is a fresh start (one CV + one JD per conversation).<br><br><button class="btn btn-ghost btn-sm" onclick="resetConversation()">Start a new conversation</button>`); return; }
+  user("Here's the job description (JD)");
+  jdReady=true; setCtx();
+  const act=convos.find(c=>c.active); if(act){ act.title="Senior Backend · Payments"; act.meta="in progress"; renderNav(); }
+  bot(`Got it — tailoring everything to the JD for <b>${ROLE}</b>. Want me to review your CV against it?`);
+  setNext("Review my CV against the JD", stepReview);
+}
+function stepReview(){
+  if(!ready("review")) return;
+  user("Review my CV against the JD");
+  setCoverage(58);
+  const recs = SUGS.map(s=>{
+    if(s.kind==="need") return `<div class="rec" id="rec-${s.id}"><div class="rec-h"><b>${s.req}</b><span class="badge need">Needs you</span></div>
+      <p class="summary" style="font-size:12px">${s.q}</p>
+      <div class="rec-q"><input id="in-${s.id}" placeholder="${s.placeholder}"/><button class="btn btn-gold btn-sm" onclick="applyAsk('${s.id}')">Add</button></div></div>`;
+    return `<div class="rec" id="rec-${s.id}"><div class="rec-h"><b>${s.req}</b><span class="badge sup">Supported</span></div>
+      <div class="diff"><span class="old">${esc(s.old)}</span> <span class="new">${esc(s.neo)}</span><div class="why">${s.why}</div></div>
+      <div class="row" id="act-${s.id}"><button class="btn btn-gold btn-sm" onclick="applySug('${s.id}')">Apply to my CV</button></div></div>`;
+  }).join("");
+  card("CV review", coverage+"% coverage",
+    `<p class="summary">Your CV already speaks to this payments role; three changes would make it land harder. Each one <b>applies straight into your draft</b> — open Preview and watch the coverage move.</p>
+     ${recs}
+     <div class="row"><button class="btn btn-primary btn-sm" onclick="applyAll()">Apply all suggested</button><button class="btn btn-ghost btn-sm" onclick="openPreview()">Show preview</button></div>
+     <p class="disc">Evidence-based rewrites, not fabricated facts — verify each before you export. Coverage is keyword overlap with the JD, not a hiring score.</p>`);
+  setNext("Apply the supported rewrites", applyAll);
+}
+function markApplied(id){
+  applied.add(id);
+  const s=SUGS.find(x=>x.id===id);
+  const act=$("act-"+id); if(act) act.innerHTML=`<span class="applied-tick">✓ Applied to your draft</span>`;
+  const q=$("rec-"+id); if(q && s.kind==="need") q.querySelector(".rec-q").innerHTML=`<span class="applied-tick">✓ Added to your draft</span>`;
+}
+function bumpCoverage(){ const map={s1:17,s2:8,s3:17}; let v=58; applied.forEach(id=>v+=map[id]||0); setCoverage(Math.min(100,v)); }
+function applySug(id){ if(applied.has(id))return; const s=SUGS.find(x=>x.id===id); draft.exp[s.exp].bullets[s.bi]={t:s.neo,hl:true}; s.adds.forEach(a=>{if(!draft.skills.find(k=>k.t===a))draft.skills.push({t:a,add:true});}); markApplied(id); renderPaper(); bumpCoverage(); afterApply(); }
+function applyAsk(id){ if(applied.has(id))return; const val=($("in-"+id).value||"").trim()||"Deployed services on Kubernetes via CI/CD pipelines."; const s=SUGS.find(x=>x.id===id); draft.exp[0].bullets.push({t:val,hl:true}); s.adds.forEach(a=>{if(!draft.skills.find(k=>k.t===a))draft.skills.push({t:a,add:true});}); markApplied(id); renderPaper(); bumpCoverage(); afterApply(); }
+function applyAll(){ SUGS.forEach(s=>{ if(!applied.has(s.id)){ if(s.kind==="need") applyAsk(s.id); else applySug(s.id); } }); }
+function afterApply(){
+  if(applied.size>=SUGS.length){ bot(`Nice — coverage is up to <b>${coverage}%</b> and every change is in your draft. Want to see it in a different template?`); setNext("Preview a template", stepTemplates); }
+  else setNext("Apply the rest", applyAll);
+}
+function stepSimulate(){
+  if(!ready("simulate")) return;
+  user("Simulate the gap");
+  const cur=coverage||58, pot=86;
+  const gaps=[
+    {t:"Java · backend services", c:"have", lbl:"Have"},
+    {t:"Payments domain", c:"have", lbl:"Have"},
+    {t:"Kafka · event-driven", c:"part", lbl:"Partial"},
+    {t:"Kubernetes · CI/CD", c:"miss", lbl:"Missing"},
+  ];
+  card("Simulate the gap", `${cur}% → ${pot}%`,
+    `<p class="summary">I modelled the ideal candidate for this JD and compared you to it. You're a credible fit; two areas would move you from a current ${cur}% to a potential ${pot}%.</p>
+     ${gaps.map(g=>`<div class="rec-h"><span class="badge ${g.c}">${g.lbl}</span><b style="font-weight:500;font-size:12px">${g.t}</b></div>`).join("")}
+     <div><div class="bar"><div class="pot" style="width:${pot}%"></div><div class="cur" style="width:${cur}%"></div></div><div class="barlbl"><span>Current ${cur}%</span><span>Potential ${pot}%</span></div></div>
+     <div class="row"><button class="btn btn-gold btn-sm" onclick="stepReview()">Close the gaps in Review</button></div>
+     <p class="disc">A model of the role's ideal, not a hiring prediction. Gaps are things to add evidence for, not proof you lack a skill.</p>`);
+  setNext("Close the gaps in Review", stepReview);
+}
+function stepTemplates(){
+  if(!ready("template")) return;
+  user("Show me templates"); openPreview();
+  const tpls=[
+    {id:"aurora",name:"Aurora",blurb:"Editorial · violet spine",sw:"linear-gradient(120deg,#6ee7d0,#8b7cff)",ats:"ATS"},
+    {id:"noir",name:"Noir",blurb:"Dark luxe · gold",sw:"linear-gradient(120deg,#1a1a1f,#c9a24b)",ats:"Design"},
+    {id:"meridian",name:"Meridian",blurb:"Swiss minimal",sw:"linear-gradient(120deg,#e7e9ef,#111318)",ats:"ATS"},
+  ];
+  card("Templates", "live preview",
+    `<p class="summary">Pick one — your draft restyles instantly in Preview. ATS templates stay single-column and parse-safe.</p>
+     <div class="tpl-grid">${tpls.map(t=>`<button class="tpl ${t.id===template?'on':''}" id="tpl-${t.id}" onclick="pickTemplate('${t.id}')">
+        <div class="sw" style="background:${t.sw}"></div><b>${t.name}</b><span>${t.blurb}</span><br><span class="ats">${t.ats}</span></button>`).join("")}</div>`);
+  setNext("Draft a cover letter", stepCover);
+}
+function pickTemplate(id){ template=id; renderPaper(); document.querySelectorAll(".tpl").forEach(b=>b.classList.remove("on")); const b=$("tpl-"+id); if(b) b.classList.add("on"); openPreview(); }
+function stepCover(){
+  if(!ready("cover")) return;
+  user("Draft a cover letter");
+  card("Cover letter", "grounded draft",
+    `<p class="summary">Drafted from your <b>working draft</b> and the JD — every claim traces to a bullet you kept.</p>
+     <div style="font-size:12px;line-height:1.6;color:var(--ink-soft);border-left:2px solid var(--violet);padding-left:12px">Dear Hiring Team,<br><br>I'm applying for the Senior Backend Engineer role on your payments platform. At Mastercard I built Kafka-based, event-driven authentication services handling high-volume auth events, and shipped PostgreSQL-backed APIs for internal payment teams…</div>
+     <div class="row"><button class="btn btn-ghost btn-sm" onclick="bot('Opened in the editor (prototype).')">Open in editor</button></div>
+     <p class="disc">Grounded in your draft — no invented employers, metrics or skills.</p>`);
+  setNext("Save this version", stepSave);
+}
+function stepSave(){
+  user("Save this version");
+  card("Saved", "done",
+    `<p class="summary">Saved <b>Amara Okafor — Payments</b> as a new private version at <b>${coverage||58}%</b> coverage, in the <b>${template[0].toUpperCase()+template.slice(1)}</b> template. Your original CV is untouched.</p>
+     <div class="row"><button class="btn btn-ghost btn-sm" onclick="bot('Exported PDF (prototype).')">Export PDF</button><button class="btn btn-ghost btn-sm" onclick="bot('Exported DOCX (prototype).')">Export DOCX</button></div>
+     <p class="disc">One journey: one CV, reviewed → improved → restyled → written up → saved, all in the chat.</p>`);
+  setNext(null);
+}
+
+function ready(what){
+  if(!draft){ bot("First, bring your CV so I can work on the real thing."); setNext("Bring my CV", stepBringCV); return false; }
+  if(!jdReady && what!=="template"){ bot("Add the job description first and I'll tailor to it."); setNext("Add the JD", stepAddJD); return false; }
+  return true;
+}
+function classify(t){
+  t=t.toLowerCase();
+  if(!draft && /cv|resume|upload|bring/.test(t)) return stepBringCV();
+  if(/\bjd\b|job description|role|target|vacancy/.test(t)) return stepAddJD();
+  if(/review|tailor|improve|rewrite|better|fix/.test(t)) return stepReview();
+  if(/simulate|ideal|gap/.test(t)) return stepSimulate();
+  if(/match|coverage|keyword|score/.test(t)){ if(ready("match")){ setCoverage(coverage||58); openPreview(); bot("Coverage is "+(coverage||58)+"% against the JD — see the ring in Preview. Apply review suggestions to raise it."); } return; }
+  if(/template|layout|design|look/.test(t)) return stepTemplates();
+  if(/cover|letter/.test(t)) return stepCover();
+  if(/save|export|version|download/.test(t)) return draft?stepSave():ready("review");
+  bot("I can review your CV, simulate the gap, show keyword coverage, preview templates, draft a cover letter, or save a version — try a chip below.");
+}
+function runInput(){ const v=$("input").value.trim(); if(!v)return; $("input").value=""; user(v); classify(v); }
+$("sendBtn").onclick=runInput;
+$("input").addEventListener("keydown",e=>{ if(e.key==="Enter") runInput(); });
+
+const CHIPS=[ {t:"Bring my CV",fn:stepBringCV},{t:"Add the JD",fn:stepAddJD},{t:"Review my CV",fn:stepReview},{t:"Keyword coverage",fn:()=>classify("coverage")},{t:"Templates",fn:stepTemplates},{t:"Cover letter",fn:stepCover} ];
+$("chips").innerHTML=CHIPS.map((c,i)=>`<button class="chip" data-i="${i}">${c.t}</button>`).join("");
+$("chips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>CHIPS[+b.dataset.i].fn());
+
+function renderMenu(){
+  $("modeMenu").innerHTML=AGENTS.map(a=>`<button class="mode-item ${a.id===agent?'on':''}" data-id="${a.id}">
+    <span class="mi-top"><b>${a.label}</b>${a.tag==='auto'?'<span class="mode-auto">Auto</span>':''}</span>
+    <span class="mi-desc">${a.desc}</span></button>`).join("");
+  $("modeMenu").querySelectorAll(".mode-item").forEach(b=>b.onclick=()=>{
+    agent=b.dataset.id; $("modeLabel").textContent=AGENTS.find(a=>a.id===agent).label; $("modeMenu").hidden=true;
+    const map={review:stepReview,simulate:stepSimulate,interview:()=>bot("Interview Coach runs a grounded mock interview (already wired in occ4)."),cover:stepCover};
+    (map[agent]||(()=>{}))();
+  });
+}
+$("modeBtn").onclick=()=>{ const m=$("modeMenu"); m.hidden=!m.hidden; if(!m.hidden) renderMenu(); };
+document.addEventListener("click",e=>{ if(!e.target.closest(".modepick")) $("modeMenu").hidden=true; });
+
+function openPreview(){ $("app").classList.add("show-preview"); $("previewBtn").classList.add("on"); $("previewBtn").setAttribute("aria-pressed","true"); $("pvDot").hidden=true; }
+function closePreview(){ $("app").classList.remove("show-preview"); $("previewBtn").classList.remove("on"); $("previewBtn").setAttribute("aria-pressed","false"); }
+$("previewBtn").onclick=()=>{ $("app").classList.contains("show-preview")?closePreview():openPreview(); };
+$("backBtn").onclick=closePreview;
+$("themeBtn").onclick=()=>{ const r=document.documentElement; const d=r.getAttribute("data-theme")==="dark"; r.setAttribute("data-theme",d?"light":"dark"); $("themeBtn").textContent=d?"☀":"☾"; };
+
+function opening(){
+  bot(`Good evening, Amara. I'm your career copilot — I can run everything the Orire app does, right here in the chat, all on one CV.<br><br>Start by bringing your CV, then paste the job description you're targeting.`);
+  setNext("Bring my CV", stepBringCV);
+}
+function resetConversation(){
+  draft=null; jdReady=false; coverage=0; template="aurora"; applied.clear(); agent="review";
+  thread.innerHTML=""; $("previewScroll").innerHTML=EMPTY_HTML;
+  $("ringWrap").hidden=true; $("ring").style.strokeDashoffset="113"; $("ringPct").textContent="0%";
+  $("modeLabel").textContent="CV Review"; setCtx(); closePreview(); closeNav(); $("pvDot").hidden=true;
+  convos.forEach(c=>c.active=false);
+  convos.unshift({ id:"c"+(convoSeq++), title:"New conversation", meta:"draft", active:true });
+  renderNav();
+  opening();
+}
+$("newBtn").onclick=resetConversation;
+$("navBtn").onclick=()=>$("app").classList.toggle("show-nav");
+$("navBackdrop").onclick=closeNav;
+renderNav();
+opening();
+</script>
+</body>
+</html>
