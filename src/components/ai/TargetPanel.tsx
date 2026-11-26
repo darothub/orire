@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useViewStore } from "@/lib/store/viewStore";
@@ -8,22 +8,17 @@ import { VIEW_META } from "@/lib/store/viewMeta";
 import { useTargetStore, isIdealStale } from "@/lib/store/targetStore";
 import { useSettingsStore } from "@/lib/store/settingsStore";
 import { usePlanStore } from "@/lib/store/planStore";
-import { planQualityLabel, remainingNote } from "@/lib/plan/plan";
-import { useUsageStore } from "@/lib/store/usageStore";
-import { sharedRun, useIsRunning, useRunOrigin, useRunStore } from "@/lib/store/runStore";
+import { planQualityLabel } from "@/lib/plan/plan";
 import { SimulateProgress } from "@/components/ai/SimulateProgress";
 import { getTemplate } from "@/components/templates/registry";
-import { coerceSimulatedCV, gapAnalysis, targetMatch } from "@/lib/ai/simulate";
-import { analyzeTone, type ToneLabel, type ToneProfile } from "@/lib/ai/retone";
-import { applyRefinePatch } from "@/lib/ai/refinePatch";
-import { factGround, parseModelJSON, scoreGrounding, RefineParseError } from "@/lib/ai/guardrails";
-import { cvContentSig } from "@/lib/ai/judge";
-import { PROVIDERS, type RefineResponse } from "@/lib/ai/types";
-import { type CVData } from "@/lib/cv/schema";
+import { gapAnalysis, targetMatch } from "@/lib/ai/simulate";
+import { TONE_OPTIONS, useRetone } from "@/lib/ai/useRetone";
+import { useSimulateRun } from "@/lib/ai/useSimulateRun";
+import { PROVIDERS } from "@/lib/ai/types";
 import { NoticeSlot, type SimNotice } from "@/components/ai/simulate/NoticeSlot";
 import { VerdictStrip } from "@/components/ai/simulate/VerdictStrip";
 import { rankMissingSections, rankMissingSkills } from "@/lib/ai/simulateImpact";
-import { buildGapReportHtml } from "@/lib/ai/simulateReport";
+import { printGapReport } from "@/lib/ai/simulateReport";
 import { advanceGuidedRun } from "@/components/ai/RunAll";
 import { useRunAllStore } from "@/lib/store/runAllStore";
 import { isFinished } from "@/lib/tailor/runAll";
@@ -31,26 +26,15 @@ import { DiffView } from "./simulate/DiffView";
 import { ScaledPaper } from "./simulate/ScaledPaper";
 import { GapPanel } from "@/components/ai/simulate/GapPanel";
 
-/** Always read the working CV from the store at call time (edits + applied refine). */
-function liveWorkingCV(): CVData {
-  return useCVStore.getState().cv;
-}
-
-const TONE_OPTIONS: ToneLabel[] = ["Executive", "Technical", "Balanced"];
-
-type RetonePhase = "idle" | "running" | "error" | "preview";
-
 export function TargetView() {
   const cv = useCVStore((s) => s.cv);
   const activeTemplate = useCVStore((s) => s.activeTemplate);
-  const applyRefinedCV = useCVStore((s) => s.applyRefinedCV);
   const setSkillSuggestions = useCVStore((s) => s.setSkillSuggestions);
   const setView = useViewStore((s) => s.setView);
   const guidedRun = useRunAllStore((s) => s.run !== null && !isFinished(s.run));
   const ideal = useTargetStore((s) => s.ideal);
   const jd = useTargetStore((s) => s.jd);
   const setJd = useTargetStore((s) => s.setJd);
-  const setTarget = useTargetStore((s) => s.setTarget);
   const label = useTargetStore((s) => s.label);
   const createdAt = useTargetStore((s) => s.createdAt);
   const baseScore = useTargetStore((s) => s.baseScore);
@@ -65,42 +49,15 @@ export function TargetView() {
   const recordScore = useTargetStore((s) => s.recordScore);
 
   const provider = useSettingsStore((s) => s.provider);
-  const models = useSettingsStore((s) => s.models);
   const plan = usePlanStore((s) => s.plan);
 
-  // Deterministic read of the target's writing voice (recomputed per target).
-  const detected = useMemo<ToneProfile | null>(() => (ideal ? analyzeTone(ideal) : null), [ideal]);
-  const [toneLabel, setToneLabel] = useState<ToneLabel | null>(null);
-  const [phase, setPhase] = useState<RetonePhase>("idle");
-  const [err, setErr] = useState<{ title: string; body: string; status?: number } | null>(null);
-  const [preview, setPreview] = useState<{ cv: CVData; warnings: string[] } | null>(null);
-  const [showBefore, setShowBefore] = useState(false);
+  const retone = useRetone(ideal, jd, "Target");
+  const sim = useSimulateRun("Target");
   const [compare, setCompare] = useState<"yours" | "ideal" | "both" | "diff">("both");
-  /** Working-CV fingerprint the open retone preview was built from. */
-  const previewBaseSig = useRef<string | null>(null);
-
-  // Generator (formerly the standalone Simulate view): building the ideal CV
-  // happens inline here, so Target is a single destination with no bounce.
+  // Building the ideal CV happens inline here, so Target is a single destination.
   const [recompose, setRecompose] = useState(false);
-  const [genPhase, setGenPhase] = useState<"input" | "running" | "error">("input");
-  const [genErr, setGenErr] = useState<{ title: string; body: string; status?: number } | null>(null);
-  const [usageNote, setUsageNote] = useState<string | null>(null);
-  const simRunning = useIsRunning("simulate");
-  const simOrigin = useRunOrigin("simulate");
-  const simStartedAt = useRunStore((s) => s.active["simulate"]?.startedAt);
 
   const meta = PROVIDERS[provider];
-  const cvSig = useMemo(() => cvContentSig(cv), [cv]);
-
-  // Drop stale retone previews when the working CV changes (edit or apply refine).
-  useEffect(() => {
-    if (!preview || !previewBaseSig.current) return;
-    if (previewBaseSig.current === cvSig) return;
-    previewBaseSig.current = null;
-    setPreview(null);
-    setPhase("idle");
-    setShowBefore(false);
-  }, [cvSig, preview]);
 
   // Keep editor skill chips aligned with the live gap vs the locked ideal.
   useEffect(() => {
@@ -118,51 +75,14 @@ export function TargetView() {
   const MineTpl = getTemplate(activeTemplate).Component;
 
   async function generate() {
-    if (!jd.trim()) return;
-    setGenPhase("running");
-    setGenErr(null);
-    try {
-      const data = await sharedRun<RefineResponse>("simulate", "Target", () =>
-        fetch("/api/ai/simulate", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ provider, model: models[provider], jobDescription: jd }),
-        }).then((r) => r.json() as Promise<RefineResponse>),
-      );
-      if (!data.ok || !data.raw) {
-        setGenErr({ title: `${meta.label} error`, body: data.error?.message ?? "Unknown error.", status: data.error?.status });
-        setGenPhase("error");
-        return;
-      }
-      const built = coerceSimulatedCV(data.raw);
-      // Baseline + chips must use the *current* working CV (edits + applied refine),
-      // not a render-closure snapshot from when the button was mounted.
-      const working = liveWorkingCV();
-      const locked = targetMatch(working, built, jd);
-      setTarget(built, jd, locked.score);
-      useCVStore.getState().setSkillSuggestions(locked.gap.missingSkills, built.skills);
-      previewBaseSig.current = null;
-      setPreview(null);
-      setPhase("idle");
-      setRecompose(false);
-      setGenPhase("input");
-      // Refresh the usage mirror (feature grey-out) and surface how many
-      // simulations remain (point 9).
-      void useUsageStore.getState().refresh().then(() => {
-        const u = useUsageStore.getState().summary;
-        if (u) setUsageNote(remainingNote("simulate", u.metrics.simulate.cap, u.metrics.simulate.used) || null);
-      });
-    } catch (e) {
-      const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
-      setGenErr({ title: "Could not build the simulation", body: msg });
-      setGenPhase("error");
-    }
+    if (!(await sim.generate())) return;
+    retone.discard();
+    setRecompose(false);
   }
 
   const showGenerator = !ideal || recompose;
   if (showGenerator) {
-    const busyElsewhere = simRunning && genPhase !== "running";
-    const running = genPhase === "running" || busyElsewhere;
+    const { busyElsewhere, running } = sim;
     return (
       <motion.div
         className="ws-view tgt-view"
@@ -187,14 +107,14 @@ export function TargetView() {
           <button className="ai-link" onClick={() => setView("connect")}>AI Settings</button>
         </div>
 
-        {genPhase === "error" && genErr ? (
+        {sim.phase === "error" && sim.err ? (
           <>
             <div className="imp-error">
-              <strong>{genErr.title}{genErr.status ? ` (HTTP ${genErr.status})` : ""}</strong>
-              <pre>{genErr.body}</pre>
+              <strong>{sim.err.title}{sim.err.status ? ` (HTTP ${sim.err.status})` : ""}</strong>
+              <pre>{sim.err.body}</pre>
             </div>
             <div className="imp-actions">
-              <button className="imp-btn" onClick={() => setGenPhase("input")}>Back</button>
+              <button className="imp-btn" onClick={sim.backToInput}>Back</button>
             </div>
           </>
         ) : (
@@ -206,9 +126,9 @@ export function TargetView() {
               placeholder="Paste the full job description…"
               value={jd}
               onChange={(e) => setJd(e.target.value)}
-              disabled={genPhase === "running"}
+              disabled={sim.phase === "running"}
             />
-            {running && <SimulateProgress startedAt={simStartedAt} />}
+            {running && <SimulateProgress startedAt={sim.startedAt} />}
             <div className="imp-actions">
               <button
                 className="imp-btn"
@@ -217,10 +137,10 @@ export function TargetView() {
                 {recompose ? "Keep current target" : "Cancel"}
               </button>
               <button className="imp-btn primary" onClick={generate} disabled={running || !jd.trim()}>
-                {genPhase === "running" ? (
+                {sim.phase === "running" ? (
                   <><span className="cmp-spinner" /> Building ideal candidate…</>
                 ) : busyElsewhere ? (
-                  <><span className="cmp-spinner" /> Simulating{simOrigin ? ` · from ${simOrigin}` : ""}…</>
+                  <><span className="cmp-spinner" /> Simulating{sim.startedBy ? ` · from ${sim.startedBy}` : ""}…</>
                 ) : (
                   "Generate role-target example"
                 )}
@@ -241,21 +161,12 @@ export function TargetView() {
     ? new Date(createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })
     : "";
 
-  const activeTone: ToneLabel = toneLabel ?? detected?.label ?? "Balanced";
 
-  function exportReport() {
-    const html = buildGapReportHtml({ label: label || "Target role", match, baseScore, rankedSkills, rankedSections });
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    w.print();
-  }
+  const exportReport = () => printGapReport({ label: label || "Target role", match, baseScore, rankedSkills, rankedSections });
 
-  const openResim = () => { setRecompose(true); setGenPhase("input"); setGenErr(null); };
+  const openResim = () => { setRecompose(true); sim.backToInput(); };
   const notices: SimNotice[] = [];
-  if (usageNote) notices.push({ id: "usage", body: usageNote });
+  if (sim.usageNote) notices.push({ id: "usage", body: sim.usageNote });
   if (resimPrompt) {
     notices.push({
       id: "resim",
@@ -275,89 +186,10 @@ export function TargetView() {
     });
   }
 
-  // What the left column shows: the retoned preview when one exists (and the
-  // user isn't peeking at the original), otherwise the live CV.
+  // What the left column shows: the rewritten preview when one exists (and the
+  // person isn't peeking at the original), otherwise the live CV.
+  const { preview, showBefore, phase, err, detected, activeTone, previewMatch, fidelity } = retone;
   const leftCV = preview && !showBefore ? preview.cv : cv;
-  const previewMatch = preview ? targetMatch(preview.cv, ideal, jd) : null;
-  const fidelity = preview ? scoreGrounding({ cv: preview.cv, warnings: preview.warnings }) : null;
-
-  async function runRetone() {
-    if (!detected) return;
-    setPhase("running");
-    setErr(null);
-    setPreview(null);
-    previewBaseSig.current = null;
-    setShowBefore(false);
-    const tone: ToneProfile = { ...detected, label: activeTone };
-    // Snapshot the latest working CV at request time (post-refine/edit).
-    const source = liveWorkingCV();
-    const sourceSig = cvContentSig(source);
-    try {
-      const data = await sharedRun<RefineResponse>("retone", "Target", () =>
-        fetch("/api/ai/retone", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ provider, model: models[provider], cv: source, tone }),
-        }).then((r) => r.json() as Promise<RefineResponse>),
-      );
-      if (!data.ok || !data.raw) {
-        setErr({
-          title: `${meta.label} error`,
-          body: data.error?.message ?? "Unknown error.",
-          status: data.error?.status,
-        });
-        setPhase("error");
-        return;
-      }
-      // If the working CV changed while retone was in flight, discard the result
-      // so we never ground/apply against a superseded document.
-      if (cvContentSig(liveWorkingCV()) !== sourceSig) {
-        setErr({
-          title: "CV changed during rewrite",
-          body: "Your CV was updated (edit or applied refine) while the rewrite ran. Run rewrite again on the latest version.",
-        });
-        setPhase("error");
-        return;
-      }
-      // Tone transfer changes VOICE only: drop any title/role the model emitted
-      // so the person's headline and every role title stay exactly as the source.
-      const patch = parseModelJSON(data.raw) as Record<string, unknown>;
-      delete patch.title;
-      for (const key of ["experience", "projects"] as const) {
-        const arr = patch[key];
-        if (Array.isArray(arr)) {
-          for (const item of arr) {
-            if (item && typeof item === "object") delete (item as { role?: unknown }).role;
-          }
-        }
-      }
-      const grounded = factGround(source, applyRefinePatch(source, patch));
-      previewBaseSig.current = sourceSig;
-      setPreview({ cv: grounded.cv, warnings: grounded.warnings });
-      setPhase("preview");
-    } catch (e) {
-      const msg = e instanceof RefineParseError ? e.message : e instanceof Error ? e.message : String(e);
-      setErr({ title: "Could not rewrite the CV", body: msg });
-      setPhase("error");
-    }
-  }
-
-  function applyRetone() {
-    if (!preview) return;
-    applyRefinedCV(preview.cv);
-    previewBaseSig.current = null;
-    setPreview(null);
-    setPhase("idle");
-    setShowBefore(false);
-  }
-
-  function discardRetone() {
-    previewBaseSig.current = null;
-    setPreview(null);
-    setPhase("idle");
-    setShowBefore(false);
-    setErr(null);
-  }
 
   return (
     <motion.div
@@ -389,7 +221,7 @@ export function TargetView() {
         <div className="sim-targets" role="tablist" aria-label="Targets">
           {saved.map((t) => (
             <span key={t.id} className="sim-target">
-              <button role="tab" aria-selected={false} onClick={() => { discardRetone(); switchTarget(t.id); }}>{t.label}</button>
+              <button role="tab" aria-selected={false} onClick={() => { retone.discard(); switchTarget(t.id); }}>{t.label}</button>
               <button className="sim-target-x" aria-label={`Remove ${t.label}`} onClick={() => removeSaved(t.id)}>×</button>
             </span>
           ))}
@@ -442,7 +274,7 @@ export function TargetView() {
                   <button
                     key={t}
                     className={`tone-opt ${activeTone === t ? "on" : ""}`}
-                    onClick={() => setToneLabel(t)}
+                    onClick={() => retone.setToneLabel(t)}
                     disabled={phase === "running"}
                   >
                     {t}
@@ -455,7 +287,7 @@ export function TargetView() {
               </p>
               <button
                 className="imp-btn accent sim-voice-run"
-                onClick={runRetone}
+                onClick={retone.run}
                 disabled={phase === "running"}
                 title={`Rewrite your CV in the target's ${activeTone.toLowerCase()} voice; facts stay yours`}
               >
@@ -480,7 +312,7 @@ export function TargetView() {
               >
                 <strong>{err.title}{err.status ? ` (HTTP ${err.status})` : ""}</strong>
                 <pre>{err.body}</pre>
-                <button className="imp-btn" onClick={discardRetone}>Dismiss</button>
+                <button className="imp-btn" onClick={retone.discard}>Dismiss</button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -565,14 +397,14 @@ export function TargetView() {
                 <div className="tone-applybar-actions">
                   <button
                     className="imp-btn"
-                    onMouseDown={() => setShowBefore(true)}
-                    onMouseUp={() => setShowBefore(false)}
-                    onMouseLeave={() => setShowBefore(false)}
+                    onMouseDown={() => retone.setShowBefore(true)}
+                    onMouseUp={() => retone.setShowBefore(false)}
+                    onMouseLeave={() => retone.setShowBefore(false)}
                   >
                     {showBefore ? "Showing original" : "Hold to compare"}
                   </button>
-                  <button className="imp-btn" onClick={discardRetone}>Discard</button>
-                  <button className="imp-btn primary" onClick={applyRetone}>Apply to my CV</button>
+                  <button className="imp-btn" onClick={retone.discard}>Discard</button>
+                  <button className="imp-btn primary" onClick={retone.apply}>Apply to my CV</button>
                 </div>
               </motion.div>
             )}

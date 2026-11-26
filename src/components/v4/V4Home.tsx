@@ -18,11 +18,11 @@ import { Pill } from "@/components/ui/Pill";
 type App = { id: string; company: string; role: string; status: ApplicationStatus; updatedAt: string };
 
 /** Where each recommended action lives. Every target is a v4 page. */
-const V4_ROUTE = { copilot: "/occ/v4", studio: "/v4/studio", export: "/v4/export" } as const;
+const V4_ROUTE = { copilot: "/occ/v4", simulate: "/v4/simulate", studio: "/v4/studio", export: "/v4/export" } as const;
 const ACTION_HREF: Record<HomeAction, string> = {
   context: V4_ROUTE.copilot,
-  match: V4_ROUTE.copilot,
-  refine: V4_ROUTE.copilot,
+  match: V4_ROUTE.simulate,
+  refine: V4_ROUTE.studio,
   applications: V4_ROUTE.copilot,
   export: V4_ROUTE.export,
 };

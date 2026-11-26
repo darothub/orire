@@ -47,3 +47,13 @@ export function buildGapReportHtml(r: GapReportInput): string {
 <p class="note">Illustrative benchmark against an AI-generated example, not an employer or ATS assessment. Add only skills you genuinely have.</p>
 </body></html>`;
 }
+
+/** Opens the gap report in a new tab and starts the print dialog (save as PDF). */
+export function printGapReport(r: GapReportInput): void {
+  const w = window.open("", "_blank");
+  if (!w) return;
+  w.document.write(buildGapReportHtml(r));
+  w.document.close();
+  w.focus();
+  w.print();
+}

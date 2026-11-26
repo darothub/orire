@@ -15,6 +15,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { AutoTextarea } from "@/components/editor/AutoTextarea";
 import { V4Shell } from "./V4Shell";
 import { V4Paper } from "./V4Paper";
+import { V4ChangeList } from "./V4ChangeList";
 
 type MobileTab = "preview" | "blocks" | "coach";
 type PanelTab = "details" | "coach";
@@ -303,14 +304,7 @@ function RefineCard({ refine }: { refine: ReturnType<typeof useStudioRefine> }) 
       {message && <p className="v4-muted" role="status">{message}</p>}
       {review && (
         <div className="v4-changes">
-          {review.changes.map((c) => (
-            <div key={c.id} className={`v4-change${skipped.has(c.id) ? " skipped" : ""}`}>
-              <b>{c.label}</b>
-              <p className="v4-was">{c.before.join("\n")}</p>
-              <p className="v4-now">{c.after.join("\n")}</p>
-              <button type="button" className="or-btn" onClick={() => refine.toggle(c.id)}>{skipped.has(c.id) ? "Accept" : "Skip"}</button>
-            </div>
-          ))}
+          <V4ChangeList changes={review.changes} skipped={skipped} onToggle={refine.toggle} />
           <button type="button" className="or-btn gold" onClick={refine.apply} disabled={skipped.size === review.changes.length}>
             Apply {review.changes.length - skipped.size} changes
           </button>
