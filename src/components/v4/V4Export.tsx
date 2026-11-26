@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
 import { V4Shell } from "./V4Shell";
 import { V4Paper } from "./V4Paper";
+import { V4_LIBRARY_HREF, V4_STUDIO_HREF } from "@/lib/v4/nav";
 
 const ALIGNS: { id: CVAlign; label: string }[] = [
   { id: "left", label: "Left" },
@@ -56,7 +57,7 @@ export function V4Export() {
           <div className="v4-empty-state">
             <b>No CV to export yet</b>
             <p>Create or import your CV in the studio first.</p>
-            <Link href="/v4/studio" className="v4-link">Open CV Studio</Link>
+            <Link href={V4_STUDIO_HREF} className="v4-link">Open CV Studio</Link>
           </div>
         ) : (
           <div className="v4-exp">
@@ -219,7 +220,7 @@ function ShareCard() {
       {!cloud ? (
         <p className="v4-hint">Sign in to share your CV as a link.</p>
       ) : !version ? (
-        <p className="v4-hint">Save this CV as a version to share it. <Link href="/v4/library" className="v4-link">Open the library</Link></p>
+        <p className="v4-hint">Save this CV as a version to share it. <Link href={V4_LIBRARY_HREF} className="v4-link">Open the library</Link></p>
       ) : url ? (
         <div className="v4-share">
           <input readOnly value={url} aria-label="Share link" onFocus={(e) => e.currentTarget.select()} />

@@ -11,6 +11,7 @@ import { useHydrated } from "@/lib/v4/useHydrated";
 import { Button } from "@/components/ui/Button";
 import { V4Shell } from "./V4Shell";
 import { V4Paper } from "./V4Paper";
+import { V4_STUDIO_HREF } from "@/lib/v4/nav";
 
 const templateName = (id: string) => getTemplateInfo(id)?.name ?? id;
 const shareUrl = (token: string) => `${window.location.origin}/cv/${token}`;
@@ -203,7 +204,7 @@ function VersionCard({ version: v, company }: { version: CvVersion; company: str
   async function onOpen() {
     setBusy(true);
     await activate(v.id);
-    router.push("/v4/studio");
+    router.push(V4_STUDIO_HREF);
   }
   async function saveEdit() {
     await rename(v.id, name);

@@ -45,6 +45,7 @@ import { useUsageStore } from "@/lib/store/usageStore";
 import { CHAT_ACTION_LABEL, actionLock, chatAccess, type ActionLock } from "@/lib/v4/copilot";
 import type { ChatIntent, ChatReply } from "@/lib/occ/chat";
 import "./occ4.css";
+import { V4_SIMULATE_HREF } from "@/lib/v4/nav";
 
 /**
  * occ4 — the Career Copilot conversational surface, rebuilt on the Orire design
@@ -1547,7 +1548,7 @@ function renderSimulateHandoff(): ReactNode {
   return (
     <CopilotCard title="Simulate runs in the CV Studio" icon={<Spark />}>
       <p className="occ4-advice-summary">Simulate compares your CV with an ideal candidate for the role, and uses your plan&apos;s simulations. Open it in the Studio to run it.</p>
-      <div className="occ4-rec-apply"><Link className="occ4-pv-toggle" href="/v4/studio/simulate">Open Simulate</Link></div>
+      <div className="occ4-rec-apply"><Link className="occ4-pv-toggle" href={V4_SIMULATE_HREF}>Open Simulate</Link></div>
     </CopilotCard>
   );
 }

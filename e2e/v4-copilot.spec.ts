@@ -16,19 +16,19 @@ test.describe("v4 Copilot", () => {
   });
 
   test("the Copilot is its own menu item and the header switch moves between it and the Studio", async ({ page }) => {
-    await page.goto("/v4/copilot");
+    await page.goto("/app/copilot");
     const menu = page.getByRole("navigation", { name: "Orire" });
     await expect(menu.getByRole("link", { name: "Copilot" })).toHaveAttribute("aria-current", "page");
     const toggle = page.getByRole("switch", { name: "Copilot" });
     await expect(toggle).toHaveAttribute("aria-checked", "true");
 
     await toggle.click();
-    await expect(page).toHaveURL(/\/v4\/studio$/);
+    await expect(page).toHaveURL(/\/app\/studio$/);
     await expect(menu.getByRole("link", { name: "CV Studio" })).toHaveAttribute("aria-current", "page");
     await expect(page.getByRole("switch", { name: "Copilot" })).toHaveAttribute("aria-checked", "false");
 
     await page.getByRole("switch", { name: "Copilot" }).click();
-    await expect(page).toHaveURL(/\/v4\/copilot$/);
+    await expect(page).toHaveURL(/\/app\/copilot$/);
   });
 
   test("a message with no keyword gets a model reply and a button for the action it suggests", async ({ page }) => {
@@ -39,7 +39,7 @@ test.describe("v4 Copilot", () => {
       expect(body.message).toBe("What should I focus on this week?");
       await route.fulfill({ json: { intent: "review", reply: "Start by checking your CV against the role." } });
     });
-    await page.goto("/v4/copilot");
+    await page.goto("/app/copilot");
     const box = page.getByRole("textbox", { name: "Message the Career Copilot" });
     await box.fill("What should I focus on this week?");
     await page.getByRole("button", { name: "Send", exact: true }).click();
@@ -51,7 +51,7 @@ test.describe("v4 Copilot", () => {
   test("when the plan's replies are used up the chat says so instead of failing", async ({ page }) => {
     await page.route("**/api/occ/chat", (route) =>
       route.fulfill({ status: 402, json: { error: "You've used all 5 Copilot replies.", code: "no-runs" } }));
-    await page.goto("/v4/copilot");
+    await page.goto("/app/copilot");
     await page.getByRole("textbox", { name: "Message the Career Copilot" }).fill("What should I focus on this week?");
     await page.getByRole("button", { name: "Send", exact: true }).click();
     await expect(page.getByText("You've used your Copilot replies")).toBeVisible();
@@ -60,7 +60,7 @@ test.describe("v4 Copilot", () => {
 
   test("a Career chat saves itself and is there after a reload", async ({ page, db, e2eUser }) => {
     await page.route("**/api/occ/chat", (route) => route.fulfill({ json: { intent: null, reply: "Here is a short answer." } }));
-    await page.goto("/v4/copilot");
+    await page.goto("/app/copilot");
     await page.getByRole("textbox", { name: "Message the Career Copilot" }).fill("What should I focus on this week?");
     await page.getByRole("button", { name: "Send", exact: true }).click();
     await expect(page.getByText("Here is a short answer.")).toBeVisible();
@@ -92,7 +92,7 @@ test.describe("v4 Interview page", () => {
         await route.fulfill({ json: { feedback: { strength: "You gave a classroom example.", improvement: "Say what changed for the students.", example: null, followUp: "How did you check understanding?", betterWording: null, whyBetter: null } } });
       }
     });
-    await page.goto("/v4/studio/interview");
+    await page.goto("/app/studio/interview");
     await page.getByPlaceholder("Paste the full job posting here.").fill(jd);
     await page.getByRole("button", { name: "Start the interview" }).click();
     await expect(page.getByRole("heading", { name: "Tell me about teaching a hard topic." })).toBeVisible();

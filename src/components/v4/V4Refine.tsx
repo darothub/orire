@@ -9,7 +9,7 @@ import { useUsageStore } from "@/lib/store/usageStore";
 import { remainingNote } from "@/lib/plan/plan";
 import { useStudioRefine } from "@/lib/v4/useStudioRefine";
 import { useHydrated } from "@/lib/v4/useHydrated";
-import { V4_COPILOT_HREF } from "@/lib/v4/nav";
+import { V4_COPILOT_HREF, V4_SIMULATE_HREF } from "@/lib/v4/nav";
 import { V4ChangeList } from "./V4ChangeList";
 import { V4Paper } from "./V4Paper";
 import { V4Progress } from "./V4Progress";
@@ -47,7 +47,7 @@ export function V4Refine() {
           </div>
         </div>
         <div className="v4-refine-actions">
-          <Link href="/v4/studio/simulate" className="or-btn">{hasJob ? "Change job description" : "Add a job description"}</Link>
+          <Link href={V4_SIMULATE_HREF} className="or-btn">{hasJob ? "Change job description" : "Add a job description"}</Link>
           <button type="button" className="or-btn gold" disabled={!hasJob || running} onClick={() => void refine.run()}>
             {running ? "Refining…" : "Run Refine"}
           </button>
