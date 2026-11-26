@@ -23,6 +23,10 @@
 .v4-navitem.on svg { color: var(--or-violet-soft); }
 .v4-main { min-width: 0; display: flex; flex-direction: column; }
 .v4-side { position: sticky; top: 0; height: 100dvh; box-sizing: border-box; }
+.v4-classic { margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: var(--or-radius-md); color: var(--or-muted); font-size: 13px; text-decoration: none; }
+.v4-classic svg { width: 18px; height: 18px; flex: none; }
+.v4-classic:hover { background: var(--or-surface); color: var(--or-ink); }
+.v4-classic + .v4-collapse { margin-top: 4px; }
 .v4-collapse { margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 1px solid var(--or-line); border-radius: var(--or-radius-md); background: transparent; color: var(--or-muted); font: inherit; font-size: 13px; cursor: pointer; }
 .v4-collapse svg { width: 18px; height: 18px; flex: none; }
 .v4-collapse:hover { background: var(--or-surface); color: var(--or-ink); }
