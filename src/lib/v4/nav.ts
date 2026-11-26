@@ -11,9 +11,10 @@ export const V4_REFINE_HREF = `${V4_STUDIO_HREF}/refine`;
 export const V4_INTERVIEW_HREF = `${V4_STUDIO_HREF}/interview`;
 export const V4_LIBRARY_HREF = `${V4_BASE}/library`;
 export const V4_EXPORT_HREF = `${V4_BASE}/export`;
+export const V4_PLAN_HREF = `${V4_BASE}/plan`;
 
 /** The v4 navigation, declared once and used by the shell on every v4 page. */
-export type V4NavKey = "home" | "studio" | "copilot" | "library" | "export";
+export type V4NavKey = "home" | "studio" | "copilot" | "library" | "export" | "plan";
 
 export interface V4NavItem {
   key: V4NavKey;
@@ -29,6 +30,7 @@ export const V4_NAV: readonly V4NavItem[] = [
   { key: "copilot", href: V4_COPILOT_HREF, label: "Copilot", icon: "M12 3l1.8 4.6L18 9l-4.2 1.4L12 15l-1.8-4.6L6 9l4.2-1.4zM19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" },
   { key: "library", href: V4_LIBRARY_HREF, label: "Version library", icon: "M4 6h16M4 12h16M4 18h10" },
   { key: "export", href: V4_EXPORT_HREF, label: "Export", icon: "M12 3v12M7 8l5-5 5 5M5 21h14" },
+  { key: "plan", href: V4_PLAN_HREF, label: "Plan & billing", icon: "M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 10h18M7 15h4" },
 ];
 
 export type V4StudioKey = "edit" | "simulate" | "refine" | "interview";

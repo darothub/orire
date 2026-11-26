@@ -45,7 +45,7 @@ import { useUsageStore } from "@/lib/store/usageStore";
 import { CHAT_ACTION_LABEL, actionLock, chatAccess, type ActionLock } from "@/lib/v4/copilot";
 import type { ChatIntent, ChatReply } from "@/lib/occ/chat";
 import "./occ4.css";
-import { V4_SIMULATE_HREF } from "@/lib/v4/nav";
+import { V4_SIMULATE_HREF, V4_PLAN_HREF } from "@/lib/v4/nav";
 
 /**
  * occ4 — the Career Copilot conversational surface, rebuilt on the Orire design
@@ -1526,8 +1526,8 @@ function renderActionLock(label: string, needs: ActionLock): ReactNode {
         This works the same as in the CV Studio, where it comes with the {plan} plan. Refine and chatting with the Copilot are open on your plan.
       </p>
       <div className="occ4-rec-apply">
-        <Link className="occ4-pv-toggle" href="/pricing">Upgrade to {plan}</Link>
-        <Link className="occ4-pv-toggle" href="/pricing">Compare plans</Link>
+        <Link className="occ4-pv-toggle" href={V4_PLAN_HREF}>Upgrade to {plan}</Link>
+        <Link className="occ4-pv-toggle" href={V4_PLAN_HREF}>Compare plans</Link>
       </div>
     </CopilotCard>
   );
@@ -1539,7 +1539,7 @@ function renderNoReplies(cap: number | null, monthly: boolean): ReactNode {
       <p className="occ4-advice-summary">
         {`Your plan includes ${cap ?? "a set number of"} replies${monthly ? " a month, and they come back next month" : ""}. The quick actions still work within your Studio limits.`}
       </p>
-      <div className="occ4-rec-apply"><Link className="occ4-pv-toggle" href="/pricing">Compare plans</Link></div>
+      <div className="occ4-rec-apply"><Link className="occ4-pv-toggle" href={V4_PLAN_HREF}>Compare plans</Link></div>
     </CopilotCard>
   );
 }

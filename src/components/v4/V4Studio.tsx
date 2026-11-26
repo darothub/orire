@@ -10,7 +10,7 @@ import { moveAt } from "@/lib/cv/reorder";
 import { blockRows, flaggedBullets, nextBlock, roleOptions, type RoleOption } from "@/lib/v4/studio";
 import { useBulletReview } from "@/lib/ai/useBulletReview";
 import { useHydrated } from "@/lib/v4/useHydrated";
-import { V4_COPILOT_HREF } from "@/lib/v4/nav";
+import { V4_COPILOT_HREF, V4_PLAN_HREF } from "@/lib/v4/nav";
 import { Toggle } from "@/components/ui/Toggle";
 import { AutoTextarea } from "@/components/editor/AutoTextarea";
 import { V4Paper } from "./V4Paper";
@@ -245,7 +245,7 @@ function BulletRow({ value, onChange, onRemove, onUp, onDown }: { value: string;
         <button type="button" aria-label="Remove bullet" onClick={onRemove}>Remove</button>
       </div>
       {err && (
-        <p className="v4-muted" role="status">{err} <Link href="/pricing" className="v4-link">See plans</Link></p>
+        <p className="v4-muted" role="status">{err} <Link href={V4_PLAN_HREF} className="v4-link">See plans</Link></p>
       )}
       {review && (
         <div className="v4-review" role="status">

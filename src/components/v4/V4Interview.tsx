@@ -13,7 +13,7 @@ import { cvDataToText } from "@/lib/cv/cvDataToText";
 import { useHydrated } from "@/lib/v4/useHydrated";
 import { useInterview } from "@/lib/v4/useInterview";
 import { answerReady, hasRole, stepLabel, TOPICS, ANSWER_MAX } from "@/lib/v4/interview";
-import { V4_REFINE_HREF } from "@/lib/v4/nav";
+import { V4_REFINE_HREF, V4_PLAN_HREF } from "@/lib/v4/nav";
 
 /** Practise answers for a role, one question at a time, with feedback on each. */
 export function V4Interview() {
@@ -40,7 +40,7 @@ export function V4Interview() {
         <Card pad className="v4-int-start">
           <h2 className="v4-h2">Interview practice is on Pro and Career</h2>
           <p className="v4-muted">Get five questions for any job, write your answers and get feedback you can act on. Pro includes a monthly allowance; Career is unlimited.</p>
-          <Link href="/pricing" className="or-btn or-btn--primary v4-int-cta">See plans</Link>
+          <Link href={V4_PLAN_HREF} className="or-btn or-btn--primary v4-int-cta">See plans</Link>
         </Card>
       </div>
     );

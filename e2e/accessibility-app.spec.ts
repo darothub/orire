@@ -26,6 +26,7 @@ const ROUTES = [
   { path: "/app/copilot", name: "copilot" },
   { path: "/app/library", name: "library" },
   { path: "/app/export", name: "export" },
+  { path: "/app/plan", name: "plan" },
 ];
 
 for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {

@@ -31,3 +31,9 @@ Set `ORIRE_V4_ENABLED` to anything but `true`. v4 reads and writes the same data
 - Opening any v4 page clears that choice, so going back is one click either way.
 - Rollback needs no deploy: set `ORIRE_V4_ENABLED` to anything but `true` and the redirect stops.
 - The landing-page buttons are unchanged: they open sign-in, and the redirect takes over once the person is signed in.
+
+## Plan and billing
+
+- `/app/plan` is the v4 page for subscribing, switching, cancelling, resuming and updating the card. It reuses `PlanPanel` and the same server actions as the current app.
+- Every "See plans" and upgrade link in v4 points there. `/pricing` stays the public page.
+- Stripe still returns to `/?billing=...`. The home page forwards those visits to `/app/plan` with the query, so the result notice shows on the plan page.
