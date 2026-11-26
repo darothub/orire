@@ -54,3 +54,6 @@ export const V4_STUDIO_TABS: readonly V4StudioTab[] = [
 export function studioTabFor(pathname: string): V4StudioTab {
   return V4_STUDIO_TABS.find((t) => t.key !== "edit" && pathname.startsWith(t.href)) ?? V4_STUDIO_TABS[0];
 }
+
+/** The current app, kept for anyone who wants to stay on it. `?classic=1` records that choice. */
+export const V4_CLASSIC_HREF = "/?classic=1";

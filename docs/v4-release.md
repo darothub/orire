@@ -23,3 +23,11 @@ Accounts that already pass the OCC beta (`ORIRE_OCC_BETA_EMAILS`, Career) keep t
 
 ## Rollback
 Set `ORIRE_V4_ENABLED` to anything but `true`. v4 reads and writes the same data as the current app.
+
+## Classic Orire and the home-page redirect
+
+- A signed-in person who passes the v4 gate (`/api/v4/access`) is sent from `/` to `/app`.
+- The "Classic Orire" link in the v4 menu opens `/?classic=1`, which records the choice in the browser (`orire:classic`) and keeps them on the current app.
+- Opening any v4 page clears that choice, so going back is one click either way.
+- Rollback needs no deploy: set `ORIRE_V4_ENABLED` to anything but `true` and the redirect stops.
+- The landing-page buttons are unchanged: they open sign-in, and the redirect takes over once the person is signed in.
