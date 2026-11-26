@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import type { CVData } from "@/lib/cv/schema";
 import { prisma } from "@/lib/db/prisma";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireV4User } from "@/lib/v4/access";
 import { parseCvField, patchCvField } from "@/lib/occ/versionPatch";
 
 export const runtime = "nodejs";
@@ -11,7 +11,7 @@ const send = (data: unknown, status = 200) => NextResponse.json(data, {
 });
 
 export async function GET() {
-  const access = await requireOccAccess();
+  const access = await requireV4User();
   if (!access) return send({ error: "Not available" }, 403);
   const documents = await prisma.document.findMany({
     where: { userId: access.userId },
@@ -24,7 +24,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const access = await requireOccAccess();
+  const access = await requireV4User();
   if (!access) return send({ error: "Not available" }, 403);
   if (Number(request.headers.get("content-length") || "0") > 7000) return send({ error: "Request too large" }, 413);
   let raw: unknown;

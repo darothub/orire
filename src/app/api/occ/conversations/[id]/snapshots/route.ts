@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireV4Career } from "@/lib/v4/access";
 import { validateOccCoachingHistory } from "@/lib/occ/coachingHistory";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ const send = (value: unknown, status = 200) => NextResponse.json(value, {
  * explicitly opt in again to storing CV quotes/interview answers.
  */
 export async function POST(request: Request, { params }: Params) {
-  const access = await requireOccAccess();
+  const access = await requireV4Career();
   if (!access) return send({ error: "Not available" }, 403);
   const { id } = await params;
   if (id.length > 100) return send({ error: "Not found" }, 404);
@@ -71,7 +71,7 @@ export async function POST(request: Request, { params }: Params) {
 
 /** Forget all structured coaching results independently of the transcript. */
 export async function DELETE(_request: Request, { params }: Params) {
-  const access = await requireOccAccess();
+  const access = await requireV4Career();
   if (!access) return send({ error: "Not available" }, 403);
   const { id } = await params;
   if (id.length > 100) return send({ error: "Not found" }, 404);

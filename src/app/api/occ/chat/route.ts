@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireVerifiedUser } from "@/lib/auth/guard";
-import { occFeatureEnabled } from "@/lib/occ/access";
+import { requireV4User, v4AiEnabled } from "@/lib/v4/access";
 import { consume, getPlanId, refund } from "@/lib/entitlement/entitlement";
 import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import { DETERMINISTIC } from "@/lib/ai/server/providerCall";
@@ -22,13 +21,13 @@ const chatStore: ChatStore = {
 const respond = (body: unknown, status: number) => NextResponse.json(body, { status, headers: NO_STORE });
 
 /**
- * A Copilot reply for a message no keyword matched. Every signed-in, verified user
+ * A Copilot reply for a message no keyword matched. Every account that has v4
  * may chat; each plan has its own reply allowance, and a failed reply gives it back.
  */
 export async function POST(req: Request) {
-  if (!occFeatureEnabled()) return respond({ error: "Not available" }, 403);
-  const access = await requireVerifiedUser("use the Copilot");
-  if (!access.ok) return respond({ error: access.message }, access.status);
+  if (!v4AiEnabled()) return respond({ error: "Not available" }, 403);
+  const access = await requireV4User();
+  if (!access) return respond({ error: "Not available" }, 403);
   if (bodyTooLarge(req)) return respond({ error: "Request too large" }, 413);
   const { provider } = routeTask("chat");
   const limited = await aiRateLimit(req, provider, access.userId);

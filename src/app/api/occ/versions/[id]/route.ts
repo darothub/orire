@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireV4User } from "@/lib/v4/access";
 
 export const runtime = "nodejs";
 const send = (data: unknown, status = 200) =>
@@ -9,7 +9,7 @@ const send = (data: unknown, status = 200) =>
 
 /** Undo deletes ONLY an untouched OCC-created version, never the source CV. */
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const access = await requireOccAccess();
+  const access = await requireV4User();
   if (!access) return send({ error: "Not available" }, 403);
   const { id } = await context.params;
   if (!id || id.length > 100) return send({ error: "Invalid version" }, 400);
