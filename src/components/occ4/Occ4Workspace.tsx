@@ -41,6 +41,8 @@ import { Occ4Refine } from "./Occ4Refine";
 import { Occ4Export } from "./Occ4Export";
 import { Occ4Editor } from "./Occ4Editor";
 import { Occ4Applications } from "./Occ4Applications";
+import { V4CopilotFrame } from "@/components/v4/V4CopilotFrame";
+import { V4CopilotPanel } from "@/components/v4/V4CopilotPanel";
 import "./occ4.css";
 
 /**
@@ -105,7 +107,11 @@ type ConvSnapshot = {
   lastStructured: string; transcript: SavedOccTurn[];
 };
 
-export function Occ4Workspace() {
+/**
+ * `shell="v4"` hosts the same conversation inside the v4 shell: the v4 Copilot
+ * panel replaces the classic conversation rail. Nothing else about the chat changes.
+ */
+export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" }) {
   const [agent, setAgent] = useState<Specialist>(DEFAULT_SPECIALIST);
   const [input, setInput] = useState("");
   const [cv, setCv] = useState("");
@@ -923,70 +929,22 @@ export function Occ4Workspace() {
 
   const DraftTemplate = draft ? getTemplate(templateId).Component : null;
 
-  return (
-    <div className={`occ4-layout${previewOpen ? " with-preview" : ""}${navOpen ? " nav-open" : ""}`}>
-      <button type="button" className="occ4-nav-backdrop" aria-label="Close conversations" onClick={() => setNavOpen(false)} />
-      <aside className="occ4-side">
-        <div className="occ4-brand">
-          <BrandMark size={28} />
-          <div>
-            <b>Orire</b>
-            <small>CAREER COPILOT</small>
-          </div>
-        </div>
-        <button type="button" className="occ4-newchat" onClick={newConversation} disabled={busy}>
-          ＋ New conversation
-        </button>
-        <div className="occ4-side-label">Conversations</div>
-        <div className="occ4-convlist">
-          {conversations.map((c) => (
-            <div key={c.id} className={`occ4-conv${c.id === activeId ? " on" : ""}`}>
-              <button
-                type="button"
-                className="occ4-conv-open"
-                aria-current={c.id === activeId}
-                disabled={busy}
-                onClick={() => switchConversation(c.id)}
-              >
-                {c.title}
-              </button>
-              {confirmDel === c.id ? (
-                <span className="occ4-conv-confirm">
-                  <button type="button" className="occ4-conv-yes" onClick={() => void deleteConversation(c.id)}>Delete</button>
-                  <button type="button" className="occ4-conv-no" aria-label="Keep conversation" onClick={() => setConfirmDel(null)}>✕</button>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  className="occ4-conv-del"
-                  disabled={busy}
-                  aria-label={`Delete ${c.title}`}
-                  onClick={() => setConfirmDel(c.id)}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-        <p className="occ4-side-hint">
-          Each conversation keeps its own CV, JD and draft — start a new one for a different job.
-        </p>
-        <button
-          type="button"
-          className="occ4-save-conv"
-          onClick={() => void saveActive()}
-          disabled={transcript.length === 0 || saveState === "saving"}
-        >
-          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : saveState === "error" ? "Save failed — retry" : "Save conversation"}
-        </button>
-        <div className="occ4-side-foot">
-          <Link href="/occ" className="occ4-back">
-            ← Current Career Copilot
-          </Link>
-        </div>
-      </aside>
-
+  const panel = (
+    <V4CopilotPanel
+      chats={conversations.map((c) => ({ id: c.id, title: c.title, saved: !!c.backendId }))}
+      activeId={activeId}
+      busy={busy}
+      onNew={newConversation}
+      onOpen={switchConversation}
+      onDelete={(id) => void deleteConversation(id)}
+      onAsk={(a) => send(a.label, a.intent)}
+      onSave={() => void saveActive()}
+      saveLabel={saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : saveState === "error" ? "Save failed, retry" : "Save chat"}
+      canSave={transcript.length > 0 && saveState !== "saving"}
+      onChoose={() => setNavOpen(false)}
+    />
+  );
+  const mainEl = (
       <main className="occ4-main">
         <header className="occ4-head">
           <button type="button" className="occ4-navtoggle" aria-label="Conversations" onClick={() => setNavOpen(true)}>☰</button>
@@ -1205,15 +1163,14 @@ export function Occ4Workspace() {
           </div>
         </div>
       </main>
-
-      {draft && DraftTemplate && (
-        <div id="cv-paper" aria-hidden className="occ4-export-paper">
+  );
+  const paperEl = draft && DraftTemplate ? (
+<div id="cv-paper" aria-hidden className="occ4-export-paper">
           <DraftTemplate cv={draft} />
         </div>
-      )}
-
-      {previewOpen && (
-        <aside className="occ4-preview" aria-label="Working CV preview">
+  ) : null;
+  const previewEl = previewOpen ? (
+<aside className="occ4-preview" aria-label="Working CV preview">
           <div className="occ4-pv-head">
             <span className="occ4-pv-ctx">
               {cvReady ? "CV ✓" : "CV —"} · {roleReady ? "JD ✓" : "JD —"}
@@ -1243,7 +1200,88 @@ export function Occ4Workspace() {
             ) : null}
           </div>
         </aside>
-      )}
+  ) : null;
+
+  if (shell === "v4") {
+    return (
+      <V4CopilotFrame panel={panel} drawerOpen={navOpen} onCloseDrawer={() => setNavOpen(false)}>
+        <div className={`occ4-v4body${previewOpen ? " with-preview" : ""}`}>
+          {mainEl}
+          {paperEl}
+          {previewEl}
+        </div>
+      </V4CopilotFrame>
+    );
+  }
+
+  return (
+    <div className={`occ4-layout${previewOpen ? " with-preview" : ""}${navOpen ? " nav-open" : ""}`}>
+      <button type="button" className="occ4-nav-backdrop" aria-label="Close conversations" onClick={() => setNavOpen(false)} />
+      <aside className="occ4-side">
+        <div className="occ4-brand">
+          <BrandMark size={28} />
+          <div>
+            <b>Orire</b>
+            <small>CAREER COPILOT</small>
+          </div>
+        </div>
+        <button type="button" className="occ4-newchat" onClick={newConversation} disabled={busy}>
+          ＋ New conversation
+        </button>
+        <div className="occ4-side-label">Conversations</div>
+        <div className="occ4-convlist">
+          {conversations.map((c) => (
+            <div key={c.id} className={`occ4-conv${c.id === activeId ? " on" : ""}`}>
+              <button
+                type="button"
+                className="occ4-conv-open"
+                aria-current={c.id === activeId}
+                disabled={busy}
+                onClick={() => switchConversation(c.id)}
+              >
+                {c.title}
+              </button>
+              {confirmDel === c.id ? (
+                <span className="occ4-conv-confirm">
+                  <button type="button" className="occ4-conv-yes" onClick={() => void deleteConversation(c.id)}>Delete</button>
+                  <button type="button" className="occ4-conv-no" aria-label="Keep conversation" onClick={() => setConfirmDel(null)}>✕</button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="occ4-conv-del"
+                  disabled={busy}
+                  aria-label={`Delete ${c.title}`}
+                  onClick={() => setConfirmDel(c.id)}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="occ4-side-hint">
+          Each conversation keeps its own CV, JD and draft — start a new one for a different job.
+        </p>
+        <button
+          type="button"
+          className="occ4-save-conv"
+          onClick={() => void saveActive()}
+          disabled={transcript.length === 0 || saveState === "saving"}
+        >
+          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : saveState === "error" ? "Save failed — retry" : "Save conversation"}
+        </button>
+        <div className="occ4-side-foot">
+          <Link href="/occ" className="occ4-back">
+            ← Current Career Copilot
+          </Link>
+        </div>
+      </aside>
+
+
+      {mainEl}
+      {paperEl}
+      {previewEl}
     </div>
   );
 }
