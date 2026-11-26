@@ -2,20 +2,12 @@
 
 import { useState } from "react";
 import type { InterviewFeedback, InterviewQuestion } from "@/lib/occ/interview";
-import { feedbackRequest, questionRequest, TURNS } from "./interview";
+import { TURNS } from "./interview";
+import { fetchFeedback, fetchQuestion } from "./interviewApi";
 
 export type InterviewPhase = "idle" | "asking" | "question" | "reviewing" | "feedback" | "done";
 
 interface Context { description: string; cv: string }
-
-async function post<T>(body: unknown, fallback: string): Promise<T> {
-  const response = await fetch("/api/occ/interview", {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), cache: "no-store",
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(typeof data?.error === "string" ? data.error : fallback);
-  return data as T;
-}
 
 /**
  * One practice run: five topics, one question at a time, feedback on each
@@ -35,8 +27,7 @@ export function useInterview(ctx: Context) {
     setFeedback(null);
     setAnswer("");
     try {
-      const data = await post<{ question: InterviewQuestion }>(questionRequest(ctx, turn), "Could not start the interview.");
-      setQuestion(data.question);
+      setQuestion(await fetchQuestion(ctx, turn));
       setIndex(turn);
       setPhase("question");
     } catch (e) {
@@ -51,8 +42,7 @@ export function useInterview(ctx: Context) {
     setError("");
     setPhase("reviewing");
     try {
-      const data = await post<{ feedback: InterviewFeedback }>(feedbackRequest(ctx, index, question.question, answer), "Could not review your answer.");
-      setFeedback(data.feedback);
+      setFeedback(await fetchFeedback(ctx, index, question.question, answer));
       setPhase("feedback");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Interview coaching failed. Try again.");
