@@ -19,6 +19,8 @@ interface Props {
   onAsk: (shortcut: AskShortcut) => void;
   /** Chat is Career only: other plans see a lock on the actions and an upgrade link. */
   locked: boolean;
+  /** Career chats save themselves: the Save button becomes a status line. */
+  autoSave: boolean;
   onSave: () => void;
   saveLabel: string;
   canSave: boolean;
@@ -36,7 +38,7 @@ const I = {
 const Icon = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d={d} /></svg>;
 
 /** The Copilot's left panel: new chat, quick actions, chats and the coach-run meter. */
-export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete, onAsk, locked, onSave, saveLabel, canSave, onChoose }: Props) {
+export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete, onAsk, locked, autoSave, onSave, saveLabel, canSave, onChoose }: Props) {
   const [collapsed, toggleCollapsed] = useCollapsed("copilot-panel");
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const coach = useUsageStore((s) => s.summary?.metrics.coach);
@@ -88,9 +90,11 @@ export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete,
             ))}
           </ul>
         )}
-        {!collapsed && (
+        {!collapsed && (autoSave ? (
+          <span className="v4-hint" role="status">{saveLabel}</span>
+        ) : (
           <button type="button" className="or-btn v4-cop-save" disabled={!canSave} onClick={onSave}>{saveLabel}</button>
-        )}
+        ))}
       </div>
 
       {cap !== null && left !== null && (
