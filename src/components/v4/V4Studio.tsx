@@ -211,7 +211,7 @@ function RoleEditor({ role }: { role: RoleOption }) {
 
   return (
     <div>
-      <div className="v4-fields">
+      <div className="v4-role-fields">
         {isExp && exp ? (
           <>
             <label>Role<input value={exp.role} onChange={(e) => updateExperience(role.id, { role: e.target.value })} /></label>
