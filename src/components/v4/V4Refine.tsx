@@ -12,6 +12,7 @@ import { useHydrated } from "@/lib/v4/useHydrated";
 import { V4_COPILOT_HREF } from "@/lib/v4/nav";
 import { V4ChangeList } from "./V4ChangeList";
 import { V4Paper } from "./V4Paper";
+import { V4Progress } from "./V4Progress";
 
 /** Refine: rewrite the whole CV for one job description, then accept or skip each change. */
 export function V4Refine() {
@@ -52,6 +53,8 @@ export function V4Refine() {
           </button>
         </div>
       </Card>
+
+      {running && <V4Progress kind="refine" title="Refining your CV" />}
 
       {message && <p className="v4-muted" role="status">{message}</p>}
 
