@@ -14,7 +14,7 @@ Accounts that already pass the OCC beta (`ORIRE_OCC_BETA_EMAILS`, Career) keep t
 - v4 pages, `/api/occ/versions`, `/api/occ/applications`: any v4 account (`requireV4User`).
 - `/api/occ/chat`: any v4 account, plus `ORIRE_OCC_ENABLED`. Reply allowance by plan (`PLAN_METERS.chat`).
 - `/api/occ/advise`, `/api/occ/match`, `/api/occ/conversations`: Career v4 accounts, plus `ORIRE_OCC_ENABLED` (`requireV4Career`). The OCC beta email list no longer applies to these for v4.
-- `/api/occ/interview`: unchanged here (OCC access); plan rules follow in a separate change.
+- `/api/occ/interview`: any v4 account, plus `ORIRE_OCC_ENABLED`. Each interview question spends one of the plan's interview questions (`PLAN_METERS.interview`: Free none, Pro 15 a month = 3 five-question sessions, Career unlimited); reviewing an answer is included but needs a plan that has interviews. The daily OCC budget still applies on top.
 
 ## Rollout
 1. `ORIRE_V4_ENABLED=true` and `ORIRE_V4_BETA_EMAILS=<your email>`: only you.
