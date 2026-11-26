@@ -9,13 +9,11 @@ import { analyzeBullet } from "@/lib/cv/coach";
 import { moveAt } from "@/lib/cv/reorder";
 import { blockRows, flaggedBullets, nextBlock, roleOptions, type RoleOption } from "@/lib/v4/studio";
 import { useBulletReview } from "@/lib/ai/useBulletReview";
-import { useStudioRefine } from "@/lib/v4/useStudioRefine";
 import { useHydrated } from "@/lib/v4/useHydrated";
+import { V4_COPILOT_HREF } from "@/lib/v4/nav";
 import { Toggle } from "@/components/ui/Toggle";
 import { AutoTextarea } from "@/components/editor/AutoTextarea";
-import { V4Shell } from "./V4Shell";
 import { V4Paper } from "./V4Paper";
-import { V4ChangeList } from "./V4ChangeList";
 
 type MobileTab = "preview" | "blocks" | "coach";
 type PanelTab = "details" | "coach";
@@ -35,7 +33,6 @@ export function V4Studio() {
   const setTemplate = useCVStore((s) => s.setTemplate);
   const previewEdit = useUIStore((s) => s.previewEdit);
   const setPreviewEdit = useUIStore((s) => s.setPreviewEdit);
-  const refine = useStudioRefine();
   const [mobileTab, setMobileTab] = useState<MobileTab>("preview");
   const [panelTab, setPanelTab] = useState<PanelTab>("details");
   const [more, setMore] = useState(false);
@@ -57,21 +54,16 @@ export function V4Studio() {
 
   if (hydrated && !started) {
     return (
-      <V4Shell active="studio" label="CV Studio">
-        <div className="v4-scroll">
-          <div className="v4-empty-state">
-            <b>No CV yet</b>
-            <p>Import your CV or start from a blank one in the Copilot, then come back to polish it here.</p>
-            <Link href="/occ/v4" className="v4-link">Open Copilot</Link>
-          </div>
-        </div>
-      </V4Shell>
+      <div className="v4-empty-state">
+        <b>No CV yet</b>
+        <p>Import your CV or start from a blank one in the Copilot, then come back to polish it here.</p>
+        <Link href={V4_COPILOT_HREF} className="v4-link">Open Copilot</Link>
+      </div>
     );
   }
 
   return (
-    <V4Shell active="studio" label="CV Studio">
-      <div className={`v4-studio tab-${mobileTab}`}>
+    <div className={`v4-studio tab-${mobileTab}`}>
         <div className="v4-studio-bar">
           <div className="v4-chips" role="group" aria-label="Template">
             {featured.map((t) => (
@@ -107,10 +99,9 @@ export function V4Studio() {
               ))}
             </div>
             {panelTab === "details" ? <DetailsPanel /> : <CoachPanel />}
-            <RefineCard refine={refine} />
           </aside>
         </div>
-        <div className="v4-mobile-coach"><CoachPanel /><RefineCard refine={refine} /></div>
+        <div className="v4-mobile-coach"><CoachPanel /></div>
 
         <dialog ref={moreRef} className="v4-dialog" aria-label="All templates" onClose={() => setMore(false)}>
           {more && (
@@ -135,7 +126,6 @@ export function V4Studio() {
           )}
         </dialog>
       </div>
-    </V4Shell>
   );
 }
 
@@ -153,8 +143,8 @@ function BlocksRail() {
           <li key={r.key} className={r.visible ? "" : "off"}>
             <label className="v4-block-name">
               <input type="checkbox" checked={r.visible} onChange={() => toggleSection(r.key)} />
-              <span>{r.label}</span>
-              {r.key === next && <em className="v4-next">Next</em>}
+              <span className="v4-block-label">{r.label}</span>
+              {r.key === next && <em className="v4-block-next" title="The next section to fill in">Fill in next</em>}
             </label>
             {r.visible && (
               <span className="v4-block-move">
@@ -212,7 +202,7 @@ function RoleEditor({ role }: { role: RoleOption }) {
 
   return (
     <div>
-      <div className="v4-fields">
+      <div className="v4-role-fields">
         {isExp && exp ? (
           <>
             <label>Role<input value={exp.role} onChange={(e) => updateExperience(role.id, { role: e.target.value })} /></label>
@@ -287,30 +277,5 @@ function CoachPanel() {
         </li>
       ))}
     </ul>
-  );
-}
-
-function RefineCard({ refine }: { refine: ReturnType<typeof useStudioRefine> }) {
-  const { hasJob, running, review, skipped, message } = refine;
-  return (
-    <section className="v4-refine" aria-label="Refine">
-      <h3>Refine for a job</h3>
-      <button type="button" className="or-btn gold" disabled={!hasJob || running} onClick={() => void refine.run()}>
-        {running ? "Refining…" : "Refine"}
-      </button>
-      {!hasJob && (
-        <p className="v4-muted">Add a job description to tailor your CV. <Link href="/occ/v4" className="v4-link">Add one in the Copilot</Link></p>
-      )}
-      {message && <p className="v4-muted" role="status">{message}</p>}
-      {review && (
-        <div className="v4-changes">
-          <V4ChangeList changes={review.changes} skipped={skipped} onToggle={refine.toggle} />
-          <button type="button" className="or-btn gold" onClick={refine.apply} disabled={skipped.size === review.changes.length}>
-            Apply {review.changes.length - skipped.size} changes
-          </button>
-          <button type="button" className="or-btn" onClick={refine.dismiss}>Dismiss</button>
-        </div>
-      )}
-    </section>
   );
 }

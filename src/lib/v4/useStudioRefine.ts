@@ -83,10 +83,14 @@ export function useStudioRefine() {
     setReview(null);
   }
 
+  function acceptAll() {
+    setSkipped(new Set());
+  }
+
   function dismiss() {
     setReview(null);
     setSkipped(new Set());
   }
 
-  return { hasJob, running, review, skipped, message, run, toggle, apply, dismiss };
+  return { hasJob, running, review, skipped, message, run, toggle, acceptAll, apply, dismiss };
 }
