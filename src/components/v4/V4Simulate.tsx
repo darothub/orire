@@ -19,9 +19,9 @@ import { TONE_OPTIONS, useRetone } from "@/lib/ai/useRetone";
 import { useSimulateRun } from "@/lib/ai/useSimulateRun";
 import { compareBullets } from "@/lib/v4/simulate";
 import { useHydrated } from "@/lib/v4/useHydrated";
+import { V4_COPILOT_HREF } from "@/lib/v4/nav";
 import { Card } from "@/components/ui/Card";
 import { MatchRing } from "@/components/ui/MatchRing";
-import { V4Shell } from "./V4Shell";
 import { V4ChangeList } from "./V4ChangeList";
 
 const ORIGIN = "Simulate";
@@ -37,29 +37,23 @@ export function V4Simulate() {
 
   if (hydrated && !started) {
     return (
-      <V4Shell active="simulate" label="Simulate">
-        <div className="v4-scroll">
-          <div className="v4-empty-state">
-            <b>No CV to compare yet</b>
-            <p>Add your CV first, then simulate it against a job description.</p>
-            <Link href="/occ/v4" className="v4-link">Open Copilot</Link>
-          </div>
-        </div>
-      </V4Shell>
+      <div className="v4-empty-state">
+        <b>No CV to compare yet</b>
+        <p>Add your CV first, then simulate it against a job description.</p>
+        <Link href={V4_COPILOT_HREF} className="v4-link">Open Copilot</Link>
+      </div>
     );
   }
 
   const showSetup = !ideal || recompose;
   return (
-    <V4Shell active="simulate" label="Simulate">
-      <div className="v4-scroll">
-        {showSetup ? (
-          <SetupView sim={sim} canKeep={recompose} onKeep={() => setRecompose(false)} onDone={() => setRecompose(false)} />
-        ) : (
-          <ResultView onNew={() => { setRecompose(true); sim.backToInput(); }} usageNote={sim.usageNote} />
-        )}
-      </div>
-    </V4Shell>
+    <div className="v4-stack">
+      {showSetup ? (
+        <SetupView sim={sim} canKeep={recompose} onKeep={() => setRecompose(false)} onDone={() => setRecompose(false)} />
+      ) : (
+        <ResultView onNew={() => { setRecompose(true); sim.backToInput(); }} usageNote={sim.usageNote} />
+      )}
+    </div>
   );
 }
 
@@ -69,7 +63,7 @@ function Head({ title, sub, menu }: { title: string; sub: string; menu?: React.R
   return (
     <header className="v4-head v4-sim-head">
       <div>
-        <h1>{title}</h1>
+        <h2 className="v4-page-title">{title}</h2>
         <p>{sub}</p>
       </div>
       {menu}

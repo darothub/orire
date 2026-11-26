@@ -9,6 +9,7 @@ import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { useTargetMatch } from "@/components/home/MatchRing";
 import { getTemplateInfo } from "@/lib/templates/catalog";
+import { V4_COPILOT_HREF } from "@/lib/v4/nav";
 import { V4Shell } from "./V4Shell";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -18,7 +19,7 @@ import { Pill } from "@/components/ui/Pill";
 type App = { id: string; company: string; role: string; status: ApplicationStatus; updatedAt: string };
 
 /** Where each recommended action lives. Every target is a v4 page. */
-const V4_ROUTE = { copilot: "/occ/v4", simulate: "/v4/simulate", studio: "/v4/studio", export: "/v4/export" } as const;
+const V4_ROUTE = { copilot: V4_COPILOT_HREF, simulate: "/v4/studio/simulate", studio: "/v4/studio", export: "/v4/export" } as const;
 const ACTION_HREF: Record<HomeAction, string> = {
   context: V4_ROUTE.copilot,
   match: V4_ROUTE.simulate,
@@ -164,7 +165,7 @@ export function V4Home() {
             <Card pad className="v4-pipeline">
               <div className="v4-cardhead">
                 <h2>Active pipeline</h2>
-                <Link href="/occ/v4" className="v4-link">Open Applications</Link>
+                <Link href={V4_COPILOT_HREF} className="v4-link">Open Applications</Link>
               </div>
               {apps === null ? (
                 <p className="v4-empty">Loading your applications…</p>
