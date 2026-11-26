@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useCollapsed } from "@/lib/v4/useCollapsed";
 import { ASK_SHORTCUTS, chatMeta, type AskShortcut } from "@/lib/v4/copilot";
@@ -16,6 +17,8 @@ interface Props {
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onAsk: (shortcut: AskShortcut) => void;
+  /** Chat is Career only: other plans see a lock on the actions and an upgrade link. */
+  locked: boolean;
   onSave: () => void;
   saveLabel: string;
   canSave: boolean;
@@ -26,13 +29,14 @@ interface Props {
 const I = {
   plus: "M12 5v14M5 12h14",
   history: "M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8M3 3v5h5M12 7v5l3 2",
+  lock: "M7 11V8a5 5 0 0110 0v3M6 11h12v9H6z",
   left: "M15 6l-6 6 6 6",
   right: "M9 6l6 6-6 6",
 };
 const Icon = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d={d} /></svg>;
 
 /** The Copilot's left panel: new chat, quick actions, chats and the coach-run meter. */
-export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete, onAsk, onSave, saveLabel, canSave, onChoose }: Props) {
+export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete, onAsk, locked, onSave, saveLabel, canSave, onChoose }: Props) {
   const [collapsed, toggleCollapsed] = useCollapsed("copilot-panel");
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const coach = useUsageStore((s) => s.summary?.metrics.coach);
@@ -50,8 +54,12 @@ export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete,
         {ASK_SHORTCUTS.map((a) => (
           <button key={a.intent} type="button" className="v4-cop-item" disabled={busy} title={a.hint} aria-label={a.label} onClick={() => { onAsk(a); onChoose(); }}>
             <Icon d={a.icon} /><span className="v4-cop-label">{a.label}</span>
+            {locked && <span className="v4-cop-lock"><Icon d={I.lock} /></span>}
           </button>
         ))}
+        {locked && (
+          <Link href="/pricing" className="v4-cop-upgrade"><span className="v4-cop-label">Upgrade to Career</span></Link>
+        )}
       </div>
 
       <div className="v4-cop-group v4-cop-chats">
