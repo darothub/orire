@@ -153,7 +153,7 @@ function BlocksRail() {
             <label className="v4-block-name">
               <input type="checkbox" checked={r.visible} onChange={() => toggleSection(r.key)} />
               <span>{r.label}</span>
-              {r.key === next && <em className="v4-next">Next</em>}
+              {r.key === next && <em className="v4-block-next">Next</em>}
             </label>
             {r.visible && (
               <span className="v4-block-move">
