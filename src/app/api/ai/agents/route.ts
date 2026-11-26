@@ -19,8 +19,8 @@ import { runAnalysis, runCritique, runRewrite, type AgentCaller, type AgentName 
 import { MAX_CRITIC_ROUNDS, sanitizeAnswers, sanitizeCritique, sanitizeGapReport, sanitizeProfile } from "@/lib/ai/agents";
 import { sanitizeSeeds } from "@/lib/tailor/seeds";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
-import { claimCoachStep, consume, getPlanId, getUsed, refund, releaseCoachStep } from "@/lib/entitlement/entitlement";
-import { gateCoachCall, type CoachStore } from "@/lib/plan/coachGate";
+import { gateCoachCall } from "@/lib/plan/coachGate";
+import { coachStore } from "@/lib/plan/coachStore";
 import { requireVerifiedUser } from "@/lib/auth/guard";
 import { bodyTooLarge, validateInputSize } from "@/lib/ai/server/limits";
 
@@ -55,15 +55,6 @@ interface Body {
 const hasShape = (c: unknown): c is CVData => {
   const v = c as Partial<CVData> | undefined;
   return !!v && !!v.basics && Array.isArray(v.experience) && Array.isArray(v.projects) && Array.isArray(v.skills) && Array.isArray(v.education) && Array.isArray(v.certifications);
-};
-
-const coachStore: CoachStore = {
-  getPlan: getPlanId,
-  getUsed: (u, plan) => getUsed(u, "coach", plan),
-  consume: async (u, plan) => void (await consume(u, "coach", plan)),
-  refund: (u, plan) => refund(u, "coach", plan),
-  claimStep: claimCoachStep,
-  releaseStep: releaseCoachStep,
 };
 
 const json = (error: string, status = 200) => NextResponse.json({ ok: false, error }, { status });

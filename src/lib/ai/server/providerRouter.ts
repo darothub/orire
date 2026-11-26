@@ -7,6 +7,7 @@
  * - Interview simulate → GPT-5-Mini (ideal candidate profile generation)
  * - Judge ("Help me pick the best") → GPT-5-Mini (ChatGPT, provider hidden in UI)
  * - Retone/restructure → GPT-5-Mini (tone adjustment)
+ * - Copilot chat replies → GPT-5-Mini (the cheap model; short answers)
  *
  * This dual-provider approach optimizes for both cost and quality:
  * - Haiku: refinement
@@ -15,7 +16,7 @@
 
 import type { ProviderId } from "@/lib/ai/types";
 
-export type AiTaskType = "refine" | "cover-letter" | "simulate" | "judge" | "retone" | "evidence" | "bullet-review" | "agent-analyze" | "agent-rewrite";
+export type AiTaskType = "refine" | "cover-letter" | "simulate" | "judge" | "retone" | "evidence" | "bullet-review" | "agent-analyze" | "agent-rewrite" | "chat";
 
 export interface RouteDecision {
   provider: ProviderId;
@@ -72,6 +73,7 @@ export function routeTask(taskType: AiTaskType): RouteDecision {
       return { provider: "anthropic", model: "claude-haiku-4-5" };
 
     case "agent-analyze":
+    case "chat":
     case "retone":
     case "evidence":
     case "bullet-review":

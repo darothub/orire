@@ -455,6 +455,11 @@
 .v4-cop-list li:hover .v4-cop-del, .v4-cop-list li.on .v4-cop-del, .v4-cop-del:focus-visible { opacity: 1; }
 .v4-cop-confirm { display: flex; align-items: center; gap: 2px; padding-right: 4px; }
 .v4-cop-save { margin-top: 6px; }
+.v4-cop-lock { margin-left: auto; display: inline-flex; color: var(--or-ink-muted, var(--or-ink-soft)); }
+.v4-cop-lock svg { width: 14px; height: 14px; }
+.v4-cop-panel--collapsed .v4-cop-lock { display: none; }
+.v4-cop-upgrade { display: flex; align-items: center; justify-content: center; min-height: 40px; margin-top: 4px; border-radius: var(--or-radius-md); background: var(--or-ink); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+.v4-cop-panel--collapsed .v4-cop-upgrade { display: none; }
 .v4-cop-meter { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--or-line); }
 .v4-cop-ring { width: 44px; height: 44px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--or-gold) var(--pct), var(--or-raised) 0); }
 .v4-cop-ring span { width: 34px; height: 34px; border-radius: 50%; background: var(--or-surface); display: grid; place-items: center; font-size: 12px; font-weight: 700; }

@@ -1,3 +1,6 @@
+import type { PlanId } from "@/lib/plan/plan";
+import type { ChatIntent } from "@/lib/occ/chat";
+
 /** Shared bits of the Copilot panel: the quick actions and how a chat is described. */
 
 export type AskIntent = "review" | "match" | "refine" | "cover" | "interview";
@@ -20,3 +23,26 @@ export const ASK_SHORTCUTS: readonly AskShortcut[] = [
 ];
 
 export const chatMeta = (saved: boolean) => (saved ? "Saved, text only" : "Not saved");
+
+/** What a reply suggests the user can tap, by action. */
+export const CHAT_ACTION_LABEL: Record<ChatIntent, string> = {
+  review: "Review my CV",
+  match: "Match me to a job",
+  refine: "Rewrite for a role",
+  cover: "Draft a cover letter",
+  interview: "Practise an interview",
+  simulate: "Simulate the gap",
+};
+
+export type ChatAccess = "ok" | "upgrade" | "no-runs";
+
+/**
+ * Whether the Copilot can answer in chat. Chat is Career only and each reply spends
+ * a monthly coach run. An unknown plan (usage not loaded yet) is let through: the
+ * server decides, this only chooses which card to show.
+ */
+export function chatAccess(plan: PlanId | undefined, coach?: { cap: number | null; used: number }): ChatAccess {
+  if (plan === undefined) return "ok";
+  if (plan !== "career") return "upgrade";
+  return coach && coach.cap !== null && coach.used >= coach.cap ? "no-runs" : "ok";
+}

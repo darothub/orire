@@ -43,6 +43,9 @@ import { Occ4Editor } from "./Occ4Editor";
 import { Occ4Applications } from "./Occ4Applications";
 import { V4CopilotFrame } from "@/components/v4/V4CopilotFrame";
 import { V4CopilotPanel } from "@/components/v4/V4CopilotPanel";
+import { useUsageStore } from "@/lib/store/usageStore";
+import { CHAT_ACTION_LABEL, chatAccess, type ChatAccess } from "@/lib/v4/copilot";
+import type { ChatIntent, ChatReply } from "@/lib/occ/chat";
 import "./occ4.css";
 
 /**
@@ -59,6 +62,8 @@ import "./occ4.css";
  * with Apply, restyle with templates, draft a grounded cover letter, and save
  * the draft as a new private library version — all on the same draft.
  */
+
+const CANNED_HELP = "I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.";
 
 type Msg = { id: number; node: ReactNode };
 type Intent = "review" | "refine" | "match" | "simulate" | "template" | "interview" | "cover" | "save" | "library" | "export" | "applications" | "default";
@@ -156,6 +161,12 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
   const router = useRouter();
   const snapshots = useRef<Map<string, ConvSnapshot>>(new Map());
   const convSeq = useRef(1);
+
+  // Chat replies are Career only and spend a monthly coach run (v4 shell only;
+  // the classic shell keeps its canned reply).
+  const plan = useUsageStore((st) => st.summary?.plan);
+  const coach = useUsageStore((st) => st.summary?.metrics.coach);
+  const access = chatAccess(plan, coach);
 
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
@@ -370,7 +381,7 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
   const sayBot = (text: string) => { logTurn("OCC", text); push(<ChatMessage role="bot">{text}</ChatMessage>); };
 
   // What each action does, phrased for the "add context first" prompt.
-  const INTENT_VERB: Partial<Record<Intent, string>> = {
+const INTENT_VERB: Partial<Record<Intent, string>> = {
     review: "review your CV against it",
     refine: "refine your whole CV for it",
     match: "score your keyword coverage",
@@ -825,9 +836,42 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
     if (intent === "library") return void runLibrary();
     if (intent === "export") return runExport();
     if (intent === "applications") return runApplications();
-    sayBot("I can review your CV against a role, run a keyword comparison, or practise an interview — add your CV and the job description, then ask.");
+    if (shell === "v4") return void runChat(text);
+    sayBot(CANNED_HELP);
   }
   useEffect(() => { handleRef.current = handle; });
+
+  // A message no keyword matched: ask the Copilot (Career only, one coach run).
+  async function runChat(text: string) {
+    if (access !== "ok") return push(<CardRow>{renderChatLock(access, coach?.cap ?? null)}</CardRow>);
+    setRunning(true);
+    try {
+      const response = await fetch("/api/occ/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: text,
+          history: transcript.slice(0, -1),
+          ...(cvReady ? { cv } : {}),
+          ...(roleReady ? { description } : {}),
+        }),
+        cache: "no-store",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        if (data?.code === "no-runs") return push(<CardRow>{renderChatLock("no-runs", coach?.cap ?? null)}</CardRow>);
+        throw new Error(typeof data?.error === "string" ? data.error : "The Copilot is unavailable right now.");
+      }
+      const { reply, intent } = data as ChatReply;
+      sayBot(reply);
+      if (intent) push(<CardRow>{renderChatSuggestion(intent, (i) => handleRef.current(i, CHAT_ACTION_LABEL[i]))}</CardRow>);
+      void useUsageStore.getState().refresh();
+    } catch (e) {
+      sayBot(e instanceof Error ? e.message : "The Copilot is unavailable right now. Try again in a moment.");
+    } finally {
+      setRunning(false);
+    }
+  }
 
   function send(text: string, intent?: Intent) {
     const value = text.trim();
@@ -937,7 +981,8 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
       onNew={newConversation}
       onOpen={switchConversation}
       onDelete={(id) => void deleteConversation(id)}
-      onAsk={(a) => send(a.label, a.intent)}
+      onAsk={(a) => (access === "upgrade" ? push(<CardRow>{renderChatLock(access, null)}</CardRow>) : send(a.label, a.intent))}
+      locked={access === "upgrade"}
       onSave={() => void saveActive()}
       saveLabel={saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved ✓" : saveState === "error" ? "Save failed, retry" : "Save chat"}
       canSave={transcript.length > 0 && saveState !== "saving"}
@@ -1439,6 +1484,33 @@ function renderCover(letter: CoverLetter): ReactNode {
         before sending.
       </p>
     </CopilotCard>
+  );
+}
+
+function renderChatLock(kind: Exclude<ChatAccess, "ok">, cap: number | null): ReactNode {
+  const upgrade = kind === "upgrade";
+  return (
+    <CopilotCard title={upgrade ? "Chatting with the Copilot is on Career" : "You've used this month's coach runs"} icon={<Spark />} tag={upgrade ? "career" : "limit"}>
+      <p className="occ4-advice-summary">
+        {upgrade
+          ? "Career lets you talk to the Copilot about your CV and your next move, and use every quick action. Each reply uses one of your monthly coach runs."
+          : `Each Copilot reply uses one coach run, and your ${cap ?? ""} for this month are gone. They come back at the start of next month. The quick actions that don't use coach runs still work.`}
+      </p>
+      {upgrade && (
+        <div className="occ4-rec-apply">
+          <Link className="occ4-pv-toggle" href="/pricing">Upgrade to Career</Link>
+          <Link className="occ4-pv-toggle" href="/pricing">Compare plans</Link>
+        </div>
+      )}
+    </CopilotCard>
+  );
+}
+
+function renderChatSuggestion(intent: ChatIntent, run: (intent: ChatIntent) => void): ReactNode {
+  return (
+    <div className="occ4-chiprow">
+      <button type="button" className="occ4-chip" onClick={() => run(intent)}>{CHAT_ACTION_LABEL[intent]}</button>
+    </div>
   );
 }
 

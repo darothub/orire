@@ -197,3 +197,11 @@ export function fakeStructuredCV(text: string): string {
     certifications: [],
   });
 }
+
+/** Copilot chat reply (src/lib/occ/chat.ts shape) — keyless dev only. */
+export function fakeChatReply(message: string): string {
+  return JSON.stringify({
+    intent: null,
+    reply: `This is a dev stand-in reply. You asked: “${message.trim().slice(0, 120)}”. With a provider key set, a short, grounded answer appears here.`,
+  });
+}
