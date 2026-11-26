@@ -11,7 +11,6 @@ import { useUsageStore } from "@/lib/store/usageStore";
 import { planQualityLabel, remainingNote } from "@/lib/plan/plan";
 import { SECTION_LABELS, type SectionKey } from "@/lib/cv/schema";
 import { gapAnalysis, targetMatch } from "@/lib/ai/simulate";
-import { SIMULATE_STAGES, simulateProgressAt } from "@/lib/ai/simulateProgress";
 import { rankMissingSections, rankMissingSkills } from "@/lib/ai/simulateImpact";
 import { printGapReport } from "@/lib/ai/simulateReport";
 import { diffCv } from "@/lib/ai/cvDiff";
@@ -23,6 +22,7 @@ import { V4_COPILOT_HREF } from "@/lib/v4/nav";
 import { Card } from "@/components/ui/Card";
 import { MatchRing } from "@/components/ui/MatchRing";
 import { V4ChangeList } from "./V4ChangeList";
+import { V4Progress } from "./V4Progress";
 
 const ORIGIN = "Simulate";
 type CompareView = "side" | "gaps";
@@ -126,7 +126,7 @@ function SetupView({ sim, canKeep, onKeep, onDone }: { sim: Sim; canKeep: boolea
             <button type="button" className="or-btn" onClick={sim.backToInput}>Back</button>
           </Card>
         ) : sim.running ? (
-          <RunningCard startedAt={sim.startedAt} />
+          <V4Progress kind="simulate" title="Running your simulation" startedAt={sim.startedAt} />
         ) : (
           <Card pad>
             <h2 className="v4-h2">How it works</h2>
@@ -140,30 +140,6 @@ function SetupView({ sim, canKeep, onKeep, onDone }: { sim: Sim; canKeep: boolea
         )}
       </div>
     </>
-  );
-}
-
-function RunningCard({ startedAt }: { startedAt?: number }) {
-  const [t0] = useState(() => startedAt ?? Date.now());
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 400);
-    return () => window.clearInterval(id);
-  }, []);
-  const { percent, label, slow } = simulateProgressAt(now - t0);
-  return (
-    <Card pad>
-      <h2 className="v4-h2">Running your simulation</h2>
-      <div className="v4-meter" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label="Simulation progress"><span style={{ width: `${percent}%` }} /></div>
-      <div className="v4-sim-pct"><span>{label}</span><span>About {percent}%</span></div>
-      <ul className="v4-stages">
-        {SIMULATE_STAGES.map((s, i) => {
-          const done = percent >= s.upTo;
-          return <li key={i} className={done ? "done" : ""}><i aria-hidden>{done ? "✓" : ""}</i>{s.label.replace(/…$/, "")}</li>;
-        })}
-      </ul>
-      <p className="v4-hint">{slow ? "Still working. Longer job descriptions take more time." : "The percentage is an estimate. It reaches 100% when your result arrives, usually under a minute."}</p>
-    </Card>
   );
 }
 
@@ -320,6 +296,7 @@ function ResultView({ onNew, usageNote }: { onNew: () => void; usageNote: string
             <button type="button" className="or-btn" disabled={retone.phase === "running" || !retone.detected} onClick={() => void retone.run()}>
               {retone.phase === "running" ? "Rewriting…" : "Preview rewrite"}
             </button>
+            {retone.phase === "running" && <V4Progress kind="retone" title="Rewriting in the role’s voice" compact />}
             <p className="v4-hint">Voice only. Your employers, dates, numbers and skills stay as they are.</p>
             {retone.phase === "error" && retone.err && (
               <p className="v4-muted" role="alert"><b>{retone.err.title}.</b> {retone.err.body} <button type="button" className="v4-link" onClick={retone.discard}>Dismiss</button></p>

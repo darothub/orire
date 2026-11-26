@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { Pill } from "@/components/ui/Pill";
 import { Diff } from "@/components/ui/Diff";
+import { V4Progress } from "./V4Progress";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { cvDataToText } from "@/lib/cv/cvDataToText";
@@ -63,7 +64,7 @@ export function V4Interview() {
         </Card>
       )}
 
-      {phase === "asking" && <Card pad><p className="v4-muted" role="status">Preparing your question…</p></Card>}
+      {phase === "asking" && <V4Progress kind="question" title="Preparing your question" compact />}
 
       {question && (phase === "question" || phase === "reviewing") && (
         <Card pad className="v4-int-q">
@@ -83,6 +84,7 @@ export function V4Interview() {
             <span className="v4-sr">Your answer</span>
             <textarea rows={5} value={answer} maxLength={ANSWER_MAX} disabled={busy} onChange={(e) => run.setAnswer(e.target.value)} placeholder="Write your answer here." />
           </label>
+          {phase === "reviewing" && <V4Progress kind="feedback" title="Reviewing your answer" compact />}
           <div className="v4-int-actions">
             <button type="button" className="or-btn or-btn--primary v4-int-cta" disabled={!answerReady(answer) || busy} onClick={() => void run.submit()}>
               {phase === "reviewing" ? "Reviewing…" : "Get feedback"}

@@ -422,3 +422,7 @@
 .v4-int-fbrow { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px; border: 1px solid var(--or-line); border-radius: var(--or-radius-lg); background: var(--or-surface-2); }
 .v4-int-fbrow p, .v4-int-fb .v4-muted, .v4-int-fb .v4-h2 { margin: 0; }
 .v4-int-fbrow p { font-size: 14px; }
+
+.v4-progress-compact { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--or-line-strong); border-radius: var(--or-radius-lg); background: var(--or-surface-2); }
+.v4-progress-compact .v4-h2 { margin: 0; font-size: 15px; }
+.v4-progress-compact .v4-sim-pct { margin: 0; }
