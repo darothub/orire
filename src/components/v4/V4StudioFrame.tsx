@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { V4_COPILOT_HREF, V4_STUDIO_TABS, studioTabFor } from "@/lib/v4/nav";
+import { V4_STUDIO_TABS, studioTabFor } from "@/lib/v4/nav";
 import { useCollapsed } from "@/lib/v4/useCollapsed";
+import { V4FrameHead } from "./V4FrameHead";
 import { V4Shell } from "./V4Shell";
 
 function Icon({ d }: { d: string }) {
@@ -23,19 +24,7 @@ export function V4StudioFrame({ children }: { children: ReactNode }) {
   return (
     <V4Shell active="studio" label="CV Studio">
       <div className="v4-frame">
-        <header className="v4-frame-head">
-          <div>
-            <h1>CV Studio</h1>
-            <p>{current.blurb}</p>
-          </div>
-          {/* Off here; turning it on opens the Copilot conversation. */}
-          <Link href={V4_COPILOT_HREF} className="v4-switch" role="switch" aria-checked={false} aria-label="Copilot">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
-            Copilot
-            <span className="v4-switch-track" aria-hidden><i /></span>
-            <small>Off</small>
-          </Link>
-        </header>
+        <V4FrameHead subtitle={current.blurb} copilotOn={false} />
         <div className={`v4-frame-body${collapsed ? " v4-frame-body--collapsed" : ""}`}>
           <nav className="v4-subnav" aria-label="Studio tools">
             {V4_STUDIO_TABS.map((t) => (
