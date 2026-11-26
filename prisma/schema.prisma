@@ -329,6 +329,11 @@ model OccConversation {
   title        String   @default("New conversation")
   primaryAgent String   @default("review")
   usedAgents   String[] @default([])
+  // What the chat was about, so reopening it brings the work back. The CV is a
+  // plain reference to a saved library version (no FK: deleting the version
+  // never deletes the chat); the job description is stored as written.
+  cvDocumentId   String?
+  jobDescription String? @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

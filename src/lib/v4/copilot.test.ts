@@ -9,7 +9,7 @@ describe("v4 copilot panel", () => {
 
   it("says whether a chat is saved, and that saved chats keep text only", () => {
     expect(chatMeta(false)).toBe("Not saved");
-    expect(chatMeta(true)).toBe("Saved, text only");
+    expect(chatMeta(true)).toBe("Saved with its CV and job");
   });
 });
 

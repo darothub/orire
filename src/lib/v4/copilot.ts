@@ -22,7 +22,7 @@ export const ASK_SHORTCUTS: readonly AskShortcut[] = [
   { intent: "interview", label: "Practise an interview", hint: "Five questions with feedback on your answers.", icon: "M9 3h6v11H9zM5 11a7 7 0 0014 0M12 18v3" },
 ];
 
-export const chatMeta = (saved: boolean) => (saved ? "Saved, text only" : "Not saved");
+export const chatMeta = (saved: boolean) => (saved ? "Saved with its CV and job" : "Not saved");
 
 /** What a reply suggests the user can tap, by action. */
 export const CHAT_ACTION_LABEL: Record<ChatIntent, string> = {
