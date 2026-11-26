@@ -26,6 +26,7 @@ export async function readUsage(): Promise<UsageSummary | null> {
         simulate: { used: 0, cap: null, remaining: null, scope: "monthly" },
         download: { used: 0, cap: null, remaining: null, scope: "monthly" },
         coach: { used: 0, cap: null, remaining: null, scope: "monthly" },
+        chat: { used: 0, cap: null, remaining: null, scope: "lifetime" },
       },
     };
   }

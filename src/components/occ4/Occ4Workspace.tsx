@@ -44,7 +44,7 @@ import { Occ4Applications } from "./Occ4Applications";
 import { V4CopilotFrame } from "@/components/v4/V4CopilotFrame";
 import { V4CopilotPanel } from "@/components/v4/V4CopilotPanel";
 import { useUsageStore } from "@/lib/store/usageStore";
-import { CHAT_ACTION_LABEL, chatAccess, type ChatAccess } from "@/lib/v4/copilot";
+import { CHAT_ACTION_LABEL, actionLock, chatAccess, type ActionLock, type ChatAccess } from "@/lib/v4/copilot";
 import type { ChatIntent, ChatReply } from "@/lib/occ/chat";
 import "./occ4.css";
 
@@ -164,11 +164,11 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
   // Transcript length last written to the server, per saved conversation (or local id before its first save).
   const savedLen = useRef<Map<string, number>>(new Map());
 
-  // Chat replies are Career only and spend a monthly coach run (v4 shell only;
-  // the classic shell keeps its canned reply).
+  // Every plan can chat, each with its own reply allowance (v4 shell only; the
+  // classic shell keeps its canned reply). Some quick actions need a higher plan.
   const plan = useUsageStore((st) => st.summary?.plan);
-  const coach = useUsageStore((st) => st.summary?.metrics.coach);
-  const access = chatAccess(plan, coach);
+  const chatUsage = useUsageStore((st) => st.summary?.metrics.chat);
+  const access = chatAccess(chatUsage);
 
   const cvReady = cv.trim().length >= 30;
   const roleReady = description.trim().length >= 30;
@@ -843,6 +843,12 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
   }
 
   function handle(intent: Intent, text: string) {
+    // The v4 Copilot follows the CV Studio's plan rules, however the action was asked for.
+    if (shell === "v4") {
+      const lock = intent in CHAT_ACTION_LABEL ? actionLock(plan, intent as ChatIntent) : null;
+      if (lock) return push(<CardRow>{renderActionLock(CHAT_ACTION_LABEL[intent as ChatIntent], lock)}</CardRow>);
+      if (intent === "simulate") return push(<CardRow>{renderSimulateHandoff()}</CardRow>);
+    }
     if (intent === "review") return void runReview(text);
     if (intent === "refine") return void runRefine();
     if (intent === "match") return void runMatch();
@@ -861,7 +867,7 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
 
   // A message no keyword matched: ask the Copilot (Career only, one coach run).
   async function runChat(text: string) {
-    if (access !== "ok") return push(<CardRow>{renderChatLock(access, coach?.cap ?? null)}</CardRow>);
+    if (access !== "ok") return push(<CardRow>{renderNoReplies(chatUsage?.cap ?? null, plan === "pro")}</CardRow>);
     setRunning(true);
     try {
       const response = await fetch("/api/occ/chat", {
@@ -877,7 +883,7 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
       });
       const data = await response.json();
       if (!response.ok) {
-        if (data?.code === "no-runs") return push(<CardRow>{renderChatLock("no-runs", coach?.cap ?? null)}</CardRow>);
+        if (data?.code === "no-runs") return push(<CardRow>{renderNoReplies(chatUsage?.cap ?? null, plan === "pro")}</CardRow>);
         throw new Error(typeof data?.error === "string" ? data.error : "The Copilot is unavailable right now.");
       }
       const { reply, intent } = data as ChatReply;
@@ -999,12 +1005,15 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
       onNew={newConversation}
       onOpen={switchConversation}
       onDelete={(id) => void deleteConversation(id)}
-      onAsk={(a) => (access === "upgrade" ? push(<CardRow>{renderChatLock(access, null)}</CardRow>) : send(a.label, a.intent))}
-      locked={access === "upgrade"}
+      onAsk={(a) => {
+        const lock = actionLock(plan, a.intent);
+        if (lock) { sayUser(a.label); return push(<CardRow>{renderActionLock(a.label, lock)}</CardRow>); }
+        send(a.label, a.intent);
+      }}
       autoSave={autoSave}
       onSave={() => void saveActive()}
-      saveLabel={saveLabelFor(saveState, autoSave)}
-      canSave={transcript.length > 0 && saveState !== "saving"}
+      saveLabel={plan !== undefined && plan !== "career" ? "Saved chats are on Career" : saveLabelFor(saveState, autoSave)}
+      canSave={transcript.length > 0 && saveState !== "saving" && plan === "career"}
       onChoose={() => setNavOpen(false)}
     />
   );
@@ -1515,21 +1524,37 @@ function saveLabelFor(state: "idle" | "saving" | "saved" | "error", auto: boolea
   return state === "saved" ? "Saved ✓" : state === "error" ? "Save failed, retry" : "Save chat";
 }
 
-function renderChatLock(kind: Exclude<ChatAccess, "ok">, cap: number | null): ReactNode {
-  const upgrade = kind === "upgrade";
+function renderActionLock(label: string, needs: ActionLock): ReactNode {
+  const plan = needs === "career" ? "Career" : "Pro";
   return (
-    <CopilotCard title={upgrade ? "Chatting with the Copilot is on Career" : "You've used this month's coach runs"} icon={<Spark />} tag={upgrade ? "career" : "limit"}>
+    <CopilotCard title={`${label} is on ${plan}`} icon={<Spark />} tag={needs}>
       <p className="occ4-advice-summary">
-        {upgrade
-          ? "Career lets you talk to the Copilot about your CV and your next move, and use every quick action. Each reply uses one of your monthly coach runs."
-          : `Each Copilot reply uses one coach run, and your ${cap ?? ""} for this month are gone. They come back at the start of next month. The quick actions that don't use coach runs still work.`}
+        This works the same as in the CV Studio, where it comes with the {plan} plan. Refine and chatting with the Copilot are open on your plan.
       </p>
-      {upgrade && (
-        <div className="occ4-rec-apply">
-          <Link className="occ4-pv-toggle" href="/pricing">Upgrade to Career</Link>
-          <Link className="occ4-pv-toggle" href="/pricing">Compare plans</Link>
-        </div>
-      )}
+      <div className="occ4-rec-apply">
+        <Link className="occ4-pv-toggle" href="/pricing">Upgrade to {plan}</Link>
+        <Link className="occ4-pv-toggle" href="/pricing">Compare plans</Link>
+      </div>
+    </CopilotCard>
+  );
+}
+
+function renderNoReplies(cap: number | null, monthly: boolean): ReactNode {
+  return (
+    <CopilotCard title="You&apos;ve used your Copilot replies" icon={<Spark />} tag="limit">
+      <p className="occ4-advice-summary">
+        {`Your plan includes ${cap ?? "a set number of"} replies${monthly ? " a month, and they come back next month" : ""}. The quick actions still work within your Studio limits.`}
+      </p>
+      <div className="occ4-rec-apply"><Link className="occ4-pv-toggle" href="/pricing">Compare plans</Link></div>
+    </CopilotCard>
+  );
+}
+
+function renderSimulateHandoff(): ReactNode {
+  return (
+    <CopilotCard title="Simulate runs in the CV Studio" icon={<Spark />}>
+      <p className="occ4-advice-summary">Simulate compares your CV with an ideal candidate for the role, and uses your plan&apos;s simulations. Open it in the Studio to run it.</p>
+      <div className="occ4-rec-apply"><Link className="occ4-pv-toggle" href="/v4/studio/simulate">Open Simulate</Link></div>
     </CopilotCard>
   );
 }

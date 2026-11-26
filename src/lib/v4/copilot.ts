@@ -34,15 +34,29 @@ export const CHAT_ACTION_LABEL: Record<ChatIntent, string> = {
   simulate: "Simulate the gap",
 };
 
-export type ChatAccess = "ok" | "upgrade" | "no-runs";
+export type ChatAccess = "ok" | "no-replies";
 
 /**
- * Whether the Copilot can answer in chat. Chat is Career only and each reply spends
- * a monthly coach run. An unknown plan (usage not loaded yet) is let through: the
- * server decides, this only chooses which card to show.
+ * Whether the Copilot can answer a free-text message. Every plan may chat; each has
+ * its own reply allowance. Unknown usage (not loaded yet) is let through: the server
+ * decides, this only chooses which card to show.
  */
-export function chatAccess(plan: PlanId | undefined, coach?: { cap: number | null; used: number }): ChatAccess {
-  if (plan === undefined) return "ok";
-  if (plan !== "career") return "upgrade";
-  return coach && coach.cap !== null && coach.used >= coach.cap ? "no-runs" : "ok";
+export function chatAccess(chat?: { cap: number | null; used: number }): ChatAccess {
+  return chat && chat.cap !== null && chat.used >= chat.cap ? "no-replies" : "ok";
+}
+
+/** The lowest plan an action needs, or null when every plan can use it. */
+export type ActionLock = "pro" | "career";
+
+/**
+ * Which quick actions each plan can run in chat, matching the CV Studio: the
+ * actions that call the Career Copilot services (review, match, interview) are
+ * Career; the cover letter is paid; Refine is open and metered by the Studio's own
+ * limits. Simulate opens the Studio's Simulate, which meters it.
+ */
+export function actionLock(plan: PlanId | undefined, intent: AskIntent | ChatIntent): ActionLock | null {
+  if (plan === undefined || plan === "career") return null;
+  if (intent === "review" || intent === "match" || intent === "interview") return "career";
+  if (intent === "cover" && plan === "free") return "pro";
+  return null;
 }
