@@ -10,6 +10,7 @@ describe("v4 navigation", () => {
     expect(studioTabFor("/v4/studio").key).toBe("edit");
     expect(studioTabFor("/v4/studio/simulate").key).toBe("simulate");
     expect(studioTabFor("/v4/studio/refine").key).toBe("refine");
+    expect(studioTabFor("/v4/studio/interview").key).toBe("interview");
     expect(studioTabFor("/v4/studio/unknown").key).toBe("edit");
   });
 
