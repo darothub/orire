@@ -26,7 +26,11 @@
 .v4-classic { margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: var(--or-radius-md); color: var(--or-muted); font-size: 13px; text-decoration: none; }
 .v4-classic svg { width: 18px; height: 18px; flex: none; }
 .v4-classic:hover { background: var(--or-surface); color: var(--or-ink); }
-.v4-classic + .v4-collapse { margin-top: 4px; }
+.v4-signout { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--or-radius-md); background: transparent; color: var(--or-muted); font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
+.v4-signout svg { width: 18px; height: 18px; flex: none; }
+.v4-signout:hover { background: var(--or-surface); color: var(--or-ink); }
+.v4-signout:disabled { opacity: 0.5; cursor: wait; }
+.v4-classic + .v4-signout, .v4-signout + .v4-collapse { margin-top: 4px; }
 .v4-collapse { margin-top: auto; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 1px solid var(--or-line); border-radius: var(--or-radius-md); background: transparent; color: var(--or-muted); font: inherit; font-size: 13px; cursor: pointer; }
 .v4-collapse svg { width: 18px; height: 18px; flex: none; }
 .v4-collapse:hover { background: var(--or-surface); color: var(--or-ink); }
@@ -462,7 +466,8 @@
 .v4-cop-lock { margin-left: auto; display: inline-flex; color: var(--or-ink-muted, var(--or-ink-soft)); }
 .v4-cop-lock svg { width: 14px; height: 14px; }
 .v4-cop-panel--collapsed .v4-cop-lock { display: none; }
-.v4-cop-upgrade { display: flex; align-items: center; justify-content: center; min-height: 40px; margin-top: 4px; border-radius: var(--or-radius-md); background: var(--or-ink); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+.v4-cop-upgrade { display: flex; align-items: center; justify-content: center; min-height: 40px; margin-top: 4px; border-radius: var(--or-radius-md); background: var(--or-violet); color: #fff; font-size: 14px; font-weight: 600; text-decoration: none; }
+.v4-cop-upgrade:hover { filter: brightness(1.08); }
 .v4-cop-panel--collapsed .v4-cop-upgrade { display: none; }
 .v4-cop-meter { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid var(--or-line); }
 .v4-cop-ring { width: 44px; height: 44px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--or-gold) var(--pct), var(--or-raised) 0); }

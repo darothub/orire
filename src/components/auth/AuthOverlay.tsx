@@ -623,6 +623,7 @@ export function AuthOverlay() {
             )}
 
             {PASSWORD_AUTH_ENABLED && emailOpen && (
+            <>
             <form id={emailFormId} className="auth-email" onSubmit={submitEmail}>
               <div className="auth-field">
                 <label className="auth-label" htmlFor={emailId}>
@@ -707,25 +708,27 @@ export function AuthOverlay() {
                     ? "Create account"
                     : "Sign in"}
               </button>
-              <button
-                type="button"
-                className="auth-magic"
-                onClick={sendMagicLink}
-                disabled={!!busy || !EMAIL_RE.test(email.trim())}
-              >
-                {busy === "magic" ? "Sending…" : magicSentTo ? "Resend sign-in link" : "Email me a sign-in link instead"}
-              </button>
-              {magicSentTo && (
-                <p className="auth-hint ok" role="status">
-                  Link sent to {magicSentTo}, check your inbox. It expires in 15 minutes.
-                </p>
-              )}
               {!signup && (
                 <a className="auth-forgot" href="/forgot">
                   Forgot password?
                 </a>
               )}
             </form>
+            {/* Outside the form on purpose: sending a sign-in link must never submit or validate the password form. */}
+            <button
+              type="button"
+              className="auth-magic"
+              onClick={sendMagicLink}
+              disabled={!!busy || !EMAIL_RE.test(email.trim())}
+            >
+              {busy === "magic" ? "Sending…" : magicSentTo ? "Resend sign-in link" : "Email me a sign-in link instead"}
+            </button>
+            {magicSentTo && (
+              <p className="auth-hint ok" role="status">
+                Link sent to {magicSentTo}, check your inbox. It expires in 15 minutes.
+              </p>
+            )}
+            </>
             )}
 
             {captchaOn && !PASSWORD_AUTH_ENABLED && challenged && (
