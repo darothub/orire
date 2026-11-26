@@ -36,11 +36,17 @@ export async function consumeMagicLinkToken(raw: string): Promise<string | null>
   const record = await prisma.magicLinkToken.findUnique({
     where: { tokenHash: hashToken(raw) },
   });
-  if (!record) return null;
+  if (!record) {
+    console.warn("[magic-link] rejected: unknown or already used token");
+    return null;
+  }
 
   // Always remove the record once looked up, valid or not.
   await prisma.magicLinkToken.delete({ where: { id: record.id } }).catch(() => {});
 
-  if (record.expiresAt.getTime() < Date.now()) return null;
+  if (record.expiresAt.getTime() < Date.now()) {
+    console.warn("[magic-link] rejected: expired token");
+    return null;
+  }
   return record.email;
 }
