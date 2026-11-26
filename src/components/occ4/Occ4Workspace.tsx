@@ -14,11 +14,7 @@ import type { ParsedCV } from "@/lib/ingest/parse";
 import { cvDataFromParsed } from "@/lib/cv/fromParsed";
 import { cvDataToText } from "@/lib/cv/cvDataToText";
 import { parseCVText } from "@/lib/ingest/parse";
-import { authorizeRefineRun } from "@/app/actions/refine";
-import { applyRefinePatch } from "@/lib/ai/refinePatch";
-import { parseModelJSON, factGround } from "@/lib/ai/guardrails";
-import { diffCv, applyReviewed } from "@/lib/ai/cvDiff";
-import { useSettingsStore } from "@/lib/store/settingsStore";
+import { applyReviewed } from "@/lib/ai/cvDiff";
 import { exportCVtoPDF } from "@/lib/export/pdf";
 import { exportCVtoDocx } from "@/lib/export/docx";
 import { cvToPlainText } from "@/lib/export/plaintext";
@@ -41,6 +37,8 @@ import { Occ4Refine } from "./Occ4Refine";
 import { Occ4Export } from "./Occ4Export";
 import { Occ4Editor } from "./Occ4Editor";
 import { Occ4Applications } from "./Occ4Applications";
+import { runRefine as refineCv } from "@/lib/v4/refineRun";
+import { fetchFeedback, fetchQuestion } from "@/lib/v4/interviewApi";
 import { V4CopilotFrame } from "@/components/v4/V4CopilotFrame";
 import { V4CopilotPanel } from "@/components/v4/V4CopilotPanel";
 import { useUsageStore } from "@/lib/store/usageStore";
@@ -433,28 +431,10 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
     setRunning(true);
     sayBot("Refining your whole CV against the JD… this uses one of your monthly refines.");
     try {
-      const { provider, models } = useSettingsStore.getState();
-      const model = models[provider] ?? "";
-      const authz = await authorizeRefineRun([{ provider, model }]);
-      if (!authz.ok || !authz.token) {
-        return sayBot(authz.block ? `${authz.block.title}: ${authz.block.body}` : "Refine isn't available on your plan.");
-      }
-      const response = await fetch("/api/ai/refine", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, model, jobDescription: description, cv: draft, runToken: authz.token, facts: [] }),
-        cache: "no-store",
-      });
-      const data = await response.json();
-      if (!data?.ok || !data.raw) {
-        return sayBot(typeof data?.error?.message === "string" ? data.error.message : "Couldn't refine the CV — try again in a moment.");
-      }
-      const before = draft;
-      const grounded = factGround(before, applyRefinePatch(before, parseModelJSON(data.raw)));
-      const changes = diffCv(before, grounded.cv);
-      if (changes.length === 0) return sayBot("Your CV already reads well for this role — Refine suggested no changes.");
-      push(<CardRow><Occ4Refine changes={changes} onApply={(rejected) => applyRefine(before, grounded.cv, rejected)} /></CardRow>);
-    } catch {
-      sayBot("Couldn't run Refine. Try again in a moment.");
+      const outcome = await refineCv(draft, description);
+      if (outcome.kind !== "changes") return sayBot(outcome.message);
+      const { before, after, changes } = outcome;
+      push(<CardRow><Occ4Refine changes={changes} onApply={(rejected) => applyRefine(before, after, rejected)} /></CardRow>);
     } finally {
       setRunning(false);
     }
@@ -728,20 +708,14 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
     }
   }
 
+  const interviewCtx = { description, cv: cvReady ? cv : "" };
+
   async function askQuestion(index: number) {
     if (!ensureContext("interview")) return;
     setRunning(true);
     sayBot(index === 0 ? "Let's practise — here's your first question." : "Next question coming up.");
     try {
-      const response = await fetch("/api/occ/interview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "question", description, ...(cvReady ? { cv } : {}), turnIndex: index }),
-        cache: "no-store",
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not start the interview.");
-      const q = data.question as InterviewQuestion;
+      const q = await fetchQuestion(interviewCtx, index);
       setIntQuestion(q);
       setIntIndex(index);
       setIntPhase("question");
@@ -758,16 +732,9 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
     if (!q) return;
     setRunning(true);
     try {
-      const response = await fetch("/api/occ/interview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "feedback", description, ...(cvReady ? { cv } : {}), question: q.question, answer, turnIndex: intIndex }),
-        cache: "no-store",
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(typeof data.error === "string" ? data.error : "Could not review your answer.");
+      const feedback = await fetchFeedback(interviewCtx, intIndex, q.question, answer);
       setIntPhase("feedback");
-      push(<CardRow>{feedbackCard(data.feedback as InterviewFeedback, intIndex, answer)}</CardRow>);
+      push(<CardRow>{feedbackCard(feedback, intIndex, answer)}</CardRow>);
     } catch (e) {
       sayBot(e instanceof Error ? e.message : "Interview coaching failed. Please try again.");
     } finally {

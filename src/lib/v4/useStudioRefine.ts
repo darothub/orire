@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { authorizeRefineRun } from "@/app/actions/refine";
-import { applyRefinePatch } from "@/lib/ai/refinePatch";
-import { parseModelJSON, factGround } from "@/lib/ai/guardrails";
-import { diffCv, applyReviewed, type CvChange } from "@/lib/ai/cvDiff";
+import { applyReviewed, type CvChange } from "@/lib/ai/cvDiff";
 import type { CVData } from "@/lib/cv/schema";
 import { useCVStore } from "@/lib/store/cvStore";
-import { useSettingsStore } from "@/lib/store/settingsStore";
 import { useTargetStore } from "@/lib/store/targetStore";
+import { runRefine } from "./refineRun";
 
 interface Review {
   before: CVData;
@@ -38,34 +35,10 @@ export function useStudioRefine() {
     setMessage("");
     setReview(null);
     setSkipped(new Set());
-    try {
-      const { provider, models } = useSettingsStore.getState();
-      const model = models[provider] ?? "";
-      const authz = await authorizeRefineRun([{ provider, model }]);
-      if (!authz.ok || !authz.token) {
-        setMessage(authz.block ? `${authz.block.title}: ${authz.block.body}` : "Refine isn’t available on your plan.");
-        return;
-      }
-      const response = await fetch("/api/ai/refine", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, model, jobDescription: jd, cv: before, runToken: authz.token, facts: [] }),
-        cache: "no-store",
-      });
-      const data = await response.json();
-      if (!data?.ok || !data.raw) {
-        setMessage(typeof data?.error?.message === "string" ? data.error.message : "Couldn’t refine the CV. Try again in a moment.");
-        return;
-      }
-      const after = factGround(before, applyRefinePatch(before, parseModelJSON(data.raw))).cv;
-      const changes = diffCv(before, after);
-      if (changes.length === 0) setMessage("Your CV already reads well for this role. Refine suggested no changes.");
-      else setReview({ before, after, changes });
-    } catch {
-      setMessage("Couldn’t run Refine. Try again in a moment.");
-    } finally {
-      setRunning(false);
-    }
+    const outcome = await runRefine(before, jd);
+    if (outcome.kind === "changes") setReview(outcome);
+    else setMessage(outcome.message);
+    setRunning(false);
   }
 
   function toggle(id: string) {
