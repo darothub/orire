@@ -7,7 +7,6 @@ import { APPLICATION_STATUS_LABELS, type ApplicationStatus } from "@/lib/occ/app
 import { homeNext, pipelineCounts, weeklyActivity, type HomeAction } from "@/lib/home/v4";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
-import { persistView, type WorkspaceView } from "@/lib/store/viewStore";
 import { useTargetMatch } from "@/components/home/MatchRing";
 import { getTemplateInfo } from "@/lib/templates/catalog";
 import { V4Shell } from "./V4Shell";
@@ -18,13 +17,14 @@ import { Pill } from "@/components/ui/Pill";
 
 type App = { id: string; company: string; role: string; status: ApplicationStatus; updatedAt: string };
 
-/** Where each recommended action lives: the Copilot (v4) or the CV studio. */
-const ACTION_TARGET: Record<HomeAction, { href: "/occ/v4" | "/"; view?: WorkspaceView }> = {
-  context: { href: "/", view: "create" },
-  match: { href: "/occ/v4" },
-  refine: { href: "/occ/v4" },
-  applications: { href: "/occ/v4" },
-  export: { href: "/", view: "export" },
+/** Where each recommended action lives. Every target is a v4 page. */
+const V4_ROUTE = { copilot: "/occ/v4", studio: "/v4/studio", export: "/v4/export" } as const;
+const ACTION_HREF: Record<HomeAction, string> = {
+  context: V4_ROUTE.copilot,
+  match: V4_ROUTE.copilot,
+  refine: V4_ROUTE.copilot,
+  applications: V4_ROUTE.copilot,
+  export: V4_ROUTE.export,
 };
 
 function greeting(now: number | null): string {
@@ -89,14 +89,8 @@ export function V4Home() {
   const peak = Math.max(1, ...activity);
   const stat = (n: number | null) => (n === null ? "–" : n);
 
-  function open(view: WorkspaceView) {
-    persistView(view);
-    router.push("/");
-  }
   function runNext() {
-    const t = ACTION_TARGET[next.action];
-    if (t.view) persistView(t.view);
-    router.push(t.href);
+    router.push(ACTION_HREF[next.action]);
   }
 
   return (
@@ -138,9 +132,9 @@ export function V4Home() {
                   <span>Template: {getTemplateInfo(templateId)?.name ?? templateId}</span>
                 </div>
                 <div className="v4-cv-actions">
-                  <Button variant="primary" size="sm" onClick={() => open("edit")}>Edit CV</Button>
-                  <Button variant="ghost" size="sm" onClick={() => open("rebrand")}>Change template</Button>
-                  <Button variant="ghost" size="sm" onClick={() => open("export")}>Export</Button>
+                  <Button variant="primary" size="sm" onClick={() => router.push(V4_ROUTE.studio)}>Edit CV</Button>
+                  <Button variant="ghost" size="sm" onClick={() => router.push(V4_ROUTE.studio)}>Change template</Button>
+                  <Button variant="ghost" size="sm" onClick={() => router.push(V4_ROUTE.export)}>Export</Button>
                 </div>
               </>
             ) : (
@@ -151,7 +145,7 @@ export function V4Home() {
                   <span>Create or import one to review, refine, restyle and export it.</span>
                 </div>
                 <div className="v4-cv-actions">
-                  <Button variant="primary" size="sm" onClick={() => open("create")}>Create your CV</Button>
+                  <Button variant="primary" size="sm" onClick={() => router.push(V4_ROUTE.copilot)}>Create your CV</Button>
                 </div>
               </>
             )}
