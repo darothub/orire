@@ -23,5 +23,5 @@ export const COMPANY = {
     billingYears: "10 years",
     logs: "90 days",
   },
-  lastUpdated: "27 October 2026",
+  lastUpdated: "26 November 2026",
 } as const;

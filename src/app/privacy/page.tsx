@@ -44,6 +44,7 @@ export default function PrivacyPage() {
         <li><strong>CV content you upload or create</strong>: the full contents of any CV you upload (PDF or DOCX) or edit: name, contact details, employment history, education, skills and anything else you choose to include.</li>
         <li><strong>Special-category and third-party data</strong>: a CV can contain special categories of data (e.g. references to health, religion or trade-union membership) and personal data about other people (e.g. referees). You decide what to include; we process it solely on your instruction to provide the Service to you.</li>
         <li><strong>Job descriptions</strong> you paste in to tailor or score a CV.</li>
+        <li><strong>Saved Copilot chats</strong> (Career plan): your messages and the replies, together with the CV version and the job description the chat was about, so you can reopen the chat later. Deleting a chat deletes this with it. On other plans, chats are not saved.</li>
         <li><strong>Payment data</strong>: processed by {COMPANY.paymentProvider}. We receive confirmation of payment and limited billing details; we do not store full card numbers.</li>
         <li><strong>Usage and device data</strong>: log data, IP address, browser and device type, pages viewed and actions taken, used for security and to improve the Service.</li>
         <li><strong>Cookies and similar technologies</strong>: see section 10.</li>
