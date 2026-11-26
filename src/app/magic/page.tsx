@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -9,27 +9,31 @@ import { BrandMark } from "@/components/BrandMark";
 function MagicExchange() {
   const params = useSearchParams();
   const token = params.get("token") ?? "";
-  const [failed, setFailed] = useState(!token);
-  // The token is single-use; guard against effect double-invocation.
+  const [phase, setPhase] = useState<"ready" | "working" | "failed">(token ? "ready" : "failed");
+  // The token is single-use, so one click makes one attempt.
   const started = useRef(false);
 
-  useEffect(() => {
+  // The link is only used when the person presses the button. Opening the page does nothing, so
+  // an email scanner, a link preview or a second tab can't use up the link before they do.
+  const signInNow = () => {
     if (!token || started.current) return;
     started.current = true;
+    setPhase("working");
     signIn("magic-link", { token, redirect: false })
       .then((res) => {
-        if (res?.error || !res?.ok) setFailed(true);
+        if (res?.error || !res?.ok) setPhase("failed");
         else window.location.replace("/");
       })
-      .catch(() => setFailed(true));
-  }, [token]);
+      .catch(() => setPhase("failed"));
+  };
 
-  if (failed) {
+  if (phase === "failed") {
     return (
       <>
-        <h1 className="authpage-title">Link expired</h1>
+        <h1 className="authpage-title">This link can&apos;t be used</h1>
         <p className="authpage-sub">
-          This sign-in link is invalid or has expired. Request a new one from the sign-in screen.
+          It may have expired (links last 15 minutes), been used already, or been replaced because you asked for a newer one.
+          Request a new link and use the latest email.
         </p>
         <Link className="authpage-back" href="/?signin=1">
           ← Back to sign in
@@ -39,8 +43,13 @@ function MagicExchange() {
   }
   return (
     <>
-      <h1 className="authpage-title">Signing you in…</h1>
-      <p className="authpage-sub" role="status">One moment while we verify your link.</p>
+      <h1 className="authpage-title">Sign in to Orire</h1>
+      <p className="authpage-sub" role="status">
+        {phase === "working" ? "Signing you in…" : "Press the button to finish signing in on this device."}
+      </p>
+      <button type="button" className="auth-submit" onClick={signInNow} disabled={phase === "working"}>
+        {phase === "working" ? "Signing in…" : "Continue to Orire"}
+      </button>
     </>
   );
 }
