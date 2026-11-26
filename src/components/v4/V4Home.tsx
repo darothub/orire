@@ -10,12 +10,11 @@ import { useTargetStore } from "@/lib/store/targetStore";
 import { persistView, type WorkspaceView } from "@/lib/store/viewStore";
 import { useTargetMatch } from "@/components/home/MatchRing";
 import { getTemplateInfo } from "@/lib/templates/catalog";
-import { BrandMark } from "@/components/BrandMark";
+import { V4Shell } from "./V4Shell";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MatchRing } from "@/components/ui/MatchRing";
 import { Pill } from "@/components/ui/Pill";
-import "./v4.css";
 
 type App = { id: string; company: string; role: string; status: ApplicationStatus; updatedAt: string };
 
@@ -101,29 +100,7 @@ export function V4Home() {
   }
 
   return (
-    <div className="v4">
-      <aside className="v4-side">
-        <Link href="/v4" className="v4-brand" aria-label="Orire home">
-          <BrandMark size={28} />
-          <span><b>Orire</b><small>v4</small></span>
-        </Link>
-        <nav className="v4-nav" aria-label="Orire">
-          <Link href="/v4" className="v4-navitem on" aria-current="page">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" /></svg>
-            Home
-          </Link>
-          <Link href="/occ/v4" className="v4-navitem">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
-            Copilot
-          </Link>
-          <Link href="/" className="v4-navitem">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></svg>
-            CV Studio
-          </Link>
-        </nav>
-      </aside>
-
-      <main className="v4-main" aria-label="Home">
+    <V4Shell active="home" label="Home">
         <div className="v4-scroll">
           <header className="v4-head">
             <h1>{greeting(now)}.</h1>
@@ -235,7 +212,6 @@ export function V4Home() {
             </Card>
           </div>
         </div>
-      </main>
-    </div>
+    </V4Shell>
   );
 }
