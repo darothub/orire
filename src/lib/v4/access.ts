@@ -9,8 +9,6 @@ export async function requireV4Access(): Promise<void> {
   if (!(await requireOccAccess())) notFound();
 }
 
-/** Shared page options for v4 routes: dynamic and never indexed. */
-export const V4_DYNAMIC = "force-dynamic" as const;
 export const v4Metadata = (title: string) => ({
   title: `${title} (v4) | Orire`,
   robots: { index: false, follow: false },
