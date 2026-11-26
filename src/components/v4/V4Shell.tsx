@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 import { BrandMark } from "@/components/BrandMark";
 import { CloudSync } from "@/components/auth/CloudSync";
 import { type V4NavKey, V4_CLASSIC_HREF, V4_HOME_HREF, V4_NAV } from "@/lib/v4/nav";
@@ -18,6 +19,7 @@ export function V4Shell({ active, label, children }: { active: V4NavKey; label: 
   const [collapsed, toggleCollapsed] = useCollapsed("menu");
   // Being here means they want v4, so a later visit to the home page sends them back here.
   useEffect(() => setClassicChosen(false), []);
+  const [leaving, setLeaving] = useState(false);
   return (
     <div className={`v4${collapsed ? " v4--collapsed" : ""}`}>
       <CloudSync />
@@ -45,6 +47,18 @@ export function V4Shell({ active, label, children }: { active: V4NavKey; label: 
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M10 6l-6 6 6 6M4 12h16" /></svg>
           <span className="v4-navlabel">Classic Orire</span>
         </Link>
+        <button
+          type="button"
+          className="v4-signout"
+          disabled={leaving}
+          onClick={() => {
+            setLeaving(true);
+            void signOut({ callbackUrl: "/" }).catch(() => setLeaving(false));
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+          <span className="v4-navlabel">{leaving ? "Signing out…" : "Sign out"}</span>
+        </button>
         <button type="button" className="v4-collapse" onClick={toggleCollapsed} aria-expanded={!collapsed} aria-label={collapsed ? "Expand menu" : "Collapse menu"} title={collapsed ? "Expand menu" : "Collapse menu"}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d={collapsed ? "M9 6l6 6-6 6" : "M15 6l-6 6 6 6"} /></svg>
           <span className="v4-navlabel">Collapse menu</span>

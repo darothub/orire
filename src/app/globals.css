@@ -4069,6 +4069,8 @@ body,
 }
 .auth-magic:hover:not(:disabled) { color: inherit; border-color: var(--or-violet); }
 .auth-magic:disabled { opacity: 0.5; cursor: not-allowed; }
+.auth-email + .auth-magic { margin-top: 12px; }
+.auth-magic + .auth-hint { margin-top: 10px; }
 .auth-hint.ok { color: var(--or-match); }
 .auth-hint { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
 .auth-hint.bad { color: var(--or-gap); }
