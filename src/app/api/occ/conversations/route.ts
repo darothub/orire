@@ -21,7 +21,7 @@ export async function GET() {
   return send({ conversations });
 }
 
-/** Explicit save only. CV and JD attachments are intentionally not persisted. */
+/** The transcript, plus (v4) a reference to the CV version and the job description the chat used. CV text is never stored here. */
 export async function POST(request: Request) {
   const access = await requireOccAccess();
   if (!access) return send({ error: "Not available" }, 403);
@@ -33,6 +33,13 @@ export async function POST(request: Request) {
   try { raw = JSON.parse(rawText); } catch { return send({ error: "Invalid JSON" }, 400); }
   const data = validateOccConversationSave(raw);
   if (!data) return send({ error: "Invalid conversation" }, 400);
+  // A reference to someone else's document must never be stored: keep it only if it is theirs.
+  const ownedDoc = data.context?.cvDocumentId
+    ? await prisma.document.findFirst({ where: { id: data.context.cvDocumentId, userId: access.userId }, select: { id: true } })
+    : null;
+  const contextData = data.context
+    ? { cvDocumentId: ownedDoc?.id ?? null, jobDescription: data.context.jobDescription }
+    : {};
   try {
     const conversation = await prisma.$transaction(async tx => {
       if (data.id) {
@@ -43,7 +50,7 @@ export async function POST(request: Request) {
         if (!existing) return null;
         await tx.occConversation.update({
           where: { id: existing.id },
-          data: { title: data.title, primaryAgent: data.primaryAgent, usedAgents: data.usedAgents },
+          data: { title: data.title, primaryAgent: data.primaryAgent, usedAgents: data.usedAgents, ...contextData },
         });
         // Old structured results can no longer be trusted after a transcript rewrite.
         // Delete independently consented snapshots rather than reconnecting them to
@@ -58,7 +65,7 @@ export async function POST(request: Request) {
       }
       const created = await tx.occConversation.create({
         data: { userId: access.userId, title: data.title, primaryAgent: data.primaryAgent,
-          usedAgents: data.usedAgents,
+          usedAgents: data.usedAgents, ...contextData,
           messages: { create: data.turns.map((t, i) => ({
             sender: t.role, text: t.text, sequence: i,
             agentId: t.role === "OCC" ? data.primaryAgent : null,

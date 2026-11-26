@@ -1,8 +1,14 @@
 import { DEFAULT_OCC_AGENT, OCC_AGENTS, type OccAgentId } from "./agents";
 
 export type SavedOccTurn = { role: "you" | "OCC"; text: string };
+/** What a chat was about. The CV is a saved library version, never CV text. */
+export type OccChatContext = { cvDocumentId: string | null; jobDescription: string | null };
+export const CHAT_JD_MAX = 15000;
+
 export type SaveOccConversation = {
   id?: string;
+  /** Present only when the client sent it; absent leaves the stored context alone. */
+  context?: OccChatContext;
   title: string;
   primaryAgent: OccAgentId;
   usedAgents: OccAgentId[];
@@ -20,6 +26,16 @@ export function validateOccConversationSave(input: unknown): SaveOccConversation
       !Array.isArray(x.usedAgents) || x.usedAgents.length > 4 ||
       x.usedAgents.some(v => typeof v !== "string" || !ids.has(v)) ||
       !Array.isArray(x.turns) || x.turns.length === 0 || x.turns.length > 100) return null;
+  let context: OccChatContext | undefined;
+  if (x.context !== undefined) {
+    if (!x.context || typeof x.context !== "object" || Array.isArray(x.context)) return null;
+    const c = x.context as Record<string, unknown>;
+    const doc = c.cvDocumentId ?? null;
+    const jd = c.jobDescription ?? null;
+    if (doc !== null && (typeof doc !== "string" || doc.length > 100 || !/^c[a-z0-9]+$/i.test(doc))) return null;
+    if (jd !== null && (typeof jd !== "string" || jd.length > CHAT_JD_MAX)) return null;
+    context = { cvDocumentId: doc as string | null, jobDescription: typeof jd === "string" && jd.trim() ? jd.trim() : null };
+  }
   const turns: SavedOccTurn[] = [];
   let total = 0;
   for (const turn of x.turns) {
@@ -32,6 +48,7 @@ export function validateOccConversationSave(input: unknown): SaveOccConversation
   }
   if (total > 60000) return null;
   return { ...(x.id ? { id: x.id as string } : {}),
+    ...(context ? { context } : {}),
     title: x.title.trim(),
     primaryAgent: (x.primaryAgent as OccAgentId) || DEFAULT_OCC_AGENT,
     usedAgents: [...new Set(x.usedAgents as OccAgentId[])],

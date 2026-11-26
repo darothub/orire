@@ -42,7 +42,7 @@ import { fetchFeedback, fetchQuestion } from "@/lib/v4/interviewApi";
 import { V4CopilotFrame } from "@/components/v4/V4CopilotFrame";
 import { V4CopilotPanel } from "@/components/v4/V4CopilotPanel";
 import { useUsageStore } from "@/lib/store/usageStore";
-import { CHAT_ACTION_LABEL, actionLock, chatAccess, type ActionLock, type ChatAccess } from "@/lib/v4/copilot";
+import { CHAT_ACTION_LABEL, actionLock, chatAccess, type ActionLock } from "@/lib/v4/copilot";
 import type { ChatIntent, ChatReply } from "@/lib/occ/chat";
 import "./occ4.css";
 
@@ -107,7 +107,7 @@ type ConvSnapshot = {
   messages: Msg[]; agent: Specialist; cv: string; draft: CVData | null; description: string;
   cvFileName: string; roleFileName: string; coverage: number | null; templateId: string;
   intPhase: "idle" | "question" | "feedback"; intIndex: number; intQuestion: InterviewQuestion | null;
-  lastStructured: string; transcript: SavedOccTurn[];
+  lastStructured: string; transcript: SavedOccTurn[]; cvDocId: string | null;
 };
 
 /**
@@ -128,6 +128,8 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
   const [uploading, setUploading] = useState<null | "cv" | "jobDescription">(null);
   const [uploadError, setUploadError] = useState("");
   const [cvFileName, setCvFileName] = useState("");
+  // The saved library version the working CV came from (or was saved as), so a saved chat can bring it back.
+  const [cvDocId, setCvDocId] = useState<string | null>(null);
   const [roleFileName, setRoleFileName] = useState("");
   const [intPhase, setIntPhase] = useState<"idle" | "question" | "feedback">("idle");
   const [intIndex, setIntIndex] = useState(0);
@@ -160,7 +162,9 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
   const snapshots = useRef<Map<string, ConvSnapshot>>(new Map());
   const convSeq = useRef(1);
   // Transcript length last written to the server, per saved conversation (or local id before its first save).
-  const savedLen = useRef<Map<string, number>>(new Map());
+  const savedSig = useRef<Map<string, string>>(new Map());
+  // What the server holds for a chat: its length and the context it was saved with.
+  const saveSig = () => `${transcript.length}:${cvDocId ?? ""}:${roleReady ? description.length : 0}`;
 
   // Every plan can chat, each with its own reply allowance (v4 shell only; the
   // classic shell keeps its canned reply). Some quick actions need a higher plan.
@@ -239,24 +243,24 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
   const activeBackendId = conversations.find((c) => c.id === activeId)?.backendId;
   useEffect(() => {
     if (!autoSave || running || transcript.length === 0 || saveState === "saving" || saveState === "error") return;
-    if (savedLen.current.get(activeBackendId ?? activeId) === transcript.length) return;
+    if (savedSig.current.get(activeBackendId ?? activeId) === saveSig()) return;
     const t = setTimeout(() => void saveActive(), 1500);
     return () => clearTimeout(t);
     // saveActive reads the latest state through its own closure on each render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoSave, running, transcript, saveState, activeBackendId, activeId]);
+  }, [autoSave, running, transcript, saveState, activeBackendId, activeId, cvDocId, description]);
 
   function captureSnapshot(): ConvSnapshot {
-    return { messages, agent, cv, draft, description, cvFileName, roleFileName, coverage, templateId, intPhase, intIndex, intQuestion, lastStructured: lastStructuredRef.current, transcript };
+    return { messages, agent, cv, draft, description, cvFileName, roleFileName, coverage, templateId, intPhase, intIndex, intQuestion, lastStructured: lastStructuredRef.current, transcript, cvDocId };
   }
   function resetActiveState() {
-    setMessages([]); setAgent(DEFAULT_SPECIALIST); setCv(""); setDraft(null); setDescription("");
+    setMessages([]); setAgent(DEFAULT_SPECIALIST); setCv(""); setCvDocId(null); setDraft(null); setDescription("");
     setCvFileName(""); setRoleFileName(""); setCoverage(null); setTemplateId("aurora");
     setIntPhase("idle"); setIntIndex(0); setIntQuestion(null); lastStructuredRef.current = "";
     setContextOpen(false); setPreviewOpen(false); setEditMode(false); setUploadError(""); setTranscript([]); setSaveState("idle"); setPending(null);
   }
   function applySnapshot(s: ConvSnapshot) {
-    setMessages(s.messages); setAgent(s.agent); setCv(s.cv); setDraft(s.draft); setDescription(s.description);
+    setMessages(s.messages); setAgent(s.agent); setCv(s.cv); setCvDocId(s.cvDocId); setDraft(s.draft); setDescription(s.description);
     setCvFileName(s.cvFileName); setRoleFileName(s.roleFileName); setCoverage(s.coverage); setTemplateId(s.templateId);
     setIntPhase(s.intPhase); setIntIndex(s.intIndex); setIntQuestion(s.intQuestion); lastStructuredRef.current = s.lastStructured;
     setUploadError(""); setTranscript(s.transcript); setSaveState("idle"); setEditMode(false); setPending(null);
@@ -332,7 +336,7 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
     } else {
       resetActiveState();
       // A saved conversation opened for the first time: load its transcript
-      // (text history only — the draft and JD were never persisted).
+      // (plus the CV version and job it used, when saved).
       if (target?.backendId) void loadSavedTranscript(target.backendId);
     }
   }
@@ -343,9 +347,15 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
       const data = await r.json();
       const msgs: { sender: string; text: string }[] = Array.isArray(data.conversation?.messages) ? data.conversation.messages : [];
       setTranscript(msgs.map((m) => ({ role: m.sender === "you" ? "you" : "OCC", text: m.text })));
+      // Bring back what the chat was about: the saved CV version and the job description.
+      const ctx = data.context as { jobDescription?: string | null; cvDocumentId?: string | null; cv?: SavedDoc | null } | undefined;
+      const job = typeof ctx?.jobDescription === "string" && ctx.jobDescription.trim().length >= 30 ? ctx.jobDescription : "";
+      const doc = ctx?.cv ?? null;
+      if (job) { setDescription(job); setRoleFileName(""); }
+      if (doc) openVersion(doc, true);
       // The intro line below is appended to the transcript too; none of it needs saving again.
-      savedLen.current.set(backendId, msgs.length + 1);
-      sayBot("Here's your saved conversation. Your CV and the JD aren't stored, so add them again to continue working.");
+      savedSig.current.set(backendId, `${msgs.length + 1}:${doc?.id ?? ""}:${job.length}`);
+      sayBot(restoredNote(!!doc, !!job, !!ctx?.cvDocumentId && !doc, doc?.title));
       for (const m of msgs) {
         push(
           <ChatMessage role={m.sender === "you" ? "user" : "bot"} avatar={m.sender === "you" ? "You" : undefined}>
@@ -367,12 +377,16 @@ export function Occ4Workspace({ shell = "classic" }: { shell?: "classic" | "v4" 
     try {
       const r = await fetch("/api/occ/conversations", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: active?.backendId, title, primaryAgent: "review", usedAgents: ["review"], turns: transcript }),
+        body: JSON.stringify({
+          id: active?.backendId, title, primaryAgent: "review", usedAgents: ["review"], turns: transcript,
+          // The v4 Copilot also keeps what the chat was about; the classic one saves the transcript only.
+          ...(shell === "v4" ? { context: { cvDocumentId: cvDocId, jobDescription: roleReady ? description : null } } : {}),
+        }),
       });
       const data = await r.json();
       if (!r.ok || typeof data?.id !== "string") return setSaveState("error");
       const backendId = data.id as string;
-      savedLen.current.set(backendId, transcript.length);
+      savedSig.current.set(backendId, saveSig());
       setConversations((cs) => cs.map((c) => (c.id === activeId ? { ...c, backendId, title } : c)));
       setSaveState("saved");
     } catch {
@@ -671,14 +685,15 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
       const data = await response.json();
       if (!response.ok) return sayBot(typeof data?.error === "string" ? data.error : "Couldn't load your library — try again in a moment.");
       const docs = (Array.isArray(data.documents) ? data.documents : []) as SavedDoc[];
-      push(<CardRow><Occ4Library docs={docs} onOpen={openVersion} /></CardRow>);
+      push(<CardRow><Occ4Library docs={docs} onOpen={(d) => openVersion(d)} /></CardRow>);
     } catch {
       sayBot("Couldn't reach your library. Try again in a moment.");
     } finally {
       setRunning(false);
     }
   }
-  function openVersion(doc: SavedDoc) {
+  function openVersion(doc: SavedDoc, quiet = false) {
+    setCvDocId(doc.id);
     const text = cvDataToText(doc.data);
     setDraft(doc.data);
     setTemplateId(doc.template || "aurora");
@@ -686,7 +701,7 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
     lastStructuredRef.current = text;
     setCvFileName(doc.title);
     setPreviewOpen(true);
-    sayBot(`Loaded “${doc.title}” as your working draft. Add a job description and I'll review or simulate against it.`);
+    if (!quiet) sayBot(`Loaded “${doc.title}” as your working draft. Add a job description and I'll review or simulate against it.`);
   }
 
   async function runSave() {
@@ -700,6 +715,7 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
       if (!res.ok) {
         return sayBot(res.reason === "unauthenticated" ? "You'll need to sign in to save to your library." : "Couldn't save the version — try again in a moment.");
       }
+      setCvDocId(res.id);
       push(<CardRow>{renderSaved(title)}</CardRow>);
     } catch {
       sayBot("Couldn't save the version. Try again in a moment.");
@@ -883,7 +899,7 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
         return sayBot("Got the job description — using it for this conversation.");
       }
       if (!cvReady && looksLikeCV(value)) {
-        setCv(value);
+        setCv(value); setCvDocId(null);
         const built = cvDataFromParsed(parseCVText(value));
         lastStructuredRef.current = value;
         setDraft(built);
@@ -943,7 +959,7 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
       if (kind === "cv" && !looksLikeCV(text)) throw new Error("This document does not look like a CV. Upload a résumé showing work experience, skills or education.");
       if (kind === "jobDescription" && !looksLikeJobDescription(text)) throw new Error("This does not look like a job description. Upload a role with responsibilities or requirements.");
       if (kind === "cv") {
-        setCv(text);
+        setCv(text); setCvDocId(null);
         setCvFileName(file.name);
         // PDF/DOCX carry a parsed structure from /api/parse; a TXT upload is
         // structured in-browser with the same heuristic parser.
@@ -1087,7 +1103,7 @@ const INTENT_VERB: Partial<Record<Intent, string>> = {
                 </div>
                 <textarea
                   value={cv}
-                  onChange={(e) => setCv(e.target.value)}
+                  onChange={(e) => { setCv(e.target.value); setCvDocId(null); }}
                   onBlur={structurePastedCv}
                   placeholder="…or paste your CV text"
                   rows={4}
@@ -1480,6 +1496,16 @@ function renderCover(letter: CoverLetter): ReactNode {
       </p>
     </CopilotCard>
   );
+}
+
+/** The line shown when a saved chat is reopened, by what could be brought back. */
+function restoredNote(cv: boolean, job: boolean, cvDeleted: boolean, title?: string): string {
+  if (cv && job) return `Here's your saved conversation. I've brought back “${title}” and the job description, so you can carry on.`;
+  if (cv) return `Here's your saved conversation, with “${title}” as your working CV. Add the job description to continue.`;
+  if (job) return "Here's your saved conversation, with its job description. Add your CV to continue working.";
+  return cvDeleted
+    ? "Here's your saved conversation. The CV version it used has been deleted from your library, so add your CV again to continue."
+    : "Here's your saved conversation. Add your CV and the job description to continue working.";
 }
 
 function saveLabelFor(state: "idle" | "saving" | "saved" | "error", auto: boolean): string {
