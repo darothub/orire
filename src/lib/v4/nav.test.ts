@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { V4_NAV, V4_STUDIO_TABS, studioTabFor } from "./nav";
 
 describe("v4 navigation", () => {
-  it("keeps the Copilot out of the menu; it is a switch on the studio", () => {
-    expect(V4_NAV.map((n) => n.key)).toEqual(["home", "studio", "library", "export"]);
+  it("lists the Copilot as its own destination, beside the studio", () => {
+    expect(V4_NAV.map((n) => n.key)).toEqual(["home", "studio", "copilot", "library", "export"]);
   });
 
   it("maps studio paths to their tool, with Edit as the default", () => {

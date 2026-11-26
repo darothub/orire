@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useUsageStore } from "@/lib/store/usageStore";
 import { useCollapsed } from "@/lib/v4/useCollapsed";
-import { ASK_SHORTCUTS, chatMeta, type AskShortcut } from "@/lib/v4/copilot";
+import { ASK_SHORTCUTS, actionLock, chatMeta, type AskShortcut } from "@/lib/v4/copilot";
 
 export interface PanelChat { id: string; title: string; saved: boolean }
 
@@ -17,8 +17,6 @@ interface Props {
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
   onAsk: (shortcut: AskShortcut) => void;
-  /** Chat is Career only: other plans see a lock on the actions and an upgrade link. */
-  locked: boolean;
   onSave: () => void;
   saveLabel: string;
   canSave: boolean;
@@ -35,13 +33,15 @@ const I = {
 };
 const Icon = ({ d }: { d: string }) => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d={d} /></svg>;
 
-/** The Copilot's left panel: new chat, quick actions, chats and the coach-run meter. */
-export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete, onAsk, locked, onSave, saveLabel, canSave, onChoose }: Props) {
+/** The Copilot's left panel: new chat, quick actions, chats and the Copilot-reply meter. */
+export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete, onAsk, onSave, saveLabel, canSave, onChoose }: Props) {
   const [collapsed, toggleCollapsed] = useCollapsed("copilot-panel");
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
-  const coach = useUsageStore((s) => s.summary?.metrics.coach);
-  const left = coach && coach.cap !== null ? Math.max(0, coach.cap - coach.used) : null;
-  const cap = coach?.cap ?? null;
+  const plan = useUsageStore((s) => s.summary?.plan);
+  const chat = useUsageStore((s) => s.summary?.metrics.chat);
+  const left = chat && chat.cap !== null ? Math.max(0, chat.cap - chat.used) : null;
+  const cap = chat?.cap ?? null;
+  const anyLocked = ASK_SHORTCUTS.some((a) => actionLock(plan, a.intent));
 
   return (
     <nav className={`v4-cop-panel${collapsed ? " v4-cop-panel--collapsed" : ""}`} aria-label="Copilot">
@@ -54,11 +54,11 @@ export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete,
         {ASK_SHORTCUTS.map((a) => (
           <button key={a.intent} type="button" className="v4-cop-item" disabled={busy} title={a.hint} aria-label={a.label} onClick={() => { onAsk(a); onChoose(); }}>
             <Icon d={a.icon} /><span className="v4-cop-label">{a.label}</span>
-            {locked && <span className="v4-cop-lock"><Icon d={I.lock} /></span>}
+            {actionLock(plan, a.intent) && <span className="v4-cop-lock"><Icon d={I.lock} /></span>}
           </button>
         ))}
-        {locked && (
-          <Link href="/pricing" className="v4-cop-upgrade"><span className="v4-cop-label">Upgrade to Career</span></Link>
+        {anyLocked && (
+          <Link href="/pricing" className="v4-cop-upgrade"><span className="v4-cop-label">See plans</span></Link>
         )}
       </div>
 
@@ -94,14 +94,14 @@ export function V4CopilotPanel({ chats, activeId, busy, onNew, onOpen, onDelete,
       </div>
 
       {cap !== null && left !== null && (
-        <div className="v4-cop-meter" title={`${left} of ${cap} coach runs left`}>
+        <div className="v4-cop-meter" title={`${left} of ${cap} Copilot replies left`}>
           {collapsed ? (
             <span className="v4-cop-ring" style={{ ["--pct" as string]: `${Math.round((left / cap) * 100)}%` }}><span>{left}</span></span>
           ) : (
             <>
-              <div className="v4-usage-row"><b>Coach runs</b><span>{left} of {cap} left</span></div>
+              <div className="v4-usage-row"><b>Copilot replies</b><span>{left} of {cap} left</span></div>
               <div className="v4-meter"><span style={{ width: `${Math.round(((cap - left) / cap) * 100)}%` }} /></div>
-              <span className="v4-hint">Shared with the bullet coach.</span>
+              <span className="v4-hint">Quick actions use your Studio limits.</span>
             </>
           )}
         </div>

@@ -1,27 +1,34 @@
 import { NextResponse } from "next/server";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireVerifiedUser } from "@/lib/auth/guard";
+import { occFeatureEnabled } from "@/lib/occ/access";
+import { consume, getPlanId, refund } from "@/lib/entitlement/entitlement";
 import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import { DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { fakeAiFor, fakeChatReply } from "@/lib/ai/server/fakeProvider";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { bodyTooLarge } from "@/lib/ai/server/limits";
-import { gateCoachCall } from "@/lib/plan/coachGate";
-import { coachStore } from "@/lib/plan/coachStore";
+import { gateChatReply, type ChatStore } from "@/lib/occ/chatGate";
 import { CHAT_SYSTEM, chatUserPrompt, parseChatInput, parseChatReply } from "@/lib/occ/chat";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 const NO_STORE = { "Cache-Control": "private, no-store" };
+const chatStore: ChatStore = {
+  getPlan: getPlanId,
+  consume: (u, plan) => consume(u, "chat", plan),
+  refund: (u, plan) => refund(u, "chat", plan),
+};
 const respond = (body: unknown, status: number) => NextResponse.json(body, { status, headers: NO_STORE });
 
 /**
- * A Copilot reply for a message no keyword matched. Career only (requireOccAccess),
- * and each reply spends one of the monthly coach runs; a failed reply gives it back.
+ * A Copilot reply for a message no keyword matched. Every signed-in, verified user
+ * may chat; each plan has its own reply allowance, and a failed reply gives it back.
  */
 export async function POST(req: Request) {
-  const access = await requireOccAccess();
-  if (!access) return respond({ error: "Not available" }, 403);
+  if (!occFeatureEnabled()) return respond({ error: "Not available" }, 403);
+  const access = await requireVerifiedUser("use the Copilot");
+  if (!access.ok) return respond({ error: access.message }, access.status);
   if (bodyTooLarge(req)) return respond({ error: "Request too large" }, 413);
   const { provider } = routeTask("chat");
   const limited = await aiRateLimit(req, provider, access.userId);
@@ -31,8 +38,8 @@ export async function POST(req: Request) {
   const input = parseChatInput(raw);
   if (!input) return respond({ error: "Send a short message to the Copilot." }, 400);
 
-  const run = await gateCoachCall(access.userId, "analyze", undefined, coachStore);
-  if (!run.ok) return respond({ error: run.error, code: run.status === 402 ? "no-runs" : "blocked" }, run.status);
+  const run = await gateChatReply(access.userId, chatStore);
+  if (!run.ok) return respond({ error: run.error, code: "no-runs" }, run.status);
 
   try {
     let content: string;

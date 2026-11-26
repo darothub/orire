@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ASK_SHORTCUTS, chatAccess, chatMeta } from "./copilot";
+import { ASK_SHORTCUTS, actionLock, chatAccess, chatMeta } from "./copilot";
 
 describe("v4 copilot panel", () => {
   it("offers one quick action per intent, each with a label to send", () => {
@@ -14,16 +14,28 @@ describe("v4 copilot panel", () => {
 });
 
 describe("chatAccess", () => {
-  it("lets an unknown plan through so the server decides", () => {
+  it("lets chat through until the plan's replies are spent", () => {
     expect(chatAccess(undefined)).toBe("ok");
+    expect(chatAccess({ cap: 5, used: 4 })).toBe("ok");
+    expect(chatAccess({ cap: 5, used: 5 })).toBe("no-replies");
+    expect(chatAccess({ cap: null, used: 900 })).toBe("ok");
   });
-  it("asks Free and Pro to upgrade", () => {
-    expect(chatAccess("free")).toBe("upgrade");
-    expect(chatAccess("pro", { cap: 10, used: 0 })).toBe("upgrade");
+});
+
+describe("actionLock", () => {
+  it("never locks Career, or an unknown plan", () => {
+    expect(actionLock("career", "interview")).toBeNull();
+    expect(actionLock(undefined, "review")).toBeNull();
   });
-  it("lets Career chat until the monthly runs are spent", () => {
-    expect(chatAccess("career", { cap: 40, used: 39 })).toBe("ok");
-    expect(chatAccess("career", { cap: 40, used: 40 })).toBe("no-runs");
-    expect(chatAccess("career", { cap: null, used: 500 })).toBe("ok");
+  it("keeps the Career services behind Career, like the Studio", () => {
+    for (const intent of ["review", "match", "interview"] as const) {
+      expect(actionLock("free", intent)).toBe("career");
+      expect(actionLock("pro", intent)).toBe("career");
+    }
+  });
+  it("opens Refine to every plan and the cover letter to paid plans", () => {
+    expect(actionLock("free", "refine")).toBeNull();
+    expect(actionLock("free", "cover")).toBe("pro");
+    expect(actionLock("pro", "cover")).toBeNull();
   });
 });

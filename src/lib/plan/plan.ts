@@ -16,7 +16,7 @@ import { allTemplatesPerk } from "@/lib/templates/catalog";
 export type PlanId = "free" | "pro" | "career";
 
 /** A metered action — one unit of spend/quota on orire's managed keys. */
-export type Metric = "refine" | "simulate" | "download" | "coach";
+export type Metric = "refine" | "simulate" | "download" | "coach" | "chat";
 
 /**
  * How a metric is capped for a plan.
@@ -121,18 +121,21 @@ export const PLAN_METERS: Record<PlanId, Record<Metric, MeterRule>> = {
     simulate: { cap: 1, scope: "lifetime" },
     download: { cap: 3, scope: "lifetime" },
     coach: { cap: 0, scope: "lifetime" },
+    chat: { cap: 5, scope: "lifetime" },
   },
   pro: {
     refine: { cap: 30, scope: "monthly" },
     simulate: { cap: null, scope: "lifetime" },
     download: { cap: null, scope: "lifetime" },
     coach: { cap: 10, scope: "monthly" },
+    chat: { cap: 30, scope: "monthly" },
   },
   career: {
     refine: { cap: null, scope: "lifetime" },
     simulate: { cap: null, scope: "lifetime" },
     download: { cap: null, scope: "lifetime" },
     coach: { cap: 40, scope: "monthly" },
+    chat: { cap: null, scope: "lifetime" },
   },
 };
 
@@ -241,6 +244,7 @@ const METRIC_NOUNS: Record<Metric, { one: string; many: string }> = {
   simulate: { one: "simulation", many: "simulations" },
   download: { one: "download", many: "downloads" },
   coach: { one: "coach run", many: "coach runs" },
+  chat: { one: "Copilot reply", many: "Copilot replies" },
 };
 
 /** Plain-language plural for a metric, used in cap/upsell copy. */

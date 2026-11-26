@@ -12,7 +12,7 @@ import { V4Shell } from "./V4Shell";
  */
 export function V4CopilotFrame({ panel, drawerOpen, onCloseDrawer, children }: { panel: ReactNode; drawerOpen: boolean; onCloseDrawer: () => void; children: ReactNode }) {
   return (
-    <V4Shell active="studio" label="CV Studio">
+    <V4Shell active="copilot" label="Copilot">
       <div className="v4-frame v4-frame--chat">
         <V4FrameHead subtitle="Ask in plain words. Switch Copilot off for the studio tools." copilotOn />
         <div className={`v4-frame-body v4-cop-body${drawerOpen ? " v4-cop-body--open" : ""}`}>
