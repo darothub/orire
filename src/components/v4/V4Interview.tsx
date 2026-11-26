@@ -7,6 +7,7 @@ import { Pill } from "@/components/ui/Pill";
 import { Diff } from "@/components/ui/Diff";
 import { V4Progress } from "./V4Progress";
 import { useCVStore } from "@/lib/store/cvStore";
+import { useUsageStore } from "@/lib/store/usageStore";
 import { useTargetStore } from "@/lib/store/targetStore";
 import { cvDataToText } from "@/lib/cv/cvDataToText";
 import { useHydrated } from "@/lib/v4/useHydrated";
@@ -22,6 +23,8 @@ export function V4Interview() {
   const setJd = useTargetStore((s) => s.setJd);
   const label = useTargetStore((s) => s.label);
   const [editRole, setEditRole] = useState(false);
+  const plan = useUsageStore((s) => s.summary?.plan);
+  const allowance = useUsageStore((s) => s.summary?.metrics.interview);
   const cvText = useMemo(() => (started ? cvDataToText(cv) : ""), [started, cv]);
   const run = useInterview({ description: jd, cv: cvText });
   const { phase, index, question, feedback, answer, error } = run;
@@ -29,6 +32,19 @@ export function V4Interview() {
 
   if (!hydrated) return null;
   const roleReady = hasRole(jd);
+
+  if (plan === "free") {
+    return (
+      <div className="v4-stack">
+        <Card pad className="v4-int-start">
+          <h2 className="v4-h2">Interview practice is on Pro and Career</h2>
+          <p className="v4-muted">Get five questions for any job, write your answers and get feedback you can act on. Pro includes a monthly allowance; Career is unlimited.</p>
+          <Link href="/pricing" className="or-btn or-btn--primary v4-int-cta">See plans</Link>
+        </Card>
+      </div>
+    );
+  }
+  const left = allowance && allowance.cap !== null ? Math.max(0, allowance.cap - allowance.used) : null;
 
   return (
     <div className="v4-stack">
@@ -60,7 +76,7 @@ export function V4Interview() {
           <h2 className="v4-h2">Five questions, one at a time</h2>
           <p className="v4-muted">You get a question on each of five topics, write your answer, and get feedback you can act on. Your answers are not saved.</p>
           <button type="button" className="or-btn or-btn--primary v4-int-cta" onClick={() => void run.start()}>Start the interview</button>
-          <span className="v4-hint">Each question and review uses part of your daily Copilot allowance.</span>
+          <span className="v4-hint">{left === null ? "Each question and review uses part of your daily Copilot allowance." : `${left} of ${allowance?.cap} interview questions left this month. Reviewing an answer is included.`}</span>
         </Card>
       )}
 

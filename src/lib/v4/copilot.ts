@@ -49,14 +49,15 @@ export function chatAccess(chat?: { cap: number | null; used: number }): ChatAcc
 export type ActionLock = "pro" | "career";
 
 /**
- * Which quick actions each plan can run in chat, matching the CV Studio: the
- * actions that call the Career Copilot services (review, match, interview) are
- * Career; the cover letter is paid; Refine is open and metered by the Studio's own
+ * Which quick actions each plan can run in chat, matching the CV Studio: review and
+ * match call the Career Copilot services (Career); interview practice and the cover
+ * letter are paid (Pro has an interview allowance, Career is unlimited); Refine is open and metered by the Studio's own
  * limits. Simulate opens the Studio's Simulate, which meters it.
  */
 export function actionLock(plan: PlanId | undefined, intent: AskIntent | ChatIntent): ActionLock | null {
   if (plan === undefined || plan === "career") return null;
-  if (intent === "review" || intent === "match" || intent === "interview") return "career";
+  if (intent === "review" || intent === "match") return "career";
+  if (intent === "interview" && plan === "free") return "pro";
   if (intent === "cover" && plan === "free") return "pro";
   return null;
 }

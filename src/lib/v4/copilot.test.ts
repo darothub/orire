@@ -27,11 +27,15 @@ describe("actionLock", () => {
     expect(actionLock("career", "interview")).toBeNull();
     expect(actionLock(undefined, "review")).toBeNull();
   });
-  it("keeps the Career services behind Career, like the Studio", () => {
-    for (const intent of ["review", "match", "interview"] as const) {
+  it("keeps review and match behind Career, like the Studio", () => {
+    for (const intent of ["review", "match"] as const) {
       expect(actionLock("free", intent)).toBe("career");
       expect(actionLock("pro", intent)).toBe("career");
     }
+  });
+  it("opens interview practice to Pro (with its allowance) and keeps Free out", () => {
+    expect(actionLock("free", "interview")).toBe("pro");
+    expect(actionLock("pro", "interview")).toBeNull();
   });
   it("opens Refine to every plan and the cover letter to paid plans", () => {
     expect(actionLock("free", "refine")).toBeNull();

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireOccAccess } from "@/lib/occ/requireAccess";
+import { requireV4User, v4AiEnabled } from "@/lib/v4/access";
+import { getPlanId } from "@/lib/entitlement/entitlement";
+import { gateMeter } from "@/lib/plan/meterGate";
+import { meterStore } from "@/lib/plan/meterStore";
+import { meterFor } from "@/lib/plan/plan";
 import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import { DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { routeTask } from "@/lib/ai/server/providerRouter";
@@ -17,7 +21,8 @@ For mode feedback: {"strength":"one specific positive thing grounded in the actu
 Ask one question at a time. Keep feedback constructive and concise. Coach using the user's own answer as evidence and explicitly distinguish examples from facts.`;
 
 export async function POST(req: Request) {
-  const access = await requireOccAccess();
+  if (!v4AiEnabled()) return respond({ error: "Not available" }, 403);
+  const access = await requireV4User();
   if (!access) return respond({ error: "Not available" }, 403);
   if (bodyTooLarge(req)) return respond({ error: "Request too large" }, 413);
   let payload: unknown;
@@ -35,10 +40,22 @@ export async function POST(req: Request) {
   const { provider } = routeTask("agent-analyze");
   const limited = await aiRateLimit(req, provider, access.userId);
   if (limited) return limited;
+  // The plan decides who may practise: each question uses one of the plan's monthly
+  // interview questions (Free none, Pro 15, Career unlimited). Reviewing an answer is
+  // part of the question it belongs to, so it only needs a plan that includes interviews.
+  const plan = await getPlanId(access.userId);
+  let planUndo: (() => Promise<void>) | null = null;
+  if (mode === "question") {
+    const gate = await gateMeter(access.userId, "interview", meterStore("interview"));
+    if (!gate.ok) return respond({ error: gate.error, code: "plan" }, gate.status);
+    planUndo = gate.undo;
+  } else if (meterFor(plan, "interview").cap === 0) {
+    return respond({ error: "Interview practice is not included on your plan. Upgrade to Pro for more.", code: "plan" }, 402);
+  }
   let budgetPeriod: string | null;
   try { budgetPeriod = await claimOccAiRequest(access.userId); }
-  catch { return respond({ error: "Interview coaching is temporarily unavailable." }, 503); }
-  if (!budgetPeriod) return respond({ error: "Daily OCC AI allowance reached. Try again tomorrow." }, 429);
+  catch { await planUndo?.(); return respond({ error: "Interview coaching is temporarily unavailable." }, 503); }
+  if (!budgetPeriod) { await planUndo?.(); return respond({ error: "Daily OCC AI allowance reached. Try again tomorrow." }, 429); }
   try {
     const user = JSON.stringify({
       mode, topic: INTERVIEW_TOPICS[turnIndex], interviewQuestionNumber: turnIndex + 1,
@@ -52,6 +69,7 @@ export async function POST(req: Request) {
     });
     if (!served.call.ok) {
       await refundOccAiRequest(access.userId, budgetPeriod);
+      await planUndo?.();
       return respond({ error: "Interview coaching is temporarily unavailable. Try again." }, 503);
     }
     try {
@@ -60,10 +78,12 @@ export async function POST(req: Request) {
         : { feedback: parseInterviewFeedback(served.call.content, answer as string), turnIndex }, 200);
     } catch {
       await refundOccAiRequest(access.userId, budgetPeriod);
+      await planUndo?.();
       return respond({ error: "Could not validate the interview response. Please retry." }, 502);
     }
   } catch {
     await refundOccAiRequest(access.userId, budgetPeriod);
+    await planUndo?.();
     return respond({ error: "Interview coaching is temporarily unavailable. Try again." }, 503);
   }
 }

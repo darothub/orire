@@ -1,23 +1,18 @@
 import { NextResponse } from "next/server";
 import { requireV4User, v4AiEnabled } from "@/lib/v4/access";
-import { consume, getPlanId, refund } from "@/lib/entitlement/entitlement";
+import { meterStore } from "@/lib/plan/meterStore";
 import { runRoutedWithFailover } from "@/lib/ai/server/failover";
 import { DETERMINISTIC } from "@/lib/ai/server/providerCall";
 import { fakeAiFor, fakeChatReply } from "@/lib/ai/server/fakeProvider";
 import { aiRateLimit } from "@/lib/ratelimit/guard";
 import { routeTask } from "@/lib/ai/server/providerRouter";
 import { bodyTooLarge } from "@/lib/ai/server/limits";
-import { gateChatReply, type ChatStore } from "@/lib/occ/chatGate";
+import { gateMeter } from "@/lib/plan/meterGate";
 import { CHAT_SYSTEM, chatUserPrompt, parseChatInput, parseChatReply } from "@/lib/occ/chat";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 const NO_STORE = { "Cache-Control": "private, no-store" };
-const chatStore: ChatStore = {
-  getPlan: getPlanId,
-  consume: (u, plan) => consume(u, "chat", plan),
-  refund: (u, plan) => refund(u, "chat", plan),
-};
 const respond = (body: unknown, status: number) => NextResponse.json(body, { status, headers: NO_STORE });
 
 /**
@@ -37,7 +32,7 @@ export async function POST(req: Request) {
   const input = parseChatInput(raw);
   if (!input) return respond({ error: "Send a short message to the Copilot." }, 400);
 
-  const run = await gateChatReply(access.userId, chatStore);
+  const run = await gateMeter(access.userId, "chat", meterStore("chat"));
   if (!run.ok) return respond({ error: run.error, code: "no-runs" }, run.status);
 
   try {

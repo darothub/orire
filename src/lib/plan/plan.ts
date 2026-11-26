@@ -16,7 +16,7 @@ import { allTemplatesPerk } from "@/lib/templates/catalog";
 export type PlanId = "free" | "pro" | "career";
 
 /** A metered action — one unit of spend/quota on orire's managed keys. */
-export type Metric = "refine" | "simulate" | "download" | "coach" | "chat";
+export type Metric = "refine" | "simulate" | "download" | "coach" | "chat" | "interview";
 
 /**
  * How a metric is capped for a plan.
@@ -122,6 +122,7 @@ export const PLAN_METERS: Record<PlanId, Record<Metric, MeterRule>> = {
     download: { cap: 3, scope: "lifetime" },
     coach: { cap: 0, scope: "lifetime" },
     chat: { cap: 5, scope: "lifetime" },
+    interview: { cap: 0, scope: "lifetime" },
   },
   pro: {
     refine: { cap: 30, scope: "monthly" },
@@ -129,6 +130,7 @@ export const PLAN_METERS: Record<PlanId, Record<Metric, MeterRule>> = {
     download: { cap: null, scope: "lifetime" },
     coach: { cap: 10, scope: "monthly" },
     chat: { cap: 30, scope: "monthly" },
+    interview: { cap: 15, scope: "monthly" },
   },
   career: {
     refine: { cap: null, scope: "lifetime" },
@@ -136,6 +138,7 @@ export const PLAN_METERS: Record<PlanId, Record<Metric, MeterRule>> = {
     download: { cap: null, scope: "lifetime" },
     coach: { cap: 40, scope: "monthly" },
     chat: { cap: null, scope: "lifetime" },
+    interview: { cap: null, scope: "lifetime" },
   },
 };
 
@@ -245,6 +248,7 @@ const METRIC_NOUNS: Record<Metric, { one: string; many: string }> = {
   download: { one: "download", many: "downloads" },
   coach: { one: "coach run", many: "coach runs" },
   chat: { one: "Copilot reply", many: "Copilot replies" },
+  interview: { one: "interview question", many: "interview questions" },
 };
 
 /** Plain-language plural for a metric, used in cap/upsell copy. */
@@ -276,6 +280,7 @@ export function withinCap(planId: PlanId, metric: Metric, used: number): RunAllo
   if (used >= cap) {
     const next = nextPlan(planId);
     const upsell = next ? `Upgrade to ${next.label} for more.` : "Upgrade for more.";
+    if (cap === 0) return { allowed: false, reason: `${metricNoun(metric)[0].toUpperCase()}${metricNoun(metric).slice(1)} are not included on ${PLANS[planId].label}. ${upsell}` };
     const when = scope === "monthly" ? " this month" : "";
     return {
       allowed: false,
