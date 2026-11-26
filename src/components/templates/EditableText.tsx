@@ -14,6 +14,10 @@ interface EditableTextProps {
   /** Allow line breaks (summary, details). Single-line commits on Enter. */
   multiline?: boolean;
   style?: CSSProperties;
+  /** Bullets: Enter commits this one and starts a new bullet after it. */
+  onEnterNew?: () => void;
+  /** Bullets: Backspace in an empty bullet removes it. */
+  onBackspaceEmpty?: () => void;
 }
 
 /**
@@ -34,6 +38,8 @@ export function EditableText({
   placeholder,
   multiline = false,
   style,
+  onEnterNew,
+  onBackspaceEmpty,
 }: EditableTextProps) {
   const previewEdit = useUIStore((s) => s.previewEdit);
   const ref = useRef<HTMLElement>(null);
@@ -67,7 +73,18 @@ export function EditableText({
       onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
       onBlur={commit}
       onKeyDown={(e: React.KeyboardEvent) => {
-        if (e.key === "Enter" && !multiline) {
+        if (e.key === "Enter" && onEnterNew && !e.shiftKey) {
+          e.preventDefault();
+          const el = e.currentTarget as HTMLElement;
+          commit();
+          onEnterNew();
+          requestAnimationFrame(() => (el.nextElementSibling as HTMLElement | null)?.focus());
+        } else if (e.key === "Backspace" && onBackspaceEmpty && !(ref.current?.innerText ?? "").trim()) {
+          e.preventDefault();
+          const prev = (e.currentTarget as HTMLElement).previousElementSibling as HTMLElement | null;
+          onBackspaceEmpty();
+          requestAnimationFrame(() => prev?.focus());
+        } else if (e.key === "Enter" && !multiline) {
           e.preventDefault();
           (e.currentTarget as HTMLElement).blur();
         } else if (e.key === "Escape") {

@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import type { CVData, SectionKey } from "@/lib/cv/schema";
 import { container, item, dateRange, normalizedHref } from "./shared";
 import { EditableText } from "./EditableText";
+import { AddBulletRow } from "./AddBulletRow";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useUIStore } from "@/lib/store/uiStore";
 
@@ -14,9 +15,15 @@ export function Noir({ cv }: { cv: CVData }) {
   const setBasics = useCVStore((s) => s.setBasics);
   const updateExperience = useCVStore((s) => s.updateExperience);
   const setHighlight = useCVStore((s) => s.setHighlight);
+  const addHighlight = useCVStore((s) => s.addHighlight);
+  const insertHighlight = useCVStore((s) => s.insertHighlight);
+  const removeHighlight = useCVStore((s) => s.removeHighlight);
   const updateEducation = useCVStore((s) => s.updateEducation);
   const updateProject = useCVStore((s) => s.updateProject);
   const setProjectHighlight = useCVStore((s) => s.setProjectHighlight);
+  const addProjectHighlight = useCVStore((s) => s.addProjectHighlight);
+  const insertProjectHighlight = useCVStore((s) => s.insertProjectHighlight);
+  const removeProjectHighlight = useCVStore((s) => s.removeProjectHighlight);
   const updateCertification = useCVStore((s) => s.updateCertification);
   const updateSkillGroup = useCVStore((s) => s.updateSkillGroup);
 
@@ -62,20 +69,25 @@ export function Noir({ cv }: { cv: CVData }) {
                   {exp.location ? ` · ${exp.location}` : ""}
                 </p>
                 {(exp.highlights.filter(Boolean).length > 0 || previewEdit) && (
-                  <ul className="nr-bullets">
-                    {exp.highlights.map((h, i) =>
-                      h || previewEdit ? (
-                        <EditableText
-                          as="li"
-                          key={i}
-                          value={h}
-                          placeholder="Achievement…"
-                          multiline
-                          onCommit={(v) => setHighlight(exp.id, i, v)}
-                        />
-                      ) : null,
-                    )}
-                  </ul>
+                  <>
+                    <ul className="nr-bullets">
+                      {exp.highlights.map((h, i) =>
+                        h || previewEdit ? (
+                          <EditableText
+                            as="li"
+                            key={i}
+                            value={h}
+                            placeholder="Achievement…"
+                            multiline
+                            onCommit={(v) => setHighlight(exp.id, i, v)}
+                            onEnterNew={() => insertHighlight(exp.id, i)}
+                            onBackspaceEmpty={() => removeHighlight(exp.id, i)}
+                          />
+                        ) : null,
+                      )}
+                    </ul>
+                    <AddBulletRow onAdd={() => addHighlight(exp.id)} />
+                  </>
                 )}
               </motion.div>
             ))}
@@ -137,20 +149,25 @@ export function Noir({ cv }: { cv: CVData }) {
                   </p>
                 )}
                 {(prj.highlights.filter(Boolean).length > 0 || previewEdit) && (
-                  <ul className="nr-bullets">
-                    {prj.highlights.map((h, i) =>
-                      h || previewEdit ? (
-                        <EditableText
-                          as="li"
-                          key={i}
-                          value={h}
-                          placeholder="Detail…"
-                          multiline
-                          onCommit={(v) => setProjectHighlight(prj.id, i, v)}
-                        />
-                      ) : null,
-                    )}
-                  </ul>
+                  <>
+                    <ul className="nr-bullets">
+                      {prj.highlights.map((h, i) =>
+                        h || previewEdit ? (
+                          <EditableText
+                            as="li"
+                            key={i}
+                            value={h}
+                            placeholder="Detail…"
+                            multiline
+                            onCommit={(v) => setProjectHighlight(prj.id, i, v)}
+                            onEnterNew={() => insertProjectHighlight(prj.id, i)}
+                            onBackspaceEmpty={() => removeProjectHighlight(prj.id, i)}
+                          />
+                        ) : null,
+                      )}
+                    </ul>
+                    <AddBulletRow onAdd={() => addProjectHighlight(prj.id)} />
+                  </>
                 )}
               </motion.div>
             ))}

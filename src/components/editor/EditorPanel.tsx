@@ -7,18 +7,14 @@ import { AnimatePresence, motion, Reorder, useDragControls } from "framer-motion
 import { useCVStore } from "@/lib/store/cvStore";
 import { useEffect, useState } from "react";
 import { gapAnalysis } from "@/lib/ai/simulate";
-import { useSession } from "next-auth/react";
-import { useUIStore } from "@/lib/store/uiStore";
 import { AutoTextarea } from "./AutoTextarea";
 import { EvidenceHelper } from "./EvidenceHelper";
 import { hasMeasurable } from "@/lib/ai/evidence";
 import { analyzeBullet } from "@/lib/cv/coach";
 import { useSpellReady } from "@/lib/cv/useSpellReady";
-import { usePlanStore } from "@/lib/store/planStore";
+import { useBulletReview } from "@/lib/ai/useBulletReview";
 import { useViewStore } from "@/lib/store/viewStore";
 import { useTargetStore } from "@/lib/store/targetStore";
-import { allowContextualBulletReview } from "@/lib/plan/plan";
-import type { BulletReview } from "@/lib/ai/bulletReview";
 import { moveById, moveAt } from "@/lib/cv/reorder";
 
 function Field({
@@ -178,44 +174,12 @@ function HighlightItem({
   const controls = useDragControls();
   useSpellReady();
   const flags = analyzeBullet(value);
-  const plan = usePlanStore((s) => s.plan);
   const setView = useViewStore((s) => s.setView);
-  const canAiReview = allowContextualBulletReview(plan);
-  const [busy, setBusy] = useState(false);
-  const [review, setReview] = useState<BulletReview | null>(null);
-  const [err, setErr] = useState("");
-
-  const { status: sessionStatus } = useSession();
-  const openAuth = useUIStore((s) => s.openAuth);
-
-  async function improve() {
-    if (sessionStatus === "unauthenticated") {
-      openAuth("signup", null, "Sign up to review bullets with AI");
-      return;
-    }
-    if (!canAiReview) {
-      setErr("AI bullet review (spelling, grammar, impact in context) is on Pro and Career.");
-      setView("plans");
-      return;
-    }
-    setBusy(true);
-    setErr("");
-    setReview(null);
-    try {
-      const res = await fetch("/api/ai/bullet-check", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ text: value, advice: flags.map((f) => ({ label: f.label, hint: f.hint })) }),
-      });
-      const data = (await res.json()) as { ok: boolean; review?: BulletReview; error?: string };
-      if (data.ok && data.review) setReview(data.review);
-      else setErr(data.error || "Couldn’t review this bullet.");
-    } catch {
-      setErr("Network error. Please try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const { busy, review, err, canAiReview, improve, clearReview } = useBulletReview({
+    value,
+    flags,
+    onUpgrade: () => setView("plans"),
+  });
 
   const canReview = value.trim().length > 0;
 
@@ -311,7 +275,7 @@ function HighlightItem({
             <span className={`ed-review-verdict ${review.verdict}`}>
               {review.verdict === "strong" ? "Strong bullet" : review.verdict === "ok" ? "Could be stronger" : "Needs work"}
             </span>
-            <button className="ed-review-x" onClick={() => setReview(null)} aria-label="Dismiss">✕</button>
+            <button className="ed-review-x" onClick={clearReview} aria-label="Dismiss">✕</button>
           </div>
           {review.issues.length > 0 && (
             <ul className="ed-review-issues">
@@ -324,7 +288,7 @@ function HighlightItem({
               <p>{review.suggestion}</p>
               <button
                 className="ed-review-use"
-                onClick={() => { onChange(review.suggestion); setReview(null); }}
+                onClick={() => { onChange(review.suggestion); clearReview(); }}
               >
                 Use this
               </button>

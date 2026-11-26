@@ -7,25 +7,24 @@ import { APPLICATION_STATUS_LABELS, type ApplicationStatus } from "@/lib/occ/app
 import { homeNext, pipelineCounts, weeklyActivity, type HomeAction } from "@/lib/home/v4";
 import { useCVStore } from "@/lib/store/cvStore";
 import { useTargetStore } from "@/lib/store/targetStore";
-import { persistView, type WorkspaceView } from "@/lib/store/viewStore";
 import { useTargetMatch } from "@/components/home/MatchRing";
 import { getTemplateInfo } from "@/lib/templates/catalog";
-import { BrandMark } from "@/components/BrandMark";
+import { V4Shell } from "./V4Shell";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MatchRing } from "@/components/ui/MatchRing";
 import { Pill } from "@/components/ui/Pill";
-import "./v4.css";
 
 type App = { id: string; company: string; role: string; status: ApplicationStatus; updatedAt: string };
 
-/** Where each recommended action lives: the Copilot (v4) or the CV studio. */
-const ACTION_TARGET: Record<HomeAction, { href: "/occ/v4" | "/"; view?: WorkspaceView }> = {
-  context: { href: "/", view: "create" },
-  match: { href: "/occ/v4" },
-  refine: { href: "/occ/v4" },
-  applications: { href: "/occ/v4" },
-  export: { href: "/", view: "export" },
+/** Where each recommended action lives. Every target is a v4 page. */
+const V4_ROUTE = { copilot: "/occ/v4", studio: "/v4/studio", export: "/v4/export" } as const;
+const ACTION_HREF: Record<HomeAction, string> = {
+  context: V4_ROUTE.copilot,
+  match: V4_ROUTE.copilot,
+  refine: V4_ROUTE.copilot,
+  applications: V4_ROUTE.copilot,
+  export: V4_ROUTE.export,
 };
 
 function greeting(now: number | null): string {
@@ -90,40 +89,12 @@ export function V4Home() {
   const peak = Math.max(1, ...activity);
   const stat = (n: number | null) => (n === null ? "–" : n);
 
-  function open(view: WorkspaceView) {
-    persistView(view);
-    router.push("/");
-  }
   function runNext() {
-    const t = ACTION_TARGET[next.action];
-    if (t.view) persistView(t.view);
-    router.push(t.href);
+    router.push(ACTION_HREF[next.action]);
   }
 
   return (
-    <div className="v4">
-      <aside className="v4-side">
-        <Link href="/v4" className="v4-brand" aria-label="Orire home">
-          <BrandMark size={28} />
-          <span><b>Orire</b><small>v4</small></span>
-        </Link>
-        <nav className="v4-nav" aria-label="Orire">
-          <Link href="/v4" className="v4-navitem on" aria-current="page">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z" /></svg>
-            Home
-          </Link>
-          <Link href="/occ/v4" className="v4-navitem">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
-            Copilot
-          </Link>
-          <Link href="/" className="v4-navitem">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></svg>
-            CV Studio
-          </Link>
-        </nav>
-      </aside>
-
-      <main className="v4-main" aria-label="Home">
+    <V4Shell active="home" label="Home">
         <div className="v4-scroll">
           <header className="v4-head">
             <h1>{greeting(now)}.</h1>
@@ -161,9 +132,9 @@ export function V4Home() {
                   <span>Template: {getTemplateInfo(templateId)?.name ?? templateId}</span>
                 </div>
                 <div className="v4-cv-actions">
-                  <Button variant="primary" size="sm" onClick={() => open("edit")}>Edit CV</Button>
-                  <Button variant="ghost" size="sm" onClick={() => open("rebrand")}>Change template</Button>
-                  <Button variant="ghost" size="sm" onClick={() => open("export")}>Export</Button>
+                  <Button variant="primary" size="sm" onClick={() => router.push(V4_ROUTE.studio)}>Edit CV</Button>
+                  <Button variant="ghost" size="sm" onClick={() => router.push(V4_ROUTE.studio)}>Change template</Button>
+                  <Button variant="ghost" size="sm" onClick={() => router.push(V4_ROUTE.export)}>Export</Button>
                 </div>
               </>
             ) : (
@@ -174,7 +145,7 @@ export function V4Home() {
                   <span>Create or import one to review, refine, restyle and export it.</span>
                 </div>
                 <div className="v4-cv-actions">
-                  <Button variant="primary" size="sm" onClick={() => open("create")}>Create your CV</Button>
+                  <Button variant="primary" size="sm" onClick={() => router.push(V4_ROUTE.copilot)}>Create your CV</Button>
                 </div>
               </>
             )}
@@ -235,7 +206,6 @@ export function V4Home() {
             </Card>
           </div>
         </div>
-      </main>
-    </div>
+    </V4Shell>
   );
 }

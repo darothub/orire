@@ -1,5 +1,6 @@
 "use client";
 
+import { insertBlankAfter } from "@/lib/cv/highlights";
 import { funnel } from "@/lib/analytics/funnel";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -59,6 +60,8 @@ interface CVState {
   removeExperience: (id: string) => void;
   setHighlight: (expId: string, index: number, value: string) => void;
   addHighlight: (expId: string) => void;
+  /** Insert an empty highlight right after `index` (Enter in live edit). */
+  insertHighlight: (expId: string, index: number) => void;
   removeHighlight: (expId: string, index: number) => void;
 
   addEducation: () => void;
@@ -74,6 +77,7 @@ interface CVState {
   removeProject: (id: string) => void;
   setProjectHighlight: (prjId: string, index: number, value: string) => void;
   addProjectHighlight: (prjId: string) => void;
+  insertProjectHighlight: (prjId: string, index: number) => void;
   removeProjectHighlight: (prjId: string, index: number) => void;
 
   addCertification: () => void;
@@ -175,6 +179,15 @@ export const useCVStore = create<CVState>()(
             ),
           },
         })),
+      insertHighlight: (expId, index) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            experience: s.cv.experience.map((e) =>
+              e.id === expId ? { ...e, highlights: insertBlankAfter(e.highlights, index) } : e,
+            ),
+          },
+        })),
       removeHighlight: (expId, index) =>
         set((s) => ({
           cv: {
@@ -239,6 +252,15 @@ export const useCVStore = create<CVState>()(
             ...s.cv,
             projects: s.cv.projects.map((p) =>
               p.id === prjId ? { ...p, highlights: [...p.highlights, ""] } : p,
+            ),
+          },
+        })),
+      insertProjectHighlight: (prjId, index) =>
+        set((s) => ({
+          cv: {
+            ...s.cv,
+            projects: s.cv.projects.map((p) =>
+              p.id === prjId ? { ...p, highlights: insertBlankAfter(p.highlights, index) } : p,
             ),
           },
         })),

@@ -663,6 +663,16 @@ body {
   position: relative;
 }
 
+/* "+ Add bullet" under a highlight list: shown only on the editing paper (live edit). */
+.oe-add-row { display: none; }
+.paper.is-editing .oe-add-row { display: block; margin: 4px 0 2px; }
+.oe-add {
+  font: inherit; font-size: 11px; font-weight: 600; color: #4b3ff0; background: transparent;
+  border: 1px dashed rgba(75, 63, 240, 0.5); border-radius: 6px; padding: 3px 9px; cursor: pointer;
+}
+.oe-add:hover { background: rgba(99, 102, 241, 0.08); }
+@media print { .oe-add-row { display: none !important; } }
+
 /* One-time light sweep that passes across a freshly mounted template (req 9). */
 .tpl-sweep {
   position: absolute;
